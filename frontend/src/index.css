@@ -1,13 +1,140 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import "tailwindcss";
+
+@theme {
+  /* =========================================
+     1. CORE PALETTE (Màu sắc cốt lõi)
+     ========================================= */
+  
+  /* --- BRAND: OneConnect Red --- */
+  --color-primary: #dc2626;            /* Red-600: Màu chủ đạo */
+  --color-primary-foreground: #ffffff;
+  --color-primary-hover: #b91c1c;      /* Red-700: Hover state */
+  
+  /* --- NEUTRAL: Nền & Chữ --- */
+  --color-background: #f9fafb;         /* Gray-50: Nền App */
+  --color-foreground: #020617;         /* Gray-950: Chữ chính */
+  
+  --color-surface: #ffffff;            /* White: Nền Card/Modal */
+  --color-surface-foreground: #020617;
+  
+  --color-muted: #f3f4f6;              /* Gray-100: Nền phụ */
+  --color-muted-foreground: #6b7280;   /* Gray-500: Chữ phụ */
+
+  --color-border: #e5e7eb;             /* Gray-200: Đường viền */
+  --color-input: #e5e7eb;              /* Viền input */
+  --color-ring: #dc2626;               /* Viền focus (Red) */
+
+  /* =========================================
+     2. SEMANTIC COLORS (Màu trạng thái)
+     ========================================= */
+
+  /* Success: "Đang làm việc", "Tăng trưởng" */
+  --color-success: #16a34a;            /* Green-600 */
+  --color-success-foreground: #ffffff;
+
+  /* Warning: "Sắp hết hạn", "Chờ duyệt" */
+  --color-warning: #d97706;            /* Amber-600 */
+  --color-warning-foreground: #ffffff;
+
+  /* Error/Destructive: "Lỗi", "Xóa", "Kỷ luật" */
+  --color-destructive: #ef4444;        /* Red-500 */
+  --color-destructive-foreground: #ffffff;
+
+  /* Info: "Thông báo chung" */
+  --color-info: #3b82f6;               /* Blue-500 */
+  --color-info-foreground: #ffffff;
+
+  /* =========================================
+     3. DATA VISUALIZATION (Màu biểu đồ)
+     * Dùng cho Dashboard sau này *
+     ========================================= */
+  --color-chart-1: #dc2626; /* Red (Primary) */
+  --color-chart-2: #2563eb; /* Blue */
+  --color-chart-3: #16a34a; /* Green */
+  --color-chart-4: #d97706; /* Orange */
+  --color-chart-5: #9333ea; /* Purple */
+
+  /* =========================================
+     4. COMPONENT VARIABLES (Cấu hình riêng)
+     ========================================= */
+
+  /* Sidebar Navigation */
+  --color-sidebar: #ffffff;
+  --color-sidebar-foreground: #374151;
+  --color-sidebar-border: #e5e7eb;
+  --color-sidebar-active: #fef2f2;     /* Red-50 */
+  --color-sidebar-active-text: #dc2626;/* Red-600 */
+
+  /* =========================================
+     5. SHAPES & TYPOGRAPHY
+     ========================================= */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;   /* Chuẩn cho Button/Input */
+  --radius-lg: 0.75rem;  /* Chuẩn cho Card */
+  --radius-xl: 1rem;     /* Chuẩn cho Modal */
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* =========================================
+     6. ADVANCED ANIMATIONS (Chuyển động)
+     * Giúp Web mượt như App Mobile *
+     ========================================= */
+  
+  /* Fade In: Hiện dần ra */
+  --animate-fade-in: fade-in 0.2s ease-out;
+  /* Slide In: Trượt từ dưới lên (cho Modal) */
+  --animate-slide-in-up: slide-in-up 0.3s ease-out;
+  /* Accordion: Đóng mở */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  /* Keyframes Definition */
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-in-up {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes accordion-down {
+    from { height: 0 }
+    to { height: var(--radix-accordion-content-height) }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height) }
+    to { height: 0 }
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  /* --- CUSTOM SCROLLBAR (Thanh cuộn đẹp) --- */
+  /* Chrome, Edge, Safari */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full transition-colors;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* --- UTILITY CLASSES --- */
+  .card {
+    @apply bg-surface border border-border rounded-lg shadow-sm;
+  }
+  
+  /* Container chuẩn cho các trang Dashboard */
+  .container-page {
+    @apply p-6 max-w-[1600px] mx-auto space-y-6;
+  }
 }
