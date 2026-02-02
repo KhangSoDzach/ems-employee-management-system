@@ -4,6 +4,10 @@ import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -11,14 +15,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Tag(name = "Employee Management", description = "APIs for managing employees")
 @RestController
 @RequestMapping("/api/v1/employees")
 public class EmployeeController {
 
-    /**
-     * Create a new employee
-     * POST /api/v1/employees
-     */
+    @Operation(summary = "Create a new employee", description = "Create a new employee record in the system")
     @PostMapping
     public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(
             @Valid @RequestBody EmployeeRequest request) {
@@ -27,10 +29,7 @@ public class EmployeeController {
                 .body(ApiResponse.success("Employee created successfully", null));
     }
 
-    /**
-     * Get all employees with pagination and filtering
-     * GET /api/v1/employees
-     */
+    @Operation(summary = "Get all employees", description = "Retrieve all employees with pagination and filtering options")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAllEmployees(
             @RequestParam(defaultValue = "0") int page,
@@ -43,20 +42,14 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    /**
-     * Get employee by ID
-     * GET /api/v1/employees/{id}
-     */
+    @Operation(summary = "Get employee by ID", description = "Retrieve a specific employee by their ID")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployeeById(@PathVariable Long id) {
         // TODO: Implement service layer
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    /**
-     * Update employee
-     * PUT /api/v1/employees/{id}
-     */
+    @Operation(summary = "Update employee", description = "Update an existing employee's information")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
             @PathVariable Long id,

@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: ems-backend
+  
+  # Database configuration
+  datasource:
+    url: jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    username: root
+    password: 
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+  
+# Server configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# Swagger/OpenAPI configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false

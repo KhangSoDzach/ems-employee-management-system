@@ -5,6 +5,8 @@ import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.leave.dto.ApproveLeaveRequest;
 import com.company.ems.backend.leave.dto.LeaveRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -13,14 +15,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
+@Tag(name = "Leave Management", description = "APIs for managing employee leave requests")
 @RestController
 @RequestMapping("/api/v1/leaves")
 public class LeaveController {
 
-    /**
-     * Submit a leave request
-     * POST /api/v1/leaves
-     */
+    @Operation(summary = "Submit leave request", description = "Submit a new leave request")
     @PostMapping
     public ResponseEntity<ApiResponse<LeaveResponse>> createLeaveRequest(
             @Valid @RequestBody LeaveRequest request) {
@@ -29,10 +29,7 @@ public class LeaveController {
                 .body(ApiResponse.success("Leave request submitted successfully", null));
     }
 
-    /**
-     * Get all leave requests with filtering and pagination
-     * GET /api/v1/leaves
-     */
+    @Operation(summary = "Get all leave requests", description = "Retrieve all leave requests with filtering and pagination")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<LeaveResponse>>> getAllLeaves(
             @RequestParam(defaultValue = "0") int page,
@@ -46,20 +43,14 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    /**
-     * Get leave request by ID
-     * GET /api/v1/leaves/{id}
-     */
+    @Operation(summary = "Get leave by ID", description = "Retrieve a specific leave request by ID")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<LeaveResponse>> getLeaveById(@PathVariable Long id) {
         // TODO: Implement get leave by id service
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    /**
-     * Approve or reject leave request
-     * PUT /api/v1/leaves/{id}/approve
-     */
+    @Operation(summary = "Approve/Reject leave", description = "Approve or reject a leave request")
     @PutMapping("/{id}/approve")
     public ResponseEntity<ApiResponse<LeaveResponse>> approveLeave(
             @PathVariable Long id,

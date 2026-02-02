@@ -1,0 +1,478 @@
+{
+    "info": {
+        "name": "EMS - Employee Management System API",
+        "description": "Complete API collection for Employee Management System",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Employee Management",
+            "item": [
+                {
+                    "name": "Create Employee",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"firstName\": \"Nguyễn Văn\",\n  \"lastName\": \"A\",\n  \"email\": \"nguyenvana@company.com\",\n  \"phone\": \"+84123456789\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"hireDate\": \"2024-01-01\",\n  \"position\": \"Software Engineer\",\n  \"department\": \"Engineering\",\n  \"salary\": 75000.00,\n  \"address\": \"123 Đường ABC\",\n  \"city\": \"Hồ Chí Minh\",\n  \"state\": \"HCM\",\n  \"zipCode\": \"70000\",\n  \"country\": \"Vietnam\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/employees",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "employees"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get All Employees",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/employees?page=0&size=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "employees"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "Engineering",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Employee by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/employees/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "employees",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Employee",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"firstName\": \"Nguyễn Văn\",\n  \"lastName\": \"B\",\n  \"email\": \"nguyenvanb@company.com\",\n  \"phone\": \"+84123456789\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"hireDate\": \"2024-01-01\",\n  \"position\": \"Senior Software Engineer\",\n  \"department\": \"Engineering\",\n  \"salary\": 85000.00,\n  \"address\": \"123 Đường ABC\",\n  \"city\": \"Hồ Chí Minh\",\n  \"state\": \"HCM\",\n  \"zipCode\": \"70000\",\n  \"country\": \"Vietnam\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/employees/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "employees",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Employee",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/employees/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "employees",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Export Employees",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/employees/export?format=csv",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "employees",
+                                "export"
+                            ],
+                            "query": [
+                                {
+                                    "key": "format",
+                                    "value": "csv"
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "SSO Authentication",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"provider\": \"google\",\n  \"token\": \"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"redirectUri\": \"http://localhost:3000/callback\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/sso",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "sso"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "User Management",
+            "item": [
+                {
+                    "name": "Update User Role",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"role\": \"ADMIN\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/users/1/roles",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "users",
+                                "1",
+                                "roles"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Attendance Management",
+            "item": [
+                {
+                    "name": "Check-in",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"employeeId\": 1,\n  \"location\": \"Office - Floor 3\",\n  \"latitude\": 10.7769,\n  \"longitude\": 106.7009,\n  \"notes\": \"On time\",\n  \"checkInTime\": \"2026-01-30T09:00:00\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/attendance/check-in",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "attendance",
+                                "check-in"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Attendance Records",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/attendance?page=0&size=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "attendance"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "employeeId",
+                                    "value": "1",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "startDate",
+                                    "value": "2026-01-01",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2026-01-31",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Attendance Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/attendance/summary?employeeId=1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "attendance",
+                                "summary"
+                            ],
+                            "query": [
+                                {
+                                    "key": "employeeId",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "startDate",
+                                    "value": "2026-01-01",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2026-01-31",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Leave Management",
+            "item": [
+                {
+                    "name": "Submit Leave Request",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"employeeId\": 1,\n  \"leaveType\": \"ANNUAL\",\n  \"startDate\": \"2026-02-10\",\n  \"endDate\": \"2026-02-12\",\n  \"reason\": \"Family vacation\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/leaves",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "leaves"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get All Leave Requests",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/leaves?page=0&size=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "leaves"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "employeeId",
+                                    "value": "1",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "PENDING",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Leave by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/leaves/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "leaves",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Approve Leave Request",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"APPROVED\",\n  \"notes\": \"Approved for the requested dates\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/leaves/1/approve",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "leaves",
+                                "1",
+                                "approve"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        }
+    ]
+}
