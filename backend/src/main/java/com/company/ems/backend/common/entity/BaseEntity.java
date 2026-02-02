@@ -50,7 +50,16 @@ public abstract class BaseEntity {
     private String updatedBy;
 
     @Version
-    private Long version;  // Optimistic locking
+    private Long version; // Optimistic locking
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_by")
+    private String deletedBy;
 
     @PrePersist
     protected void onCreate() {
@@ -65,5 +74,23 @@ public abstract class BaseEntity {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Soft delete the entity
+     */
+    public void softDelete(String deletedByUser) {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedByUser;
+    }
+
+    /**
+     * Restore soft deleted entity
+     */
+    public void restore() {
+        this.isDeleted = false;
+        this.deletedAt = null;
+        this.deletedBy = null;
     }
 }
