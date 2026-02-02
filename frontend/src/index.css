@@ -1,94 +1,64 @@
 @import "tailwindcss";
 
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
 @theme {
   /* =========================================
-     1. CORE PALETTE (Màu sắc cốt lõi)
+     1. KHAI BÁO BIẾN CHO TAILWIND V4
+     (Kết nối biến CSS với class Tailwind)
      ========================================= */
-  
-  /* --- BRAND: OneConnect Red --- */
-  --color-primary: #dc2626;            /* Red-600: Màu chủ đạo */
-  --color-primary-foreground: #ffffff;
-  --color-primary-hover: #b91c1c;      /* Red-700: Hover state */
-  
-  /* --- NEUTRAL: Nền & Chữ --- */
-  --color-background: #f9fafb;         /* Gray-50: Nền App */
-  --color-foreground: #020617;         /* Gray-950: Chữ chính */
-  
-  --color-surface: #ffffff;            /* White: Nền Card/Modal */
-  --color-surface-foreground: #020617;
-  
-  --color-muted: #f3f4f6;              /* Gray-100: Nền phụ */
-  --color-muted-foreground: #6b7280;   /* Gray-500: Chữ phụ */
-
-  --color-border: #e5e7eb;             /* Gray-200: Đường viền */
-  --color-input: #e5e7eb;              /* Viền input */
-  --color-ring: #dc2626;               /* Viền focus (Red) */
-
-  /* =========================================
-     2. SEMANTIC COLORS (Màu trạng thái)
-     ========================================= */
-
-  /* Success: "Đang làm việc", "Tăng trưởng" */
-  --color-success: #16a34a;            /* Green-600 */
-  --color-success-foreground: #ffffff;
-
-  /* Warning: "Sắp hết hạn", "Chờ duyệt" */
-  --color-warning: #d97706;            /* Amber-600 */
-  --color-warning-foreground: #ffffff;
-
-  /* Error/Destructive: "Lỗi", "Xóa", "Kỷ luật" */
-  --color-destructive: #ef4444;        /* Red-500 */
-  --color-destructive-foreground: #ffffff;
-
-  /* Info: "Thông báo chung" */
-  --color-info: #3b82f6;               /* Blue-500 */
-  --color-info-foreground: #ffffff;
-
-  /* =========================================
-     3. DATA VISUALIZATION (Màu biểu đồ)
-     * Dùng cho Dashboard sau này *
-     ========================================= */
-  --color-chart-1: #dc2626; /* Red (Primary) */
-  --color-chart-2: #2563eb; /* Blue */
-  --color-chart-3: #16a34a; /* Green */
-  --color-chart-4: #d97706; /* Orange */
-  --color-chart-5: #9333ea; /* Purple */
-
-  /* =========================================
-     4. COMPONENT VARIABLES (Cấu hình riêng)
-     ========================================= */
-
-  /* Sidebar Navigation */
-  --color-sidebar: #ffffff;
-  --color-sidebar-foreground: #374151;
-  --color-sidebar-border: #e5e7eb;
-  --color-sidebar-active: #fef2f2;     /* Red-50 */
-  --color-sidebar-active-text: #dc2626;/* Red-600 */
-
-  /* =========================================
-     5. SHAPES & TYPOGRAPHY
-     ========================================= */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;   /* Chuẩn cho Button/Input */
-  --radius-lg: 0.75rem;  /* Chuẩn cho Card */
-  --radius-xl: 1rem;     /* Chuẩn cho Modal */
-  
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* =========================================
-     6. ADVANCED ANIMATIONS (Chuyển động)
-     * Giúp Web mượt như App Mobile *
-     ========================================= */
-  
-  /* Fade In: Hiện dần ra */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Animation Custom */
   --animate-fade-in: fade-in 0.2s ease-out;
-  /* Slide In: Trượt từ dưới lên (cho Modal) */
   --animate-slide-in-up: slide-in-up 0.3s ease-out;
-  /* Accordion: Đóng mở */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
-  /* Keyframes Definition */
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -107,13 +77,117 @@
   }
 }
 
+/* =========================================
+   2. CẤU HÌNH MÀU SẮC (THEMING)
+   ========================================= */
 @layer base {
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
+  :root {
+    /* --- 🟢 OPTION 1: CHỈNH SIZE (RADIUS) --- */
+    /* Hãy mở comment dòng bạn muốn dùng */
+
+    /* --radius: 0.3rem; */ /* Góc vuông (Compact/Excel style) */
+    --radius: 0.625rem;     /* Góc chuẩn (Default - Hơi bo tròn nhẹ) */
+    /* --radius: 1rem; */   /* Góc tròn nhiều (Playful/Mobile style) */
+
+
+    /* --- MÀU NỀN CƠ BẢN (Light Mode) --- */
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.141 0.005 285.823);
+    
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.141 0.005 285.823);
+    
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.141 0.005 285.823);
+
+    /* --- 🔴 MẶC ĐỊNH: RED --- */
+    --primary: oklch(0.58 0.23 28.5); 
+    --primary-foreground: oklch(0.985 0 0);
+    
+    --secondary: oklch(0.967 0.001 286.375);
+    --secondary-foreground: oklch(0.21 0.006 285.885);
+    
+    --muted: oklch(0.967 0.001 286.375);
+    --muted-foreground: oklch(0.552 0.016 285.938);
+    
+    --accent: oklch(0.967 0.001 286.375);
+    --accent-foreground: oklch(0.21 0.006 285.885);
+    
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.985 0 0);
+
+    --border: oklch(0.92 0.004 286.32);
+    --input: oklch(0.92 0.004 286.32);
+    --ring: oklch(0.58 0.23 28.5); /* Trùng màu Primary */
+
+    /* Chart Colors */
+    --chart-1: oklch(0.58 0.23 28.5);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+
+    /* Sidebar */
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.141 0.005 285.823);
+    --sidebar-primary: oklch(0.58 0.23 28.5);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.967 0.001 286.375);
+    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+    --sidebar-border: oklch(0.92 0.004 286.32);
+    --sidebar-ring: oklch(0.58 0.23 28.5);
   }
-  
-  /* --- CUSTOM SCROLLBAR (Thanh cuộn đẹp) --- */
-  /* Chrome, Edge, Safari */
+
+  /* --- DARK MODE --- */
+  .dark {
+    --background: oklch(0.141 0.005 285.823);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.21 0.006 285.885);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.21 0.006 285.885);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.58 0.23 28.5);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.274 0.006 286.033);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.274 0.006 286.033);
+    --muted-foreground: oklch(0.705 0.015 286.067);
+    --accent: oklch(0.274 0.006 286.033);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.396 0.141 25.723);
+    --destructive-foreground: oklch(0.637 0.237 25.331);
+    --border: oklch(0.274 0.006 286.033);
+    --input: oklch(0.274 0.006 286.033);
+    --ring: oklch(0.446 0.178 28.5);
+    
+    --sidebar: oklch(0.21 0.006 285.885);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.58 0.23 28.5);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.274 0.006 286.033);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(0.274 0.006 286.033);
+    --sidebar-ring: oklch(0.446 0.178 28.5);
+  }
+}
+
+/* =========================================
+   3. GLOBAL STYLES & UTILITIES
+   ========================================= */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Container chuẩn cho các trang Dashboard */
+  .container-page {
+    @apply p-6 max-w-screen-2xl mx-auto space-y-6;
+  }
+
+  /* Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -126,15 +200,5 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/50;
-  }
-
-  /* --- UTILITY CLASSES --- */
-  .card {
-    @apply bg-surface border border-border rounded-lg shadow-sm;
-  }
-  
-  /* Container chuẩn cho các trang Dashboard */
-  .container-page {
-    @apply p-6 max-w-[1600px] mx-auto space-y-6;
   }
 }
