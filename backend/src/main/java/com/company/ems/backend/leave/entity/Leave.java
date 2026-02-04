@@ -6,10 +6,14 @@ import java.time.temporal.ChronoUnit;
 
 import com.company.ems.backend.common.entity.BaseEntity;
 import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.leave.enums.LeaveStatus;
+import com.company.ems.backend.leave.enums.LeaveType;
 import com.company.ems.backend.user.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -19,6 +23,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -48,9 +53,10 @@ public class Leave extends BaseEntity {
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    @NotBlank(message = "Leave type is required")
+    @NotNull(message = "Leave type is required")
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String leaveType; // ANNUAL, SICK, PERSONAL, UNPAID, EMERGENCY
+    private LeaveType leaveType;
 
     @NotNull(message = "Start date is required")
     @Column(nullable = false)
@@ -67,9 +73,10 @@ public class Leave extends BaseEntity {
     @Column(nullable = false, length = 1000)
     private String reason;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     @Builder.Default
-    private String status = "PENDING"; // PENDING, APPROVED, REJECTED, CANCELLED
+    private LeaveStatus status = LeaveStatus.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by_user_id")
@@ -95,13 +102,36 @@ public class Leave extends BaseEntity {
     @Builder.Default
     private Boolean isEmergency = false;
 
+    // New fields for enhanced leave management
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delegated_to_employee_id")
+    private Employee delegatedTo;
+
+    @Column
+    private Integer leaveBalanceBefore;
+
+    @Column
+    private Integer leaveBalanceAfter;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isPaid = true;
+
+    @Size(max = 100, message = "Emergency contact during leave must not exceed 100 characters")
+    @Column(length = 100)
+    private String emergencyContactDuringLeave;
+
+    @Size(max = 20, message = "Emergency phone during leave must not exceed 20 characters")
+    @Column(length = 20)
+    private String emergencyPhoneDuringLeave;
+
     /**
      * Calculate total days between start and end date
      */
     public void calculateTotalDays() {
         if (startDate != null && endDate != null) {
             long days = ChronoUnit.DAYS.between(startDate, endDate) + 1; // +1 to include both start and end date
-            
+
             if (isHalfDay != null && isHalfDay) {
                 this.totalDays = 1; // Half day is counted as 0.5 but stored as 1
             } else {
@@ -114,7 +144,7 @@ public class Leave extends BaseEntity {
      * Approve the leave request
      */
     public void approve(User approver, String notes) {
-        this.status = "APPROVED";
+        this.status = LeaveStatus.APPROVED;
         this.approvedBy = approver;
         this.approvedAt = LocalDateTime.now();
         this.approvalNotes = notes;
@@ -124,7 +154,7 @@ public class Leave extends BaseEntity {
      * Reject the leave request
      */
     public void reject(User approver, String reason) {
-        this.status = "REJECTED";
+        this.status = LeaveStatus.REJECTED;
         this.approvedBy = approver;
         this.approvedAt = LocalDateTime.now();
         this.rejectionReason = reason;
@@ -134,10 +164,21 @@ public class Leave extends BaseEntity {
      * Cancel the leave request
      */
     public void cancel() {
-        if ("PENDING".equals(this.status) || "APPROVED".equals(this.status)) {
-            this.status = "CANCELLED";
+        if (LeaveStatus.PENDING.equals(this.status) || LeaveStatus.APPROVED.equals(this.status)) {
+            this.status = LeaveStatus.CANCELLED;
         } else {
             throw new IllegalStateException("Cannot cancel a " + this.status + " leave request");
+        }
+    }
+
+    /**
+     * Withdraw the leave request (by employee)
+     */
+    public void withdraw() {
+        if (LeaveStatus.PENDING.equals(this.status)) {
+            this.status = LeaveStatus.WITHDRAWN;
+        } else {
+            throw new IllegalStateException("Can only withdraw pending leave requests");
         }
     }
 
@@ -145,21 +186,21 @@ public class Leave extends BaseEntity {
      * Check if leave is approved
      */
     public boolean isApproved() {
-        return "APPROVED".equals(status);
+        return LeaveStatus.APPROVED.equals(status);
     }
 
     /**
      * Check if leave is pending
      */
     public boolean isPending() {
-        return "PENDING".equals(status);
+        return LeaveStatus.PENDING.equals(status);
     }
 
     /**
      * Check if leave is active (currently on leave)
      */
     public boolean isActive() {
-        if (!"APPROVED".equals(status)) {
+        if (!LeaveStatus.APPROVED.equals(status)) {
             return false;
         }
         LocalDate today = LocalDate.now();
@@ -180,7 +221,7 @@ public class Leave extends BaseEntity {
     @PreUpdate
     private void beforeSave() {
         calculateTotalDays();
-        
+
         // Validate date range
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("End date cannot be before start date");
