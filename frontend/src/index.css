@@ -1,14 +1,15 @@
 @import "tailwindcss";
-
 @plugin "tailwindcss-animate";
 
+/* =========================================
+   CUSTOM VARIANT
+   ========================================= */
 @custom-variant dark (&:is(.dark *));
 
+/* =========================================
+   THEME TOKENS (TAILWIND V4)
+   ========================================= */
 @theme {
-  /* =========================================
-     1. KHAI BÁO BIẾN CHO TAILWIND V4
-     (Kết nối biến CSS với class Tailwind)
-     ========================================= */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -52,80 +53,62 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+}
 
-  /* Animation Custom */
-  --animate-fade-in: fade-in 0.2s ease-out;
-  --animate-slide-in-up: slide-in-up 0.3s ease-out;
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
+/* =========================================
+   BASE STYLES + 🔥 FIX ROOT HEIGHT
+   ========================================= */
+@layer base {
+  /* 🔥 FIX QUAN TRỌNG NHẤT – KHÔNG CÓ LÀ SIDEBAR ĐÈ */
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
 
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  * {
+    @apply border-border outline-ring/50;
   }
-  @keyframes slide-in-up {
-    from { transform: translateY(10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  @keyframes accordion-down {
-    from { height: 0 }
-    to { height: var(--radix-accordion-content-height) }
-  }
-  @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height) }
-    to { height: 0 }
+
+  body {
+    @apply bg-background text-foreground font-sans;
   }
 }
 
 /* =========================================
-   2. CẤU HÌNH MÀU SẮC (THEMING)
+   LIGHT MODE
    ========================================= */
 @layer base {
   :root {
-    /* --- 🟢 OPTION 1: CHỈNH SIZE (RADIUS) --- */
-    /* Hãy mở comment dòng bạn muốn dùng */
+    --radius: 0.625rem;
 
-    /* --radius: 0.3rem; */ /* Góc vuông (Compact/Excel style) */
-    --radius: 0.625rem;     /* Góc chuẩn (Default - Hơi bo tròn nhẹ) */
-    /* --radius: 1rem; */   /* Góc tròn nhiều (Playful/Mobile style) */
-
-
-    /* --- MÀU NỀN CƠ BẢN (Light Mode) --- */
     --background: oklch(1 0 0);
     --foreground: oklch(0.141 0.005 285.823);
-    
+
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.141 0.005 285.823);
-    
+
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.141 0.005 285.823);
 
-    /* --- 🔴 MẶC ĐỊNH: RED --- */
-    --primary: oklch(0.58 0.23 28.5); 
+    --primary: oklch(0.58 0.23 28.5);
     --primary-foreground: oklch(0.985 0 0);
-    
+
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
-    
+
     --muted: oklch(0.967 0.001 286.375);
     --muted-foreground: oklch(0.552 0.016 285.938);
-    
+
     --accent: oklch(0.967 0.001 286.375);
     --accent-foreground: oklch(0.21 0.006 285.885);
-    
+
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.985 0 0);
 
     --border: oklch(0.92 0.004 286.32);
     --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.58 0.23 28.5); /* Trùng màu Primary */
-
-    /* Chart Colors */
-    --chart-1: oklch(0.58 0.23 28.5);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    --ring: oklch(0.58 0.23 28.5);
 
     /* Sidebar */
     --sidebar: oklch(0.985 0 0);
@@ -137,29 +120,41 @@
     --sidebar-border: oklch(0.92 0.004 286.32);
     --sidebar-ring: oklch(0.58 0.23 28.5);
   }
+}
 
-  /* --- DARK MODE --- */
+/* =========================================
+   DARK MODE
+   ========================================= */
+@layer base {
   .dark {
     --background: oklch(0.141 0.005 285.823);
     --foreground: oklch(0.985 0 0);
+
     --card: oklch(0.21 0.006 285.885);
     --card-foreground: oklch(0.985 0 0);
+
     --popover: oklch(0.21 0.006 285.885);
     --popover-foreground: oklch(0.985 0 0);
+
     --primary: oklch(0.58 0.23 28.5);
     --primary-foreground: oklch(0.985 0 0);
+
     --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
+
     --muted: oklch(0.274 0.006 286.033);
     --muted-foreground: oklch(0.705 0.015 286.067);
+
     --accent: oklch(0.274 0.006 286.033);
     --accent-foreground: oklch(0.985 0 0);
+
     --destructive: oklch(0.396 0.141 25.723);
     --destructive-foreground: oklch(0.637 0.237 25.331);
+
     --border: oklch(0.274 0.006 286.033);
     --input: oklch(0.274 0.006 286.033);
     --ring: oklch(0.446 0.178 28.5);
-    
+
     --sidebar: oklch(0.21 0.006 285.885);
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.58 0.23 28.5);
@@ -172,33 +167,66 @@
 }
 
 /* =========================================
-   3. GLOBAL STYLES & UTILITIES
+   UTILITIES
    ========================================= */
+@layer base {
+  .container-page {
+    @apply mx-auto max-w-screen-2xl p-6 space-y-6;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-  }
-
-  /* Container chuẩn cho các trang Dashboard */
-  .container-page {
-    @apply p-6 max-w-screen-2xl mx-auto space-y-6;
-  }
-
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full transition-colors;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
   }
 }
