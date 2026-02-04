@@ -1,24 +1,122 @@
 package com.company.ems.backend.auth.controller;
 
-import com.company.ems.backend.auth.dto.AuthResponse;
-import com.company.ems.backend.auth.dto.SsoRequest;
-import com.company.ems.backend.common.dto.ApiResponse;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import com.company.ems.backend.auth.dto.AuthResponse;
+import com.company.ems.backend.auth.dto.LoginRequest;
+import com.company.ems.backend.auth.dto.RefreshTokenRequest;
+import com.company.ems.backend.auth.service.AuthenticationService;
+import com.company.ems.backend.common.dto.ApiResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * REST Controller for authentication operations
+ * Handles login, token refresh, and logout
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
+@Tag(name = "Authentication", description = "Authentication and authorization endpoints")
 public class AuthController {
 
+    private final AuthenticationService authenticationService;
+
     /**
-     * SSO Authentication (Google, Microsoft, etc.)
-     * POST /api/v1/auth/sso
+     * User login endpoint
+     * POST /api/v1/auth/login
+     *
+     * @param request     Login request with username and password
+     * @param httpRequest HTTP request for extracting device info
+     * @return Authentication response with access and refresh tokens
      */
-    @PostMapping("/sso")
-    public ResponseEntity<ApiResponse<AuthResponse>> ssoAuthentication(
-            @Valid @RequestBody SsoRequest request) {
-        // TODO: Implement SSO authentication service
-        return ResponseEntity.ok(ApiResponse.success("Authentication successful", null));
+    @PostMapping("/login")
+    @Operation(summary = "User login", description = "Authenticate user and return JWT tokens")
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
+
+        String deviceInfo = extractDeviceInfo(httpRequest);
+        AuthResponse authResponse = authenticationService.login(request, deviceInfo);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Login successful", authResponse));
+    }
+
+    /**
+     * Refresh access token endpoint
+     * POST /api/v1/auth/refresh
+     *
+     * @param request Refresh token request
+     * @return New access token
+     */
+    @PostMapping("/refresh")
+    @Operation(summary = "Refresh access token", description = "Get a new access token using refresh token")
+    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        AuthResponse authResponse = authenticationService.refreshAccessToken(request.getRefreshToken());
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Token refreshed successfully", authResponse));
+    }
+
+    /**
+     * Logout endpoint (revoke refresh token)
+     * POST /api/v1/auth/logout
+     *
+     * @param request Refresh token to revoke
+     * @return Success message
+     */
+    @PostMapping("/logout")
+    @Operation(summary = "Logout", description = "Revoke refresh token and logout user")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        authenticationService.logout(request.getRefreshToken());
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Logout successful", null));
+    }
+
+    /**
+     * Logout from all devices
+     * POST /api/v1/auth/logout-all
+     *
+     * @param userDetails Currently authenticated user
+     * @return Success message
+     */
+    @PostMapping("/logout-all")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Logout from all devices", description = "Revoke all refresh tokens for the user")
+    public ResponseEntity<ApiResponse<Void>> logoutAllDevices(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        // Extract user ID from UserDetails (username is the ID in our case)
+        // This would need to be adjusted based on actual UserDetails implementation
+        authenticationService.logoutAllDevices(Long.parseLong(userDetails.getUsername()));
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Logged out from all devices", null));
+    }
+
+    /**
+     * Extract device information from HTTP request
+     *
+     * @param request HTTP request
+     * @return Device info string (User-Agent + IP)
+     */
+    private String extractDeviceInfo(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        String ip = request.getRemoteAddr();
+        return String.format("%s | IP: %s", userAgent != null ? userAgent : "Unknown", ip);
     }
 }

@@ -22,9 +22,10 @@ public class AuthResponse {
     @AllArgsConstructor
     public static class UserInfo {
         private Long id;
+        private String username;
         private String email;
         private String firstName;
         private String lastName;
-        private String role;
+        private java.util.List<String> roles;
     }
 }
