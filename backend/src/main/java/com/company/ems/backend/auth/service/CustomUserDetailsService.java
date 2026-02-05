@@ -24,50 +24,54 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+        private final UserRepository userRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.debug("Loading user by username: {}", username);
+        @Override
+        @Transactional(readOnly = true)
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+                log.debug("Loading user by username: {}", username);
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new UsernameNotFoundException(
+                                                "User not found with username: " + username));
 
-        // Check if account is locked
-        if (user.isAccountLocked()) {
-            throw new UsernameNotFoundException("Account is locked");
+                // Check if account is locked
+                if (user.isAccountLocked()) {
+                        throw new UsernameNotFoundException("Account is locked");
+                }
+
+                // Convert User entity to Spring Security UserDetails
+                java.util.Set<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                                .collect(Collectors.toSet());
+
+                authorities.addAll(user.getRoles().stream()
+                                .flatMap(role -> role.getPermissions().stream())
+                                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                                .collect(Collectors.toSet()));
+
+                return org.springframework.security.core.userdetails.User.builder()
+                                .username(user.getUsername())
+                                .password(user.getPassword())
+                                .disabled(!user.getEnabled())
+                                .accountExpired(!user.getAccountNonExpired())
+                                .accountLocked(user.isAccountLocked())
+                                .credentialsExpired(!user.getCredentialsNonExpired())
+                                .authorities(authorities)
+                                .build();
         }
 
-        // Convert User entity to Spring Security UserDetails
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .disabled(!user.getEnabled())
-                .accountExpired(!user.getAccountNonExpired())
-                .accountLocked(user.isAccountLocked())
-                .credentialsExpired(!user.getCredentialsNonExpired())
-                .authorities(user.getRoles().stream()
-                        .flatMap(role -> role.getPermissions().stream())
-                        .map(permission -> new SimpleGrantedAuthority(permission.getName()))
-                        .collect(Collectors.toSet()))
-                .authorities(user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toSet()))
-                .build();
-    }
+        /**
+         * Load user by user ID
+         * Useful for token refresh
+         */
+        @Transactional(readOnly = true)
+        public UserDetails loadUserById(Long userId) {
+                log.debug("Loading user by ID: {}", userId);
 
-    /**
-     * Load user by user ID
-     * Useful for token refresh
-     */
-    @Transactional(readOnly = true)
-    public UserDetails loadUserById(Long userId) {
-        log.debug("Loading user by ID: {}", userId);
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
-
-        return loadUserByUsername(user.getUsername());
-    }
+                return loadUserByUsername(user.getUsername());
+        }
 }

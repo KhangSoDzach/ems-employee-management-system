@@ -15,6 +15,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import api from "@/lib/axios";
 
 const loginSchema = z.object({
     email: z.string().email("Email không hợp lệ"),
@@ -53,24 +54,38 @@ export const LoginPage = () => {
 
     const onSubmit = async (data: LoginFormValues) => {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            // Call API
+            // Mapping email to username as per backend requirement
+            const response = await api.post("/auth/login", {
+                username: data.email,
+                password: data.password
+            });
 
-            if (data.email === "admin@ems.com" && data.password === "123456") {
+            // api interceptor returns response.data
+            // Structure: { status: "...", message: "...", data: { accessToken, refreshToken, ... } }
+            const { accessToken, refreshToken } = response.data;
+
+            if (accessToken) {
+                localStorage.setItem("access_token", accessToken);
+                localStorage.setItem("refresh_token", refreshToken);
+
                 if (data.remember) {
                     localStorage.setItem("rememberedEmail", data.email);
                 } else {
                     localStorage.removeItem("rememberedEmail");
                 }
 
-                alert("Đăng nhập thành công!");
+                // alert("Đăng nhập thành công!"); // Removed alert for better UX
                 navigate("/");
             } else {
-                setError("root", {
-                    message: "Email hoặc mật khẩu không chính xác",
-                });
+                throw new Error("Invalid response from server");
             }
-        } catch (error) {
-            setError("root", { message: "Có lỗi xảy ra, vui lòng thử lại" });
+
+        } catch (error: any) {
+            console.error("Login error:", error);
+            setError("root", {
+                message: error.response?.data?.message || "Email hoặc mật khẩu không chính xác",
+            });
         }
     };
 

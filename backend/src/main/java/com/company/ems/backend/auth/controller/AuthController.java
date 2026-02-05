@@ -10,6 +10,7 @@ import com.company.ems.backend.auth.dto.LoginRequest;
 import com.company.ems.backend.auth.dto.RefreshTokenRequest;
 import com.company.ems.backend.auth.service.AuthenticationService;
 import com.company.ems.backend.common.dto.ApiResponse;
+import com.company.ems.backend.user.entity.User;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -61,9 +62,11 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "Refresh access token", description = "Get a new access token using refresh token")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
-            @Valid @RequestBody RefreshTokenRequest request) {
+            @Valid @RequestBody RefreshTokenRequest request,
+            HttpServletRequest httpRequest) {
 
-        AuthResponse authResponse = authenticationService.refreshAccessToken(request.getRefreshToken());
+        String deviceInfo = extractDeviceInfo(httpRequest);
+        AuthResponse authResponse = authenticationService.refreshAccessToken(request.getRefreshToken(), deviceInfo);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Token refreshed successfully", authResponse));
@@ -95,14 +98,14 @@ public class AuthController {
      * @return Success message
      */
     @PostMapping("/logout-all")
-    @SecurityRequirement(name = "Bearer Authentication")
+    @SecurityRequirement(name = "bearer-jwt")
     @Operation(summary = "Logout from all devices", description = "Revoke all refresh tokens for the user")
     public ResponseEntity<ApiResponse<Void>> logoutAllDevices(
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        // Extract user ID from UserDetails (username is the ID in our case)
-        // This would need to be adjusted based on actual UserDetails implementation
-        authenticationService.logoutAllDevices(Long.parseLong(userDetails.getUsername()));
+        // Get user from repository to get the actual ID
+        User user = authenticationService.getUserByUsername(userDetails.getUsername());
+        authenticationService.logoutAllDevices(user.getId());
 
         return ResponseEntity.ok(
                 ApiResponse.success("Logged out from all devices", null));

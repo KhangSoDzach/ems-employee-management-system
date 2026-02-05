@@ -10,3 +10,6 @@ backend/run_debug.log
 !.agent/*.json
 !.agent/*.txt
 /.agent
+frontend/package-lock.json
+frontend/package.json
+/backend/logs

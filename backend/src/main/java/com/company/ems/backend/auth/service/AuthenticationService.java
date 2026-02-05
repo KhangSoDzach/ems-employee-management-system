@@ -104,10 +104,12 @@ public class AuthenticationService {
      * Refresh access token using refresh token
      *
      * @param refreshTokenString Refresh token
-     * @return New authentication response with new access token
+     * @param deviceInfo         Device information (User-Agent, IP, etc.)
+     * @return New authentication response with new access token and new refresh
+     *         token
      */
     @Transactional
-    public AuthResponse refreshAccessToken(String refreshTokenString) {
+    public AuthResponse refreshAccessToken(String refreshTokenString, String deviceInfo) {
         log.debug("Refreshing access token");
 
         // Validate refresh token
@@ -116,13 +118,20 @@ public class AuthenticationService {
 
         User user = refreshToken.getUser();
 
+        // ROTATION: Revoke the old refresh token
+        refreshTokenService.revokeRefreshToken(refreshTokenString);
+        log.info("Old refresh token revoked for rotation: {}", user.getUsername());
+
         // Load user details and generate new access token
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String newAccessToken = jwtTokenUtil.generateAccessToken(userDetails);
 
-        log.info("Access token refreshed for user: {}", user.getUsername());
+        // Generate NEW refresh token
+        String newRefreshToken = refreshTokenService.createRefreshToken(user, deviceInfo);
 
-        return buildAuthResponse(user, newAccessToken, refreshTokenString);
+        log.info("Access token refreshed and rotated for user: {}", user.getUsername());
+
+        return buildAuthResponse(user, newAccessToken, newRefreshToken);
     }
 
     /**
@@ -169,6 +178,18 @@ public class AuthenticationService {
         }
 
         userRepository.save(user);
+    }
+
+    /**
+     * Get user by username
+     *
+     * @param username Username to search for
+     * @return User object
+     */
+    @Transactional(readOnly = true)
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadCredentialsException("User not found: " + username));
     }
 
     /**
