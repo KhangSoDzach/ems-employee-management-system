@@ -63,7 +63,7 @@ export const LoginPage = () => {
 
             // api interceptor returns response.data
             // Structure: { status: "...", message: "...", data: { accessToken, refreshToken, ... } }
-            const { accessToken, refreshToken } = response.data;
+            const { accessToken, refreshToken } = response.data.data;
 
             if (accessToken) {
                 localStorage.setItem("access_token", accessToken);
