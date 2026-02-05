@@ -65,7 +65,7 @@ server:
 jwt:
   secret: ${JWT_SECRET:changeme-secret-key-for-development-only-minimum-256-bits-required-please-use-env-variable}
   refresh-secret: ${JWT_REFRESH_SECRET:changeme-refresh-secret-key-for-development-only-use-env-variable-in-production}
-  expiration-ms: 900000  # 15 minutes (in milliseconds)
+  expiration-ms: 1800000  # 30 minutes (in milliseconds)
   refresh-expiration-ms: 604800000  # 7 days (in milliseconds)
   issuer: ems-backend
   audience: ems-app
