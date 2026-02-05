@@ -1,6 +1,43 @@
 # EMS - Employee Management System
 
+[![CI](https://github.com/YOUR_USERNAME/ems-employee-management-system/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/ems-employee-management-system/actions/workflows/ci.yml)
+[![Code Quality](https://github.com/YOUR_USERNAME/ems-employee-management-system/actions/workflows/code-quality.yml/badge.svg)](https://github.com/YOUR_USERNAME/ems-employee-management-system/actions/workflows/code-quality.yml)
+
 A full-stack employee management system built with Spring Boot and React.
+
+## 🚀 Quick Start
+
+### With Docker (Recommended)
+```bash
+# Clone repository
+git clone https://github.com/YOUR_USERNAME/ems-employee-management-system.git
+cd ems-employee-management-system
+
+# Copy environment file
+cp .env.example .env
+
+# Start all services
+docker-compose up -d
+
+# Access application
+# Frontend: http://localhost:5173
+# Backend:  http://localhost:8080
+# Swagger:  http://localhost:8080/swagger-ui.html
+```
+
+### Without Docker
+```bash
+# Backend
+cd backend
+mvn spring-boot:run
+
+# Frontend (in another terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+📖 **Full Documentation**: See [DOCKER.md](DOCKER.md) for detailed setup guide.
 
 ## Tech Stack
 

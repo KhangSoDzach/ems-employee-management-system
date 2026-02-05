@@ -16,3 +16,4 @@ frontend/package.json
 .env
 DOCKER.md
 DOCKER_SETUP_COMPLETE.md
+CI_SETUP_COMPLETE.md
