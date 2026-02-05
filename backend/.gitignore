@@ -34,3 +34,6 @@ build/
 
 ### agent skill ###
 /system-prompts-and-models-of-ai-tools/
+
+.env
+.env.example
