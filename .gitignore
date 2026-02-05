@@ -1,2 +1,15 @@
 backend/.agent/skills/
 backend/run_debug.log
+
+# Agent skills (large folder - keep only active-skills and config)
+.agent/skills/skills/
+
+# Keep these agent files
+!.agent/active-skills/
+!.agent/*.md
+!.agent/*.json
+!.agent/*.txt
+/.agent
+frontend/package-lock.json
+frontend/package.json
+/backend/logs

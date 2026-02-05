@@ -11,7 +11,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.company.ems.backend.department.entity.Department;
 import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.position.entity.Position;
 
 /**
  * Repository interface for Employee entity
@@ -43,12 +45,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     /**
      * Find employees by department
      */
-    List<Employee> findAllByDepartment(String department);
+    List<Employee> findAllByDepartment(Department department);
 
     /**
      * Find employees by position
      */
-    List<Employee> findAllByPosition(String position);
+    List<Employee> findAllByPosition(Position position);
 
     /**
      * Find employees by status
@@ -68,13 +70,13 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
            "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-           "AND (:department IS NULL OR e.department = :department) " +
-           "AND (:position IS NULL OR e.position = :position) " +
+           "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
+           "AND (:positionId IS NULL OR e.position.id = :positionId) " +
            "AND (:status IS NULL OR e.status = :status)")
     Page<Employee> searchEmployees(
             @Param("search") String search,
-            @Param("department") String department,
-            @Param("position") String position,
+            @Param("departmentId") Long departmentId,
+            @Param("positionId") Long positionId,
             @Param("status") String status,
             Pageable pageable
     );
@@ -91,8 +93,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     /**
      * Count employees by department
      */
-    @Query("SELECT COUNT(e) FROM Employee e WHERE e.department = :department AND e.status = 'ACTIVE'")
-    long countByDepartment(@Param("department") String department);
+    @Query("SELECT COUNT(e) FROM Employee e WHERE e.department.id = :departmentId AND e.status = 'ACTIVE'")
+    long countByDepartment(@Param("departmentId") Long departmentId);
 
     /**
      * Count total active employees
@@ -109,12 +111,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     /**
      * Get all distinct departments
      */
-    @Query("SELECT DISTINCT e.department FROM Employee e WHERE e.department IS NOT NULL ORDER BY e.department")
-    List<String> findAllDepartments();
+    @Query("SELECT DISTINCT e.department FROM Employee e WHERE e.department IS NOT NULL ORDER BY e.department.name")
+    List<Department> findAllDepartments();
 
     /**
      * Get all distinct positions
      */
-    @Query("SELECT DISTINCT e.position FROM Employee e WHERE e.position IS NOT NULL ORDER BY e.position")
-    List<String> findAllPositions();
+    @Query("SELECT DISTINCT e.position FROM Employee e WHERE e.position IS NOT NULL ORDER BY e.position.title")
+    List<Position> findAllPositions();
 }

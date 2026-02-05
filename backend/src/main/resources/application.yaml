@@ -6,7 +6,8 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
-    password: ${DB_PASSWORD:}
+    password: 
+    # ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
@@ -18,7 +19,7 @@ spring:
   # JPA/Hibernate Configuration
   jpa:
     hibernate:
-      ddl-auto: validate  # Flyway manages schema - validate only
+      ddl-auto: update  # Auto-create missing tables (changed from validate)
     show-sql: true
     properties:
       hibernate:
@@ -62,9 +63,12 @@ server:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:4f8b5c3a9e7d2b1f6a4c8e3d9b7a5f2c8e6b4d1a7f3c9e5b2d8a6f4c1e7b9a3d}
-  expiration: 86400000  # 24 hours in milliseconds
-  refresh-expiration: 604800000  # 7 days in milliseconds
+  secret: ${JWT_SECRET:changeme-secret-key-for-development-only-minimum-256-bits-required-please-use-env-variable}
+  refresh-secret: ${JWT_REFRESH_SECRET:changeme-refresh-secret-key-for-development-only-use-env-variable-in-production}
+  expiration-ms: 1800000  # 30 minutes (in milliseconds)
+  refresh-expiration-ms: 604800000  # 7 days (in milliseconds)
+  issuer: ems-backend
+  audience: ems-app
 
 # Swagger/OpenAPI Configuration
 springdoc:
