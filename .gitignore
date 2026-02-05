@@ -13,3 +13,6 @@ backend/run_debug.log
 frontend/package-lock.json
 frontend/package.json
 /backend/logs
+.env
+DOCKER.md
+DOCKER_SETUP_COMPLETE.md
