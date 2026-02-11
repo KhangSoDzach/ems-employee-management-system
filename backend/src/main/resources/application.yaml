@@ -42,6 +42,7 @@ spring:
     validate-on-migrate: true
     clean-disabled: true  # Safety: prevent accidental data loss
     out-of-order: false
+    validate-migration-naming: true
 
 # Server Configuration
 server:

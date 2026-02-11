@@ -7,7 +7,7 @@
 
 -- Step 1: Insert Permissions
 -- Core permissions organized by category
-INSERT INTO permissions (name, description, category, created_at, updated_at, is_deleted, version) VALUES
+INSERT INTO ems_db.permissions (name, description, category, created_at, updated_at, is_deleted, version) VALUES
 -- User Management Permissions
 ('USER_READ', 'View user information and list users', 'USER', NOW(), NOW(), FALSE, 0),
 ('USER_CREATE', 'Create new users', 'USER', NOW(), NOW(), FALSE, 0),
