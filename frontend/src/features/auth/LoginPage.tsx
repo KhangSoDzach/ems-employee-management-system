@@ -81,10 +81,11 @@ export const LoginPage = () => {
                 throw new Error("Invalid response from server");
             }
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Login error:", error);
+            const axiosError = error as { response?: { data?: { message?: string } } };
             setError("root", {
-                message: error.response?.data?.message || "Email hoặc mật khẩu không chính xác",
+                message: axiosError.response?.data?.message || "Email hoặc mật khẩu không chính xác",
             });
         }
     };

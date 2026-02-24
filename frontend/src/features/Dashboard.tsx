@@ -4,6 +4,17 @@ import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Link } from "react-router-dom"
 
+interface EmployeeCardProps {
+  name: string;
+  code: string;
+  status: string;
+  statusColor: string;
+  avatar?: string;
+  id: string | number;
+  email: string;
+  phone: string;
+}
+
 function EmployeeCard({
   name,
   code,
@@ -13,7 +24,7 @@ function EmployeeCard({
   id,
   email,
   phone,
-}: any) {
+}: EmployeeCardProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
       <div className="flex justify-between items-start mb-3">
