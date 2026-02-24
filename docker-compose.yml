@@ -15,6 +15,9 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      # Init scripts run once on first startup (empty data dir).
+      # 01_init_grants.sh ensures the app user has all required privileges.
+      - ./docker/mysql:/docker-entrypoint-initdb.d:ro
     networks:
       - ems-network
     healthcheck:
