@@ -38,7 +38,7 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-emsuser}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-emspass123}
       JWT_SECRET: ${JWT_SECRET:-changeme-secret-key-for-development-only-minimum-256-bits-required-please-use-env-variable}
@@ -61,6 +61,7 @@ services:
       dockerfile: Dockerfile
     container_name: ems-frontend
     restart: unless-stopped
+    user: "0:0"   # Run as root in dev so Vite can write temp files in bind-mounted /app
     depends_on:
       backend:
         condition: service_healthy
@@ -80,7 +81,7 @@ services:
     networks:
       - ems-network
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173/" ]
+      test: [ "CMD", "wget", "-O", "/dev/null", "-q", "http://127.0.0.1:5173/" ]
       interval: 30s
       timeout: 10s
       retries: 3
