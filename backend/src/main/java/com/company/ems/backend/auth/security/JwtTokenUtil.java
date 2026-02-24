@@ -3,12 +3,12 @@ package com.company.ems.backend.auth.security;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import com.company.ems.backend.user.enums.DataScope;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -35,15 +35,46 @@ public class JwtTokenUtil {
 
     private final JwtProperties jwtProperties;
 
+    private static final String CLAIM_USER_ID = "userId";
+    private static final String CLAIM_ROLES = "roles";
+    private static final String CLAIM_PERMISSIONS = "permissions";
+    private static final String CLAIM_DATA_SCOPES = "dataScope";
+
     /**
-     * Generate access token for user
-     *
-     * @param userDetails User details
-     * @return JWT access token
-     */
-    public String generateAccessToken(UserDetails userDetails) {
+    * @param principal CustomUserPrincipal
+    * @return JWT access token string
+    */
+
+    public String generateAccessToken(CustomUserPrincipal principal) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", userDetails.getAuthorities());
+
+        // userId - cần cho Data Scope SELF check
+        claims.put(CLAIM_USER_ID, principal.getUserId());
+
+        // Roles (không có prefix "ROLE_")
+        claims.put(CLAIM_ROLES, principal.getRoleNames());
+
+        // Permissions (fine-grained actions, ví dụ: EMPLOYEE_VIEW)
+        claims.put(CLAIM_PERMISSIONS, principal.getPermissionNames());
+
+        // DataScopes (ví dụ: SELF, TEAM, ALL)
+        Set<String> scopeNames = principal.getDataScopes().stream()
+                .map(DataScope::name)
+                .collect(Collectors.toSet());
+        claims.put(CLAIM_DATA_SCOPES, scopeNames);
+
+        return createToken(claims, principal.getUsername(),
+                jwtProperties.getExpirationMs(), jwtProperties.getSecret());
+    }
+
+    public String generateAccessToken(UserDetails userDetails) {
+        if(userDetails instanceof CustomUserPrincipal principal) {
+            return generateAccessToken(principal);
+        }
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(CLAIM_ROLES, userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
         return createToken(claims, userDetails.getUsername(), jwtProperties.getExpirationMs(),
                 jwtProperties.getSecret());
     }
@@ -56,7 +87,7 @@ public class JwtTokenUtil {
      */
     public String generateRefreshToken(Long userId) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
+        claims.put(CLAIM_USER_ID, userId);
         return createToken(claims, userId.toString(), jwtProperties.getRefreshExpirationMs(),
                 jwtProperties.getRefreshSecret());
     }
@@ -130,9 +161,14 @@ public class JwtTokenUtil {
     /**
      * Extract user ID from refresh token
      */
+
+    public Long extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get(CLAIM_USER_ID, Long.class));
+    }
+
     public Long extractUserIdFromRefreshToken(String token) {
         Claims claims = extractAllClaims(token, jwtProperties.getRefreshSecret());
-        return claims.get("userId", Long.class);
+        return claims.get(CLAIM_USER_ID, Long.class);
     }
 
     /**

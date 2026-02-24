@@ -19,6 +19,8 @@ INSERT INTO ems_db.permissions (name, description, category, created_at, updated
 ('EMPLOYEE_CREATE', 'Create new employee records', 'EMPLOYEE', NOW(), NOW(), FALSE, 0),
 ('EMPLOYEE_UPDATE', 'Update existing employee information', 'EMPLOYEE', NOW(), NOW(), FALSE, 0),
 ('EMPLOYEE_DELETE', 'Delete employee records', 'EMPLOYEE', NOW(), NOW(), FALSE, 0),
+('EMPLOYEE_IMPORT', 'Import danh sách nhân viên',   'EMPLOYEE', NOW(), NOW(), FALSE, 0),
+( 'EMPLOYEE_EXPORT', 'Export danh sách nhân viên',   'EMPLOYEE', NOW(), NOW(), FALSE, 0),
 
 -- Department Management Permissions
 ('DEPARTMENT_READ', 'View department information', 'DEPARTMENT', NOW(), NOW(), FALSE, 0),
@@ -32,6 +34,8 @@ INSERT INTO ems_db.permissions (name, description, category, created_at, updated
 ('LEAVE_READ', 'View leave requests', 'LEAVE', NOW(), NOW(), FALSE, 0),
 ('LEAVE_WRITE', 'Create/Update leave requests', 'LEAVE', NOW(), NOW(), FALSE, 0),
 ('LEAVE_APPROVE', 'Approve or reject leave requests', 'LEAVE', NOW(), NOW(), FALSE, 0),
+('LEAVE_CANCEL',  'Hủy yêu cầu nghỉ phép', 'LEAVE', NOW(), NOW(), FALSE, 0),
+
 
 -- Report Permissions
 ('REPORT_VIEW', 'View system reports and analytics', 'REPORT', NOW(), NOW(), FALSE, 0),

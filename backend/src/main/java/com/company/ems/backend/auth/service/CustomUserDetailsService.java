@@ -2,6 +2,7 @@ package com.company.ems.backend.auth.service;
 
 import java.util.stream.Collectors;
 
+import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -37,28 +38,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 
                 // Check if account is locked
                 if (user.isAccountLocked()) {
-                        throw new UsernameNotFoundException("Account is locked");
+                        throw new UsernameNotFoundException("Account is locked: " + username);
                 }
 
                 // Convert User entity to Spring Security UserDetails
-                java.util.Set<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-                                .collect(Collectors.toSet());
-
-                authorities.addAll(user.getRoles().stream()
-                                .flatMap(role -> role.getPermissions().stream())
-                                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
-                                .collect(Collectors.toSet()));
-
-                return org.springframework.security.core.userdetails.User.builder()
-                                .username(user.getUsername())
-                                .password(user.getPassword())
-                                .disabled(!user.getEnabled())
-                                .accountExpired(!user.getAccountNonExpired())
-                                .accountLocked(user.isAccountLocked())
-                                .credentialsExpired(!user.getCredentialsNonExpired())
-                                .authorities(authorities)
-                                .build();
+//
+                return CustomUserPrincipal.of(user);
         }
 
         /**
@@ -72,6 +57,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
 
-                return loadUserByUsername(user.getUsername());
+                return CustomUserPrincipal.of(user);
         }
 }

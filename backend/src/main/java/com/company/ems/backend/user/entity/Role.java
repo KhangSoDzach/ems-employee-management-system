@@ -5,15 +5,8 @@ import java.util.Set;
 
 import com.company.ems.backend.common.entity.BaseEntity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import com.company.ems.backend.user.enums.DataScope;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,6 +33,16 @@ public class Role extends BaseEntity {
 
     @Column(length = 255)
     private String description;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "role_data_scopes",
+            joinColumns = @JoinColumn(name = "role_id")
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "data_scope", length = 20, nullable = false)
+    @Builder.Default
+    private Set<DataScope> dataScopes = new HashSet<>();
 
     @ManyToMany(mappedBy = "roles")
     @Builder.Default
@@ -76,5 +79,12 @@ public class Role extends BaseEntity {
     public boolean hasPermission(String permissionName) {
         return permissions.stream()
                 .anyMatch(permission -> permission.getName().equals(permissionName));
+    }
+
+    public boolean hasDataScope(DataScope scope) {
+        if (dataScopes.contains(DataScope.ALL)) return true;
+        if (scope == DataScope.DEPARTMENT && dataScopes.contains(DataScope.DEPARTMENT)) return true;
+        if (scope == DataScope.TEAM && dataScopes.contains(DataScope.TEAM)) return true;
+        return dataScopes.contains(scope);
     }
 }

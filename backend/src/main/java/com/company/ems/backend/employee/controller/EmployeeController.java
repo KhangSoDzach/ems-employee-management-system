@@ -4,27 +4,32 @@ import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import com.company.ems.backend.employee.service.EmployeeService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/employees")
+@RequiredArgsConstructor
 public class EmployeeController {
-
+    private final EmployeeService employeeService;
     /**
      * Create a new employee
      * POST /api/v1/employees
      */
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'EMPLOYEE_CREATE')")
     public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(
             @Valid @RequestBody EmployeeRequest request) {
-        // TODO: Implement service layer
+        EmployeeResponse response = employeeService.createEmployee(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Employee created successfully", null));
+                .body(ApiResponse.success("Employee created successfully", response));
     }
 
     /**
@@ -32,6 +37,7 @@ public class EmployeeController {
      * GET /api/v1/employees
      */
     @GetMapping
+    @PreAuthorize("hasPermission(null, 'EMPLOYEE_VIEW')")
     public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAllEmployees(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -39,8 +45,9 @@ public class EmployeeController {
             @RequestParam(required = false) String position,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search) {
+        PageResponse<EmployeeResponse> response = employeeService.getAllEmplyees(page, size, department, position, status, search);
         // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -48,9 +55,11 @@ public class EmployeeController {
      * GET /api/v1/employees/{id}
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'EMPLOYEE_VIEW')")
     public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployeeById(@PathVariable Long id) {
         // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success(null));
+        EmployeeResponse response = employeeService.getEmployeeById(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -58,11 +67,13 @@ public class EmployeeController {
      * PUT /api/v1/employees/{id}
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
             @PathVariable Long id,
             @Valid @RequestBody EmployeeRequest request) {
+        EmployeeResponse response = employeeService.updateEmployee(id, request);
         // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success("Employee updated successfully", null));
+        return ResponseEntity.ok(ApiResponse.success("Employee updated successfully",response));
     }
 
     /**
@@ -70,8 +81,10 @@ public class EmployeeController {
      * DELETE /api/v1/employees/{id}
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'EMPLOYEE_DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteEmployee(@PathVariable Long id) {
         // TODO: Implement service layer
+        employeeService.deleteEmployee(id);
         return ResponseEntity.ok(ApiResponse.success("Employee deleted successfully", null));
     }
 
@@ -80,6 +93,7 @@ public class EmployeeController {
      * POST /api/v1/employees/{id}/files
      */
     @PostMapping(value = "/{id}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasPermission(null, 'EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<String>> uploadEmployeeFiles(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
@@ -93,6 +107,7 @@ public class EmployeeController {
      * POST /api/v1/employees/import
      */
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasPermission(null, 'EMPLOYEE_IMPORT')")
     public ResponseEntity<ApiResponse<String>> importEmployees(
             @RequestParam("file") MultipartFile file) {
         // TODO: Implement import service
@@ -104,6 +119,7 @@ public class EmployeeController {
      * GET /api/v1/employees/export
      */
     @GetMapping("/export")
+    @PreAuthorize("hasPermission(null, 'EMPLOYEE_EXPORT')")
     public ResponseEntity<byte[]> exportEmployees(
             @RequestParam(defaultValue = "csv") String format,
             @RequestParam(required = false) String department,
