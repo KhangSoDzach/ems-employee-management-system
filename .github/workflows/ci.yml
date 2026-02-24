@@ -11,7 +11,23 @@ jobs:
   backend-ci:
     name: Backend Build & Test
     runs-on: ubuntu-latest
-    
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: ems
+          MYSQL_USER: ems
+          MYSQL_PASSWORD: ems
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,6 +45,10 @@ jobs:
 
       - name: Run tests
         working-directory: ./backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ems?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          SPRING_DATASOURCE_USERNAME: ems
+          SPRING_DATASOURCE_PASSWORD: ems
         run: mvn test -B
 
       - name: Package application
