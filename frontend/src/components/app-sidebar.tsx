@@ -26,10 +26,7 @@ const data = {
           title: "Quản lý nhân viên",
           url: "./dashboard",
         },
-        {
-          title: "Project Structure",
-          url: "#",
-        },
+       
       ],
     },
    
