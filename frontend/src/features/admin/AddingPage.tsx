@@ -34,7 +34,26 @@ const AddingPage: React.FC = () => {
                 Fill in the administrative details for the new hire.
               </p>
             </div>
-
+              
+          {/* Profile photo */}
+          <div className="mt-6 p-4 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/20 flex items-center gap-4">
+            <div className="size-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <span className="material-symbols-outlined text-3xl text-gray-400">
+              
+              </span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Profile Photo
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                JPG or PNG, max 5MB
+              </p>
+            </div>
+            <button className="text-xs font-bold px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700">
+              Upload
+            </button>
+          </div>
             <form className="space-y-4">
               {/* Employee ID */}
               <div>
@@ -102,25 +121,6 @@ const AddingPage: React.FC = () => {
             </form>
           </div>
 
-          {/* Profile photo */}
-          <div className="mt-6 p-4 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/20 flex items-center gap-4">
-            <div className="size-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              <span className="material-symbols-outlined text-3xl text-gray-400">
-              
-              </span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                Profile Photo
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                JPG or PNG, max 5MB
-              </p>
-            </div>
-            <button className="text-xs font-bold px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700">
-              Upload
-            </button>
-          </div>
         </main>
 
         {/* Footer */}
@@ -129,9 +129,9 @@ const AddingPage: React.FC = () => {
             <button className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-md">
               Create Account
             </button>
-            <button className="w-full border py-3.5 rounded-md text-gray-700 dark:text-gray-300">
+            {/* <button className="w-full border py-3.5 rounded-md text-gray-700 dark:text-gray-300">
               Cancel
-            </button>
+            </button> */}
           </div>
         </footer>
       </div>
