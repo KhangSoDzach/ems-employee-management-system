@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "@/features/auth/LoginPage";
 import Dashboard from "./features/Dashboard";
 import AddingPage from "./features/admin/AddingPage";
@@ -13,6 +13,7 @@ function App() {
         <Route path="/adding" element={<AddingPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/employee" element={<EmployeeDashboard />} />
+        <Route path="/request" element={<LeaveRequestPage />} />
       </Routes>
     </BrowserRouter>
   );

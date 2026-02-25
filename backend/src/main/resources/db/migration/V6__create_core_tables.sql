@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS departments
     CONSTRAINT uc_departments_code UNIQUE (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE UNIQUE INDEX idx_department_code  ON departments (code);
+-- Removed CREATE UNIQUE INDEX idx_department_code ON departments (code);
 CREATE INDEX        idx_department_status ON departments (is_active);
 CREATE INDEX        idx_department_parent ON departments (parent_department_id);
 
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS positions
     CONSTRAINT uc_positions_code UNIQUE (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE UNIQUE INDEX idx_position_code       ON positions (code);
+-- Removed CREATE UNIQUE INDEX idx_position_code ON positions (code);
 CREATE INDEX        idx_position_level      ON positions (level);
 CREATE INDEX        idx_position_status     ON positions (is_active);
 CREATE INDEX        idx_position_department ON positions (department_id);
