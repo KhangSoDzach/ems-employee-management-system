@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
     Card,
     CardContent,
@@ -15,10 +15,10 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import api from "@/lib/axios";
+import { useAuth } from "@/contexts/AuthContext";
 
 const loginSchema = z.object({
-    email: z.string().email("Email không hợp lệ"),
+    email: z.string().min(1, "Vui lòng nhập Username/Email"),
     password: z.string().min(1, "Vui lòng nhập mật khẩu"),
     remember: z.boolean().optional(),
 });
@@ -27,6 +27,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginPage = () => {
     const navigate = useNavigate();
+    const { login, isAuthenticated } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
 
     const {
@@ -44,6 +45,13 @@ export const LoginPage = () => {
         },
     });
 
+    // Redirect if already logged in
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/dashboard", { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
+
     useEffect(() => {
         const savedEmail = localStorage.getItem("rememberedEmail");
         if (savedEmail) {
@@ -54,38 +62,19 @@ export const LoginPage = () => {
 
     const onSubmit = async (data: LoginFormValues) => {
         try {
-            // Call API
-            // Mapping email to username as per backend requirement
-            const response = await api.post("/auth/login", {
-                username: data.email,
-                password: data.password
-            });
+            await login(data.email, data.password);
 
-            // api interceptor returns response.data
-            // Structure: { status: "...", message: "...", data: { accessToken, refreshToken, ... } }
-            const { accessToken, refreshToken } = response.data.data;
-
-            if (accessToken) {
-                localStorage.setItem("access_token", accessToken);
-                localStorage.setItem("refresh_token", refreshToken);
-
-                if (data.remember) {
-                    localStorage.setItem("rememberedEmail", data.email);
-                } else {
-                    localStorage.removeItem("rememberedEmail");
-                }
-
-                // alert("Đăng nhập thành công!"); // Removed alert for better UX
-                navigate("/");
+            if (data.remember) {
+                localStorage.setItem("rememberedEmail", data.email);
             } else {
-                throw new Error("Invalid response from server");
+                localStorage.removeItem("rememberedEmail");
             }
 
-        } catch (error: unknown) {
+            navigate("/dashboard", { replace: true });
+        } catch (error: any) {
             console.error("Login error:", error);
-            const axiosError = error as { response?: { data?: { message?: string } } };
             setError("root", {
-                message: axiosError.response?.data?.message || "Email hoặc mật khẩu không chính xác",
+                message: error.response?.data?.message || "Email hoặc mật khẩu không chính xác",
             });
         }
     };
@@ -184,10 +173,6 @@ export const LoginPage = () => {
                                     Ghi nhớ đăng nhập
                                 </Label>
                             </div>
-
-                            <Link to="/forgot" className="text-sm font-medium text-primary hover:underline">
-                                Quên mật khẩu?
-                            </Link>
                         </div>
 
                         {errors.root && (
