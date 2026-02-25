@@ -34,9 +34,9 @@ CREATE TABLE IF NOT EXISTS departments
     CONSTRAINT uc_departments_code UNIQUE (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Removed CREATE UNIQUE INDEX idx_department_code ON departments (code);
-CREATE INDEX        idx_department_status ON departments (is_active);
-CREATE INDEX        idx_department_parent ON departments (parent_department_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_department_code   ON departments (code);
+CREATE INDEX        IF NOT EXISTS idx_department_status ON departments (is_active);
+CREATE INDEX        IF NOT EXISTS idx_department_parent ON departments (parent_department_id);
 
 ALTER TABLE departments
     ADD CONSTRAINT FK_DEPARTMENTS_ON_PARENT_DEPARTMENT
@@ -71,10 +71,10 @@ CREATE TABLE IF NOT EXISTS positions
     CONSTRAINT uc_positions_code UNIQUE (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Removed CREATE UNIQUE INDEX idx_position_code ON positions (code);
-CREATE INDEX        idx_position_level      ON positions (level);
-CREATE INDEX        idx_position_status     ON positions (is_active);
-CREATE INDEX        idx_position_department ON positions (department_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_position_code       ON positions (code);
+CREATE INDEX        IF NOT EXISTS idx_position_level      ON positions (level);
+CREATE INDEX        IF NOT EXISTS idx_position_status     ON positions (is_active);
+CREATE INDEX        IF NOT EXISTS idx_position_department ON positions (department_id);
 
 ALTER TABLE positions
     ADD CONSTRAINT FK_POSITIONS_ON_DEPARTMENT
@@ -142,12 +142,12 @@ CREATE TABLE IF NOT EXISTS employees
     CONSTRAINT uc_employees_user         UNIQUE (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE UNIQUE INDEX idx_employee_email       ON employees (email);
-CREATE INDEX        idx_employee_hire_date   ON employees (hire_date);
-CREATE INDEX        idx_employee_status      ON employees (status);
-CREATE INDEX        idx_employee_department  ON employees (department_id);
-CREATE INDEX        idx_employee_position    ON employees (position_id);
-CREATE INDEX        idx_employee_manager     ON employees (reporting_manager_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_employee_email       ON employees (email);
+CREATE INDEX        IF NOT EXISTS idx_employee_hire_date   ON employees (hire_date);
+CREATE INDEX        IF NOT EXISTS idx_employee_status      ON employees (status);
+CREATE INDEX        IF NOT EXISTS idx_employee_department  ON employees (department_id);
+CREATE INDEX        IF NOT EXISTS idx_employee_position    ON employees (position_id);
+CREATE INDEX        IF NOT EXISTS idx_employee_manager     ON employees (reporting_manager_id);
 
 ALTER TABLE employees
     ADD CONSTRAINT FK_EMPLOYEES_ON_DEPARTMENT
@@ -204,9 +204,9 @@ CREATE TABLE IF NOT EXISTS salaries
     CONSTRAINT pk_salaries PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_salary_effective_dates         ON salaries (effective_from, effective_to);
-CREATE INDEX idx_salary_employee_effective      ON salaries (employee_id, effective_from, effective_to);
-CREATE INDEX idx_salary_employee                ON salaries (employee_id);
+CREATE INDEX IF NOT EXISTS idx_salary_effective_dates         ON salaries (effective_from, effective_to);
+CREATE INDEX IF NOT EXISTS idx_salary_employee_effective      ON salaries (employee_id, effective_from, effective_to);
+CREATE INDEX IF NOT EXISTS idx_salary_employee                ON salaries (employee_id);
 
 ALTER TABLE salaries
     ADD CONSTRAINT FK_SALARIES_ON_EMPLOYEE
@@ -253,10 +253,10 @@ CREATE TABLE IF NOT EXISTS leaves
     CONSTRAINT pk_leaves PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_leave_dates    ON leaves (start_date, end_date);
-CREATE INDEX idx_leave_status   ON leaves (status);
-CREATE INDEX idx_leave_type     ON leaves (leave_type);
-CREATE INDEX idx_leave_employee ON leaves (employee_id);
+CREATE INDEX IF NOT EXISTS idx_leave_dates    ON leaves (start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_leave_status   ON leaves (status);
+CREATE INDEX IF NOT EXISTS idx_leave_type     ON leaves (leave_type);
+CREATE INDEX IF NOT EXISTS idx_leave_employee ON leaves (employee_id);
 
 ALTER TABLE leaves
     ADD CONSTRAINT FK_LEAVES_ON_EMPLOYEE
@@ -298,9 +298,9 @@ CREATE TABLE IF NOT EXISTS leave_balances
     CONSTRAINT pk_leave_balances PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE UNIQUE INDEX idx_leave_balance_employee_year_type ON leave_balances (employee_id, year, leave_type);
-CREATE INDEX        idx_leave_balance_year               ON leave_balances (year);
-CREATE INDEX        idx_leave_balance_employee           ON leave_balances (employee_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leave_balance_employee_year_type ON leave_balances (employee_id, year, leave_type);
+CREATE INDEX        IF NOT EXISTS idx_leave_balance_year               ON leave_balances (year);
+CREATE INDEX        IF NOT EXISTS idx_leave_balance_employee           ON leave_balances (employee_id);
 
 ALTER TABLE leave_balances
     ADD CONSTRAINT FK_LEAVE_BALANCES_ON_EMPLOYEE
@@ -338,10 +338,10 @@ CREATE TABLE IF NOT EXISTS payrolls
     CONSTRAINT pk_payrolls PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE UNIQUE INDEX idx_payroll_employee_period ON payrolls (employee_id, payroll_month, payroll_year);
-CREATE INDEX        idx_payroll_period          ON payrolls (payroll_month, payroll_year);
-CREATE INDEX        idx_payroll_status          ON payrolls (status);
-CREATE INDEX        idx_payroll_employee        ON payrolls (employee_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payroll_employee_period ON payrolls (employee_id, payroll_month, payroll_year);
+CREATE INDEX        IF NOT EXISTS idx_payroll_period          ON payrolls (payroll_month, payroll_year);
+CREATE INDEX        IF NOT EXISTS idx_payroll_status          ON payrolls (status);
+CREATE INDEX        IF NOT EXISTS idx_payroll_employee        ON payrolls (employee_id);
 
 ALTER TABLE payrolls
     ADD CONSTRAINT FK_PAYROLLS_ON_EMPLOYEE
@@ -393,8 +393,8 @@ CREATE TABLE IF NOT EXISTS attendances
     CONSTRAINT pk_attendances PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE UNIQUE INDEX idx_attendance_employee_date ON attendances (employee_id, date);
-CREATE INDEX        idx_attendance_status        ON attendances (status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_attendance_employee_date ON attendances (employee_id, date);
+CREATE INDEX        IF NOT EXISTS idx_attendance_status        ON attendances (status);
 
 ALTER TABLE attendances
     ADD CONSTRAINT FK_ATTENDANCES_ON_EMPLOYEE
