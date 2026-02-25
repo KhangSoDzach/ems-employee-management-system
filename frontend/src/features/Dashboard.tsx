@@ -1,4 +1,3 @@
-import React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -34,7 +33,7 @@ function EmployeeCard({
               <img src={avatar} className="w-full h-full object-cover" />
             ) : (
               <span className="material-symbols-outlined text-3xl text-gray-400">
-               
+
               </span>
             )}
           </div>
@@ -61,7 +60,7 @@ function EmployeeCard({
         </div>
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-base">
-            Phone Number: 
+            Phone Number:
           </span>
           {phone}
         </div>
@@ -73,7 +72,7 @@ function EmployeeCard({
 export default function Page() {
   return (
     <SidebarProvider
-  
+
     >
       <AppSidebar variant="inset" />
 
@@ -87,14 +86,14 @@ export default function Page() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Danh sách nhân viên
             </h1>
-            
+
           </div>
 
           {/* Search */}
           <div className="flex gap-2">
             <div className="relative flex-1">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-        
+
               </span>
               <input
                 placeholder="Tìm mã, tên, email..."
@@ -107,14 +106,14 @@ export default function Page() {
           </div>
 
           {/* Add button */}
-         <Link
-  to="/adding"
-  className="w-full bg-primary text-white font-bold py-3 rounded-lg shadow-md
+          <Link
+            to="/adding"
+            className="w-full bg-primary text-white font-bold py-3 rounded-lg shadow-md
              flex items-center justify-center gap-2 rounded-lg"
->
-  <span className="material-symbols-outlined"></span>
-  Thêm nhân viên
-</Link>
+          >
+            <span className="material-symbols-outlined"></span>
+            Thêm nhân viên
+          </Link>
 
           {/* Employee list */}
           <div className="space-y-4">
