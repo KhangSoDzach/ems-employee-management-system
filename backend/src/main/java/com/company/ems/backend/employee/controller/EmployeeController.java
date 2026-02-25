@@ -35,12 +35,11 @@ public class EmployeeController {
      * POST /api/v1/employees
      */
     @PostMapping
-    @PreAuthorize("hasPermission(null, 'EMPLOYEE_CREATE')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')")
     public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(
             @Valid @RequestBody EmployeeRequest request) {
-        EmployeeResponse response = employeeService.createEmployee(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Employee created successfully", response));
+                .body(ApiResponse.success("Employee created successfully", employeeService.createEmployee(request)));
     }
 
     /**
@@ -48,7 +47,7 @@ public class EmployeeController {
      * GET /api/v1/employees
      */
     @GetMapping
-    @PreAuthorize("hasPermission(null, 'EMPLOYEE_VIEW')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
     public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAllEmployees(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -56,9 +55,8 @@ public class EmployeeController {
             @RequestParam(required = false) String position,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search) {
-        PageResponse<EmployeeResponse> response = employeeService.getAllEmplyees(page, size, department, position, status, search);
         // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(employeeService.getAllEmployees(page, size, department, position, status, search)));
     }
 
     /**
@@ -66,11 +64,10 @@ public class EmployeeController {
      * GET /api/v1/employees/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasPermission(null, 'EMPLOYEE_VIEW')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW') and @empSec.canAccessEmployee(authentication, #id)")
     public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployeeById(@PathVariable Long id) {
         // TODO: Implement service layer
-        EmployeeResponse response = employeeService.getEmployeeById(id);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(employeeService.getEmployeeById(id)));
     }
 
     /**
@@ -78,7 +75,7 @@ public class EmployeeController {
      * PUT /api/v1/employees/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasPermission(null, 'EMPLOYEE_UPDATE')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE') and @empSec.canAccessEmployee(authentication, #id)")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
             @PathVariable Long id,
             @Valid @RequestBody EmployeeRequest request) {
@@ -92,7 +89,7 @@ public class EmployeeController {
      * DELETE /api/v1/employees/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasPermission(null, 'EMPLOYEE_DELETE')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteEmployee(@PathVariable Long id) {
         // TODO: Implement service layer
         employeeService.deleteEmployee(id);
@@ -104,7 +101,7 @@ public class EmployeeController {
      * POST /api/v1/employees/{id}/files
      */
     @PostMapping(value = "/{id}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasPermission(null, 'EMPLOYEE_UPDATE')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE') and @empSec.canAccessEmployee(authentication, #id)")
     public ResponseEntity<ApiResponse<String>> uploadEmployeeFiles(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
@@ -118,7 +115,7 @@ public class EmployeeController {
      * POST /api/v1/employees/import
      */
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasPermission(null, 'EMPLOYEE_IMPORT')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_IMPORT')")
     public ResponseEntity<ApiResponse<String>> importEmployees(
             @RequestParam("file") MultipartFile file) {
         // TODO: Implement import service
@@ -130,7 +127,7 @@ public class EmployeeController {
      * GET /api/v1/employees/export
      */
     @GetMapping("/export")
-    @PreAuthorize("hasPermission(null, 'EMPLOYEE_EXPORT')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_EXPORT')")
     public ResponseEntity<byte[]> exportEmployees(
             @RequestParam(defaultValue = "csv") String format,
             @RequestParam(required = false) String department,
