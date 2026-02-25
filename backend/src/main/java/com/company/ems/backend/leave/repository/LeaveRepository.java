@@ -3,6 +3,7 @@ package com.company.ems.backend.leave.repository;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.leave.entity.Leave;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -138,4 +139,10 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
      */
     @Query("SELECT l FROM Leave l WHERE l.approvedBy.id = :userId ORDER BY l.approvedAt DESC")
     List<Leave> findLeavesApprovedByUser(@Param("userId") Long userId);
+
+    @Query("SELECT l FROM Leave l WHERE l.employee.id = :employeeId ORDER BY l.createdAt DESC")
+    Page<Leave> findByEmployeeId(@Param("employeeId") Long employeeId, Pageable pageable);
+
+    @Query("SELECT l FROM Leave l WHERE l.employee.reportingManager.user.id = :managerUserId ORDER BY l.createdAt DESC")
+    Page<Leave> findByReportingManagerUserId(@Param("managerUserId") Long managerUserId, Pageable pageable);
 }

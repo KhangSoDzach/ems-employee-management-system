@@ -28,7 +28,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "users", indexes = {
         @Index(name = "idx_username", columnList = "username"),
-        @Index(name = "idx_email", columnList = "email")
+        @Index(name = "idx_email", columnList = "email"),
+        @Index(name = "idx_two_factor_enabled", columnList = "twoFactorEnabled")
 })
 @Getter
 @Setter
@@ -71,6 +72,22 @@ public class User extends BaseEntity {
 
     @Column
     private LocalDateTime lockedUntil;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean twoFactorEnabled = false;
+
+    @Column(length = 255)
+    private String twoFactorSecret;
+
+    @Column(columnDefinition = "TEXT")
+    private String recoveryCodes;
+
+    @Column
+    private LocalDateTime twoFactorEnabledAt;
+
+    @Column
+    private LocalDateTime twoFactorDisabledAt;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(

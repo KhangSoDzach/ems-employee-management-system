@@ -53,3 +53,24 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 
 -- Comment for documentation
 ALTER TABLE refresh_tokens COMMENT = 'Refresh tokens for JWT authentication and secure logout';
+
+
+ALTER TABLE users
+    -- 2FA enable flag
+    ADD COLUMN two_factor_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT '2FA is enabled for this user',
+
+    -- TOTP secret key (encrypted, 32 characters Base32)
+    ADD COLUMN two_factor_secret VARCHAR(255) NULL COMMENT 'Encrypted TOTP secret key',
+
+    -- Recovery codes (JSON array, encrypted)
+    ADD COLUMN recovery_codes TEXT NULL COMMENT 'Encrypted JSON array of one-time recovery codes',
+
+    -- 2FA metadata
+    ADD COLUMN two_factor_enabled_at DATETIME(6) NULL COMMENT 'Timestamp when 2FA was enabled',
+    ADD COLUMN two_factor_disabled_at DATETIME(6) NULL COMMENT 'Timestamp when 2FA was disabled';
+
+-- Add index for 2FA queries
+CREATE INDEX idx_two_factor_enabled ON users(two_factor_enabled);
+
+-- Comments for documentation
+ALTER TABLE users COMMENT = 'System users with authentication, authorization and 2FA support';

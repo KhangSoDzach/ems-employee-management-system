@@ -2,16 +2,19 @@ name: PR Checks
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
-  # PR Title Check
+  # ─────────────────────────────────────────
+  # Enforce Conventional Commits title format.
+  # Removed continue-on-error — this now BLOCKS the PR.
+  # ─────────────────────────────────────────
   pr-title-check:
-    name: PR Title Format Check
+    name: PR Title — Conventional Commits
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Check PR title format
+      - name: Validate PR title
         uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -28,52 +31,33 @@ jobs:
             ci
             chore
           requireScope: false
-        continue-on-error: true
 
-  # PR Size Check
+  # ─────────────────────────────────────────
+  # Advisory only — warns but never blocks.
+  # (conflict detection is handled by GitHub itself)
+  # ─────────────────────────────────────────
   pr-size-check:
-    name: PR Size Check
+    name: PR Size Advisory
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check PR size
+      - name: Report PR size
         run: |
           CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
           CHANGED_LINES=$(git diff --stat origin/${{ github.base_ref }}...HEAD | tail -1 | awk '{print $4+$6}')
-          
-          echo "Changed files: $CHANGED_FILES"
-          echo "Changed lines: $CHANGED_LINES"
-          
-          if [ $CHANGED_FILES -gt 50 ]; then
-            echo "⚠️ Warning: PR changes more than 50 files. Consider splitting into smaller PRs."
-          fi
-          
-          if [ $CHANGED_LINES -gt 1000 ]; then
-            echo "⚠️ Warning: PR changes more than 1000 lines. Consider splitting into smaller PRs."
-          fi
 
-  # Conflict Check
-  conflict-check:
-    name: Merge Conflict Check
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+          echo "Changed files : $CHANGED_FILES"
+          echo "Changed lines : $CHANGED_LINES"
 
-      - name: Check for merge conflicts
-        run: |
-          git fetch origin ${{ github.base_ref }}
-          if git merge-tree $(git merge-base HEAD origin/${{ github.base_ref }}) HEAD origin/${{ github.base_ref }} | grep -q '<<<<<'; then
-            echo "❌ Merge conflicts detected!"
-            exit 1
-          else
-            echo "✅ No merge conflicts"
+          if [ "$CHANGED_FILES" -gt 50 ]; then
+            echo "⚠️  >50 files changed — consider splitting into smaller PRs."
           fi
+          if [ "$CHANGED_LINES" -gt 1000 ]; then
+            echo "⚠️  >1000 lines changed — consider splitting into smaller PRs."
+          fi
+          exit 0  # advisory only, never blocks

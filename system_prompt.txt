@@ -16,6 +16,7 @@ You MUST NOT:
 - Deploy to production
 - Modify secrets or real credentials
 - Bypass architectural rules
+- Hardcode ANY value — credentials, URLs, ports, timeouts, thresholds, role names, magic strings/numbers, or environment-specific data directly in source code
 
 ====================================
 2. STACK & TECHNOLOGY
@@ -207,6 +208,51 @@ MANDATORY RULES:
    - Business logic in Controllers or Repositories
    - Domain entities exposed to API
    - Magic numbers/strings without constants
+   - ANY hardcoded value in source code (see rule 9)
+
+9. NO HARDCODING — ABSOLUTE RULE:
+   Every value that can vary between environments, configurations, or deployments MUST be externalized.
+
+   Backend — use `application.yaml` / `application-{profile}.yaml` / environment variables:
+   - Database URLs, usernames, passwords → `spring.datasource.*` or env vars
+   - Server port, context path → `server.port`, `server.servlet.context-path`
+   - JWT secret, expiration → `app.security.jwt.*`
+   - External service URLs → `app.integrations.*`
+   - Business thresholds (max leave days, salary caps) → `app.business.*`
+   - CORS allowed origins → `app.cors.allowed-origins`
+   - Role names / permission strings → constants in a dedicated `RoleConstants` or `PermissionConstants` class
+   - Pagination defaults → `app.pagination.*`
+   - File size limits, upload paths → `app.storage.*`
+
+   Frontend — use `.env` / `.env.{mode}` files:
+   - API base URL → `VITE_API_BASE_URL`
+   - Feature flags → `VITE_FEATURE_*`
+   - Timeout values → `VITE_REQUEST_TIMEOUT`
+   - Never inline any URL, token, or environment-specific string in component/service code
+
+   Infrastructure — use Docker Compose env vars or `.env` files:
+   - Never hardcode credentials in `docker-compose.yml`; use `${VAR}` substitution
+   - Never commit `.env` files containing real secrets (add to `.gitignore`)
+
+   Numeric / string literals in code:
+   - Extract to named constants: `private static final int MAX_RETRY = 3;`
+   - Extract to enum if the value is a finite known set
+   - Add a comment explaining the business meaning of each constant
+
+   Violation examples (FORBIDDEN):
+   ```java
+   // FORBIDDEN
+   String url = "http://localhost:8080/api";
+   if (role.equals("ADMIN")) { ... }
+   Duration.ofSeconds(3600);
+   ```
+   Compliant examples (REQUIRED):
+   ```java
+   // CORRECT
+   @Value("${app.api.base-url}") private String apiBaseUrl;
+   if (role.equals(RoleConstants.ADMIN)) { ... }
+   @Value("${app.security.jwt.expiration-seconds}") private long jwtExpiration;
+   ```
 
 ====================================
 6. FILE & PACKAGE CONVENTIONS

@@ -1,9 +1,13 @@
 package com.company.ems.backend.config;
 
+import com.company.ems.backend.auth.security.JwtAuthenticationEntryPoint;
+import com.company.ems.backend.auth.security.JwtAuthenticationFilter;
+import com.company.ems.backend.rbac.evaluator.CustomPermissionEvaluator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,10 +20,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.company.ems.backend.auth.security.JwtAuthenticationEntryPoint;
 import com.company.ems.backend.auth.security.JwtAuthenticationFilter;
-import com.company.ems.backend.auth.service.CustomUserDetailsService;
-
+import com.company.ems.backend.rbac.evaluator.CustomPermissionEvaluator;
 import lombok.RequiredArgsConstructor;
-
 /**
  * Security configuration for the application
  * Configures JWT authentication and authorization rules
@@ -27,12 +29,16 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
-@RequiredArgsConstructor
 public class SecurityConfig {
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final CustomUserDetailsService userDetailsService;
+    private final CustomPermissionEvaluator customPermissionEvaluator;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint, CustomPermissionEvaluator customPermissionEvaluator) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.customPermissionEvaluator = customPermissionEvaluator;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,29 +46,33 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> {
+                    ex.authenticationEntryPoint(jwtAuthenticationEntryPoint);
+                })
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/actuator/**")
-                        .permitAll()
-                        // Protected endpoints
-                        .requestMatchers("/api/v1/employees/**").hasAnyRole("ADMIN", "MANAGER")
-                        .requestMatchers("/api/v1/attendance/**").hasAnyRole("ADMIN", "MANAGER", "EMPLOYEE")
-                        .requestMatchers("/api/v1/leave/**").hasAnyRole("ADMIN", "MANAGER", "EMPLOYEE")
-                        .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
-                        // All other requests require authentication
-                        .anyRequest().authenticated())
-                // Add JWT filter before UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                // Set custom authentication entry point
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint));
-
+                                "/swagger-ui.html"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/info"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public MethodSecurityExpressionHandler methodSecurityExpressionHandler() {
+        DefaultMethodSecurityExpressionHandler handler =
+                new DefaultMethodSecurityExpressionHandler();
+        handler.setPermissionEvaluator(customPermissionEvaluator);
+        return handler;
     }
 
     @Bean
@@ -73,13 +83,5 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
     }
 }

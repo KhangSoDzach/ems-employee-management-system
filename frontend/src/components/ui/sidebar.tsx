@@ -25,7 +25,7 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "16rem";
+const SIDEBAR_WIDTH = "13rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
@@ -239,14 +239,24 @@ const Sidebar = React.forwardRef<
       >
         {/* This is what handles the sidebar gap on desktop */}
         <div
+          data-sidebar="ghost-spacer"
           className={cn(
-            "relative w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
+            "relative bg-transparent transition-[width] duration-200 ease-linear",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
           )}
+          style={{
+              width:
+              state === "expanded"
+                ? "var(--sidebar-width)"
+                : collapsible === "icon"
+                  ? "var(--sidebar-width-icon)"
+                  : "0px",
+            ...props.style,
+          }}
         />
         <div
           className={cn(
@@ -565,7 +575,6 @@ const sidebarMenuButtonVariants = cva(
   },
 );
 
-
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & {
@@ -683,10 +692,12 @@ const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean;
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
+  // Deterministic width between 50 to 90% based on stable id.
+  const id = React.useId();
   const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`;
-  }, []);
+    const hash = id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    return `${(hash % 40) + 50}%`;
+  }, [id]);
 
   return (
     <div
