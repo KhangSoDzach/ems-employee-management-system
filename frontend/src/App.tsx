@@ -5,7 +5,6 @@ import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import EmployeeDashboard from "./features/employee/EmployeeDashboard";
 import LeaveRequestPage from "./features/employee/LeaveRequestPage";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 import CheckinPage from "./features/employee/CheckinPage";
 

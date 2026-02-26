@@ -2,12 +2,7 @@ import React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-
-/* ================= SCHEMA ================= */
+import { Link } from "react-router-dom"
 
 const leaveSchema = z
   .object({
@@ -59,22 +54,10 @@ const TEXT = {
 };
 
 const LeaveRequestPage: React.FC = () => {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    formState: { errors, isValid },
-  } = useForm<LeaveFormValues>({
+  const { reset } = useForm<LeaveFormValues>({
     resolver: zodResolver(leaveSchema),
     mode: "onChange",
   })
-
-  const onSubmit = (data: LeaveFormValues) => {
-    console.log(data)
-    alert("Gửi đơn thành công!")
-    reset()
-  }
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen font-display">
@@ -156,7 +139,7 @@ const LeaveRequestPage: React.FC = () => {
             {TEXT.btnSubmit}
           </button>
 
-          <button className="w-full h-12 bg-transparent border border-border-color dark:border-slate-700 text-foreground dark:text-slate-200 font-medium rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+          <button onClick={() => reset()} className="w-full h-12 bg-transparent border border-border-color dark:border-slate-700 text-foreground dark:text-slate-200 font-medium rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
             {TEXT.btnCancel}
           </button>
         </div>
