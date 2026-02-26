@@ -7,6 +7,8 @@ import LeaveRequestPage from "./features/employee/LeaveRequestPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
+import CheckinPage from "./features/employee/CheckinPage";
+
 function App() {
   return (
     <AuthProvider>
@@ -19,13 +21,14 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/employee" element={<EmployeeDashboard />} />
           <Route path="/request" element={<LeaveRequestPage />} />
+          <Route path="/checkin" element={<CheckinPage />} />
 
-        {/* </Route> */}
-      </Routes>
-    </BrowserRouter>
+          {/* </Route> */}
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   );
-} 
+}
 
 
 export default App;

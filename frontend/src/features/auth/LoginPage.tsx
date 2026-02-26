@@ -17,9 +17,24 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 
+const TEXT = {
+    title: "Chào mừng trở lại",
+    desc: "Đăng nhập vào hệ thống quản lý nhân sự EMS",
+    labelEmail: "Email",
+    placeholderEmail: "admin@ems.com",
+    labelPassword: "Mật khẩu",
+    placeholderPassword: "••••••••",
+    labelRemember: "Ghi nhớ đăng nhập",
+    btnLogin: "Đăng nhập",
+    btnProcessing: "Đang xử lý...",
+    errEmailReq: "Vui lòng nhập Username/Email",
+    errPassReq: "Vui lòng nhập mật khẩu",
+    errDefault: "Email hoặc mật khẩu không chính xác",
+}
+
 const loginSchema = z.object({
-    email: z.string().min(1, "Vui lòng nhập Username/Email"),
-    password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+    email: z.string().min(1, TEXT.errEmailReq),
+    password: z.string().min(1, TEXT.errPassReq),
     remember: z.boolean().optional(),
 });
 
@@ -80,7 +95,9 @@ export const LoginPage = () => {
                 "Email hoặc mật khẩu không chính xác";
 
             console.error("Login error:", error);
-            setError("root", { message: serverMessage });
+            setError("root", {
+                message: error.response?.data?.message || TEXT.errDefault,
+            });
         }
     };
 
@@ -116,21 +133,21 @@ export const LoginPage = () => {
                     <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
                         <User className="text-primary w-8 h-8" />
                     </div>
-                    <CardTitle className="text-2xl font-bold">Chào mừng trở lại</CardTitle>
+                    <CardTitle className="text-2xl font-bold">{TEXT.title}</CardTitle>
                     <CardDescription>
-                        Đăng nhập vào hệ thống quản lý nhân sự EMS
+                        {TEXT.desc}
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email">{TEXT.labelEmail}</Label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                                 <Input
                                     id="email"
-                                    placeholder="admin@ems.com"
+                                    placeholder={TEXT.placeholderEmail}
                                     className={`pl-9 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                     {...register("email")}
                                 />
@@ -138,14 +155,14 @@ export const LoginPage = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">Mật khẩu</Label>
+                            <Label htmlFor="password">{TEXT.labelPassword}</Label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
 
                                 <Input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="••••••••"
+                                    placeholder={TEXT.placeholderPassword}
                                     className={`pl-9 pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                     {...register("password")}
                                 />
@@ -175,7 +192,7 @@ export const LoginPage = () => {
                                     htmlFor="remember"
                                     className="text-sm font-medium leading-none cursor-pointer"
                                 >
-                                    Ghi nhớ đăng nhập
+                                    {TEXT.labelRemember}
                                 </Label>
                             </div>
                         </div>
@@ -189,10 +206,10 @@ export const LoginPage = () => {
                         <Button className="w-full font-bold" size="lg" disabled={isSubmitting}>
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang xử lý...
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {TEXT.btnProcessing}
                                 </>
                             ) : (
-                                "Đăng nhập"
+                                TEXT.btnLogin
                             )}
                         </Button>
                     </form>
