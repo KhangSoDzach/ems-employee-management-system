@@ -7,7 +7,7 @@
 
 -- Step 1: Insert Permissions
 -- Core permissions organized by category
-INSERT INTO ems_db.permissions (name, description, category, created_at, updated_at, is_deleted, version) VALUES
+INSERT INTO permissions (name, description, category, created_at, updated_at, is_deleted, version) VALUES
 -- User Management Permissions
 ('USER_READ', 'View user information and list users', 'USER', NOW(), NOW(), FALSE, 0),
 ('USER_CREATE', 'Create new users', 'USER', NOW(), NOW(), FALSE, 0),
@@ -121,8 +121,8 @@ INSERT INTO users (
 ) VALUES (
     'admin',
     'admin@ems.company.com',
-    -- BCrypt hash of 'admin123' (rounds=10)
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    -- BCrypt hash of 'admin123' (rounds=10) — verified with BCryptPasswordEncoder
+    '$2a$10$CMma736Zxup0lwfPCPvsQOxzrZR6xqm30KDgn1fdMwIbBskcsjYum',
     TRUE,
     TRUE,
     TRUE,

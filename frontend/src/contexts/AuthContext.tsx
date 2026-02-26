@@ -10,6 +10,8 @@ import api from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
+type ApiResponse<T> = { status: string; message: string; data: T };
+
 export interface UserInfo {
     id: number;
     username: string;
@@ -45,8 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             // api interceptor returns response.data (already unwrapped by axios.ts)
             // BE response: { status, message, data: UserInfo }
-            const res = await api.get("/auth/me");
-            return (res as any).data as UserInfo;
+            const res = await api.get("/auth/me") as unknown as ApiResponse<UserInfo>;
+            return res.data;
         } catch {
             return null;
         }
@@ -72,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = useCallback(
         async (username: string, password: string): Promise<void> => {
             // BE response (already unwrapped by interceptor): { status, message, data: AuthResponse }
-            const res = await api.post("/auth/login", { username, password });
-            const { accessToken, refreshToken } = (res as any).data;
+            const res = await api.post("/auth/login", { username, password }) as unknown as ApiResponse<{ accessToken: string; refreshToken: string }>;
+            const { accessToken, refreshToken } = res.data;
 
             if (!accessToken) throw new Error("No access token in response");
 

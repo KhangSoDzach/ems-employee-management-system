@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
     Card,
     CardContent,
@@ -15,11 +15,26 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import api from "@/lib/axios";
+import { useAuth } from "@/contexts/AuthContext";
+
+const TEXT = {
+    title: "Chào mừng trở lại",
+    desc: "Đăng nhập vào hệ thống quản lý nhân sự EMS",
+    labelEmail: "Email",
+    placeholderEmail: "admin@ems.com",
+    labelPassword: "Mật khẩu",
+    placeholderPassword: "••••••••",
+    labelRemember: "Ghi nhớ đăng nhập",
+    btnLogin: "Đăng nhập",
+    btnProcessing: "Đang xử lý...",
+    errEmailReq: "Vui lòng nhập Username/Email",
+    errPassReq: "Vui lòng nhập mật khẩu",
+    errDefault: "Email hoặc mật khẩu không chính xác",
+}
 
 const loginSchema = z.object({
-    email: z.string().email("Email không hợp lệ"),
-    password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+    email: z.string().min(1, TEXT.errEmailReq),
+    password: z.string().min(1, TEXT.errPassReq),
     remember: z.boolean().optional(),
 });
 
@@ -27,6 +42,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginPage = () => {
     const navigate = useNavigate();
+    const { login, isAuthenticated } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
 
     const {
@@ -44,6 +60,14 @@ export const LoginPage = () => {
         },
     });
 
+    // Redirect nếu đã đăng nhập và không đang trong quá trình submit
+    // Thêm !isSubmitting để tránh trường hợp này chạy đè lên lúc đang hiện thị lỗi
+    useEffect(() => {
+        if (isAuthenticated && !isSubmitting) {
+            navigate("/dashboard", { replace: true });
+        }
+    }, [isAuthenticated, navigate, isSubmitting]);
+
     useEffect(() => {
         const savedEmail = localStorage.getItem("rememberedEmail");
         if (savedEmail) {
@@ -54,38 +78,20 @@ export const LoginPage = () => {
 
     const onSubmit = async (data: LoginFormValues) => {
         try {
-            // Call API
-            // Mapping email to username as per backend requirement
-            const response = await api.post("/auth/login", {
-                username: data.email,
-                password: data.password
-            });
+            await login(data.email, data.password);
 
-            // api interceptor returns response.data
-            // Structure: { status: "...", message: "...", data: { accessToken, refreshToken, ... } }
-            const { accessToken, refreshToken } = response.data.data;
-
-            if (accessToken) {
-                localStorage.setItem("access_token", accessToken);
-                localStorage.setItem("refresh_token", refreshToken);
-
-                if (data.remember) {
-                    localStorage.setItem("rememberedEmail", data.email);
-                } else {
-                    localStorage.removeItem("rememberedEmail");
-                }
-
-                // alert("Đăng nhập thành công!"); // Removed alert for better UX
-                navigate("/");
+            if (data.remember) {
+                localStorage.setItem("rememberedEmail", data.email);
             } else {
-                throw new Error("Invalid response from server");
+                localStorage.removeItem("rememberedEmail");
             }
 
+            navigate("/dashboard", { replace: true });
         } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
             console.error("Login error:", error);
-            const axiosError = error as { response?: { data?: { message?: string } } };
             setError("root", {
-                message: axiosError.response?.data?.message || "Email hoặc mật khẩu không chính xác",
+                message: err.response?.data?.message || TEXT.errDefault,
             });
         }
     };
@@ -122,21 +128,21 @@ export const LoginPage = () => {
                     <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
                         <User className="text-primary w-8 h-8" />
                     </div>
-                    <CardTitle className="text-2xl font-bold">Chào mừng trở lại</CardTitle>
+                    <CardTitle className="text-2xl font-bold">{TEXT.title}</CardTitle>
                     <CardDescription>
-                        Đăng nhập vào hệ thống quản lý nhân sự EMS
+                        {TEXT.desc}
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email">{TEXT.labelEmail}</Label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                                 <Input
                                     id="email"
-                                    placeholder="admin@ems.com"
+                                    placeholder={TEXT.placeholderEmail}
                                     className={`pl-9 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                     {...register("email")}
                                 />
@@ -144,14 +150,14 @@ export const LoginPage = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">Mật khẩu</Label>
+                            <Label htmlFor="password">{TEXT.labelPassword}</Label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
 
                                 <Input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="••••••••"
+                                    placeholder={TEXT.placeholderPassword}
                                     className={`pl-9 pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                     {...register("password")}
                                 />
@@ -181,13 +187,9 @@ export const LoginPage = () => {
                                     htmlFor="remember"
                                     className="text-sm font-medium leading-none cursor-pointer"
                                 >
-                                    Ghi nhớ đăng nhập
+                                    {TEXT.labelRemember}
                                 </Label>
                             </div>
-
-                            <Link to="/forgot" className="text-sm font-medium text-primary hover:underline">
-                                Quên mật khẩu?
-                            </Link>
                         </div>
 
                         {errors.root && (
@@ -199,10 +201,10 @@ export const LoginPage = () => {
                         <Button className="w-full font-bold" size="lg" disabled={isSubmitting}>
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang xử lý...
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {TEXT.btnProcessing}
                                 </>
                             ) : (
-                                "Đăng nhập"
+                                TEXT.btnLogin
                             )}
                         </Button>
                     </form>
