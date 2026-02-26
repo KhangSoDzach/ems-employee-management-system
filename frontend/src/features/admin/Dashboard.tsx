@@ -1,7 +1,49 @@
 import React, { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { differenceInYears } from "date-fns"
+
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+
+/* ====================== */
+/* ====== SCHEMA ======== */
+/* ====================== */
+
+const employeeSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, "Họ tên phải có ít nhất 2 ký tự")
+    .max(255, "Họ tên không quá 255 ký tự"),
+
+  nationalId: z
+    .string()
+    .regex(/^(\d{9}|\d{12})$/, "CMND/CCCD phải là 9 hoặc 12 số"),
+
+  companyEmail: z
+    .string()
+    .email("Email không hợp lệ"),
+
+  phoneNumber: z
+    .string()
+    .regex(/^\d{10,13}$/, "Số điện thoại phải từ 10-13 số"),
+
+  dateOfBirth: z
+    .string()
+    .refine(
+      (date) =>
+        differenceInYears(new Date(), new Date(date)) >= 18,
+      "Nhân viên phải từ 18 tuổi trở lên"
+    ),
+})
+
+type EmployeeFormValues = z.infer<typeof employeeSchema>
+
+/* ====================== */
+/* ====== CARD ========== */
+/* ====================== */
 
 interface EmployeeCardProps {
   name: string
@@ -58,8 +100,24 @@ function EmployeeCard({
   )
 }
 
+/* ====================== */
+/* ====== PAGE ========== */
+/* ====================== */
+
 export default function Page() {
   const [open, setOpen] = useState(false)
+
+  const form = useForm<EmployeeFormValues>({
+    resolver: zodResolver(employeeSchema),
+    mode: "onChange",
+  })
+
+  function onSubmit(data: EmployeeFormValues) {
+    console.log("Employee created:", data)
+    alert("Tạo nhân viên thành công!")
+    setOpen(false)
+    form.reset()
+  }
 
   return (
     <SidebarProvider>
@@ -92,154 +150,140 @@ export default function Page() {
               statusColor="bg-green-100 text-green-600"
               id="123456789012"
               email="an.nguyen@company.vn"
-              phone="0912 345 678"
+              phone="0912345678"
             />
           </div>
 
           {/* ================= MODAL ================= */}
-         {open && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          {open && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl">
 
-    <div className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800">
+                {/* Header */}
+                <div className="flex justify-between items-center px-8 py-6 border-b">
+                  <h2 className="text-2xl font-semibold">
+                    Thêm nhân viên mới
+                  </h2>
 
-      {/* Header */}
-      <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200 dark:border-gray-800">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Thêm nhân viên mới
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Điền thông tin cơ bản để khởi tạo hồ sơ nhân sự trong hệ thống.
-          </p>
-        </div>
+                  <button onClick={() => setOpen(false)}>✕</button>
+                </div>
 
-        <button
-          onClick={() => setOpen(false)}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
-        >
-          ✕
-        </button>
-      </div>
+                {/* Body */}
+                <div className="p-10">
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                   >
+                    {/* Họ tên */}
+                    <div>
+                      <label className="font-medium">Họ và tên</label>
+                      <input
+                        {...form.register("fullName")}
+                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${
+                          form.formState.errors.fullName
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Vui lòng nhập họ và tên của nhân viên"
+                      />
+                      <p className="text-sm text-red-500 mt-2">
+                        {form.formState.errors.fullName?.message}
+                      </p>
+                    </div>
 
-      {/* Body */}
-      <div className="max-h-[75vh] overflow-y-auto">
+                    {/* CCCD */}
+                    <div>
+                      <label className="font-medium">CMND / CCCD</label>
+                      <input
+                        {...form.register("nationalId")}
+                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${
+                          form.formState.errors.nationalId
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                         placeholder="Vui lòng nhập CCCD của nhân viên"
+                      />
+                      <p className="text-sm text-red-500 mt-2">
+                        {form.formState.errors.nationalId?.message}
+                      </p>
+                    </div>
 
-        {/* Section header */}
-        <div className="px-8 py-5 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-            Thông tin cơ bản
-          </h3>
-        </div>
+                    {/* Email */}
+                    <div>
+                      <label className="font-medium">Email công ty</label>
+                      <input
+                        type="email"
+                        {...form.register("companyEmail")}
+                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${
+                          form.formState.errors.companyEmail
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                         placeholder="Vui lòng nhập email công ty của nhân viên"
+                      />
+                      <p className="text-sm text-red-500 mt-2">
+                        {form.formState.errors.companyEmail?.message}
+                      </p>
+                    </div>
 
-        <div className="p-10">
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Phone */}
+                    <div>
+                      <label className="font-medium">Số điện thoại</label>
+                      <input
+                        {...form.register("phoneNumber")}
+                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${
+                          form.formState.errors.phoneNumber
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                         placeholder="Vui lòng nhập số điện thoại của nhân viên"
+                      />
+                      <p className="text-sm text-red-500 mt-2">
+                        {form.formState.errors.phoneNumber?.message}
+                      </p>
+                    </div>
 
-            {/* Employee ID */}
-            <div className="md:col-span-2">
-              <label className="text-base font-medium text-gray-600 dark:text-gray-300">
-                Employee ID
-              </label>
-              <input
-                readOnly
-                value="EMP-2026-0004"
-                className="w-full mt-2 px-5 py-3.5 text-base rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
-              />
-              <p className="text-sm text-gray-400 mt-2">
-                ID được tạo tự động bởi hệ thống.
-              </p>
-            </div>
+                    {/* Ngày sinh */}
+                    <div>
+                      <label className="font-medium">Ngày sinh</label>
+                      <input
+                        type="date"
+                        {...form.register("dateOfBirth")}
+                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${
+                          form.formState.errors.dateOfBirth
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      <p className="text-sm text-red-500 mt-2">
+                        {form.formState.errors.dateOfBirth?.message}
+                      </p>
+                    </div>
 
-            {/* Họ tên */}
-            <div>
-              <label className="text-base font-medium text-gray-600 dark:text-gray-300">
-                Họ và tên
-              </label>
-              <input
-                placeholder="Nguyễn Văn A"
-                className="w-full mt-2 px-5 py-3.5 text-base rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
+                    {/* Footer Buttons */}
+                    <div className="md:col-span-2 flex justify-end gap-4 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setOpen(false)}
+                        className="px-6 py-3 rounded-xl border"
+                      >
+                        Hủy
+                      </button>
 
-            {/* CCCD */}
-            <div>
-              <label className="text-base font-medium text-gray-600 dark:text-gray-300">
-                CMND / CCCD
-              </label>
-              <input
-                placeholder="0123456789"
-                className="w-full mt-2 px-5 py-3.5 text-base rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
+                      <button
+                        type="submit"
+                        disabled={!form.formState.isValid}
+                        className="px-8 py-3 font-semibold rounded-xl bg-primary text-white disabled:opacity-50"
+                      >
+                        Lưu & Tạo tài khoản
+                      </button>
+                    </div>
 
-            {/* Email */}
-            <div>
-              <label className="text-base font-medium text-gray-600 dark:text-gray-300">
-                Email công ty
-              </label>
-              <input
-                type="email"
-                placeholder="name@company.com"
-                className="w-full mt-2 px-5 py-3.5 text-base rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="text-base font-medium text-gray-600 dark:text-gray-300">
-                Số điện thoại
-              </label>
-              <div className="flex gap-3 mt-2">
-                <select className="w-32 px-4 py-3.5 text-base rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary outline-none">
-                  <option>+84</option>
-                  <option>+60</option>
-                  <option>+65</option>
-                  <option>+1</option>
-                </select>
-
-                <input
-                  type="tel"
-                  placeholder="0912 345 678"
-                  className="flex-1 px-5 py-3.5 text-base rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary outline-none"
-                />
+                  </form>
+                </div>
               </div>
             </div>
-
-            {/* Ngày sinh */}
-            <div>
-              <label className="text-base font-medium text-gray-600 dark:text-gray-300">
-                Ngày sinh
-              </label>
-              <input
-                type="date"
-                className="w-full mt-2 px-5 py-3.5 text-base rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-
-          </form>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex justify-end gap-4 px-8 py-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-b-2xl">
-        <button
-          onClick={() => setOpen(false)}
-          className="px-6 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-        >
-          Hủy
-        </button>
-
-        <button
-          type="submit"
-          className="px-8 py-3 text-base font-semibold rounded-xl bg-primary text-white hover:bg-primary/90 shadow-sm transition"
-        >
-          Lưu & Tạo tài khoản
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}
-
+          )}
         </main>
       </SidebarInset>
     </SidebarProvider>
