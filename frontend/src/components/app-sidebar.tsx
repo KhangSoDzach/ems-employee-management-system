@@ -1,10 +1,12 @@
 import * as React from "react"
 import { useLocation } from "react-router-dom"
+import { LogOut } from "lucide-react"
 
 import { VersionSwitcher } from "@/components/version-switcher"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -32,7 +34,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
           title: "Quản lý nhân viên",
           url: "/admin",
         },
-       
+
       ],
     },
   ] : [
@@ -44,6 +46,9 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
           title: "Hồ sơ của tôi",
           url: "/employee",
         },
+        {
+          title: "Chấm công",
+          url: "/checkin",
          {
           title: "Tạo đơn nghỉ phép",
           url: "/request",
@@ -79,6 +84,18 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
           </SidebarGroup>
         ))}
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild className="text-red-600 hover:text-red-700 hover:bg-red-50 font-medium">
+              <button>
+                <LogOut />
+                <span>{"Đăng xuất"}</span>
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
