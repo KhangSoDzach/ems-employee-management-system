@@ -2,8 +2,11 @@ version: '3.8'
 
 services:
   backend:
-    # Thay vì build container chạy file JAR, ta dùng command mvnw spring-boot:run để dev
-    command: [ "./mvnw", "spring-boot:run" ]
+    # Dev: dùng Maven build stage (có Maven sẵn) thay vì runtime stage (JRE-only)
+    build:
+      target: build
+    # Dùng sh để tránh lỗi Permission denied do Git trên Windows không giữ execute bit (+x)
+    command: [ "sh", "./mvnw", "spring-boot:run" ]
     volumes:
       # Mount source code backend để map sự thay đổi vào container
       - ./backend/src:/app/src

@@ -15,8 +15,9 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      # Init scripts run once on first startup (empty data dir).
-      # 01_init_grants.sh ensures the app user has all required privileges.
+      # Thư mục này để chứa init scripts chạy một lần khi DB chưa có data.
+      # MySQL official image tự tạo MYSQL_USER với quyền trên MYSQL_DATABASE;
+      # thêm .sql/.sh vào đây nếu cần grant bổ sung hoặc seed dữ liệu.
       - ./docker/mysql:/docker-entrypoint-initdb.d:ro
     networks:
       - ems-network
@@ -61,12 +62,12 @@ services:
       dockerfile: Dockerfile
     container_name: ems-frontend
     restart: unless-stopped
-    user: "0:0"   # Run as root in dev so Vite can write temp files in bind-mounted /app
+    user: "0:0" # Run as root in dev so Vite can write temp files in bind-mounted /app
     depends_on:
       backend:
         condition: service_healthy
     environment:
-      VITE_API_URL: http://localhost:8080
+      VITE_API_URL: http://localhost:8080/api/v1
     ports:
       - "5173:5173"
     volumes:

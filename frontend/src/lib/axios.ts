@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Tạo instance với cấu hình mặc định
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -25,6 +25,10 @@ api.interceptors.response.use(
 
     // Check if error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url?.includes('/auth/login')) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refresh_token');
 
