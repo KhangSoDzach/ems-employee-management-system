@@ -22,7 +22,7 @@ public class ProfileAccessAuditAspect {
     private static final String AUDIT_FORMAT =
             "PROFILE_AUDIT | user=[{}] | roles=[{}] | method=[{}] | targetEmpId=[{}] | result=[{}] | time=[{}ms]";
 
-    @Around("execution(* com.company.ems.backend.employee.service.EmployeeProfileService.*(..))")
+    @Around("execution(* com.company.ems.backend.employee.search.service.EmployeeProfileService.*(..))")
     public Object auditProfileAccess(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
 

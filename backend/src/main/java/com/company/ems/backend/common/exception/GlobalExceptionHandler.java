@@ -24,20 +24,10 @@ import com.company.ems.backend.common.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import javax.naming.AuthenticationException;
-
-/**
- * Global exception handler for the application
- * Catches exceptions and returns appropriate HTTP responses
- */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final String FORBIDDEN_MSG = "Bạn không có quyền truy cập chức năng này";
-    /**
-     * ForbiddenException - Ném bởi DataScopeService khi user vượt phạm vi dữ liệu.
-     * HTTP 403
-     */
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ApiResponse<Void>> handleForbiddenException(
             ForbiddenException ex, WebRequest request) {
@@ -47,10 +37,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(FORBIDDEN_MSG));
     }
 
-    /**
-     * AccessDeniedException - Ném bởi Spring Security khi @PreAuthorize fail.
-     * HTTP 403
-     */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
@@ -61,10 +47,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(FORBIDDEN_MSG));
     }
 
-    /**
-     * UnauthorizedException - Token không hợp lệ, hết hạn, hoặc thiếu.
-     * HTTP 401
-     */
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnauthorizedException(
             UnauthorizedException ex, WebRequest request) {
@@ -74,10 +56,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
-    /**
-     * LockedException - Tài khoản bị khóa (quá nhiều lần đăng nhập sai).
-     * HTTP 401
-     */
     @ExceptionHandler(LockedException.class)
     public ResponseEntity<ApiResponse<Void>> handleLockedException(
             LockedException ex, WebRequest request) {
@@ -87,13 +65,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên."));
     }
 
-    /**
-     * DisabledException - Tài khoản bị vô hiệu hóa.
-     * HTTP 401
-     *
-     * FIX: Tách riêng thay vì gộp với AuthenticationException
-     * → tránh lỗi "Inconvertible types: cannot cast AuthenticationException to DisabledException"
-     */
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ApiResponse<Void>> handleDisabledException(
             DisabledException ex, WebRequest request) {
@@ -103,10 +74,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."));
     }
 
-    /**
-     * BadCredentialsException - Sai username hoặc password khi đăng nhập.
-     * HTTP 401
-     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(
             BadCredentialsException ex, WebRequest request) {
@@ -208,6 +175,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(message));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(
+            IllegalArgumentException ex, WebRequest request) {
+        log.warn("400 Illegal Argument: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

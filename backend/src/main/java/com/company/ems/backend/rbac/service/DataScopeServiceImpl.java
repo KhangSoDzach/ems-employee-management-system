@@ -1,12 +1,15 @@
 package com.company.ems.backend.rbac.service;
 
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeProfileRepository;
+import com.company.ems.backend.employee.search.repository.EmployeeSpecification;
 import com.company.ems.backend.user.enums.DataScope;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -19,14 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class DataScopeServiceImpl implements DataScopeService {
 
     private final EmployeeProfileRepository profileRepository;
-
     @Override
     public boolean canAccessEmployee(Long targetEmployeeId) {
         CustomUserPrincipal principal = getCurrentPrincipal();
-        if (principal == null) {
-            log.warn("SCOPE_CHECK: no authenticated principal");
-            return false;
-        }
+        if (principal == null) return false;
 
         if (principal.hasDataScope(DataScope.ALL)) {
             log.debug("SCOPE_ALLOW [ALL]: user=[{}] empId=[{}]",
@@ -47,7 +46,7 @@ public class DataScopeServiceImpl implements DataScopeService {
 
         boolean isSelf = isSelfEmployee(targetEmployeeId, principal);
         if (!isSelf) {
-            log.warn("SCOPE_DENY [SELF]: user=[{}] tried to access empId=[{}]",
+            log.warn("SCOPE_DENY [SELF]: user=[{}] tried empId=[{}]",
                     principal.getUsername(), targetEmployeeId);
         }
         return isSelf;
@@ -55,25 +54,45 @@ public class DataScopeServiceImpl implements DataScopeService {
 
     @Override
     public boolean isInManagerTeam(Long targetEmployeeId) {
-        CustomUserPrincipal principal = getCurrentPrincipal();
-        if (principal == null) return false;
-        return isInManagerTeam(targetEmployeeId, principal);
+        CustomUserPrincipal p = getCurrentPrincipal();
+        return p != null && isInManagerTeam(targetEmployeeId, p);
     }
 
     @Override
     public boolean isSelfEmployee(Long targetEmployeeId) {
+        CustomUserPrincipal p = getCurrentPrincipal();
+        return p != null && isSelfEmployee(targetEmployeeId, p);
+    }
+
+    @Override
+    public Specification<Employee> buildScopeSpec() {
         CustomUserPrincipal principal = getCurrentPrincipal();
-        if (principal == null) return false;
-        return isSelfEmployee(targetEmployeeId, principal);
+        if (principal == null) {
+            return (root, query, cb) -> cb.disjunction();
+        }
+
+        if (principal.hasDataScope(DataScope.ALL)) {
+            log.debug("SCOPE_SPEC [ALL]: user=[{}]", principal.getUsername());
+            return Specification.where(null); // No additional constraint
+        }
+
+        if (principal.hasDataScope(DataScope.TEAM)) {
+            log.debug("SCOPE_SPEC [TEAM]: manager=[{}] userId=[{}]",
+                    principal.getUsername(), principal.getUserId());
+            return EmployeeSpecification.inManagerTeam(principal.getUserId());
+        }
+
+        log.warn("SCOPE_SPEC [SELF]: user=[{}] không được list search", principal.getUsername());
+        return (root, query, cb) -> cb.disjunction();
     }
 
-    private boolean isInManagerTeam(Long targetEmployeeId, CustomUserPrincipal principal) {
-        return profileRepository.isEmployeeInManagerTeam(targetEmployeeId, principal.getUserId());
+    private boolean isInManagerTeam(Long empId, CustomUserPrincipal p) {
+        return profileRepository.isEmployeeInManagerTeam(empId, p.getUserId());
     }
 
-    private boolean isSelfEmployee(Long targetEmployeeId, CustomUserPrincipal principal) {
-        return profileRepository.findEmployeeIdByUserId(principal.getUserId())
-                .map(empId -> empId.equals(targetEmployeeId))
+    private boolean isSelfEmployee(Long empId, CustomUserPrincipal p) {
+        return profileRepository.findEmployeeIdByUserId(p.getUserId())
+                .map(id -> id.equals(empId))
                 .orElse(false);
     }
 
