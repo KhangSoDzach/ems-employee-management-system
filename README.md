@@ -16,14 +16,35 @@ cd ems-employee-management-system
 # Copy environment file
 cp .env.example .env
 
-# Start all services
+# Start all services (Production-like)
 docker-compose up -d
-
-# Access application
-# Frontend: http://localhost:5173
-# Backend:  http://localhost:8080
-# Swagger:  http://localhost:8080/swagger-ui.html
 ```
+
+### With Docker (Development / Hot-Reload)
+Sử dụng `docker-compose.override.yml` để kích hoạt hot-reload cho cả Frontend (Vite) và Backend (Spring Boot). Tránh việc phải build lại file JAR mỗi khi thay đổi code.
+
+```bash
+# Khởi chạy dev với override (áp dụng hot-reload)
+docker compose up --build
+# Hoặc lệnh tường minh: docker compose -f docker-compose.yml -f docker-compose.override.yml up --build
+
+# Rebuild service riêng lẻ
+docker compose build backend
+
+# Xem logs của service (ví dụ: backend)
+docker compose logs -f backend
+```
+
+**Lưu ý (Đặc tính & Rủi ro):**
+- **WSL2/Windows**: Bind-mount có thể chậm trên Windows I/O. Frontend đã cấu hình anonymous volume cho `/app/node_modules` giúp tăng tốc Vite và tránh xung đột quyền/hệ điều hành.
+- **Môi trường**: Việc chạy source code qua wrapper `./mvnw` trong container có thể đem lại khác biệt nhỏ với file JAR được build từ GitHub Actions/Production. Maven dependency có cache qua volume dùng chung.
+- Hãy dùng `.env` dev với biến môi trường hợp lệ (`VITE_API_URL`, database mock...).
+
+### Access Application
+Mở trình duyệt:
+- **Frontend** (React/Vite)  : http://localhost:5173
+- **Backend** (Spring Boot)  : http://localhost:8080
+- **Swagger Documentation**  : http://localhost:8080/swagger-ui.html
 
 ### Without Docker
 ```bash
