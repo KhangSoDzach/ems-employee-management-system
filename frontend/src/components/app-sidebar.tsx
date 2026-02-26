@@ -49,7 +49,8 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
         {
           title: "Chấm công",
           url: "/checkin",
-         {
+        },
+        {
           title: "Tạo đơn nghỉ phép",
           url: "/request",
         },

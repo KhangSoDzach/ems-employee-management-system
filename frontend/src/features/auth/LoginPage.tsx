@@ -87,16 +87,11 @@ export const LoginPage = () => {
             }
 
             navigate("/dashboard", { replace: true });
-        } catch (error: any) {
-            // Lấy message lỗi trước tiên từ body response của backend (ví dụ: "Invalid username or password")
-            const serverMessage =
-                error?.response?.data?.message ||
-                error?.message ||
-                "Email hoặc mật khẩu không chính xác";
-
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
             console.error("Login error:", error);
             setError("root", {
-                message: error.response?.data?.message || TEXT.errDefault,
+                message: err.response?.data?.message || TEXT.errDefault,
             });
         }
     };
