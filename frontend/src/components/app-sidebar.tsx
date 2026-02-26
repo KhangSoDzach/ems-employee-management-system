@@ -30,7 +30,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
       items: [
         {
           title: "Quản lý nhân viên",
-          url: "./dashboard",
+          url: "/admin",
         },
        
       ],
@@ -43,6 +43,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
         {
           title: "Hồ sơ của tôi",
           url: "/employee",
+        },
+         {
+          title: "Tạo đơn nghỉ phép",
+          url: "/request",
         },
       ],
     }

@@ -14,13 +14,13 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+        {/* <Route element={<ProtectedRoute />}> */}
+          <Route path="/admin" element={<Dashboard />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/employee" element={<EmployeeDashboard />} />
           <Route path="/request" element={<LeaveRequestPage />} />
 
-        </Route>
+        {/* </Route> */}
       </Routes>
     </BrowserRouter>
     </AuthProvider>
