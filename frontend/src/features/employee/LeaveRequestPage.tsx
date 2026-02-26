@@ -1,6 +1,33 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+const TEXT = {
+  title: "Tạo đơn nghỉ phép",
+  sectionInfo: "Thông tin nghỉ phép",
+  labelType: "Loại phép",
+  optSelect: "Chọn loại phép",
+  optAnnual: "Nghỉ phép năm",
+  optSick: "Nghỉ ốm",
+  optUnpaid: "Nghỉ không lương",
+  optPersonal: "Việc riêng",
+  labelStart: "Ngày bắt đầu",
+  labelEnd: "Ngày kết thúc",
+  labelReason: "Lý do nghỉ",
+  placeholderReason: "Nhập lý do chi tiết...",
+  infoNote: "Đơn xin nghỉ phép sẽ được gửi đến quản lý trực tiếp của bạn để phê duyệt.",
+  btnSubmit: "Gửi đơn",
+  btnCancel: "Hủy bỏ",
+  summaryTitle: "Tóm tắt quỹ phép",
+  summaryRemainingLabel: "Số ngày còn lại",
+  summaryRemainingValue: "12.5 ngày",
+  summaryUsedLabel: "Phép đã dùng",
+  summaryUsedValue: "2.5 ngày",
+  iconArrowBack: "arrow_back",
+  iconInfo: "info",
+  iconExpandMore: "expand_more",
+  iconCalendarMonth: "calendar_month",
+};
+
 const LeaveRequestPage: React.FC = () => {
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen font-display">
@@ -12,12 +39,12 @@ const LeaveRequestPage: React.FC = () => {
           className="text-foreground dark:text-slate-100 p-2 hover:bg-slate-100 dark:hover:bg-primary/20 rounded-full transition-colors"
         >
           <span className="material-symbols-outlined align-middle">
-            arrow_back
+            {TEXT.iconArrowBack}
           </span>
         </Link>
 
         <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold text-foreground dark:text-slate-100">
-          Tạo đơn nghỉ phép
+          {TEXT.title}
         </h1>
       </div>
 
@@ -26,37 +53,37 @@ const LeaveRequestPage: React.FC = () => {
         {/* Main Form Card */}
         <div className="bg-surface dark:bg-slate-900/50 rounded-lg border border-border-color dark:border-primary/10 p-6 shadow-sm">
           <h2 className="text-2xl font-bold text-foreground dark:text-slate-100 mb-6">
-            Thông tin nghỉ phép
+            {TEXT.sectionInfo}
           </h2>
 
           <form className="space-y-4">
 
             {/* Leave Type */}
             <FormSelect
-              label="Loại phép"
+              label={TEXT.labelType}
               options={[
-                { value: "", label: "Chọn loại phép" },
-                { value: "annual", label: "Nghỉ phép năm" },
-                { value: "sick", label: "Nghỉ ốm" },
-                { value: "unpaid", label: "Nghỉ không lương" },
-                { value: "personal", label: "Việc riêng" },
+                { value: "", label: TEXT.optSelect },
+                { value: "annual", label: TEXT.optAnnual },
+                { value: "sick", label: TEXT.optSick },
+                { value: "unpaid", label: TEXT.optUnpaid },
+                { value: "personal", label: TEXT.optPersonal },
               ]}
             />
 
             {/* Start Date */}
-            <FormDate label="Ngày bắt đầu" />
+            <FormDate label={TEXT.labelStart} />
 
             {/* End Date */}
-            <FormDate label="Ngày kết thúc" />
+            <FormDate label={TEXT.labelEnd} />
 
             {/* Reason */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-foreground dark:text-slate-200">
-                Lý do nghỉ
+                {TEXT.labelReason}
               </label>
               <textarea
                 rows={4}
-                placeholder="Nhập lý do chi tiết..."
+                placeholder={TEXT.placeholderReason}
                 className="w-full p-3 bg-surface dark:bg-slate-800 border border-border-color dark:border-slate-700 rounded-md text-foreground dark:text-slate-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none"
               />
             </div>
@@ -65,10 +92,10 @@ const LeaveRequestPage: React.FC = () => {
             <div className="p-3 bg-primary/5 dark:bg-primary/10 rounded-md border border-primary/10">
               <div className="flex gap-2">
                 <span className="material-symbols-outlined text-primary text-sm">
-                  info
+                  {TEXT.iconInfo}
                 </span>
                 <p className="text-xs text-muted-foreground dark:text-slate-400">
-                  Đơn xin nghỉ phép sẽ được gửi đến quản lý trực tiếp của bạn để phê duyệt.
+                  {TEXT.infoNote}
                 </p>
               </div>
             </div>
@@ -79,32 +106,32 @@ const LeaveRequestPage: React.FC = () => {
         {/* Action Buttons */}
         <div className="mt-8 flex flex-col gap-3">
           <button className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-md shadow-md shadow-primary/20 transition-all active:scale-[0.98]">
-            Gửi đơn
+            {TEXT.btnSubmit}
           </button>
 
           <button className="w-full h-12 bg-transparent border border-border-color dark:border-slate-700 text-foreground dark:text-slate-200 font-medium rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-            Hủy bỏ
+            {TEXT.btnCancel}
           </button>
         </div>
 
         {/* Summary Card */}
         <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-dashed border-border-color dark:border-slate-700">
           <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-            Tóm tắt quỹ phép
+            {TEXT.summaryTitle}
           </h3>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-muted-foreground">Số ngày còn lại</p>
+              <p className="text-xs text-muted-foreground">{TEXT.summaryRemainingLabel}</p>
               <p className="text-lg font-bold text-foreground dark:text-slate-100">
-                12.5 ngày
+                {TEXT.summaryRemainingValue}
               </p>
             </div>
 
             <div>
-              <p className="text-xs text-muted-foreground">Phép đã dùng</p>
+              <p className="text-xs text-muted-foreground">{TEXT.summaryUsedLabel}</p>
               <p className="text-lg font-bold text-foreground dark:text-slate-100">
-                2.5 ngày
+                {TEXT.summaryUsedValue}
               </p>
             </div>
           </div>
@@ -145,7 +172,7 @@ const FormSelect: React.FC<{
       </select>
       <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted-foreground">
         <span className="material-symbols-outlined text-sm">
-          expand_more
+          {TEXT.iconExpandMore}
         </span>
       </div>
     </div>
@@ -164,7 +191,7 @@ const FormDate: React.FC<{ label: string }> = ({ label }) => (
       />
       <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted-foreground">
         <span className="material-symbols-outlined text-sm">
-          calendar_month
+          {TEXT.iconCalendarMonth}
         </span>
       </div>
     </div>

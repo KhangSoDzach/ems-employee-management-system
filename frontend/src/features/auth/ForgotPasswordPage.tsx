@@ -15,6 +15,24 @@ import {
     CardTitle
 } from "@/components/ui/card";
 
+const TEXT = {
+    titleForgot: "Quên mật khẩu?",
+    titleOtp: "Xác thực OTP",
+    descForgot: "Nhập email để nhận mã xác thực.",
+    descOtpPrefix: "Đã gửi mã 6 số đến ",
+    labelEmail: "Email công ty",
+    btnSendMail: "Gửi mã xác thực",
+    btnSending: "Đang gửi...",
+    btnVerify: "Xác nhận",
+    btnVerifying: "Đang xác thực...",
+    labelOtp: "Mã OTP",
+    otpValidSuffix: "Mã hết hạn sau ",
+    otpExpired: "Mã đã hết hạn",
+    btnResend: "Gửi lại mã mới",
+    linkBackLogin: "Quay lại đăng nhập",
+    btnBackEmail: "Nhập lại Email"
+}
+
 const emailSchema = z.object({
     email: z.string().email("Địa chỉ email không hợp lệ"),
 });
@@ -127,13 +145,13 @@ export const ForgotPasswordPage = () => {
                     </div>
 
                     <CardTitle className="text-2xl font-bold">
-                        {step === 1 ? "Quên mật khẩu?" : "Xác thực OTP"}
+                        {step === 1 ? TEXT.titleForgot : TEXT.titleOtp}
                     </CardTitle>
 
                     <CardDescription>
                         {step === 1
-                            ? "Nhập email để nhận mã xác thực."
-                            : <>Đã gửi mã 6 số đến <span className="font-semibold text-foreground">{savedEmail}</span></>}
+                            ? TEXT.descForgot
+                            : <>{TEXT.descOtpPrefix}<span className="font-semibold text-foreground">{savedEmail}</span></>}
                     </CardDescription>
                 </CardHeader>
 
@@ -142,7 +160,7 @@ export const ForgotPasswordPage = () => {
                     {step === 1 ? (
                         <form onSubmit={handleSubmitEmail(onSendCode)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email công ty</Label>
+                                <Label htmlFor="email">{TEXT.labelEmail}</Label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                                     <Input
@@ -164,13 +182,13 @@ export const ForgotPasswordPage = () => {
                                 size="lg"
                                 disabled={isEmailSubmitting}
                             >
-                                {isEmailSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang gửi...</> : "Gửi mã xác thực"}
+                                {isEmailSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {TEXT.btnSending}</> : TEXT.btnSendMail}
                             </Button>
                         </form>
                     ) : (
                         <form onSubmit={handleSubmitOtp(onVerifyCode)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="space-y-2">
-                                <Label htmlFor="otp" className="sr-only">Mã OTP</Label>
+                                <Label htmlFor="otp" className="sr-only">{TEXT.labelOtp}</Label>
                                 <Input
                                     id="otp"
                                     type="text"
@@ -191,13 +209,13 @@ export const ForgotPasswordPage = () => {
                             </div>
 
                             <Button className="w-full font-bold" size="lg" disabled={isOtpSubmitting}>
-                                {isOtpSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang xác thực...</> : "Xác nhận"}
+                                {isOtpSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {TEXT.btnVerifying}</> : TEXT.btnVerify}
                             </Button>
 
                             <div className="flex flex-col items-center gap-2">
                                 <p className={`text-xs text-center flex items-center gap-1 ${timeLeft === 0 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
                                     <Timer className="w-3 h-3" />
-                                    {timeLeft > 0 ? `Mã hết hạn sau ${formatTime(timeLeft)}` : "Mã đã hết hạn"}
+                                    {timeLeft > 0 ? `${TEXT.otpValidSuffix}${formatTime(timeLeft)}` : TEXT.otpExpired}
                                 </p>
 
                                 <button
@@ -206,7 +224,7 @@ export const ForgotPasswordPage = () => {
                                     disabled={timeLeft > 0}
                                     className={`text-sm font-medium transition-colors ${timeLeft > 0 ? "text-muted-foreground cursor-not-allowed opacity-50" : "text-primary hover:underline cursor-pointer"}`}
                                 >
-                                    Gửi lại mã mới
+                                    {TEXT.btnResend}
                                 </button>
                             </div>
                         </form>
@@ -216,7 +234,7 @@ export const ForgotPasswordPage = () => {
                         {step === 1 ? (
                             <Link to="/login" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Quay lại đăng nhập
+                                {TEXT.linkBackLogin}
                             </Link>
                         ) : (
                             <button
@@ -225,7 +243,7 @@ export const ForgotPasswordPage = () => {
                                 className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                             >
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Nhập lại Email
+                                {TEXT.btnBackEmail}
                             </button>
                         )}
                     </div>

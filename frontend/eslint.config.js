@@ -4,6 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
+import reactPlugin from 'eslint-plugin-react'
 
 export default defineConfig([
   globalIgnores(['dist']),
@@ -15,6 +16,9 @@ export default defineConfig([
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
+    plugins: {
+      react: reactPlugin,
+    },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -24,6 +28,7 @@ export default defineConfig([
         'warn',
         { allowConstantExport: true },
       ],
+      'react/jsx-no-literals': ['warn', { noStrings: true, ignoreProps: true }],
     },
   },
 ])
