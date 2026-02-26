@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    # Dev: dùng Maven build stage (có Maven sẵn) thay vì runtime stage (JRE-only)
+    build:
+      target: build
+    # Dùng sh để tránh lỗi Permission denied do Git trên Windows không giữ execute bit (+x)
+    command: [ "sh", "./mvnw", "spring-boot:run" ]
+    volumes:
+      # Mount source code backend để map sự thay đổi vào container
+      - ./backend/src:/app/src
+      - ./backend/pom.xml:/app/pom.xml
+      - ./backend/mvnw:/app/mvnw
+      - ./backend/.mvn:/app/.mvn
+      # (Tuỳ chọn nhưng RẤT quan trọng) Cache thư mục .m2 để không phải tải lại dependencies mỗi lần restart
+      - maven_cache:/root/.m2
+
+  frontend:
+    # Ở docker-compose.yml gốc đã map các file source,
+    # Chặn node_modules sync lại ra ngoài Window host (cải thiện hiệu năng trên WSL2/Windows)
+    volumes:
+      - /app/node_modules
+
+volumes:
+  maven_cache:
+    driver: local
