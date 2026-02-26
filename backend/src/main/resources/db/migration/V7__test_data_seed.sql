@@ -19,13 +19,13 @@ INSERT IGNORE INTO users (username, email, password, enabled,
     failed_login_attempts, created_at, updated_at, is_deleted, version)
 VALUES
 ('manager1',  'manager1@ems.company.com',
- '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+ '$2a$10$CMma736Zxup0lwfPCPvsQOxzrZR6xqm30KDgn1fdMwIbBskcsjYum',
  TRUE, TRUE, TRUE, TRUE, 0, NOW(), NOW(), FALSE, 0),
 ('employee1', 'employee1@ems.company.com',
- '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+ '$2a$10$CMma736Zxup0lwfPCPvsQOxzrZR6xqm30KDgn1fdMwIbBskcsjYum',
  TRUE, TRUE, TRUE, TRUE, 0, NOW(), NOW(), FALSE, 0),
 ('employee2', 'employee2@ems.company.com',
- '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+ '$2a$10$CMma736Zxup0lwfPCPvsQOxzrZR6xqm30KDgn1fdMwIbBskcsjYum',
  TRUE, TRUE, TRUE, TRUE, 0, NOW(), NOW(), FALSE, 0);
 
 -- 4. ROLES

@@ -60,12 +60,13 @@ export const LoginPage = () => {
         },
     });
 
-    // Redirect if already logged in
+    // Redirect nếu đã đăng nhập và không đang trong quá trình submit
+    // Thêm !isSubmitting để tránh trường hợp này chạy đè lên lúc đang hiện thị lỗi
     useEffect(() => {
-        if (isAuthenticated) {
+        if (isAuthenticated && !isSubmitting) {
             navigate("/dashboard", { replace: true });
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, isSubmitting]);
 
     useEffect(() => {
         const savedEmail = localStorage.getItem("rememberedEmail");
@@ -87,6 +88,12 @@ export const LoginPage = () => {
 
             navigate("/dashboard", { replace: true });
         } catch (error: any) {
+            // Lấy message lỗi trước tiên từ body response của backend (ví dụ: "Invalid username or password")
+            const serverMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                "Email hoặc mật khẩu không chính xác";
+
             console.error("Login error:", error);
             setError("root", {
                 message: error.response?.data?.message || TEXT.errDefault,

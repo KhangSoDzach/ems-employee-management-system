@@ -12,12 +12,12 @@ import CheckinPage from "./features/employee/CheckinPage";
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          {/* <Route element={<ProtectedRoute />}> */}
-          <Route path="/dashboard" element={<Dashboard />} />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        {/* <Route element={<ProtectedRoute />}> */}
+          <Route path="/admin" element={<Dashboard />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/employee" element={<EmployeeDashboard />} />
           <Route path="/request" element={<LeaveRequestPage />} />

@@ -1,4 +1,9 @@
 import React, { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { differenceInYears } from "date-fns"
+
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -25,6 +30,42 @@ const TEXT = {
   emp1Name: "Nguyễn Văn An",
   emp1Status: "Hoạt động",
 }
+/* ====================== */
+/* ====== SCHEMA ======== */
+/* ====================== */
+
+const employeeSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, "Họ tên phải có ít nhất 2 ký tự")
+    .max(255, "Họ tên không quá 255 ký tự"),
+
+  nationalId: z
+    .string()
+    .regex(/^(\d{9}|\d{12})$/, "CMND/CCCD phải là 9 hoặc 12 số"),
+
+  companyEmail: z
+    .string()
+    .email("Email không hợp lệ"),
+
+  phoneNumber: z
+    .string()
+    .regex(/^\d{10,13}$/, "Số điện thoại phải từ 10-13 số"),
+
+  dateOfBirth: z
+    .string()
+    .refine(
+      (date) =>
+        differenceInYears(new Date(), new Date(date)) >= 18,
+      "Nhân viên phải từ 18 tuổi trở lên"
+    ),
+})
+
+type EmployeeFormValues = z.infer<typeof employeeSchema>
+
+/* ====================== */
+/* ====== CARD ========== */
+/* ====================== */
 
 interface EmployeeCardProps {
   name: string
@@ -81,8 +122,24 @@ function EmployeeCard({
   )
 }
 
+/* ====================== */
+/* ====== PAGE ========== */
+/* ====================== */
+
 export default function Page() {
   const [open, setOpen] = useState(false)
+
+  const form = useForm<EmployeeFormValues>({
+    resolver: zodResolver(employeeSchema),
+    mode: "onChange",
+  })
+
+  function onSubmit(data: EmployeeFormValues) {
+    console.log("Employee created:", data)
+    alert("Tạo nhân viên thành công!")
+    setOpen(false)
+    form.reset()
+  }
 
   return (
     <SidebarProvider>
@@ -115,7 +172,7 @@ export default function Page() {
               statusColor="bg-green-100 text-green-600"
               id="123456789012"
               email="an.nguyen@company.vn"
-              phone="0912 345 678"
+              phone="0912345678"
             />
           </div>
 
@@ -263,6 +320,11 @@ export default function Page() {
             </div>
           )}
 
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </SidebarInset>
     </SidebarProvider>

@@ -121,8 +121,8 @@ INSERT INTO users (
 ) VALUES (
     'admin',
     'admin@ems.company.com',
-    -- BCrypt hash of 'admin123' (rounds=10)
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    -- BCrypt hash of 'admin123' (rounds=10) — verified with BCryptPasswordEncoder
+    '$2a$10$CMma736Zxup0lwfPCPvsQOxzrZR6xqm30KDgn1fdMwIbBskcsjYum',
     TRUE,
     TRUE,
     TRUE,

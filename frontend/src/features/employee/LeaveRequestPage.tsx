@@ -1,5 +1,35 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+
+import { AppSidebar } from "@/components/app-sidebar"
+import { SiteHeader } from "@/components/site-header"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+
+/* ================= SCHEMA ================= */
+
+const leaveSchema = z
+  .object({
+    leaveType: z.string().min(1, "Vui lòng chọn loại phép"),
+    startDate: z.string().min(1, "Vui lòng chọn ngày bắt đầu"),
+    endDate: z.string().min(1, "Vui lòng chọn ngày kết thúc"),
+    reason: z.string().min(5, "Lý do tối thiểu 5 ký tự"),
+  })
+  .refine(
+    (data) => {
+      if (!data.startDate || !data.endDate) return true
+      return new Date(data.endDate) >= new Date(data.startDate)
+    },
+    {
+      message: "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu",
+      path: ["endDate"],
+    }
+  )
+
+type LeaveFormValues = z.infer<typeof leaveSchema>
+
+/* ================= PAGE ================= */
 
 const TEXT = {
   title: "Tạo đơn nghỉ phép",
@@ -29,6 +59,23 @@ const TEXT = {
 };
 
 const LeaveRequestPage: React.FC = () => {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors, isValid },
+  } = useForm<LeaveFormValues>({
+    resolver: zodResolver(leaveSchema),
+    mode: "onChange",
+  })
+
+  const onSubmit = (data: LeaveFormValues) => {
+    console.log(data)
+    alert("Gửi đơn thành công!")
+    reset()
+  }
+
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen font-display">
 
@@ -134,6 +181,7 @@ const LeaveRequestPage: React.FC = () => {
                 {TEXT.summaryUsedValue}
               </p>
             </div>
+
           </div>
         </div>
 
