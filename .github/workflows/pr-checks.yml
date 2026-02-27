@@ -32,32 +32,4 @@ jobs:
             chore
           requireScope: false
 
-  # ─────────────────────────────────────────
-  # Advisory only — warns but never blocks.
-  # (conflict detection is handled by GitHub itself)
-  # ─────────────────────────────────────────
-  pr-size-check:
-    name: PR Size Advisory
-    runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Report PR size
-        run: |
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
-          CHANGED_LINES=$(git diff --stat origin/${{ github.base_ref }}...HEAD | tail -1 | awk '{print $4+$6}')
-
-          echo "Changed files : $CHANGED_FILES"
-          echo "Changed lines : $CHANGED_LINES"
-
-          if [ "$CHANGED_FILES" -gt 50 ]; then
-            echo "⚠️  >50 files changed — consider splitting into smaller PRs."
-          fi
-          if [ "$CHANGED_LINES" -gt 1000 ]; then
-            echo "⚠️  >1000 lines changed — consider splitting into smaller PRs."
-          fi
-          exit 0  # advisory only, never blocks
