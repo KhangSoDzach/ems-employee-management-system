@@ -25,38 +25,54 @@ const data = {
 export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" }) {
   const location = useLocation()
 
-  const navMain = role === "admin" ? [
-    {
-      title: "Quản lý tài khoản",
-      url: "#",
-      items: [
+ const navMain =
+  role === "admin"
+    ? [
         {
-          title: "Quản lý nhân viên",
-          url: "/admin",
+          title: "Quản lý tài khoản",
+          url: "#",
+          items: [
+            {
+              title: "Quản lý nhân viên",
+              url: "/admin",
+            },
+          ],
         },
-
-      ],
-    },
-  ] : [
-    {
-      title: "Thông tin cá nhân",
-      url: "#",
-      items: [
+      ]
+    : role === "manager"
+    ? [
         {
-          title: "Hồ sơ của tôi",
-          url: "/employee",
+          title: "Quản lý đội nhóm",
+          url: "#",
+          items: [
+            
+            {
+              title: "Duyệt đơn nghỉ phép",
+              url: "/approve",
+            },
+          ],
         },
+      ]
+    : [
         {
-          title: "Chấm công",
-          url: "/checkin",
+          title: "Thông tin cá nhân",
+          url: "#",
+          items: [
+            {
+              title: "Hồ sơ của tôi",
+              url: "/employee",
+            },
+            {
+              title: "Chấm công",
+              url: "/checkin",
+            },
+            {
+              title: "Tạo đơn nghỉ phép",
+              url: "/request",
+            },
+          ],
         },
-        {
-          title: "Tạo đơn nghỉ phép",
-          url: "/request",
-        },
-      ],
-    }
-  ];
+      ];
   return (
     <Sidebar {...props}>
       <SidebarHeader>
