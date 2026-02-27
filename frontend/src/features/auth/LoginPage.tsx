@@ -64,9 +64,10 @@ export const LoginPage = () => {
     // Thêm !isSubmitting để tránh trường hợp này chạy đè lên lúc đang hiện thị lỗi
     useEffect(() => {
         if (isAuthenticated && !isSubmitting) {
-            navigate("/dashboard", { replace: true });
+            navigate("/admin", { replace: true });
         }
-    }, [isAuthenticated, navigate, isSubmitting]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, isSubmitting, navigate]);
 
     useEffect(() => {
         const savedEmail = localStorage.getItem("rememberedEmail");
@@ -86,7 +87,7 @@ export const LoginPage = () => {
                 localStorage.removeItem("rememberedEmail");
             }
 
-            navigate("/dashboard", { replace: true });
+            navigate("/admin", { replace: true });
         } catch (error: unknown) {
             const err = error as { response?: { data?: { message?: string } } };
             console.error("Login error:", error);
@@ -190,6 +191,13 @@ export const LoginPage = () => {
                                     {TEXT.labelRemember}
                                 </Label>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => navigate("/forgot-password")}
+                                className="text-sm text-primary hover:underline font-medium"
+                            >
+                                Quên mật khẩu?
+                            </button>
                         </div>
 
                         {errors.root && (
