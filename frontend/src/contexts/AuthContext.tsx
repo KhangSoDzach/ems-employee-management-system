@@ -25,7 +25,7 @@ interface AuthContextType {
     user: UserInfo | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (username: string, password: string) => Promise<void>;
+    login: (username: string, password: string) => Promise<UserInfo>;
     logout: () => Promise<void>;
 }
 
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      * Throws on failure so callers can handle the error message.
      */
     const login = useCallback(
-        async (username: string, password: string): Promise<void> => {
+        async (username: string, password: string): Promise<UserInfo> => {
             // BE response (already unwrapped by interceptor): { status, message, data: AuthResponse }
             const res = await api.post("/auth/login", { username, password }) as unknown as ApiResponse<{ accessToken: string; refreshToken: string }>;
             const { accessToken, refreshToken } = res.data;
@@ -83,7 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.setItem("refresh_token", refreshToken);
 
             const userInfo = await fetchCurrentUser();
+            if (!userInfo) throw new Error("Failed to fetch user info after login");
             setUser(userInfo);
+            return userInfo;
         },
         [fetchCurrentUser]
     );
