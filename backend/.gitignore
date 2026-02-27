@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### agent skill ###
+/system-prompts-and-models-of-ai-tools/
+
+.env
