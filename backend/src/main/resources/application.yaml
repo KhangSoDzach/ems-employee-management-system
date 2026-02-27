@@ -1,12 +1,28 @@
 spring:
   application:
     name: ems-backend
-  
+
+  # Mail / SMTP Configuration (for Forgot Password OTP)
+  mail:
+    host: ${MAIL_HOST:smtp.mailtrap.io}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 3000
+      mail.smtp.writetimeout: 5000
   # Database Configuration
+  # Hybrid dev: DB chạy trong Docker (port 3306 publish ra host), BE/FE chạy trên host.
+  # Default credentials khớp với docker-compose.yml (MYSQL_ROOT_PASSWORD=root123).
+  # Override bằng env vars khi deploy.
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    password: ${SPRING_DATASOURCE_PASSWORD:root123}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
@@ -146,3 +162,8 @@ app:
   file:
     upload-dir: uploads/
     max-size: 10485760  # 10MB in bytes
+  mail:
+    from: ${MAIL_FROM:no-reply@ems.company.com}
+  password-reset:
+    otp-expiry-minutes: 5      # Must match frontend countdown timer (5 minutes)
+    resend-cooldown-seconds: 60

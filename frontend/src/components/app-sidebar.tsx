@@ -1,6 +1,6 @@
 import * as React from "react"
-import { useLocation } from "react-router-dom"
-import { LogOut } from "lucide-react"
+import { useLocation, useNavigate } from "react-router-dom"
+import { LogOut, Loader2 } from "lucide-react"
 
 import { VersionSwitcher } from "@/components/version-switcher"
 import {
@@ -16,6 +16,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/contexts/AuthContext"
 
 // This is sample data.
 const data = {
@@ -24,6 +25,20 @@ const data = {
 
 export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" }) {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      navigate("/login", { replace: true })
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
  const navMain =
   role === "admin"
@@ -104,11 +119,17 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="text-red-600 hover:text-red-700 hover:bg-red-50 font-medium">
-              <button>
+            <SidebarMenuButton
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 font-medium disabled:opacity-60"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <Loader2 className="animate-spin" />
+              ) : (
                 <LogOut />
-                <span>{"Đăng xuất"}</span>
-              </button>
+              )}
+              <span>{isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
