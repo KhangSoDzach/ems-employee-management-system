@@ -5,6 +5,9 @@ import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import EmployeeDashboard from "./features/employee/EmployeeDashboard";
 import LeaveRequestPage from "./features/employee/LeaveRequestPage";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import CheckinPage from "./features/employee/CheckinPage";
+import { Toaster } from "@/components/ui/sonner";
 import CheckinPage from "./features/employee/CheckinPage";
 import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
@@ -36,6 +39,7 @@ function App() {
           {/* </Route> */}
         </Routes>
       </BrowserRouter>
+      <Toaster richColors position="top-right" />
     </AuthProvider>
   );
 }
