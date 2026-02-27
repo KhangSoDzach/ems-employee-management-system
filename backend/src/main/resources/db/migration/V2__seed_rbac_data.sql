@@ -120,7 +120,7 @@ INSERT INTO users (
     version
 ) VALUES (
     'admin',
-    'admin@ems.company.com',
+    'aex31625@gmail.com',
     -- BCrypt hash of 'admin123' (rounds=10) — verified with BCryptPasswordEncoder
     '$2a$10$CMma736Zxup0lwfPCPvsQOxzrZR6xqm30KDgn1fdMwIbBskcsjYum',
     TRUE,

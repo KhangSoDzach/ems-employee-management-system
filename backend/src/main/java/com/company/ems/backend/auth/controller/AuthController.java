@@ -6,9 +6,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import com.company.ems.backend.auth.dto.AuthResponse;
+import com.company.ems.backend.auth.dto.ForgotPasswordRequest;
 import com.company.ems.backend.auth.dto.LoginRequest;
 import com.company.ems.backend.auth.dto.RefreshTokenRequest;
+import com.company.ems.backend.auth.dto.ResetPasswordRequest;
 import com.company.ems.backend.auth.service.AuthenticationService;
+import com.company.ems.backend.auth.service.PasswordResetService;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.user.entity.User;
 
@@ -30,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
         private final AuthenticationService authenticationService;
+        private final PasswordResetService passwordResetService;
 
         /**
          * User login endpoint
@@ -110,6 +114,46 @@ public class AuthController {
 
                 return ResponseEntity.ok(
                                 ApiResponse.success("Logged out from all devices", null));
+        }
+
+        /**
+         * Initiate password reset – send 6-digit OTP to user's email.
+         * POST /api/v1/auth/forgot-password
+         *
+         * Always returns 200 regardless of whether the email exists (anti-enumeration).
+         *
+         * @param request contains the user's email address
+         * @return generic success message
+         */
+        @PostMapping("/forgot-password")
+        @Operation(summary = "Forgot password – request OTP", description = "Sends a 6-digit OTP to the given email. Always returns 200 to prevent email enumeration.")
+        public ResponseEntity<ApiResponse<Void>> forgotPassword(
+                        @Valid @RequestBody ForgotPasswordRequest request) {
+
+                passwordResetService.initiatePasswordReset(request.getEmail());
+
+                return ResponseEntity.ok(
+                                ApiResponse.success("Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.", null));
+        }
+
+        /**
+         * Verifies the OTP and sets the new password atomically.
+         *
+         * @param request contains email, 6-digit OTP, and new password
+         * @return success message
+         */
+        @PostMapping("/reset-password")
+        @Operation(summary = "Reset password with OTP", description = "Verifies the OTP received by email and resets the password in one call. OTP is valid for 5 minutes.")
+        public ResponseEntity<ApiResponse<Void>> resetPassword(
+                        @Valid @RequestBody ResetPasswordRequest request) {
+
+                passwordResetService.resetPassword(
+                                request.getEmail(),
+                                request.getOtp(),
+                                request.getNewPassword());
+
+                return ResponseEntity.ok(
+                                ApiResponse.success("Mật khẩu đã được đặt lại thành công.", null));
         }
 
         /**
