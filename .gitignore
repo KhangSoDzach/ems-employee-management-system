@@ -15,3 +15,4 @@ backend/run_debug.log
 DOCKER.md
 DOCKER_SETUP_COMPLETE.md
 CI_SETUP_COMPLETE.md
+/node_modules
