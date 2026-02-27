@@ -1,4 +1,6 @@
-import { Play, Coffee, CalendarClock, Plane } from "lucide-react"
+import { Play, Square, Coffee, CalendarClock, Plane } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,7 +18,10 @@ const TEXT = {
     statusUnchecked: "Chưa điểm danh",
     currentTime: "08:30:45 AM",
     greeting: "Chào buổi sáng! Hãy bắt đầu ngày làm việc đầy năng lượng.",
+    greetingCheckedIn: "Bạn đang trong ca làm việc. Chúc một ngày làm việc hiệu quả!",
+    greetingCheckedOut: "Bạn đã kết thúc ca làm việc hôm nay. Nghỉ ngơi tốt nhé!",
     btnCheckIn: "Check In Ngay",
+    btnCheckOut: "Check Out",
     btnReport: "Báo cáo sự cố",
     weeklyExtraHours: "+2.5h",
     weeklyHoursLabel: "Tổng giờ làm tuần này",
@@ -75,6 +80,54 @@ const historyData = [
 ]
 
 export default function CheckinPage() {
+    const navigate = useNavigate();
+    const [status, setStatus] = useState<"unchecked" | "checked_in" | "checked_out">(() => {
+        return (localStorage.getItem("emp_status") as "unchecked" | "checked_in" | "checked_out") || "unchecked";
+    });
+
+    const [checkInTime, setCheckInTime] = useState<string | null>(() => {
+        return localStorage.getItem("emp_checkin_time");
+    });
+
+    const [checkOutTime, setCheckOutTime] = useState<string | null>(() => {
+        return localStorage.getItem("emp_checkout_time");
+    });
+
+    const [currentTime, setCurrentTime] = useState<string>("");
+
+    // Cập nhật đồng hồ mỗi giây
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const now = new Date();
+            setCurrentTime(now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        }, 1000);
+
+        // Gán thời gian ban đầu để không bị chớp màn hình
+        setCurrentTime(new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+
+        return () => clearInterval(timer);
+    }, []);
+
+    const handleCheckIn = () => {
+        const nowStr = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' });
+        setStatus("checked_in");
+        setCheckInTime(nowStr);
+
+        localStorage.setItem("emp_status", "checked_in");
+        localStorage.setItem("emp_checkin_time", nowStr);
+        localStorage.removeItem("emp_checkout_time");
+        setCheckOutTime(null);
+    };
+
+    const handleCheckOut = () => {
+        const nowStr = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' });
+        setStatus("checked_out");
+        setCheckOutTime(nowStr);
+
+        localStorage.setItem("emp_status", "checked_out");
+        localStorage.setItem("emp_checkout_time", nowStr);
+    };
+
     return (
         <SidebarProvider>
             <AppSidebar role="employee" variant="inset" />
@@ -99,17 +152,53 @@ export default function CheckinPage() {
                     <Card className="border-border shadow-sm bg-linear-to-br from-primary/5 to-background overflow-hidden relative">
                         <CardContent className="p-8 flex items-center justify-between">
                             <div className="z-10 flex flex-col items-start gap-4">
-                                <Badge variant="outline" className="text-destructive border-destructive/20 bg-destructive/10 font-medium px-3 py-1">
-                                    {TEXT.statusUnchecked}
-                                </Badge>
-                                <h1 className="text-5xl font-extrabold text-foreground">{TEXT.currentTime}</h1>
-                                <p className="text-muted-foreground text-lg">{TEXT.greeting}</p>
+                                {status === "unchecked" && (
+                                    <Badge variant="outline" className="text-destructive border-destructive/20 bg-destructive/10 font-medium px-3 py-1">
+                                        {TEXT.statusUnchecked}
+                                    </Badge>
+                                )}
+                                {status === "checked_in" && (
+                                    <Badge variant="outline" className="text-primary border-primary/20 bg-primary/10 font-medium px-3 py-1">
+                                        Đang làm việc (Vào lúc {checkInTime})
+                                    </Badge>
+                                )}
+                                {status === "checked_out" && (
+                                    <Badge variant="outline" className="text-muted-foreground border-border bg-muted font-medium px-3 py-1">
+                                        Đã Check-out (Vào: {checkInTime} - Ra: {checkOutTime})
+                                    </Badge>
+                                )}
+
+                                <h1 className="text-5xl font-extrabold text-foreground">{currentTime}</h1>
+
+                                <p className="text-muted-foreground text-lg">
+                                    {status === "unchecked" && TEXT.greeting}
+                                    {status === "checked_in" && TEXT.greetingCheckedIn}
+                                    {status === "checked_out" && TEXT.greetingCheckedOut}
+                                </p>
 
                                 <div className="flex gap-4 mt-2">
-                                    <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2">
-                                        <Play className="fill-current w-5 h-5" />
-                                        {TEXT.btnCheckIn}
-                                    </Button>
+                                    {(status === "unchecked" || status === "checked_out") && (
+                                        <Button
+                                            onClick={handleCheckIn}
+                                            size="lg"
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2"
+                                        >
+                                            <Play className="fill-current w-5 h-5" />
+                                            {TEXT.btnCheckIn}
+                                        </Button>
+                                    )}
+
+                                    {status === "checked_in" && (
+                                        <Button
+                                            onClick={handleCheckOut}
+                                            size="lg"
+                                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2"
+                                        >
+                                            <Square className="fill-current w-5 h-5" />
+                                            {TEXT.btnCheckOut}
+                                        </Button>
+                                    )}
+
                                     <Button size="lg" variant="outline" className="bg-background hover:bg-muted text-foreground rounded-xl px-8 h-12 font-medium flex items-center gap-2">
                                         <Coffee className="w-5 h-5 text-muted-foreground" />
                                         {TEXT.btnReport}
@@ -196,7 +285,7 @@ export default function CheckinPage() {
                         <CardContent className="p-6">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-lg text-foreground">{TEXT.historyTitle}</h3>
-                                <Button variant="ghost" className="text-muted-foreground text-sm hover:text-foreground group">
+                                <Button variant="ghost" onClick={() => navigate("/attendance")} className="text-muted-foreground text-sm hover:text-foreground group">
                                     {TEXT.viewAllPrompt} <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
                                 </Button>
                             </div>
