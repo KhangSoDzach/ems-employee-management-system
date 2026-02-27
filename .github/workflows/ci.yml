@@ -63,14 +63,6 @@ jobs:
           path: backend/target/surefire-reports/
           retention-days: 7
 
-      - name: Upload JAR
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-jar
-          path: backend/target/*.jar
-          retention-days: 3
-
   # ─────────────────────────────────────────
   # 2. Frontend — lint + type-check + build
   # ─────────────────────────────────────────
@@ -105,22 +97,14 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      - name: Upload dist
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist/
-          retention-days: 3
-
-  # 3. Docker build validation (Sprint 2+)
-  #    Runs after both jobs pass so we don't burn
-  #    image build minutes on broken code.
+  # 3. Docker build validation — only on merges to main
+  #    (avoids burning image-build minutes on every PR)
 
   docker-build:
     name: Docker Build Validation
     runs-on: ubuntu-latest
     needs: [ backend-ci, frontend-ci ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout
