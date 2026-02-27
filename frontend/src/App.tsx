@@ -7,27 +7,27 @@ import LeaveRequestPage from "./features/employee/LeaveRequestPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 import CheckinPage from "./features/employee/CheckinPage";
-import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          {/* <Route element={<ProtectedRoute />}> */}
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        {/* <Route element={<ProtectedRoute />}> */}
           <Route path="/admin" element={<Dashboard />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/employee" element={<EmployeeDashboard />} />
           <Route path="/request" element={<LeaveRequestPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
-          <Route path="/approve" element={<ApproveLeaveRequest />} />
+
           {/* </Route> */}
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
 }
+
 
 export default App;
