@@ -3,10 +3,13 @@ spring:
     name: ems-backend
   
   # Database Configuration
+  # Hybrid dev: DB chạy trong Docker (port 3306 publish ra host), BE/FE chạy trên host.
+  # Default credentials khớp với docker-compose.yml (MYSQL_ROOT_PASSWORD=root123).
+  # Override bằng env vars khi deploy.
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    password: ${SPRING_DATASOURCE_PASSWORD:root123}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
