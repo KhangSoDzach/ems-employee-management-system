@@ -19,23 +19,26 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
-          {/* <Route element={<ProtectedRoute />}> */}
-          <Route path="/admin" element={<Dashboard />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Protected: must be logged in */}
-          {/* <Route element={<ProtectedRoute />}> */}
+          <Route element={<ProtectedRoute />}>
+            {/* Admin only */}
+            <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route path="/admin" element={<Dashboard />} />
+            </Route>
 
-          {/* Admin only */}
-          <Route path="/admin" element={<Dashboard />} />
+            {/* Employee only (common routes) */}
+            <Route path="/employee" element={<EmployeeDashboard />} />
+            <Route path="/request" element={<LeaveRequestPage />} />
+            <Route path="/checkin" element={<CheckinPage />} />
+            <Route path="/attendance" element={<AttendanceHistoryPage />} />
 
-          {/* Employee only */}
-          <Route path="/employee" element={<EmployeeDashboard />} />
-          <Route path="/request" element={<LeaveRequestPage />} />
-          <Route path="/checkin" element={<CheckinPage />} />
-          <Route path="/approve" element={<ApproveLeaveRequest />} />
-          <Route path="/attendance" element={<AttendanceHistoryPage />} />
-          {/* </Route> */}
+            {/* Manager only */}
+            <Route element={<ProtectedRoute allowedRoles={["MANAGER"]} />}>
+              <Route path="/approve" element={<ApproveLeaveRequest />} />
+            </Route>
+          </Route>
         </Routes>
       </BrowserRouter>
       <Toaster richColors position="top-right" />

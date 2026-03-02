@@ -42,6 +42,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-emsuser}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-emspass123}
+      # Disable mail health indicator in Actuator to avoid failing overall health
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       JWT_SECRET: ${JWT_SECRET:-changeme-secret-key-for-development-only-minimum-256-bits-required-please-use-env-variable}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-changeme-refresh-secret-key-for-development-only-use-env-variable-in-production}
     ports:

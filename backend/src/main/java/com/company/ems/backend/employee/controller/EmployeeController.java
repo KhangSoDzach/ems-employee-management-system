@@ -57,7 +57,6 @@ public class EmployeeController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search) {
         PageResponse<EmployeeResponse> response = employeeService.getAllEmplyees(page, size, department, position, status, search);
-        // TODO: Implement service layer
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
