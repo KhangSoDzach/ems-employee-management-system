@@ -33,8 +33,9 @@ function App() {
           <Route path="/employee" element={<EmployeeDashboard />} />
           <Route path="/request" element={<LeaveRequestPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
-          <Route path="/approve" element={<ApproveLeaveRequest />} />
           <Route path="/attendance" element={<AttendanceHistoryPage />} />
+          {/* Manager only */}
+          <Route path="/approve" element={<ApproveLeaveRequest />} />
           {/* </Route> */}
         </Routes>
       </BrowserRouter>
