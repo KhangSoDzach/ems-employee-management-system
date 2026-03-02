@@ -5,11 +5,12 @@ import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import EmployeeDashboard from "./features/employee/EmployeeDashboard";
 import LeaveRequestPage from "./features/employee/LeaveRequestPage";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+// import { ProtectedRoute } from "@/components/ProtectedRoute";
 import CheckinPage from "./features/employee/CheckinPage";
 import { Toaster } from "@/components/ui/sonner";
 import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
+import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
 // import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/approve" element={<ApproveLeaveRequest />} />
           <Route path="/attendance" element={<AttendanceHistoryPage />} />
+          <Route path="/adjustment-requests" element={<AdjustmentRequestPage />} />
           {/* </Route> */}
         </Routes>
       </BrowserRouter>

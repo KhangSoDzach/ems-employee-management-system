@@ -23,7 +23,7 @@ const data = {
   versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"]
 }
 
-export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" }) {
+export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" | "manager" }) {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout } = useAuth()
@@ -40,9 +40,9 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
     }
   }
 
- const navMain =
-  role === "admin"
-    ? [
+  const navMain =
+    role === "admin"
+      ? [
         {
           title: "Quản lý tài khoản",
           url: "#",
@@ -54,40 +54,44 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
           ],
         },
       ]
-    : role === "manager"
-    ? [
-        {
-          title: "Quản lý đội nhóm",
-          url: "#",
-          items: [
-            
-            {
-              title: "Duyệt đơn nghỉ phép",
-              url: "/approve",
-            },
-          ],
-        },
-      ]
-    : [
-        {
-          title: "Thông tin cá nhân",
-          url: "#",
-          items: [
-            {
-              title: "Hồ sơ của tôi",
-              url: "/employee",
-            },
-            {
-              title: "Chấm công",
-              url: "/checkin",
-            },
-            {
-              title: "Tạo đơn nghỉ phép",
-              url: "/request",
-            },
-          ],
-        },
-      ];
+      : role === "manager"
+        ? [
+          {
+            title: "Quản lý đội nhóm",
+            url: "#",
+            items: [
+
+              {
+                title: "Duyệt đơn nghỉ phép",
+                url: "/approve",
+              },
+            ],
+          },
+        ]
+        : [
+          {
+            title: "Thông tin cá nhân",
+            url: "#",
+            items: [
+              {
+                title: "Hồ sơ của tôi",
+                url: "/employee",
+              },
+              {
+                title: "Chấm công",
+                url: "/checkin",
+              },
+              {
+                title: "Tạo đơn nghỉ phép",
+                url: "/request",
+              },
+              {
+                title: "Điều chỉnh chấm công",
+                url: "/adjustment-requests",
+              },
+            ],
+          },
+        ];
   return (
     <Sidebar {...props}>
       <SidebarHeader>
