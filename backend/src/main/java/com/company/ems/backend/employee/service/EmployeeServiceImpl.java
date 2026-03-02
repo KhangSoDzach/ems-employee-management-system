@@ -1,11 +1,19 @@
 package com.company.ems.backend.employee.service;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.ForbiddenException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
@@ -13,13 +21,6 @@ import com.company.ems.backend.user.enums.DataScope;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -152,6 +153,43 @@ public class EmployeeServiceImpl implements EmployeeService {
         return null;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PublicEmployeeResponse getMyProfile() {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+
+        Employee employee = employeeRepository.findByUserId(principal.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy hồ sơ nhân viên cho tài khoản hiện tại"));
+
+        log.info("User [{}] accessed own profile [employeeId={}]",
+                principal.getUsername(), employee.getId());
+
+        return mapToPublicResponse(employee);
+    }
+
+    private PublicEmployeeResponse mapToPublicResponse(Employee employee) {
+        if (employee == null) return null;
+        return PublicEmployeeResponse.builder()
+                .id(employee.getId())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .email(employee.getEmail())
+                .phone(employee.getPhone())
+                .dateOfBirth(employee.getDateOfBirth())
+                .hireDate(employee.getHireDate())
+                .position(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
+                .department(employee.getDepartment() != null ? employee.getDepartment().getName() : null)
+                .address(employee.getAddress())
+                .city(employee.getCity())
+                .state(employee.getState())
+                .country(employee.getCountry())
+                .status(employee.getStatus() != null ? employee.getStatus().name() : null)
+                .avatarUrl(employee.getAvatarUrl())
+                .createdAt(employee.getCreatedAt())
+                .updatedAt(employee.getUpdatedAt())
+                .build();
+    }
 
     private EmployeeResponse mapToResponse(Employee employee) {
         if (employee == null) return null;

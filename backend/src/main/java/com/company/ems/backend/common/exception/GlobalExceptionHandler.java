@@ -18,13 +18,11 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.company.ems.backend.common.dto.ApiResponse;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-import javax.naming.AuthenticationException;
 
 /**
  * Global exception handler for the application
@@ -34,6 +32,7 @@ import javax.naming.AuthenticationException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
         private static final String FORBIDDEN_MSG = "Bạn không có quyền truy cập chức năng này";
+        private static final String DATA_SCOPE_DENIED_MSG = "Bạn không có quyền truy cập hồ sơ này";
 
         /**
          * ForbiddenException - Ném bởi DataScopeService khi user vượt phạm vi dữ liệu.
@@ -45,7 +44,7 @@ public class GlobalExceptionHandler {
                 log.warn("403 Forbidden [DataScope]: {} - {}", ex.getMessage(), request.getDescription(false));
                 return ResponseEntity
                                 .status(HttpStatus.FORBIDDEN)
-                                .body(ApiResponse.error(FORBIDDEN_MSG));
+                                .body(ApiResponse.error(DATA_SCOPE_DENIED_MSG));
         }
 
         /**

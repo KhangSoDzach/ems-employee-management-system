@@ -30,6 +30,7 @@ function App() {
 
             {/* Employee only (common routes) */}
             <Route path="/employee" element={<EmployeeDashboard />} />
+            <Route path="/profile" element={<EmployeeDashboard />} />
             <Route path="/request" element={<LeaveRequestPage />} />
             <Route path="/checkin" element={<CheckinPage />} />
             <Route path="/attendance" element={<AttendanceHistoryPage />} />
