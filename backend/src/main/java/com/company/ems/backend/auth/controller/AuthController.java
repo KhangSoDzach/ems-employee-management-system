@@ -1,5 +1,6 @@
 package com.company.ems.backend.auth.controller;
 
+import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,10 +20,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-/**
- * REST Controller for authentication operations
- * Handles login, token refresh, and logout
- */
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -31,14 +28,6 @@ public class AuthController {
 
         private final AuthenticationService authenticationService;
 
-        /**
-         * User login endpoint
-         * POST /api/v1/auth/login
-         *
-         * @param request     Login request with username and password
-         * @param httpRequest HTTP request for extracting device info
-         * @return Authentication response with access and refresh tokens
-         */
         @PostMapping("/login")
         @Operation(summary = "User login", description = "Authenticate user and return JWT tokens")
         public ResponseEntity<ApiResponse<AuthResponse>> login(
@@ -52,13 +41,6 @@ public class AuthController {
                                 ApiResponse.success("Login successful", authResponse));
         }
 
-        /**
-         * Refresh access token endpoint
-         * POST /api/v1/auth/refresh
-         *
-         * @param request Refresh token request
-         * @return New access token
-         */
         @PostMapping("/refresh")
         @Operation(summary = "Refresh access token", description = "Get a new access token using refresh token")
         public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
@@ -73,85 +55,57 @@ public class AuthController {
                                 ApiResponse.success("Token refreshed successfully", authResponse));
         }
 
-        /**
-         * Logout endpoint (revoke refresh token)
-         * POST /api/v1/auth/logout
-         *
-         * @param request Refresh token to revoke
-         * @return Success message
-         */
         @PostMapping("/logout")
-        @Operation(summary = "Logout", description = "Revoke refresh token and logout user")
+        @SecurityRequirement(name = "bearer-jwt")
+        @Operation(summary = "Logout")
         public ResponseEntity<ApiResponse<Void>> logout(
-                        @Valid @RequestBody RefreshTokenRequest request) {
+                @Valid @RequestBody RefreshTokenRequest request,
+                HttpServletRequest httpRequest,
+                @AuthenticationPrincipal CustomUserPrincipal principal) {
 
-                authenticationService.logout(request.getRefreshToken());
+                Long  userId   = principal != null ? principal.getUserId()   : null;
+                String username = principal != null ? principal.getUsername() : null;
 
-                return ResponseEntity.ok(
-                                ApiResponse.success("Logout successful", null));
+                authenticationService.logout(
+                        request.getRefreshToken(),
+                        extractDeviceInfo(httpRequest),
+                        userId, username);
+
+                return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
         }
 
-        /**
-         * Logout from all devices
-         * POST /api/v1/auth/logout-all
-         *
-         * @param userDetails Currently authenticated user
-         * @return Success message
-         */
         @PostMapping("/logout-all")
         @SecurityRequirement(name = "bearer-jwt")
         @Operation(summary = "Logout from all devices", description = "Revoke all refresh tokens for the user")
         public ResponseEntity<ApiResponse<Void>> logoutAllDevices(
-                        @AuthenticationPrincipal UserDetails userDetails) {
+                HttpServletRequest httpRequest,
+                @AuthenticationPrincipal CustomUserPrincipal principal) {
 
-                // Get user from repository to get the actual ID
-                User user = authenticationService.getUserByUsername(userDetails.getUsername());
-                authenticationService.logoutAllDevices(user.getId());
+                authenticationService.logoutAllDevices(
+                        principal.getUserId(),
+                        principal.getUsername(),
+                        extractDeviceInfo(httpRequest));
 
-                return ResponseEntity.ok(
-                                ApiResponse.success("Logged out from all devices", null));
+                return ResponseEntity.ok(ApiResponse.success("Logged out from all devices", null));
         }
 
-        /**
-         * Extract device information from HTTP request
-         *
-         * @param request HTTP request
-         * @return Device info string (User-Agent + IP)
-         */
         private String extractDeviceInfo(HttpServletRequest request) {
-                String userAgent = request.getHeader("User-Agent");
-                String ip = request.getRemoteAddr();
-                return String.format("%s | IP: %s", userAgent != null ? userAgent : "Unknown", ip);
+                String ua = request.getHeader("User-Agent");
+                String ip = getClientIp(request);
+                return String.format("%s | IP: %s", ua != null ? ua : "Unknown", ip);
         }
 
-        /**
-         * Get current authenticated user details
-         * GET /api/v1/auth/me
-         *
-         * @param userDetails Currently authenticated user
-         * @return User details
-         */
-        @GetMapping("/me")
-        @SecurityRequirement(name = "bearer-jwt")
-        @Operation(summary = "Get current user", description = "Returns the authenticated user's profile info")
-        public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> getCurrentUser(
-                        @AuthenticationPrincipal UserDetails userDetails) {
-
-                User user = authenticationService.getUserByUsername(userDetails.getUsername());
-
-                AuthResponse.UserInfo userInfo = AuthResponse.UserInfo.builder()
-                                .id(user.getId())
-                                .username(user.getUsername())
-                                .email(user.getEmail())
-                                // firstName & lastName belong to Employee entity, not User – returning null for
-                                // now
-                                .firstName(null)
-                                .lastName(null)
-                                .roles(user.getRoles().stream()
-                                                .map(role -> role.getName())
-                                                .toList())
-                                .build();
-
-                return ResponseEntity.ok(ApiResponse.success("Current user info", userInfo));
+        private String getClientIp(HttpServletRequest request) {
+                String[] headers = {
+                        "X-Forwarded-For", "X-Real-IP", "Proxy-Client-IP",
+                        "WL-Proxy-Client-IP", "HTTP_X_FORWARDED_FOR"
+                };
+                for (String header : headers) {
+                        String ip = request.getHeader(header);
+                        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+                                return ip.split(",")[0].trim();
+                        }
+                }
+                return request.getRemoteAddr();
         }
 }

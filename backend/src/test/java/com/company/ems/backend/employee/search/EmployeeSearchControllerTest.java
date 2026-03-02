@@ -1,6 +1,8 @@
 package com.company.ems.backend.employee.search;
 
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.auth.security.JwtTokenUtil;
+import com.company.ems.backend.auth.service.CustomUserDetailsService;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
 import com.company.ems.backend.employee.search.controller.EmployeeSearchController;
@@ -39,6 +41,9 @@ class EmployeeSearchControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockBean EmployeeSearchService searchService;
+
+    @MockBean JwtTokenUtil jwtTokenUtil;
+    @MockBean CustomUserDetailsService userDetailsService;
 
     private CustomUserPrincipal hrPrincipal() {
         return new CustomUserPrincipal(1L, "hr_admin", "pw", true, true, true, true,

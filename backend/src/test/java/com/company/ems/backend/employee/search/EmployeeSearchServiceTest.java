@@ -99,7 +99,7 @@ class EmployeeSearchServiceTest {
         }
 
         @Test
-        @DisplayName("✅ HR không có kết quả → empty page, không throw exception")
+        @DisplayName(" HR không có kết quả → empty page, không throw exception")
         void hr_noResults_returnsEmptyPage() {
             setupSecurityContext(1L, "hr_admin", Set.of(DataScope.ALL));
             when(dataScopeService.buildScopeSpec()).thenReturn(Specification.where(null));
@@ -113,7 +113,7 @@ class EmployeeSearchServiceTest {
         }
 
         @Test
-        @DisplayName("✅ Response không chứa salary, bankAccount, nationalId")
+        @DisplayName(" Response không chứa salary, bankAccount, nationalId")
         void response_doesNotContainSensitiveFields() {
             setupSecurityContext(1L, "hr_admin", Set.of(DataScope.ALL));
             Employee employee = buildEmployee(11L, "Tran", "Employee1", "e1@test.com");

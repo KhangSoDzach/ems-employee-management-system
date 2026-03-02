@@ -22,10 +22,7 @@ import com.company.ems.backend.auth.security.JwtAuthenticationEntryPoint;
 import com.company.ems.backend.auth.security.JwtAuthenticationFilter;
 import com.company.ems.backend.rbac.evaluator.CustomPermissionEvaluator;
 import lombok.RequiredArgsConstructor;
-/**
- * Security configuration for the application
- * Configures JWT authentication and authorization rules
- */
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
@@ -61,6 +58,7 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/info"
                         ).permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "HR_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
