@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react"
+import React, { useState, useCallback, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -7,6 +7,8 @@ import {
     CalendarIcon, UploadCloud, FileText, Image as ImageIcon, X,
     MapPin, ShieldCheck, Download, Briefcase
 } from "lucide-react"
+import { employeeService } from "@/services/employeeService"
+import { useAuth } from "@/contexts/AuthContext"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -133,11 +135,43 @@ const defaultValues: Partial<ProfileFormValues> = {
 }
 
 export default function EmployeeDashboard() {
+    const { user } = useAuth()
+    // Chỉ HR và Admin mới được cập nhật hồ sơ (US-07 AC-04)
+    const canEdit = user?.roles.some(r => r === 'ROLE_HR' || r === 'ROLE_ADMIN') ?? false
+
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
         defaultValues,
         mode: "onChange",
     })
+
+    // --- Load hồ sơ thực từ backend GET /api/v1/employees/me ---
+    const [profileLoading, setProfileLoading] = useState(true)
+    const [profileError, setProfileError] = useState<string | null>(null)
+
+    useEffect(() => {
+        employeeService.getMyProfile()
+            .then((data) => {
+                form.reset({
+                    employeeCode: (data as unknown as Record<string, string>)["employeeCode"] ?? "",
+                    fullName: [data.firstName, data.lastName].filter(Boolean).join(" "),
+                    companyEmail: data.email ?? "",
+                    nationalId: "",         // trường nhạy cảm – server không trả
+                    phoneNumber: data.phone ?? "",
+                    dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(1995, 5, 15),
+                    startDate: data.hireDate ? new Date(data.hireDate) : new Date(),
+                    department: data.department ?? "",
+                    jobRole: data.position ?? "",
+                    lineManager: "",        // chưa có trong PublicEmployeeResponse
+                    workStatus: (data.status as ProfileFormValues["workStatus"]) ?? "ACTIVE",
+                    contractType: "FULL_TIME",
+                })
+            })
+            .catch(() => setProfileError("Không thể tải hồ sơ. Vui lòng thử lại."))
+            .finally(() => setProfileLoading(false))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    // ----------------------------------------------------------
 
     function onSubmit(data: ProfileFormValues) {
         console.log("Form submitted: ", data)
@@ -186,6 +220,36 @@ export default function EmployeeDashboard() {
         }
     }
 
+    // Loading skeleton
+    if (profileLoading) {
+        return (
+            <SidebarProvider>
+                <AppSidebar role="employee" variant="inset" />
+                <SidebarInset>
+                    <SiteHeader />
+                    <main className="flex flex-1 items-center justify-center min-h-screen">
+                        <p className="text-muted-foreground animate-pulse">Đang tải hồ sơ…</p>
+                    </main>
+                </SidebarInset>
+            </SidebarProvider>
+        )
+    }
+
+    // API Error banner
+    if (profileError) {
+        return (
+            <SidebarProvider>
+                <AppSidebar role="employee" variant="inset" />
+                <SidebarInset>
+                    <SiteHeader />
+                    <main className="flex flex-1 items-center justify-center min-h-screen">
+                        <p className="text-destructive font-medium">{profileError}</p>
+                    </main>
+                </SidebarInset>
+            </SidebarProvider>
+        )
+    }
+
     return (
         <SidebarProvider>
             <AppSidebar role="employee" variant="inset" />
@@ -201,12 +265,21 @@ export default function EmployeeDashboard() {
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Button variant="outline" className="font-semibold" onClick={() => form.reset()}>
-                                {TEXT.btnCancel}
-                            </Button>
-                            <Button onClick={form.handleSubmit(onSubmit)} className="font-bold bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all">
-                                {TEXT.btnUpdate}
-                            </Button>
+                            {canEdit ? (
+                                <>
+                                    <Button variant="outline" className="font-semibold" onClick={() => form.reset()}>
+                                        {TEXT.btnCancel}
+                                    </Button>
+                                    <Button onClick={form.handleSubmit(onSubmit)} className="font-bold bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all">
+                                        {TEXT.btnUpdate}
+                                    </Button>
+                                </>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                    Chế độ xem
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -267,7 +340,7 @@ export default function EmployeeDashboard() {
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.labelFullName}</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder={TEXT.placeholderFullName} {...field} className="bg-gray-50/50" />
+                                                        <Input readOnly={!canEdit} placeholder={TEXT.placeholderFullName} {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -281,7 +354,7 @@ export default function EmployeeDashboard() {
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.labelEmail}</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="email@company.com" {...field} className="bg-gray-50/50" />
+                                                        <Input readOnly={!canEdit} placeholder="email@company.com" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -295,7 +368,7 @@ export default function EmployeeDashboard() {
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.labelNationalId}</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="012345678912" {...field} className="bg-gray-50/50" />
+                                                        <Input readOnly={!canEdit} placeholder="012345678912" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -309,7 +382,7 @@ export default function EmployeeDashboard() {
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.labelPhone}</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="0912345678" {...field} className="bg-gray-50/50" />
+                                                        <Input readOnly={!canEdit} placeholder="0912345678" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -327,8 +400,10 @@ export default function EmployeeDashboard() {
                                                             <FormControl>
                                                                 <Button
                                                                     variant={"outline"}
+                                                                    disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
+                                                                        !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >
@@ -371,7 +446,7 @@ export default function EmployeeDashboard() {
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.empCodeLabel}</FormLabel>
                                                     <FormControl>
-                                                        <Input disabled {...field} className="bg-gray-100 dark:bg-gray-800" />
+                                                        <Input readOnly {...field} className="bg-gray-100 dark:bg-gray-800 focus-visible:ring-0" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -384,9 +459,9 @@ export default function EmployeeDashboard() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.labelWorkStatus}</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className="bg-gray-50/50">
+                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
                                                                 <SelectValue placeholder={TEXT.placeholderStatus} />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -407,9 +482,9 @@ export default function EmployeeDashboard() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.labelDepartment}</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className="bg-gray-50/50">
+                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
                                                                 <SelectValue placeholder={TEXT.placeholderDepartment} />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -431,9 +506,9 @@ export default function EmployeeDashboard() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.labelRole}</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className="bg-gray-50/50">
+                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
                                                                 <SelectValue placeholder={TEXT.placeholderRole} />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -455,9 +530,9 @@ export default function EmployeeDashboard() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.labelContract}</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className="bg-gray-50/50">
+                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
                                                                 <SelectValue placeholder={TEXT.placeholderContract} />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -479,9 +554,9 @@ export default function EmployeeDashboard() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="font-bold text-gray-700">{TEXT.managerLabel}</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className="bg-gray-50/50">
+                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
                                                                 <SelectValue placeholder={TEXT.placeholderManager} />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -507,8 +582,10 @@ export default function EmployeeDashboard() {
                                                             <FormControl>
                                                                 <Button
                                                                     variant={"outline"}
+                                                                    disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
+                                                                        !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >
@@ -543,8 +620,10 @@ export default function EmployeeDashboard() {
                                                             <FormControl>
                                                                 <Button
                                                                     variant={"outline"}
+                                                                    disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
+                                                                        !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >

@@ -1,13 +1,11 @@
 package com.company.ems.backend.config;
 
-import com.company.ems.backend.auth.security.JwtAuthenticationEntryPoint;
-import com.company.ems.backend.auth.security.JwtAuthenticationFilter;
-import com.company.ems.backend.rbac.evaluator.CustomPermissionEvaluator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,7 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.company.ems.backend.auth.security.JwtAuthenticationEntryPoint;
 import com.company.ems.backend.auth.security.JwtAuthenticationFilter;
 import com.company.ems.backend.rbac.evaluator.CustomPermissionEvaluator;
-import lombok.RequiredArgsConstructor;
 /**
  * Security configuration for the application
  * Configures JWT authentication and authorization rules
@@ -43,6 +40,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())  // Dùng CorsConfigurationSource từ WebConfig
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
