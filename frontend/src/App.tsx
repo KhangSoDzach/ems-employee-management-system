@@ -35,11 +35,14 @@ function App() {
             <Route path="/checkin" element={<CheckinPage />} />
             <Route path="/attendance" element={<AttendanceHistoryPage />} />
 
-            {/* Manager only */}
-            <Route element={<ProtectedRoute allowedRoles={["MANAGER"]} />}>
-              <Route path="/approve" element={<ApproveLeaveRequest />} />
-            </Route>
-          </Route>
+          {/* Employee only */}
+          <Route path="/employee" element={<EmployeeDashboard />} />
+          <Route path="/request" element={<LeaveRequestPage />} />
+          <Route path="/checkin" element={<CheckinPage />} />
+          <Route path="/attendance" element={<AttendanceHistoryPage />} />
+          {/* Manager only */}
+          <Route path="/approve" element={<ApproveLeaveRequest />} />
+          {/* </Route> */}
         </Routes>
       </BrowserRouter>
       <Toaster richColors position="top-right" />
