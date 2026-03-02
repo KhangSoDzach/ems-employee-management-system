@@ -8,7 +8,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import CheckinPage from "./features/employee/CheckinPage";
 import { Toaster } from "@/components/ui/sonner";
-import CheckinPage from "./features/employee/CheckinPage";
 import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
 // import { ProtectedRoute } from "@/components/ProtectedRoute";
