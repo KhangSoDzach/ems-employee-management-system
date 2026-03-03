@@ -260,44 +260,23 @@ export default function ApproveLeaveRequest() {
                         </Badge>
                       </TableCell>
 
-                      <TableCell
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleUpdateStatus(
-                                  row.id,
-                                  "APPROVED"
-                                )
-                              }
-                              className="text-green-600"
-                            >
-                              Phê duyệt
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleUpdateStatus(
-                                  row.id,
-                                  "REJECTED"
-                                )
-                              }
-                              className="text-destructive"
-                            >
-                              Từ chối
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                     <TableCell onClick={(e) => e.stopPropagation()}>
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button size="icon" variant="ghost">
+        <MoreHorizontal className="w-4 h-4" />
+      </Button>
+    </DropdownMenuTrigger>
+
+    <DropdownMenuContent align="end">
+      <DropdownMenuItem
+        onClick={() => setSelectedRequest(row)}
+      >
+        Xem chi tiết
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</TableCell>
                     </TableRow>
                   ))
                 )}
