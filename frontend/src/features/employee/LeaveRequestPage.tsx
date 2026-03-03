@@ -1,172 +1,412 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react"
+import { format } from "date-fns"
+import {
+  MoreHorizontal, Plane, Plus, Search, SlidersHorizontal, X,
+} from "lucide-react"
+import { toast } from "sonner"
 
-const LeaveRequestPage: React.FC = () => {
+import { AppSidebar } from "@/components/app-sidebar"
+import { SiteHeader } from "@/components/site-header"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { cn } from "@/lib/utils"
+
+import type { LeaveFormValues, LeaveRequest, LeaveStatus, LeaveType } from "./leave-request.constants"
+import {
+  ALL_LABEL,
+  CURRENT_USER,
+  DATE_FORMAT,
+  LEAVE_STATUS_CONFIG,
+  LEAVE_STATUS_OPTIONS,
+  LEAVE_TYPE_CONFIG,
+  LEAVE_TYPE_OPTIONS,
+  MOCK_DATA,
+} from "./leave-request.constants"
+import { ActiveFilterBadge, StatusBadge, TypeBadge } from "./components/LeaveBadges"
+import { LeaveDetailSheet } from "./components/LeaveDetailSheet"
+import { CreateLeaveModal } from "./components/CreateLeaveModal"
+
+/* ══════════════ EMPTY STATE ══════════════ */
+
+const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
+  <TableRow>
+    <TableCell colSpan={6} className="h-[400px] text-center">
+      <div className="flex flex-col items-center justify-center text-muted-foreground p-8">
+        <div className="w-16 h-16 mb-4 rounded-full bg-muted/50 flex items-center justify-center">
+          <Plane className="w-8 h-8 text-muted-foreground opacity-50" />
+        </div>
+        {hasFilter ? (
+          <>
+            <p className="text-base font-medium text-foreground mb-1">Không tìm thấy kết quả</p>
+            <p className="text-sm">Hãy thử thay đổi hoặc xóa bộ lọc để xem kết quả.</p>
+          </>
+        ) : (
+          <>
+            <p className="text-base font-medium text-foreground mb-1">Chưa có đơn nghỉ phép</p>
+            <p className="text-sm">Bạn chưa tạo đơn xin nghỉ phép nào.</p>
+          </>
+        )}
+      </div>
+    </TableCell>
+  </TableRow>
+)
+
+/* ══════════════ MAIN PAGE ══════════════ */
+
+export default function LeaveRequestPage() {
+  const [requests, setRequests] = useState<LeaveRequest[]>(MOCK_DATA)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<LeaveStatus | "ALL">("ALL")
+  const [typeFilter, setTypeFilter] = useState<LeaveType | "ALL">("ALL")
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null)
+
+  /* ── Filtered rows ── */
+  const filtered = requests.filter((r) => {
+    const q = searchQuery.toLowerCase()
+    return (
+      (statusFilter === "ALL" || r.status === statusFilter) &&
+      (typeFilter === "ALL" || r.type === typeFilter) &&
+      (
+        q === "" ||
+        r.id.toLowerCase().includes(q) ||
+        LEAVE_TYPE_CONFIG[r.type].label.toLowerCase().includes(q) ||
+        r.reason.toLowerCase().includes(q)
+      )
+    )
+  })
+
+  const hasFilter = statusFilter !== "ALL" || typeFilter !== "ALL" || searchQuery !== ""
+
+  /* ── Handlers ── */
+  const handleCreate = async (data: LeaveFormValues) => {
+    await new Promise((r) => setTimeout(r, 1200))
+    const newReq: LeaveRequest = {
+      id: `LV-${String(requests.length + 1).padStart(3, "0")}`,
+      dateCreated: new Date(),
+      startDate: data.startDate,
+      endDate: data.endDate,
+      type: data.leaveType,
+      status: "PENDING",
+      reason: data.reason,
+      auditTrail: [
+        { id: "a1", action: "CREATED", actor: CURRENT_USER.name, timestamp: new Date() },
+      ],
+    }
+    setRequests((prev) => [newReq, ...prev])
+    toast.success("Đơn nghỉ phép đã được gửi!", {
+      description: `Mã ${newReq.id} đang chờ quản lý phê duyệt.`,
+    })
+  }
+
+  const handleCancel = (id: string) => {
+    setRequests((prev) => prev.filter((r) => r.id !== id))
+    toast.info("Đã hủy đơn nghỉ phép.")
+  }
+
+  const clearAllFilters = () => {
+    setStatusFilter("ALL")
+    setTypeFilter("ALL")
+    setSearchQuery("")
+  }
+
+  /* ── Render ── */
   return (
-    <div className="bg-background-light dark:bg-background-dark min-h-screen font-display">
+    <SidebarProvider>
+      <AppSidebar role="employee" variant="inset" />
+      <SidebarInset>
+        <SiteHeader />
 
-      {/* Top Navigation Bar */}
-      <div className="sticky top-0 z-10 flex items-center bg-surface dark:bg-background-dark/95 border-b border-border-color dark:border-primary/20 px-4 py-3 h-16 relative">
-        <Link
-          to="/dashboard"
-          className="text-foreground dark:text-slate-100 p-2 hover:bg-slate-100 dark:hover:bg-primary/20 rounded-full transition-colors"
-        >
-          <span className="material-symbols-outlined align-middle">
-            arrow_back
-          </span>
-        </Link>
+        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
 
-        <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold text-foreground dark:text-slate-100">
-          Tạo đơn nghỉ phép
-        </h1>
-      </div>
-
-      <main className="max-w-md mx-auto p-4 md:p-6">
-
-        {/* Main Form Card */}
-        <div className="bg-surface dark:bg-slate-900/50 rounded-lg border border-border-color dark:border-primary/10 p-6 shadow-sm">
-          <h2 className="text-2xl font-bold text-foreground dark:text-slate-100 mb-6">
-            Thông tin nghỉ phép
-          </h2>
-
-          <form className="space-y-4">
-
-            {/* Leave Type */}
-            <FormSelect
-              label="Loại phép"
-              options={[
-                { value: "", label: "Chọn loại phép" },
-                { value: "annual", label: "Nghỉ phép năm" },
-                { value: "sick", label: "Nghỉ ốm" },
-                { value: "unpaid", label: "Nghỉ không lương" },
-                { value: "personal", label: "Việc riêng" },
-              ]}
-            />
-
-            {/* Start Date */}
-            <FormDate label="Ngày bắt đầu" />
-
-            {/* End Date */}
-            <FormDate label="Ngày kết thúc" />
-
-            {/* Reason */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-foreground dark:text-slate-200">
-                Lý do nghỉ
-              </label>
-              <textarea
-                rows={4}
-                placeholder="Nhập lý do chi tiết..."
-                className="w-full p-3 bg-surface dark:bg-slate-800 border border-border-color dark:border-slate-700 rounded-md text-foreground dark:text-slate-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none"
-              />
-            </div>
-
-            {/* Info Box */}
-            <div className="p-3 bg-primary/5 dark:bg-primary/10 rounded-md border border-primary/10">
-              <div className="flex gap-2">
-                <span className="material-symbols-outlined text-primary text-sm">
-                  info
-                </span>
-                <p className="text-xs text-muted-foreground dark:text-slate-400">
-                  Đơn xin nghỉ phép sẽ được gửi đến quản lý trực tiếp của bạn để phê duyệt.
-                </p>
+          {/* ── Page Header ── */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-muted-foreground text-sm">Chấm công</span>
+                <span className="text-muted-foreground text-sm">/</span>
+                <span className="text-sm font-semibold text-foreground">Đơn nghỉ phép</span>
               </div>
-            </div>
-
-          </form>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-col gap-3">
-          <button className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-md shadow-md shadow-primary/20 transition-all active:scale-[0.98]">
-            Gửi đơn
-          </button>
-
-          <button className="w-full h-12 bg-transparent border border-border-color dark:border-slate-700 text-foreground dark:text-slate-200 font-medium rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-            Hủy bỏ
-          </button>
-        </div>
-
-        {/* Summary Card */}
-        <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-dashed border-border-color dark:border-slate-700">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-            Tóm tắt quỹ phép
-          </h3>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Số ngày còn lại</p>
-              <p className="text-lg font-bold text-foreground dark:text-slate-100">
-                12.5 ngày
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Đơn xin nghỉ phép
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Quản lý và theo dõi trạng thái các đơn xin nghỉ phép của bạn.
               </p>
             </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground">Phép đã dùng</p>
-              <p className="text-lg font-bold text-foreground dark:text-slate-100">
-                2.5 ngày
-              </p>
-            </div>
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="shrink-0 h-10 px-5 font-semibold gap-1.5 shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Tạo đơn mới
+            </Button>
           </div>
-        </div>
 
-      </main>
+          {/* ── Filter Bar ── */}
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
 
-      {/* Bottom spacing */}
-      <div className="h-8"></div>
-    </div>
-  );
-};
+            {/* Search */}
+            <div className="relative flex-1 min-w-[180px] max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm kiếm mã, lý do..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 w-full text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-export default LeaveRequestPage;
+            {/* Trạng thái Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap">
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Trạng thái
+                  {statusFilter !== "ALL" && (
+                    <>
+                      <div className="w-px h-4 bg-border mx-1" />
+                      <ActiveFilterBadge
+                        value={LEAVE_STATUS_CONFIG[statusFilter].label}
+                        colorClass="text-foreground bg-muted border-none"
+                        onClear={() => setStatusFilter("ALL")}
+                      />
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuItem onClick={() => setStatusFilter("ALL")} className="font-medium cursor-pointer">
+                  {ALL_LABEL}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {LEAVE_STATUS_OPTIONS.map(([value, config]) => (
+                  <DropdownMenuItem
+                    key={value}
+                    onClick={() => setStatusFilter(value)}
+                    className={cn("cursor-pointer", statusFilter === value && "bg-muted font-medium")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "w-2 h-2 rounded-full inline-block shrink-0",
+                        value === "PENDING" && "bg-amber-500",
+                        value === "APPROVED" && "bg-emerald-500",
+                        value === "REJECTED" && "bg-rose-500",
+                        value === "RETURNED" && "bg-orange-500",
+                      )} />
+                      {config.label}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-/* ================= COMPONENTS ================= */
+            {/* Loại phép Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap">
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Loại phép
+                  {typeFilter !== "ALL" && (
+                    <>
+                      <div className="w-px h-4 bg-border mx-1" />
+                      <ActiveFilterBadge
+                        value={LEAVE_TYPE_CONFIG[typeFilter].label}
+                        colorClass={LEAVE_TYPE_CONFIG[typeFilter].badgeClass}
+                        onClear={() => setTypeFilter("ALL")}
+                      />
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuItem onClick={() => setTypeFilter("ALL")} className="font-medium cursor-pointer">
+                  {ALL_LABEL}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {LEAVE_TYPE_OPTIONS.map(([value, config]) => (
+                  <DropdownMenuItem
+                    key={value}
+                    onClick={() => setTypeFilter(value)}
+                    className={cn("cursor-pointer", typeFilter === value && "bg-muted font-medium")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "w-2 h-2 rounded-full inline-block",
+                        value === "annual" && "bg-indigo-500",
+                        value === "sick" && "bg-rose-500",
+                        value === "unpaid" && "bg-slate-500",
+                        value === "personal" && "bg-violet-500",
+                      )} />
+                      {config.label}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-type SelectOption = {
-  value: string;
-  label: string;
-};
+            {/* Clear all */}
+            {hasFilter && (
+              <Button
+                variant="ghost"
+                onClick={clearAllFilters}
+                className="h-9 px-3 text-muted-foreground hover:text-foreground gap-1.5"
+              >
+                <X className="w-4 h-4" />
+                Xóa lọc
+              </Button>
+            )}
+          </div>
 
-const FormSelect: React.FC<{
-  label: string;
-  options: SelectOption[];
-}> = ({ label, options }) => (
-  <div className="space-y-1">
-    <label className="text-sm font-medium text-foreground dark:text-slate-200">
-      {label}
-    </label>
-    <div className="relative">
-      <select className="w-full h-11 px-3 bg-surface dark:bg-slate-800 border border-border-color dark:border-slate-700 rounded-md text-foreground dark:text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted-foreground">
-        <span className="material-symbols-outlined text-sm">
-          expand_more
-        </span>
-      </div>
-    </div>
-  </div>
-);
+          {/* ── Table Area ── */}
+          <div className="border rounded-2xl bg-card shadow-sm overflow-hidden flex flex-col">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/40">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="py-4 font-semibold text-foreground px-6">Mã đơn</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">Ngày tạo</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">Thời gian nghỉ</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">Loại phép</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">Trạng thái</TableHead>
+                    <TableHead className="py-4 w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0
+                    ? <EmptyState hasFilter={hasFilter} />
+                    : filtered.map((req) => (
+                      <TableRow
+                        key={req.id}
+                        className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
+                        onClick={() => setDetailRequest(req)}
+                      >
+                        <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
+                          {req.id}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 font-medium text-foreground">
+                          {format(req.dateCreated, DATE_FORMAT)}
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <span className="font-medium text-foreground">
+                            {format(req.startDate, DATE_FORMAT)}
+                            {req.startDate.getTime() !== req.endDate.getTime()
+                              && ` – ${format(req.endDate, DATE_FORMAT)}`}
+                          </span>
+                          <span className="text-muted-foreground text-xs block mt-0.5">
+                            {Math.ceil((req.endDate.getTime() - req.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1} ngày
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <TypeBadge type={req.type} />
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <StatusBadge status={req.status} />
+                        </TableCell>
+                        <TableCell className="py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem
+                                className="cursor-pointer text-sm"
+                                onClick={() => setDetailRequest(req)}
+                              >
+                                Xem chi tiết
+                              </DropdownMenuItem>
+                              {req.status === "RETURNED" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="cursor-pointer text-sm text-primary font-medium">
+                                    Gửi lại
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {req.status === "PENDING" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="cursor-pointer text-sm text-destructive focus:text-destructive"
+                                    onClick={() => handleCancel(req.id)}
+                                  >
+                                    Hủy đơn
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
 
-const FormDate: React.FC<{ label: string }> = ({ label }) => (
-  <div className="space-y-1">
-    <label className="text-sm font-medium text-foreground dark:text-slate-200">
-      {label}
-    </label>
-    <div className="relative">
-      <input
-        type="date"
-        className="w-full h-11 px-3 bg-surface dark:bg-slate-800 border border-border-color dark:border-slate-700 rounded-md text-foreground dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+            {/* Summary footer */}
+            {filtered.length > 0 && (
+              <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Hiển thị {filtered.length} / {requests.length} đơn</span>
+                <div className="flex gap-4">
+                  {(["PENDING", "APPROVED", "REJECTED", "RETURNED"] as LeaveStatus[]).map((s) => {
+                    const count = requests.filter((r) => r.status === s).length
+                    return count > 0 ? (
+                      <span key={s}>
+                        <span className="font-semibold text-foreground">{count}</span>{" "}
+                        {LEAVE_STATUS_CONFIG[s].label}
+                      </span>
+                    ) : null
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </SidebarInset>
+
+      {/* Create Modal */}
+      <CreateLeaveModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreate}
       />
-      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted-foreground">
-        <span className="material-symbols-outlined text-sm">
-          calendar_month
-        </span>
-      </div>
-    </div>
-  </div>
-);
+
+      {/* Detail Sheet */}
+      <LeaveDetailSheet
+        request={detailRequest}
+        open={!!detailRequest}
+        onClose={() => setDetailRequest(null)}
+      />
+    </SidebarProvider>
+  )
+}

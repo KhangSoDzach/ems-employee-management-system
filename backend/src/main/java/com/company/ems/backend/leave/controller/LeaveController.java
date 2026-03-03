@@ -26,7 +26,7 @@ public class LeaveController {
      * POST /api/v1/leaves
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('LEAVE_CREATE')")
+    @PreAuthorize("hasPermission(null, 'LEAVE_CREATE')")
     public ResponseEntity<ApiResponse<LeaveResponse>> createLeaveRequest(
             @Valid @RequestBody LeaveRequest request) {
         // TODO: Implement leave request service
@@ -40,7 +40,7 @@ public class LeaveController {
      * GET /api/v1/leaves
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('LEAVE_VIEW')")
+    @PreAuthorize("hasPermission(null, 'LEAVE_VIEW')")
     public ResponseEntity<ApiResponse<PageResponse<LeaveResponse>>> getAllLeaves(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -60,7 +60,7 @@ public class LeaveController {
      * GET /api/v1/leaves/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('LEAVE_VIEW') and @empSec.canAccessLeave(authentication, #id)")
+    @PreAuthorize("hasPermission(null, 'LEAVE_VIEW')")
     public ResponseEntity<ApiResponse<LeaveResponse>> getLeaveById(@PathVariable Long id) {
         LeaveResponse response = leaveService.getLeaveById(id);
         // TODO: Implement get leave by id service
@@ -72,7 +72,7 @@ public class LeaveController {
      * PUT /api/v1/leaves/{id}/approve
      */
     @PutMapping("/{id}/approve")
-    @PreAuthorize("hasAuthority('LEAVE_APPROVE') and @empSec.canApproveLeave(authentication, #id)")
+    @PreAuthorize("hasPermission(null, 'LEAVE_APPROVE')")
     public ResponseEntity<ApiResponse<LeaveResponse>> approveLeave(
             @PathVariable Long id,
             @Valid @RequestBody ApproveLeaveRequest request) {
@@ -85,7 +85,7 @@ public class LeaveController {
      * DELETE /api/v1/leaves/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('LEAVE_CANCEL') and @empSec.isOwnLeave(authentication, #id)")
+    @PreAuthorize("hasPermission(null, 'LEAVE_CANCEL')")
     public ResponseEntity<ApiResponse<Void>> cancelLeave(@PathVariable Long id) {
         leaveService.cancelLeave(id);
         return ResponseEntity.ok(ApiResponse.success("Hủy yêu cầu nghỉ phép thành công", null));
