@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
 import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
+import AssetManagementPage from "./features/admin/Asset-Management";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           {/* Admin only */}
           {/* <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}> */}
           <Route path="/admin" element={<Dashboard />} />
+          <Route path="/asset" element={<AssetManagementPage />} />
           {/* </Route> */}
 
           {/* Employee only */}
