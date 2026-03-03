@@ -1,12 +1,10 @@
 import * as React from "react"
-import { useLocation, useNavigate } from "react-router-dom"
-import { LogOut, Loader2 } from "lucide-react"
+import { useLocation } from "react-router-dom"
 
 import { VersionSwitcher } from "@/components/version-switcher"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -16,82 +14,39 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { useAuth } from "@/contexts/AuthContext"
 
 // This is sample data.
 const data = {
   versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"]
 }
 
-export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" | "manager" }) {
+export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" }) {
   const location = useLocation()
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
-  const handleLogout = async () => {
-    if (isLoggingOut) return
-    setIsLoggingOut(true)
-    try {
-      await logout()
-      navigate("/login", { replace: true })
-    } finally {
-      setIsLoggingOut(false)
-    }
-  }
-
-  const navMain =
-    role === "admin"
-      ? [
+  const navMain = role === "admin" ? [
+    {
+      title: "Quản lý tài khoản",
+      url: "#",
+      items: [
         {
-          title: "Quản lý tài khoản",
-          url: "#",
-          items: [
-            {
-              title: "Quản lý nhân viên",
-              url: "/admin",
-            },
-          ],
+          title: "Quản lý nhân viên",
+          url: "./dashboard",
         },
-      ]
-      : role === "manager"
-        ? [
-          {
-            title: "Quản lý đội nhóm",
-            url: "#",
-            items: [
-
-              {
-                title: "Duyệt đơn nghỉ phép",
-                url: "/approve",
-              },
-            ],
-          },
-        ]
-        : [
-          {
-            title: "Thông tin cá nhân",
-            url: "#",
-            items: [
-              {
-                title: "Hồ sơ của tôi",
-                url: "/employee",
-              },
-              {
-                title: "Chấm công",
-                url: "/checkin",
-              },
-              {
-                title: "Tạo đơn nghỉ phép",
-                url: "/request",
-              },
-              {
-                title: "Điều chỉnh chấm công",
-                url: "/adjustment-requests",
-              },
-            ],
-          },
-        ];
+       
+      ],
+    },
+  ] : [
+    {
+      title: "Thông tin cá nhân",
+      url: "#",
+      items: [
+        {
+          title: "Hồ sơ của tôi",
+          url: "/employee",
+        },
+      ],
+    }
+  ];
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -120,24 +75,6 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 font-medium disabled:opacity-60"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <LogOut />
-              )}
-              <span>{isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

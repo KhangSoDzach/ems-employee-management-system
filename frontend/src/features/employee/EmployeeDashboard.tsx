@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react"
+import React, { useState, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -7,8 +7,6 @@ import {
     CalendarIcon, UploadCloud, FileText, Image as ImageIcon, X,
     MapPin, ShieldCheck, Download, Briefcase
 } from "lucide-react"
-import { employeeService } from "@/services/employeeService"
-import { useAuth } from "@/contexts/AuthContext"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -35,69 +33,8 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
-const TEXT = {
-    breadcrumb: "Cổng thông tin > Hồ sơ của tôi",
-    title: "Thông tin cá nhân",
-    btnCancel: "Hủy thay đổi",
-    btnUpdate: "Cập nhật hồ sơ",
-    modalSuccess: "Cập nhật thông tin thành công!",
-    departmentPrefix: "Phòng ",
-    officeLocation: "Văn phòng Hà Nội",
-    empCodeLabel: "Mã nhân viên",
-    managerLabel: "Quản lý trực tiếp",
-    sectionContact: "Thông tin liên hệ & Cá nhân",
-    labelFullName: "Họ và tên",
-    placeholderFullName: "Nhập họ và tên",
-    labelEmail: "Email công ty",
-    labelNationalId: "CCCD/CMND",
-    labelPhone: "Số điện thoại (Tùy chọn)",
-    labelDob: "Ngày sinh",
-    selectDate: "Chọn ngày",
-    sectionJob: "Thông tin công việc",
-    labelWorkStatus: "Trạng thái làm việc",
-    placeholderStatus: "Chọn trạng thái",
-    statusActive: "Đang làm việc",
-    statusInactive: "Nghỉ việc",
-    statusSuspended: "Đình chỉ",
-    labelDepartment: "Phòng ban",
-    placeholderDepartment: "Chọn phòng ban",
-    deptDesign: "Thiết kế sản phẩm",
-    deptEngineering: "Kỹ thuật",
-    deptHR: "Nhân sự",
-    deptMarketing: "Marketing",
-    labelRole: "Vị trí công việc",
-    placeholderRole: "Chọn vị trí",
-    roleDesigner: "Chuyên viên UI/UX",
-    roleFrontend: "Kỹ sư Frontend",
-    roleBackend: "Kỹ sư Backend",
-    roleManager: "Quản lý sản phẩm",
-    labelContract: "Loại hợp đồng",
-    placeholderContract: "Chọn loại hợp đồng",
-    contractFullTime: "Toàn thời gian",
-    contractPartTime: "Bán thời gian",
-    contractProbation: "Hợp đồng thử việc",
-    contractIntern: "Thực tập sinh",
-    placeholderManager: "Chọn quản lý",
-    labelStartDate: "Ngày bắt đầu",
-    labelEndDate: "Ngày kết thúc (Tùy chọn)",
-    sectionDocs: "Tài liệu của tôi",
-    fileSigned: "Đã ký • Thg 8, 2021",
-    fileVerified: "Đã xác minh • Thg 8, 2021",
-    labelUploadNew: "Tải lên tài liệu mới",
-    dragDrop: "Kéo & thả tệp vào đây",
-    orBrowse: "hoặc nhấn để duyệt tệp",
-    allowedFormats: "Định dạng cho phép: PDF, JPG, PNG",
-    maxSize: "Kích thước tối đa: 50MB",
-    readyUploadPrefix: "Sẵn sàng tải lên (",
-    readyUploadSuffix: ")",
-    mbText: " MB",
-    statsTitle: "Thống kê nhanh",
-    statsLeaveLabel: "Ngày phép còn lại",
-    statsAttendanceLabel: "Chuyên cần",
-    percentSign: "%"
-}
-
 const profileSchema = z.object({
+    // Basic Information
     employeeCode: z.string(),
     fullName: z.string().min(2, "Họ tên phải từ 2 ký tự").max(255, "Họ tên không quá 255 ký tự"),
     nationalId: z.string().regex(/^(\d{9}|\d{12})$/, "CMND/CCCD phải là 9 hoặc 12 số"),
@@ -106,6 +43,8 @@ const profileSchema = z.object({
     dateOfBirth: z.date({
         message: "Vui lòng chọn ngày sinh",
     }).refine((date) => differenceInYears(new Date(), date) >= 18, "Nhân viên phải từ 18 tuổi trở lên"),
+
+    // Contract & Organization
     contractType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]),
     startDate: z.date({
         message: "Vui lòng chọn ngày bắt đầu",
@@ -135,49 +74,18 @@ const defaultValues: Partial<ProfileFormValues> = {
 }
 
 export default function EmployeeDashboard() {
-    const { user } = useAuth()
-    // Chỉ HR và Admin mới được cập nhật hồ sơ (US-07 AC-04)
-    const canEdit = user?.roles.some(r => r === 'ROLE_HR' || r === 'ROLE_ADMIN') ?? false
-
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
         defaultValues,
         mode: "onChange",
     })
 
-    // --- Load hồ sơ thực từ backend GET /api/v1/employees/me ---
-    const [profileLoading, setProfileLoading] = useState(true)
-    const [profileError, setProfileError] = useState<string | null>(null)
-
-    useEffect(() => {
-        employeeService.getMyProfile()
-            .then((data) => {
-                form.reset({
-                    employeeCode: (data as unknown as Record<string, string>)["employeeCode"] ?? "",
-                    fullName: [data.firstName, data.lastName].filter(Boolean).join(" "),
-                    companyEmail: data.email ?? "",
-                    nationalId: "",         // trường nhạy cảm – server không trả
-                    phoneNumber: data.phone ?? "",
-                    dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(1995, 5, 15),
-                    startDate: data.hireDate ? new Date(data.hireDate) : new Date(),
-                    department: data.department ?? "",
-                    jobRole: data.position ?? "",
-                    lineManager: "",        // chưa có trong PublicEmployeeResponse
-                    workStatus: (data.status as ProfileFormValues["workStatus"]) ?? "ACTIVE",
-                    contractType: "FULL_TIME",
-                })
-            })
-            .catch(() => setProfileError("Không thể tải hồ sơ. Vui lòng thử lại."))
-            .finally(() => setProfileLoading(false))
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-    // ----------------------------------------------------------
-
     function onSubmit(data: ProfileFormValues) {
         console.log("Form submitted: ", data)
-        alert(TEXT.modalSuccess)
+        alert("Cập nhật thông tin thành công!")
     }
 
+    // File Upload Logic
     const [dragActive, setDragActive] = useState(false)
     const [files, setFiles] = useState<File[]>([])
 
@@ -198,7 +106,7 @@ export default function EmployeeDashboard() {
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const droppedFiles = Array.from(e.dataTransfer.files).filter(file => {
                 const isValidType = ['application/pdf', 'image/jpeg', 'image/png'].includes(file.type);
-                const isValidSize = file.size <= 50 * 1024 * 1024;
+                const isValidSize = file.size <= 50 * 1024 * 1024; // 50MB
                 return isValidType && isValidSize;
             });
             setFiles((prev) => [...prev, ...droppedFiles])
@@ -220,36 +128,6 @@ export default function EmployeeDashboard() {
         }
     }
 
-    // Loading skeleton
-    if (profileLoading) {
-        return (
-            <SidebarProvider>
-                <AppSidebar role="employee" variant="inset" />
-                <SidebarInset>
-                    <SiteHeader />
-                    <main className="flex flex-1 items-center justify-center min-h-screen">
-                        <p className="text-muted-foreground animate-pulse">Đang tải hồ sơ…</p>
-                    </main>
-                </SidebarInset>
-            </SidebarProvider>
-        )
-    }
-
-    // API Error banner
-    if (profileError) {
-        return (
-            <SidebarProvider>
-                <AppSidebar role="employee" variant="inset" />
-                <SidebarInset>
-                    <SiteHeader />
-                    <main className="flex flex-1 items-center justify-center min-h-screen">
-                        <p className="text-destructive font-medium">{profileError}</p>
-                    </main>
-                </SidebarInset>
-            </SidebarProvider>
-        )
-    }
-
     return (
         <SidebarProvider>
             <AppSidebar role="employee" variant="inset" />
@@ -259,30 +137,22 @@ export default function EmployeeDashboard() {
                 <main className="flex flex-1 flex-col p-4 md:p-8 bg-gray-50/50 dark:bg-background-dark min-h-screen">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <div>
-                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{TEXT.breadcrumb}</p>
+                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Cổng thông tin &gt; Hồ sơ của tôi</p>
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                {TEXT.title}
+                                Thông tin cá nhân
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
-                            {canEdit ? (
-                                <>
-                                    <Button variant="outline" className="font-semibold" onClick={() => form.reset()}>
-                                        {TEXT.btnCancel}
-                                    </Button>
-                                    <Button onClick={form.handleSubmit(onSubmit)} className="font-bold bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all">
-                                        {TEXT.btnUpdate}
-                                    </Button>
-                                </>
-                            ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
-                                    <ShieldCheck className="w-3.5 h-3.5" />
-                                    Chế độ xem
-                                </span>
-                            )}
+                            <Button variant="outline" className="font-semibold" onClick={() => form.reset()}>
+                                Hủy thay đổi
+                            </Button>
+                            <Button onClick={form.handleSubmit(onSubmit)} className="font-bold bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all">
+                                Cập nhật hồ sơ
+                            </Button>
                         </div>
                     </div>
 
+                    {/* Banner Card */}
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 mb-6 border shadow-sm flex flex-col md:flex-row items-center md:items-start justify-between gap-6 relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
@@ -297,11 +167,11 @@ export default function EmployeeDashboard() {
                                     </span>
                                 </div>
                                 <p className="text-muted-foreground font-medium">
-                                    {form.watch("jobRole")} &bull; {TEXT.departmentPrefix}{form.watch("department")}
+                                    {form.watch("jobRole")} &bull; Phòng {form.watch("department")}
                                 </p>
                                 <div className="flex items-center justify-center md:justify-start gap-4 mt-3 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-1.5">
-                                        <MapPin className="w-4 h-4" /> {TEXT.officeLocation}
+                                        <MapPin className="w-4 h-4" /> Văn phòng Hà Nội
                                     </div>
                                 </div>
                             </div>
@@ -309,11 +179,11 @@ export default function EmployeeDashboard() {
 
                         <div className="flex flex-row md:flex-col gap-6 md:gap-4 md:text-right text-left bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border">
                             <div>
-                                <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{TEXT.empCodeLabel}</p>
+                                <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">Mã nhân viên</p>
                                 <p className="font-bold">{form.watch("employeeCode")}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{TEXT.managerLabel}</p>
+                                <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">Quản lý trực tiếp</p>
                                 <div className="flex items-center gap-2">
                                     <img src="https://i.pravatar.cc/150?u=michael" className="w-6 h-6 rounded-full" />
                                     <p className="font-bold">{form.watch("lineManager")}</p>
@@ -326,10 +196,11 @@ export default function EmployeeDashboard() {
                         <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                             <div className="lg:col-span-2 space-y-6">
+                                {/* Contact & Personal Details */}
                                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm">
                                     <h3 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-4">
                                         <ShieldCheck className="w-5 h-5 text-primary" />
-                                        {TEXT.sectionContact}
+                                        Thông tin liên hệ &amp; Cá nhân
                                     </h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -338,9 +209,9 @@ export default function EmployeeDashboard() {
                                             name="fullName"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelFullName}</FormLabel>
+                                                    <FormLabel className="font-bold text-gray-700">Họ và tên</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder={TEXT.placeholderFullName} {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
+                                                        <Input placeholder="Nhập họ và tên" {...field} className="bg-gray-50/50" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -352,9 +223,9 @@ export default function EmployeeDashboard() {
                                             name="companyEmail"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelEmail}</FormLabel>
+                                                    <FormLabel className="font-bold text-gray-700">Email công ty</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="email@company.com" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
+                                                        <Input placeholder="email@company.com" {...field} className="bg-gray-50/50" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -366,9 +237,9 @@ export default function EmployeeDashboard() {
                                             name="nationalId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelNationalId}</FormLabel>
+                                                    <FormLabel className="font-bold text-gray-700">CCCD/CMND</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="012345678912" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
+                                                        <Input placeholder="012345678912" {...field} className="bg-gray-50/50" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -380,9 +251,9 @@ export default function EmployeeDashboard() {
                                             name="phoneNumber"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelPhone}</FormLabel>
+                                                    <FormLabel className="font-bold text-gray-700">Số điện thoại (Tùy chọn)</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="0912345678" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
+                                                        <Input placeholder="0912345678" {...field} className="bg-gray-50/50" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -394,20 +265,18 @@ export default function EmployeeDashboard() {
                                             name="dateOfBirth"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col pt-1">
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelDob}</FormLabel>
+                                                    <FormLabel className="font-bold text-gray-700">Ngày sinh</FormLabel>
                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <FormControl>
                                                                 <Button
                                                                     variant={"outline"}
-                                                                    disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
-                                                                        !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >
-                                                                    {field.value ? format(field.value, "PPP") : <span>{TEXT.selectDate}</span>}
+                                                                    {field.value ? format(field.value, "PPP") : <span>Chọn ngày</span>}
                                                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -432,10 +301,11 @@ export default function EmployeeDashboard() {
                                     </div>
                                 </div>
 
+                                {/* Employment Information */}
                                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm">
                                     <h3 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-4">
                                         <Briefcase className="w-5 h-5 text-primary" />
-                                        {TEXT.sectionJob}
+                                        Thông tin công việc
                                     </h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -444,9 +314,9 @@ export default function EmployeeDashboard() {
                                             name="employeeCode"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.empCodeLabel}</FormLabel>
+                                                    <FormLabel className="font-bold text-gray-700">Mã nhân viên</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly {...field} className="bg-gray-100 dark:bg-gray-800 focus-visible:ring-0" />
+                                                        <Input disabled {...field} className="bg-gray-100 dark:bg-gray-800" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -458,17 +328,17 @@ export default function EmployeeDashboard() {
                                             name="workStatus"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelWorkStatus}</FormLabel>
-                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormLabel className="font-bold text-gray-700">Trạng thái làm việc</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderStatus} />
+                                                            <SelectTrigger className="bg-gray-50/50">
+                                                                <SelectValue placeholder="Chọn trạng thái" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="ACTIVE">{TEXT.statusActive}</SelectItem>
-                                                            <SelectItem value="INACTIVE">{TEXT.statusInactive}</SelectItem>
-                                                            <SelectItem value="SUSPENDED">{TEXT.statusSuspended}</SelectItem>
+                                                            <SelectItem value="ACTIVE">Đang làm việc</SelectItem>
+                                                            <SelectItem value="INACTIVE">Nghỉ việc</SelectItem>
+                                                            <SelectItem value="SUSPENDED">Đình chỉ</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -481,18 +351,18 @@ export default function EmployeeDashboard() {
                                             name="department"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelDepartment}</FormLabel>
-                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormLabel className="font-bold text-gray-700">Phòng ban</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderDepartment} />
+                                                            <SelectTrigger className="bg-gray-50/50">
+                                                                <SelectValue placeholder="Chọn phòng ban" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="Product Design">{TEXT.deptDesign}</SelectItem>
-                                                            <SelectItem value="Engineering">{TEXT.deptEngineering}</SelectItem>
-                                                            <SelectItem value="Human Resources">{TEXT.deptHR}</SelectItem>
-                                                            <SelectItem value="Marketing">{TEXT.deptMarketing}</SelectItem>
+                                                            <SelectItem value="Product Design">Thiết kế sản phẩm</SelectItem>
+                                                            <SelectItem value="Engineering">Kỹ thuật</SelectItem>
+                                                            <SelectItem value="Human Resources">Nhân sự</SelectItem>
+                                                            <SelectItem value="Marketing">Marketing</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -505,18 +375,18 @@ export default function EmployeeDashboard() {
                                             name="jobRole"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelRole}</FormLabel>
-                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormLabel className="font-bold text-gray-700">Vị trí công việc</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderRole} />
+                                                            <SelectTrigger className="bg-gray-50/50">
+                                                                <SelectValue placeholder="Chọn vị trí" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="Senior UI/UX Designer">{TEXT.roleDesigner}</SelectItem>
-                                                            <SelectItem value="Frontend Engineer">{TEXT.roleFrontend}</SelectItem>
-                                                            <SelectItem value="Backend Engineer">{TEXT.roleBackend}</SelectItem>
-                                                            <SelectItem value="Product Manager">{TEXT.roleManager}</SelectItem>
+                                                            <SelectItem value="Senior UI/UX Designer">Chuyên viên UI/UX</SelectItem>
+                                                            <SelectItem value="Frontend Engineer">Kỹ sư Frontend</SelectItem>
+                                                            <SelectItem value="Backend Engineer">Kỹ sư Backend</SelectItem>
+                                                            <SelectItem value="Product Manager">Quản lý sản phẩm</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -529,18 +399,18 @@ export default function EmployeeDashboard() {
                                             name="contractType"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelContract}</FormLabel>
-                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormLabel className="font-bold text-gray-700">Loại hợp đồng</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderContract} />
+                                                            <SelectTrigger className="bg-gray-50/50">
+                                                                <SelectValue placeholder="Chọn loại hợp đồng" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="FULL_TIME">{TEXT.contractFullTime}</SelectItem>
-                                                            <SelectItem value="PART_TIME">{TEXT.contractPartTime}</SelectItem>
-                                                            <SelectItem value="CONTRACT">{TEXT.contractProbation}</SelectItem>
-                                                            <SelectItem value="INTERN">{TEXT.contractIntern}</SelectItem>
+                                                            <SelectItem value="FULL_TIME">Toàn thời gian</SelectItem>
+                                                            <SelectItem value="PART_TIME">Bán thời gian</SelectItem>
+                                                            <SelectItem value="CONTRACT">Hợp đồng thử việc</SelectItem>
+                                                            <SelectItem value="INTERN">Thực tập sinh</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -553,11 +423,11 @@ export default function EmployeeDashboard() {
                                             name="lineManager"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.managerLabel}</FormLabel>
-                                                    <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormLabel className="font-bold text-gray-700">Quản lý trực tiếp</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderManager} />
+                                                            <SelectTrigger className="bg-gray-50/50">
+                                                                <SelectValue placeholder="Chọn quản lý" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
@@ -576,20 +446,18 @@ export default function EmployeeDashboard() {
                                             name="startDate"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col pt-1">
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelStartDate}</FormLabel>
+                                                    <FormLabel className="font-bold text-gray-700">Ngày bắt đầu</FormLabel>
                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <FormControl>
                                                                 <Button
                                                                     variant={"outline"}
-                                                                    disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
-                                                                        !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >
-                                                                    {field.value ? format(field.value, "PPP") : <span>{TEXT.selectDate}</span>}
+                                                                    {field.value ? format(field.value, "PPP") : <span>Chọn ngày</span>}
                                                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -614,20 +482,18 @@ export default function EmployeeDashboard() {
                                             name="endDate"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col pt-1">
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelEndDate}</FormLabel>
+                                                    <FormLabel className="font-bold text-gray-700">Ngày kết thúc (Tùy chọn)</FormLabel>
                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <FormControl>
                                                                 <Button
                                                                     variant={"outline"}
-                                                                    disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
-                                                                        !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >
-                                                                    {field.value ? format(field.value, "PPP") : <span>{TEXT.selectDate}</span>}
+                                                                    {field.value ? format(field.value, "PPP") : <span>Chọn ngày</span>}
                                                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -650,12 +516,15 @@ export default function EmployeeDashboard() {
                                 </div>
                             </div>
 
+                            {/* Sidebar Columns */}
                             <div className="space-y-6">
 
+                                {/* Documents & Attachments */}
                                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm h-min">
-                                    <h3 className="text-lg font-bold mb-4 border-b pb-4">{TEXT.sectionDocs}</h3>
+                                    <h3 className="text-lg font-bold mb-4 border-b pb-4">Tài liệu của tôi</h3>
 
                                     <div className="space-y-4">
+                                        {/* Existing Files */}
                                         <div className="space-y-3 mb-6">
                                             <div className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 hover:border-primary/30 transition-colors">
                                                 <div className="flex items-center gap-3">
@@ -664,7 +533,7 @@ export default function EmployeeDashboard() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-gray-800">HopDongLaoDong.pdf</p>
-                                                        <p className="text-xs text-muted-foreground">{TEXT.fileSigned}</p>
+                                                        <p className="text-xs text-muted-foreground">Đã ký &bull; Thg 8, 2021</p>
                                                     </div>
                                                 </div>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
@@ -679,7 +548,7 @@ export default function EmployeeDashboard() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-gray-800">BanSaoCCCD.jpg</p>
-                                                        <p className="text-xs text-muted-foreground">{TEXT.fileVerified}</p>
+                                                        <p className="text-xs text-muted-foreground">Đã xác minh &bull; Thg 8, 2021</p>
                                                     </div>
                                                 </div>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
@@ -688,8 +557,9 @@ export default function EmployeeDashboard() {
                                             </div>
                                         </div>
 
+                                        {/* Upload Zone */}
                                         <div>
-                                            <h4 className="text-sm font-bold mb-3 text-gray-700">{TEXT.labelUploadNew}</h4>
+                                            <h4 className="text-sm font-bold mb-3 text-gray-700">Tải lên tài liệu mới</h4>
                                             <div
                                                 className={cn(
                                                     "border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer relative",
@@ -709,20 +579,21 @@ export default function EmployeeDashboard() {
                                                 />
                                                 <UploadCloud className="w-8 h-8 text-primary/60 mx-auto mb-3" />
                                                 <p className="text-sm font-bold text-gray-700">
-                                                    {TEXT.dragDrop}
+                                                    Kéo &amp; thả tệp vào đây
                                                 </p>
                                                 <p className="text-xs text-gray-500 mt-1">
-                                                    {TEXT.orBrowse}
+                                                    hoặc nhấn để duyệt tệp
                                                 </p>
                                                 <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-1">
-                                                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{TEXT.allowedFormats}</span>
-                                                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{TEXT.maxSize}</span>
+                                                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Định dạng cho phép: PDF, JPG, PNG</span>
+                                                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Kích thước tối đa: 50MB</span>
                                                 </div>
                                             </div>
 
+                                            {/* Uploaded Files Preview */}
                                             {files.length > 0 && (
                                                 <div className="mt-4 space-y-2">
-                                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{TEXT.readyUploadPrefix}{files.length}{TEXT.readyUploadSuffix}</p>
+                                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Sẵn sàng tải lên ({files.length})</p>
                                                     {files.map((file, i) => (
                                                         <div key={i} className="flex items-center justify-between p-2.5 border rounded-lg bg-gray-50 animate-in fade-in slide-in-from-bottom-2">
                                                             <div className="flex items-center space-x-3 overflow-hidden">
@@ -733,7 +604,7 @@ export default function EmployeeDashboard() {
                                                                 )}
                                                                 <div className="truncate">
                                                                     <p className="text-xs font-semibold text-gray-700 truncate">{file.name}</p>
-                                                                    <p className="text-[10px] text-gray-400">{(file.size / 1024 / 1024).toFixed(2)}{TEXT.mbText}</p>
+                                                                    <p className="text-[10px] text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                                                                 </div>
                                                             </div>
                                                             <button type="button" onClick={() => removeFile(i)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors shrink-0">
@@ -747,16 +618,17 @@ export default function EmployeeDashboard() {
                                     </div>
                                 </div>
 
+                                {/* Quick Stats */}
                                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm">
-                                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">{TEXT.statsTitle}</h3>
+                                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">Thống kê nhanh</h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="border bg-purple-50/50 dark:bg-purple-900/10 rounded-xl p-4 text-center">
                                             <p className="text-3xl font-black text-purple-600 mb-1">12</p>
-                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{TEXT.statsLeaveLabel}</p>
+                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Ngày phép còn lại</p>
                                         </div>
                                         <div className="border bg-teal-50/50 dark:bg-teal-900/10 rounded-xl p-4 text-center">
-                                            <p className="text-3xl font-black text-teal-600 mb-1">98<span className="text-xl">{TEXT.percentSign}</span></p>
-                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{TEXT.statsAttendanceLabel}</p>
+                                            <p className="text-3xl font-black text-teal-600 mb-1">98<span className="text-xl">%</span></p>
+                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Chuyên cần</p>
                                         </div>
                                     </div>
                                 </div>

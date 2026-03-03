@@ -1,30 +1,15 @@
 package com.company.ems.backend.rbac.service;
 
-import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import org.springframework.data.jpa.domain.Specification;
+import com.company.ems.backend.employee.entity.Employee;
 
 public interface DataScopeService {
 
-    /**
-     * @param principal     CustomUserPrincipal của user đang đăng nhập
-     * @param targetEmpId   ID của Employee cần kiểm tra quyền truy cập
-     * @return true nếu được phép truy cập
-     */
-    void assertCanAccessEmployee(CustomUserPrincipal principal, Long targetEmpId);
+    boolean canAccessEmployee(Long targetEmployeeId);
 
-    /**
-     * @param principal     CustomUserPrincipal của user đang đăng nhập
-     * @param leaveId       ID của Leave request
-     */
-    void assertCanAccessLeave(CustomUserPrincipal principal, Long leaveId);
+    boolean isInManagerTeam(Long targetEmployeeId);
 
-    /**
-     * @param principal     CustomUserPrincipal của user đang đăng nhập
-     * @param leaveId       ID của Leave request cần approve
-     */
-    void assertCanApproveLeave(CustomUserPrincipal principal, Long leaveId);
+    boolean isSelfEmployee(Long targetEmployeeId);
 
-    /**
-     * @return CustomUserPrincipal của user đang đăng nhập
-     */
-    CustomUserPrincipal getCurrentPrincipal();
+    Specification<Employee> buildScopeSpec();
 }

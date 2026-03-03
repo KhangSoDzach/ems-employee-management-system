@@ -22,5 +22,4 @@ public interface EmployeeService {
     EmployeeResponse updateEmployee(Long id, EmployeeRequest request);
     void deleteEmployee(Long id);
 
-    PageResponse<EmployeeResponse> getAllEmplyees(int page, int size, String department, String position, String status, String search);
 }
