@@ -129,7 +129,7 @@ export default function LeaveRequestPage() {
   /* ── Render ── */
   return (
     <SidebarProvider>
-      <AppSidebar role="manager" variant="inset" />
+      <AppSidebar role="employee" variant="inset" />
       <SidebarInset>
         <SiteHeader />
 

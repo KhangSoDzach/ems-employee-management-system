@@ -11,7 +11,6 @@ import { Toaster } from "@/components/ui/sonner";
 import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
 import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
-// import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 function App() {
   return (
@@ -23,27 +22,20 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Protected: must be logged in */}
-          <Route element={<ProtectedRoute />}>
-            {/* Admin only */}
-            <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-              <Route path="/admin" element={<Dashboard />} />
-            </Route>
+          {/* <Route element={<ProtectedRoute />}> */}
+          {/* Admin only */}
+          {/* <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}> */}
+          <Route path="/admin" element={<Dashboard />} />
+          {/* </Route> */}
 
-            {/* Employee only (common routes) */}
-            <Route path="/employee" element={<EmployeeDashboard />} />
-            <Route path="/profile" element={<EmployeeDashboard />} />
-            <Route path="/request" element={<LeaveRequestPage />} />
-            <Route path="/checkin" element={<CheckinPage />} />
-            <Route path="/attendance" element={<AttendanceHistoryPage />} />
-
-            {/* Employee only */}
-            <Route path="/employee" element={<EmployeeDashboard />} />
-            <Route path="/request" element={<LeaveRequestPage />} />
-            <Route path="/checkin" element={<CheckinPage />} />
-            <Route path="/attendance" element={<AttendanceHistoryPage />} />
-            {/* Manager only */}
-            <Route path="/approve" element={<ApproveLeaveRequest />} />
-            {/* </Route> */}
+          {/* Employee only */}
+          <Route path="/employee" element={<EmployeeDashboard />} />
+          <Route path="/profile" element={<EmployeeDashboard />} />
+          <Route path="/request" element={<LeaveRequestPage />} />
+          <Route path="/checkin" element={<CheckinPage />} />
+          <Route path="/attendance" element={<AttendanceHistoryPage />} />
+          <Route path="/adjustment-requests" element={<AdjustmentRequestPage />} />
+          <Route path="/approve" element={<ApproveLeaveRequest />} />
         </Routes>
       </BrowserRouter>
       <Toaster richColors position="top-right" />
