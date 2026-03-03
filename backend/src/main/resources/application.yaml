@@ -34,7 +34,7 @@ spring:
   # JPA/Hibernate Configuration
   jpa:
     hibernate:
-      ddl-auto: update  # Auto-create missing tables (changed from validate)
+      ddl-auto: none  # Flyway manages schema; Hibernate must not auto-create/alter tables
     show-sql: true
     properties:
       hibernate:

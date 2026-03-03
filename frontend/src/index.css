@@ -53,12 +53,30 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ── Status badge semantic colors ── */
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-fg: var(--status-pending-fg);
+  --color-status-pending-border: var(--status-pending-border);
+
+  --color-status-approved: var(--status-approved);
+  --color-status-approved-fg: var(--status-approved-fg);
+  --color-status-approved-border: var(--status-approved-border);
+
+  --color-status-rejected: var(--status-rejected);
+  --color-status-rejected-fg: var(--status-rejected-fg);
+  --color-status-rejected-border: var(--status-rejected-border);
+
+  --color-status-returned: var(--status-returned);
+  --color-status-returned-fg: var(--status-returned-fg);
+  --color-status-returned-border: var(--status-returned-border);
 }
 
 /* =========================================
    BASE STYLES + 🔥 FIX ROOT HEIGHT
    ========================================= */
 @layer base {
+
   /* 🔥 FIX QUAN TRỌNG NHẤT – KHÔNG CÓ LÀ SIDEBAR ĐÈ */
   html,
   body,
@@ -205,6 +223,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
