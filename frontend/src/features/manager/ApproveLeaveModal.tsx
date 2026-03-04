@@ -98,7 +98,9 @@ export default function ApproveLeaveDialog({
             <span className="text-xs font-mono bg-white px-2 py-1 rounded-md shadow border">
               {request.id}
             </span>
-
+            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor()}`}>
+              {getStatusLabel()}
+            </span>
           </div>
 
           <div>

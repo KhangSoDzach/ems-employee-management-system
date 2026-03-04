@@ -93,18 +93,15 @@ export default function CheckinPage() {
         return localStorage.getItem("emp_checkout_time");
     });
 
-    const [currentTime, setCurrentTime] = useState<string>("");
+    const [currentTime, setCurrentTime] = useState<string>(() =>
+        new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    );
 
-    // Cập nhật đồng hồ mỗi giây
     useEffect(() => {
-        const timer = setInterval(() => {
-            const now = new Date();
-            setCurrentTime(now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-        }, 1000);
-
-        // Gán thời gian ban đầu để không bị chớp màn hình
-        setCurrentTime(new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-
+        const tick = () => {
+            setCurrentTime(new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        };
+        const timer = setInterval(tick, 1000);
         return () => clearInterval(timer);
     }, []);
 

@@ -93,6 +93,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 title: "Điều chỉnh chấm công",
                 url: "/adjustment-requests",
               },
+              {
+                title: "Tài sản của tôi",
+                url: "/my-assets",
+              },
             ],
           },
         ];

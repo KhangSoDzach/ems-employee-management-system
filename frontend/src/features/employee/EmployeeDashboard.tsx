@@ -5,7 +5,7 @@ import * as z from "zod"
 import { format, differenceInYears } from "date-fns"
 import {
     CalendarIcon, UploadCloud, FileText, Image as ImageIcon, X,
-    MapPin, ShieldCheck, Download, Briefcase
+    MapPin, ShieldCheck, Briefcase
 } from "lucide-react"
 import { employeeService } from "@/services/employeeService"
 import { useAuth } from "@/contexts/AuthContext"
