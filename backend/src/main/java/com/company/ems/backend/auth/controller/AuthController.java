@@ -12,6 +12,7 @@ import com.company.ems.backend.auth.dto.RefreshTokenRequest;
 import com.company.ems.backend.auth.dto.ResetPasswordRequest;
 import com.company.ems.backend.auth.service.AuthenticationService;
 import com.company.ems.backend.auth.service.PasswordResetService;
+import com.company.ems.backend.auditlog.dto.RequestContext;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.user.entity.User;
 
@@ -49,8 +50,8 @@ public class AuthController {
                         @Valid @RequestBody LoginRequest request,
                         HttpServletRequest httpRequest) {
 
-                String deviceInfo = extractDeviceInfo(httpRequest);
-                AuthResponse authResponse = authenticationService.login(request, deviceInfo);
+                RequestContext ctx = buildRequestContext(httpRequest);
+                AuthResponse authResponse = authenticationService.login(request, ctx);
 
                 return ResponseEntity.ok(
                                 ApiResponse.success("Login successful", authResponse));
@@ -69,9 +70,9 @@ public class AuthController {
                         @Valid @RequestBody RefreshTokenRequest request,
                         HttpServletRequest httpRequest) {
 
-                String deviceInfo = extractDeviceInfo(httpRequest);
-                AuthResponse authResponse = authenticationService.refreshAccessToken(request.getRefreshToken(),
-                                deviceInfo);
+                RequestContext ctx = buildRequestContext(httpRequest);
+                AuthResponse authResponse = authenticationService.refreshAccessToken(
+                                request.getRefreshToken(), ctx);
 
                 return ResponseEntity.ok(
                                 ApiResponse.success("Token refreshed successfully", authResponse));
@@ -87,9 +88,13 @@ public class AuthController {
         @PostMapping("/logout")
         @Operation(summary = "Logout", description = "Revoke refresh token and logout user")
         public ResponseEntity<ApiResponse<Void>> logout(
-                        @Valid @RequestBody RefreshTokenRequest request) {
+                        @Valid @RequestBody RefreshTokenRequest request,
+                        @AuthenticationPrincipal UserDetails userDetails,
+                        HttpServletRequest httpRequest) {
 
-                authenticationService.logout(request.getRefreshToken());
+                String actor = userDetails != null ? userDetails.getUsername() : "ANONYMOUS";
+                RequestContext ctx = buildRequestContext(httpRequest);
+                authenticationService.logout(request.getRefreshToken(), actor, ctx);
 
                 return ResponseEntity.ok(
                                 ApiResponse.success("Logout successful", null));
@@ -106,11 +111,13 @@ public class AuthController {
         @SecurityRequirement(name = "bearer-jwt")
         @Operation(summary = "Logout from all devices", description = "Revoke all refresh tokens for the user")
         public ResponseEntity<ApiResponse<Void>> logoutAllDevices(
-                        @AuthenticationPrincipal UserDetails userDetails) {
+                        @AuthenticationPrincipal UserDetails userDetails,
+                        HttpServletRequest httpRequest) {
 
                 // Get user from repository to get the actual ID
                 User user = authenticationService.getUserByUsername(userDetails.getUsername());
-                authenticationService.logoutAllDevices(user.getId());
+                RequestContext ctx = buildRequestContext(httpRequest);
+                authenticationService.logoutAllDevices(user.getId(), userDetails.getUsername(), ctx);
 
                 return ResponseEntity.ok(
                                 ApiResponse.success("Logged out from all devices", null));
@@ -162,10 +169,37 @@ public class AuthController {
          * @param request HTTP request
          * @return Device info string (User-Agent + IP)
          */
-        private String extractDeviceInfo(HttpServletRequest request) {
+        /**
+         * Builds a RequestContext from an incoming HTTP request.
+         * Respects X-Forwarded-For header for deployments behind a proxy/load-balancer.
+         */
+        private RequestContext buildRequestContext(HttpServletRequest request) {
                 String userAgent = request.getHeader("User-Agent");
-                String ip = request.getRemoteAddr();
-                return String.format("%s | IP: %s", userAgent != null ? userAgent : "Unknown", ip);
+                String xff = request.getHeader("X-Forwarded-For");
+                String ip = (xff != null && !xff.isBlank())
+                                ? xff.split(",")[0].trim()
+                                : request.getRemoteAddr();
+                String correlationId = request.getHeader("X-Correlation-ID");
+
+                // Determine client type from User-Agent (best-effort heuristic)
+                String clientType = "WEB";
+                if (userAgent != null) {
+                        String ua = userAgent.toLowerCase();
+                        if (ua.contains("okhttp") || ua.contains("android") || ua.contains("ios") ||
+                                        ua.contains("dart") || ua.contains("flutter")) {
+                                clientType = "MOBILE";
+                        } else if (ua.contains("python") || ua.contains("java/") || ua.contains("go-http") ||
+                                        ua.contains("curl") || ua.contains("postman") || ua.contains("axios")) {
+                                clientType = "API";
+                        }
+                }
+
+                return RequestContext.builder()
+                                .ipAddress(ip)
+                                .userAgent(userAgent)
+                                .clientType(clientType)
+                                .correlationId(correlationId)
+                                .build();
         }
 
         /**
