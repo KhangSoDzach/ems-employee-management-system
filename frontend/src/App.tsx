@@ -13,6 +13,7 @@ import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
 import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
 import AssetManagementPage from "./features/admin/Asset-Management";
 import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentRequest";
+import MyAssetsPage from "./features/employee/MyAssetsPage";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
           <Route path="/adjustment-requests" element={<AdjustmentRequestPage />} />
           <Route path="/approve" element={<ApproveLeaveRequest />} />
           <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
+          <Route path="/my-assets" element={<MyAssetsPage />} />
         </Routes>
       </BrowserRouter>
       <Toaster richColors position="top-right" />

@@ -1,4 +1,5 @@
 import * as z from "zod"
+import type { LucideIcon } from "lucide-react"
 import { CheckCircle2, FileText, RotateCcw, Send, XCircle } from "lucide-react"
 
 /* ══════════════ TYPES ══════════════ */
@@ -57,7 +58,7 @@ export const LEAVE_TYPE_CONFIG: Record<LeaveType, { label: string; badgeClass: s
 export const LEAVE_TYPE_OPTIONS = Object.entries(LEAVE_TYPE_CONFIG) as [LeaveType, typeof LEAVE_TYPE_CONFIG[LeaveType]][]
 
 /* ── THUỘC TÍNH TRẠNG THÁI ── */
-export const LEAVE_STATUS_CONFIG: Record<LeaveStatus, { label: string; badgeClass: string; icon: any }> = {
+export const LEAVE_STATUS_CONFIG: Record<LeaveStatus, { label: string; badgeClass: string; icon: LucideIcon }> = {
     PENDING: { label: "Chờ duyệt", badgeClass: "text-amber-700 bg-amber-50 border-amber-200", icon: RotateCcw },
     APPROVED: { label: "Đã duyệt", badgeClass: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: CheckCircle2 },
     REJECTED: { label: "Từ chối", badgeClass: "text-rose-700 bg-rose-50 border-rose-200", icon: XCircle },
