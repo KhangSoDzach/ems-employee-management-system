@@ -15,6 +15,7 @@ import AssetManagementPage from "./features/admin/Asset-Management";
 import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentRequest";
 import MyAssetsPage from "./features/employee/MyAssetsPage";
 
+
 function App() {
   return (
     <AuthProvider>
@@ -34,7 +35,6 @@ function App() {
 
           {/* Employee only */}
           <Route path="/employee" element={<EmployeeDashboard />} />
-          <Route path="/profile" element={<EmployeeDashboard />} />
           <Route path="/request" element={<LeaveRequestPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/attendance" element={<AttendanceHistoryPage />} />
@@ -42,6 +42,9 @@ function App() {
           <Route path="/approve" element={<ApproveLeaveRequest />} />
           <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
           <Route path="/my-assets" element={<MyAssetsPage />} />
+          <Route path="/manager-my-assets" element={<MyAssetsPage sidebarRole="manager" />} />
+          <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
+
         </Routes>
       </BrowserRouter>
       <Toaster richColors position="top-right" />
