@@ -5,45 +5,49 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Eye, Pencil } from "lucide-react";
 import AssetDetailModal from "./AssetDetailModal";
 import AssetCreateModal from "./AssetCreateModal";
-/* ================= DATA ================= */
-
-const assets = [
-  {
-    id: "ASSET-001",
-    name: "MacBook Pro M2",
-    desc: "14-inch, 16GB RAM",
-    type: "Laptop",
-    status: "Sẵn dùng",
-    statusColor: "bg-green-100 text-green-700",
-    user: "Kho HN",
-  },
-  {
-    id: "ASSET-002",
-    name: "Dell XPS 15",
-    desc: "9520, Core i7",
-    type: "Laptop",
-    status: "Đang cấp phát",
-    statusColor: "bg-blue-100 text-blue-700",
-    user: "Nguyễn Văn A",
-  },
-  {
-    id: "ASSET-003",
-    name: "ThinkPad X1",
-    desc: "Carbon Gen 10",
-    type: "Laptop",
-    status: "Đã thu hồi",
-    statusColor: "bg-yellow-100 text-yellow-700",
-    user: "Kho HCM",
-  },
-];
+import AssetEditModal from "./AssetEditModal";
 
 /* ================= PAGE ================= */
 
 export default function AssetManagementPage() {
+  /* ================= DATA ================= */
+
+  const [assets, setAssets] = useState([
+    {
+      id: "ASSET-001",
+      name: "MacBook Pro M2",
+      desc: "14-inch, 16GB RAM",
+      type: "Laptop",
+      status: "Sẵn dùng",
+      statusColor: "bg-green-100 text-green-700",
+      user: "Kho HN",
+    },
+    {
+      id: "ASSET-002",
+      name: "Dell XPS 15",
+      desc: "9520, Core i7",
+      type: "Laptop",
+      status: "Đang cấp phát",
+      statusColor: "bg-blue-100 text-blue-700",
+      user: "Nguyễn Văn A",
+    },
+    {
+      id: "ASSET-003",
+      name: "ThinkPad X1",
+      desc: "Carbon Gen 10",
+      type: "Laptop",
+      status: "Đã thu hồi",
+      statusColor: "bg-yellow-100 text-yellow-700",
+      user: "Kho HCM",
+    },
+  ]);
+
   const [activeFilter, setActiveFilter] = useState("Tất cả");
   const [search, setSearch] = useState("");
   const [openDetail, setOpenDetail] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const filteredAssets = assets.filter((a) => {
     const matchSearch =
       a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -156,6 +160,10 @@ export default function AssetManagementPage() {
                         <Pencil
                           size={18}
                           className="cursor-pointer hover:text-primary"
+                          onClick={() => {
+                            setSelectedAsset(asset);
+                            setOpenEdit(true);
+                          }}
                         />
                       </div>
                     </td>
@@ -193,6 +201,25 @@ export default function AssetManagementPage() {
         <AssetDetailModal
           open={openDetail}
           onClose={() => setOpenDetail(false)}
+        />
+        <AssetEditModal
+          open={openEdit}
+          asset={selectedAsset}
+          onClose={() => setOpenEdit(false)}
+          onSave={(updated) => {
+            setAssets((prev) =>
+              prev.map((a) =>
+                a.id === updated.id
+                  ? {
+                      ...a,
+                      name: updated.name,
+                      type: updated.type,
+                      status: updated.status,
+                    }
+                  : a,
+              ),
+            );
+          }}
         />
       </SidebarInset>
     </SidebarProvider>

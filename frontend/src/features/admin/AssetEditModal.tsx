@@ -1,20 +1,70 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, UploadCloud } from "lucide-react";
+
+interface Asset {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+  value: number;
+  purchaseDate: string;
+  status: string;
+  warrantyDate?: string;
+  supplier?: string;
+  contractDate?: string;
+  condition: string;
+  note?: string;
+  image?: string;
+  locationOrUser?: string;
+}
 
 interface Props {
   open: boolean;
+  asset: Asset | null;
   onClose: () => void;
+  onSave: (updatedAsset: Asset) => void;
 }
 
-export default function AssetCreateModal({ open, onClose }: Props) {
+export default function AssetEditModal({
+  open,
+  asset,
+  onClose,
+  onSave,
+}: Props) {
+  const [formData, setFormData] = useState<Asset | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  if (!open) return null;
+  useEffect(() => {
+    if (asset) {
+      setFormData(asset);
+      setImagePreview(asset.image || null);
+    }
+  }, [asset]);
+
+  if (!open || !formData) return null;
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => (prev ? { ...prev, [name]: value } : prev));
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImagePreview(URL.createObjectURL(file));
+      const preview = URL.createObjectURL(file);
+      setImagePreview(preview);
+      setFormData((prev) => (prev ? { ...prev, image: preview } : prev));
+    }
+  };
+
+  const handleSubmit = () => {
+    if (formData) {
+      onSave(formData);
+      onClose();
     }
   };
 
@@ -24,7 +74,7 @@ export default function AssetCreateModal({ open, onClose }: Props) {
         {/* HEADER */}
         <div className="flex items-center justify-between px-8 py-5 border-b">
           <h2 className="text-xl font-semibold text-gray-900">
-            Thêm tài sản mới
+            Chỉnh sửa tài sản
           </h2>
           <button onClick={onClose}>
             <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
@@ -32,9 +82,9 @@ export default function AssetCreateModal({ open, onClose }: Props) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8 max-h-[80vh] overflow-y-auto">
-          {/* LEFT COLUMN */}
+          {/* LEFT */}
           <div className="lg:col-span-1 space-y-6">
-            {/* IMAGE UPLOAD */}
+            {/* IMAGE */}
             <div className="bg-gray-50 rounded-xl border p-4">
               <label className="text-sm font-semibold text-gray-700 block mb-3">
                 Hình ảnh tài sản
@@ -62,125 +112,140 @@ export default function AssetCreateModal({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* THÔNG TIN PHỤ */}
+            {/* INFO PHỤ */}
             <div className="bg-gray-50 rounded-xl border p-4 space-y-4">
               <h3 className="text-sm font-semibold text-gray-800">
                 Thông tin bổ sung
               </h3>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Bảo hành đến
-                </label>
+                <label className="text-xs text-gray-600">Bảo hành đến</label>
                 <input
                   type="date"
+                  name="warrantyDate"
+                  value={formData.warrantyDate || ""}
+                  onChange={handleChange}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Nhà cung cấp
-                </label>
+                <label className="text-xs text-gray-600">Nhà cung cấp</label>
                 <input
+                  name="supplier"
+                  value={formData.supplier || ""}
+                  onChange={handleChange}
                   placeholder="Nhập tên nhà cung cấp..."
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Hợp đồng đến
-                </label>
+                <label className="text-xs text-gray-600">Hợp đồng đến</label>
                 <input
                   type="date"
+                  name="contractDate"
+                  value={formData.contractDate || ""}
+                  onChange={handleChange}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN */}
+          {/* RIGHT */}
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Mã tài sản */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
                   Mã tài sản
                 </label>
                 <input
+                  value={formData.code}
                   disabled
-                  value="ASSET-2026-XXXX"
                   className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-500"
                 />
-                <p className="text-xs text-gray-400 italic">
-                  * Tự động tạo khi lưu
-                </p>
               </div>
 
-              {/* Tên tài sản */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
-                  Tên tài sản <span className="text-red-500">*</span>
+                  Tên tài sản *
                 </label>
                 <input
-                  placeholder="Nhập tên tài sản..."
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
-              {/* Loại */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
                   Loại tài sản
                 </label>
-                <select className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                >
                   <option>Thiết bị IT</option>
                   <option>Nội thất</option>
                   <option>Điện máy</option>
                 </select>
               </div>
 
-              {/* Giá trị */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
                   Giá trị (VNĐ)
                 </label>
                 <input
                   type="number"
-                  placeholder="0"
+                  name="value"
+                  value={formData.value}
+                  onChange={handleChange}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
-              {/* Ngày mua */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
                   Ngày mua
                 </label>
                 <input
                   type="date"
+                  name="purchaseDate"
+                  value={formData.purchaseDate}
+                  onChange={handleChange}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
-              {/* Trạng thái */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
-                  Trạng thái khởi tạo
+                  Trạng thái
                 </label>
-                <select className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                >
                   <option>Sẵn có</option>
                   <option>Đã cấp phát</option>
                   <option>Thu hồi</option>
                 </select>
               </div>
-              {/* Vị trí / Người sử dụng */}
+
+              {/* LOCATION */}
               <div className="space-y-1 md:col-span-2">
                 <label className="text-sm font-medium text-gray-700">
                   Vị trí / Người sử dụng
                 </label>
                 <input
+                  name="locationOrUser"
+                  value={formData.locationOrUser || ""}
+                  onChange={handleChange}
                   placeholder="VD: Kho HN hoặc Nguyễn Văn A..."
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
@@ -241,12 +306,15 @@ export default function AssetCreateModal({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Ghi chú */}
+            {/* NOTE */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">
                 Ghi chú
               </label>
               <textarea
+                name="note"
+                value={formData.note || ""}
+                onChange={handleChange}
                 rows={4}
                 placeholder="Mô tả thêm về cấu hình, tình trạng..."
                 className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -264,8 +332,11 @@ export default function AssetCreateModal({ open, onClose }: Props) {
             Hủy
           </button>
 
-          <button className="px-5 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 shadow">
-            Lưu tài sản
+          <button
+            onClick={handleSubmit}
+            className="px-6 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 shadow"
+          >
+            Cập nhật tài sản
           </button>
         </div>
       </div>
