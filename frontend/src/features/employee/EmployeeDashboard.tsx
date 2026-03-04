@@ -120,17 +120,15 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>
 
 const defaultValues: Partial<ProfileFormValues> = {
-    employeeCode: "NV-10293",
-    fullName: "Nguyễn Văn An",
-    nationalId: "012345678912",
-    companyEmail: "an.nguyen@company.com",
-    phoneNumber: "0912345678",
-    dateOfBirth: new Date(1995, 5, 15),
+    employeeCode: "",
+    fullName: "",
+    nationalId: "",
+    companyEmail: "",
+    phoneNumber: "",
     contractType: "FULL_TIME",
-    startDate: new Date(2021, 7, 12),
-    department: "Product Design",
-    jobRole: "Senior UI/UX Designer",
-    lineManager: "Michael Scott",
+    department: "",
+    jobRole: "",
+    lineManager: "",
     workStatus: "ACTIVE",
 }
 
@@ -158,7 +156,7 @@ export default function EmployeeDashboard() {
                     companyEmail: data.email ?? "",
                     nationalId: "",         // trường nhạy cảm – server không trả
                     phoneNumber: data.phone ?? "",
-                    dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(1995, 5, 15),
+                    dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(),
                     startDate: data.hireDate ? new Date(data.hireDate) : new Date(),
                     department: data.department ?? "",
                     jobRole: data.position ?? "",
@@ -286,8 +284,10 @@ export default function EmployeeDashboard() {
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 mb-6 border shadow-sm flex flex-col md:flex-row items-center md:items-start justify-between gap-6 relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg relative">
-                                <img src="https://i.pravatar.cc/150?u=sarah" alt="Profile" className="w-full h-full object-cover" />
+                            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg relative flex items-center justify-center">
+                                <span className="text-3xl font-bold text-gray-400">
+                                    {form.watch("fullName")?.charAt(0) || "?"}
+                                </span>
                             </div>
                             <div className="text-center md:text-left pt-2">
                                 <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
@@ -315,7 +315,9 @@ export default function EmployeeDashboard() {
                             <div>
                                 <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{TEXT.managerLabel}</p>
                                 <div className="flex items-center gap-2">
-                                    <img src="https://i.pravatar.cc/150?u=michael" className="w-6 h-6 rounded-full" />
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">
+                                        {form.watch("lineManager")?.charAt(0) || "?"}
+                                    </div>
                                     <p className="font-bold">{form.watch("lineManager")}</p>
                                 </div>
                             </div>
@@ -656,37 +658,7 @@ export default function EmployeeDashboard() {
                                     <h3 className="text-lg font-bold mb-4 border-b pb-4">{TEXT.sectionDocs}</h3>
 
                                     <div className="space-y-4">
-                                        <div className="space-y-3 mb-6">
-                                            <div className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 hover:border-primary/30 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-red-100 text-red-600 rounded-lg">
-                                                        <FileText className="w-5 h-5" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-gray-800">HopDongLaoDong.pdf</p>
-                                                        <p className="text-xs text-muted-foreground">{TEXT.fileSigned}</p>
-                                                    </div>
-                                                </div>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                                                    <Download className="w-4 h-4" />
-                                                </Button>
-                                            </div>
 
-                                            <div className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 hover:border-primary/30 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                                                        <ImageIcon className="w-5 h-5" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-gray-800">BanSaoCCCD.jpg</p>
-                                                        <p className="text-xs text-muted-foreground">{TEXT.fileVerified}</p>
-                                                    </div>
-                                                </div>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                                                    <Download className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
 
                                         <div>
                                             <h4 className="text-sm font-bold mb-3 text-gray-700">{TEXT.labelUploadNew}</h4>
@@ -751,11 +723,11 @@ export default function EmployeeDashboard() {
                                     <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">{TEXT.statsTitle}</h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="border bg-purple-50/50 dark:bg-purple-900/10 rounded-xl p-4 text-center">
-                                            <p className="text-3xl font-black text-purple-600 mb-1">12</p>
+                                            <p className="text-3xl font-black text-purple-600 mb-1">0</p>
                                             <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{TEXT.statsLeaveLabel}</p>
                                         </div>
                                         <div className="border bg-teal-50/50 dark:bg-teal-900/10 rounded-xl p-4 text-center">
-                                            <p className="text-3xl font-black text-teal-600 mb-1">98<span className="text-xl">{TEXT.percentSign}</span></p>
+                                            <p className="text-3xl font-black text-teal-600 mb-1">0<span className="text-xl">{TEXT.percentSign}</span></p>
                                             <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{TEXT.statsAttendanceLabel}</p>
                                         </div>
                                     </div>

@@ -77,7 +77,6 @@
    ========================================= */
 @layer base {
 
-  /* 🔥 FIX QUAN TRỌNG NHẤT – KHÔNG CÓ LÀ SIDEBAR ĐÈ */
   html,
   body,
   #root {
