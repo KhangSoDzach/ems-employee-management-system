@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
 import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
+import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentRequest";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/attendance" element={<AttendanceHistoryPage />} />
           <Route path="/adjustment-requests" element={<AdjustmentRequestPage />} />
           <Route path="/approve" element={<ApproveLeaveRequest />} />
+          <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
         </Routes>
       </BrowserRouter>
       <Toaster richColors position="top-right" />

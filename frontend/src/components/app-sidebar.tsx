@@ -65,6 +65,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 title: "Duyệt đơn nghỉ phép",
                 url: "/approve",
               },
+              {
+                title: "Duyệt điều chỉnh chấm công",
+                url: "/approve-adjustments",
+              },
             ],
           },
         ]
