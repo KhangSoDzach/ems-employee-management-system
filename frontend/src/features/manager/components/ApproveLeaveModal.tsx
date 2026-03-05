@@ -93,16 +93,6 @@ export default function ApproveLeaveDialog({
       >
         {/* ================= HEADER ================= */}
         <div className="px-6 py-5 border-b bg-muted/10 space-y-3">
-
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono bg-white px-2 py-1 rounded-md shadow border">
-              {request.id}
-            </span>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor()}`}>
-              {getStatusLabel()}
-            </span>
-          </div>
-
           <div>
             <h2 className="text-xl font-bold">
               Chi tiết đơn nghỉ
@@ -110,6 +100,14 @@ export default function ApproveLeaveDialog({
             <p className="text-sm text-muted-foreground mt-1">
               Tạo lúc 08:30, 01/03/2026
             </p>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono bg-white px-2 py-1 rounded-md shadow border">
+              {request.id}
+            </span>
+            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor()}`}>
+              {getStatusLabel()}
+            </span>
           </div>
         </div>
 
