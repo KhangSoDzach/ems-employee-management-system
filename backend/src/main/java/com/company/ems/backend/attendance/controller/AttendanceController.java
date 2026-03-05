@@ -109,7 +109,7 @@ public class AttendanceController {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
         PageResponse<AttendanceResponse> result =
                 attendanceService.getAttendance(page, size, employeeId, startDate, endDate, status, principal);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return ResponseEntity.ok(ApiResponse.success("success", result));
     }
 
     /**
@@ -126,7 +126,7 @@ public class AttendanceController {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
         AttendanceSummaryResponse summary =
                 attendanceService.getSummary(employeeId, startDate, endDate, principal);
-        return ResponseEntity.ok(ApiResponse.success(summary));
+        return ResponseEntity.ok(ApiResponse.success("success", summary));
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────
