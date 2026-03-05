@@ -69,8 +69,7 @@ public class AttendanceAdjustmentController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-        return ResponseEntity.ok(ApiResponse.success(
-                adjustmentService.getMyRequests(page, size, principal)));
+        return ResponseEntity.ok(ApiResponse.success(adjustmentService.getMyRequests(page, size, principal)));
     }
 
     /**
@@ -102,8 +101,7 @@ public class AttendanceAdjustmentController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-        return ResponseEntity.ok(ApiResponse.success(
-                adjustmentService.getPendingForApprover(page, size, principal)));
+        return ResponseEntity.ok(ApiResponse.success(adjustmentService.getPendingForApprover(page, size, principal)));
     }
 
     /**
@@ -116,8 +114,7 @@ public class AttendanceAdjustmentController {
     public ResponseEntity<ApiResponse<AdjustmentRequestResponse>> getDetail(
             @PathVariable Long id) {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-        return ResponseEntity.ok(ApiResponse.success(
-                adjustmentService.getDetail(id, principal)));
+        return ResponseEntity.ok(ApiResponse.success(adjustmentService.getDetail(id, principal)));
     }
 
     /**
