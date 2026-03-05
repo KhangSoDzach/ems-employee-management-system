@@ -141,8 +141,6 @@ public class AuditLogService {
                 .size(page.getSize())
                 .totalElements(page.getTotalElements())
                 .totalPages(page.getTotalPages())
-                .first(page.isFirst())
-                .last(page.isLast())
                 .build();
     }
 
