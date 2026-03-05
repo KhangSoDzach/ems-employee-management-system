@@ -6,7 +6,8 @@ import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
@@ -15,127 +16,79 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "assets")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@SQLDelete(sql = "UPDATE assets SET is_deleted = true, deleted_at = NOW() WHERE id = ?")
-@Where(clause = "is_deleted = false")
+@Where(clause = "deleted = false")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Asset {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "asset_code", unique = true, nullable = false, length = 50)
+    @Column(name = "asset_code", nullable = false, unique = true, length = 20)
     private String assetCode;
-
-    @Column(name = "asset_name", nullable = false)
+    @Column(name = "asset_name", nullable = false, length = 255)
     private String assetName;
-
-    @Column(name = "asset_type", nullable = false, length = 50)
+    @Column(name = "asset_type", length = 50)
     private String assetType;
-
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
 
     @Column(name = "purchase_date")
     private LocalDate purchaseDate;
 
-    @Column(name = "purchase_price", precision = 15, scale = 2)
-    private BigDecimal purchasePrice;
+    @Column(name = "asset_value", precision = 18, scale = 2)
+    private BigDecimal assetValue;
 
-    @Column(length = 255)
-    private String supplier;
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 
-    @Column(name = "warranty_until")
-    private LocalDate warrantyUntil;
-
-    @Column(columnDefinition = "JSON")
-    private String specifications;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private AssetStatus status = AssetStatus.AVAILABLE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "asset_condition", nullable = false, length = 20)
-    private AssetCondition assetCondition;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "asset_status", nullable = false, length = 20)
-    private AssetStatus assetStatus;
+    private AssetCondition condition = AssetCondition.NEW;
+    @Column(name = "location", length = 255)
+    private String location;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to_employee_id")
-    private Employee assignedToEmployee;
+    @JoinColumn(name = "assigned_to_id")
+    private Employee assignedTo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_by_id")
+    private User assignedBy;
 
     @Column(name = "assigned_date")
     private LocalDateTime assignedDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_by_user_id")
-    private User assignedByUser;
-
     @Column(name = "return_date")
     private LocalDateTime returnDate;
+    @Column(name = "warranty_until")
+    private LocalDate warrantyUntil;
 
-    @Column(length = 255)
-    private String location;
-
-    @Column(name = "is_deleted")
-    @Builder.Default
-    private Boolean isDeleted = false;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
+    @Column(name = "supplier_name", length = 255)
+    private String supplierName;
+    @Column(name = "contract_until")
+    private LocalDate contractUntil;
+    @Column(name = "contract_number", length = 100)
+    private String contractNumber;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "deleted_by_user_id")
-    private User deletedByUser;
+    @JoinColumn(name = "created_by_id")
+    private User createdBy;
 
+    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_user_id", updatable = false)
-    private User createdByUser;
-
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "updated_by_user_id")
-    private User updatedByUser;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (assetCondition == null) {
-            assetCondition = AssetCondition.NEW;
-        }
-        if (assetStatus == null) {
-            assetStatus = AssetStatus.AVAILABLE;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    // Business methods
-    public boolean isAvailable() {
-        return assetStatus == AssetStatus.AVAILABLE && !isDeleted;
-    }
-
-    public boolean isAssigned() {
-        return assetStatus == AssetStatus.ASSIGNED && assignedToEmployee != null;
-    }
-
-    public boolean canBeAssigned() {
-        return isAvailable() && assetCondition != AssetCondition.LOST
-                && assetCondition != AssetCondition.DISPOSED;
-    }
-
-    public boolean canBeReturned() {
-        return isAssigned();
-    }
+    @Column(name = "deleted", nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
 }
