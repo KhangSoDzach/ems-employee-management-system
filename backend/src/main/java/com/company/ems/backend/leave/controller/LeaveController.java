@@ -52,7 +52,7 @@ public class LeaveController {
         PageResponse<LeaveResponse> response =
                 leaveService.getAllLeaves(page, size, employeeId, status, leaveType, startDate, endDate);
         // TODO: Implement get leaves service
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.ok(ApiResponse.success("success", null));
     }
 
     /**
@@ -61,10 +61,10 @@ public class LeaveController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasPermission(null, 'LEAVE_VIEW')")
-    public ResponseEntity<ApiResponse<LeaveResponse>> getLeaveById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> getLeaveById(@PathVariable Long id) {
         LeaveResponse response = leaveService.getLeaveById(id);
         // TODO: Implement get leave by id service
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.ok(ApiResponse.success(null, "success"));
     }
 
     /**

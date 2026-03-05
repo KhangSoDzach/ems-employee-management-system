@@ -38,7 +38,7 @@ public class TwoFactorAuthController {
     @Operation(
             summary = "Setup 2FA",
             description = "Initiate 2FA setup. Generates secret key and QR code. Scan QR code with Google Authenticator or Authy.",
-            security = @SecurityRequirement(name = "bearer-jwt")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<TwoFactorAuthResponse>> setup2FA(
             Authentication authentication
@@ -62,7 +62,7 @@ public class TwoFactorAuthController {
     @Operation(
             summary = "Verify and enable 2FA",
             description = "Verify TOTP code from authenticator app and enable 2FA. Returns recovery codes - save them securely!",
-            security = @SecurityRequirement(name = "bearer-jwt")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<TwoFactorAuthResponse>> verify2FA(
             Authentication authentication,
@@ -86,7 +86,7 @@ public class TwoFactorAuthController {
     @Operation(
             summary = "Disable 2FA",
             description = "Disable 2FA for current user. Requires password or TOTP code verification. Email notification will be sent.",
-            security = @SecurityRequirement(name = "bearer-jwt")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<TwoFactorAuthResponse>> disable2FA(
             Authentication authentication,
@@ -109,7 +109,7 @@ public class TwoFactorAuthController {
     @Operation(
             summary = "Get 2FA status",
             description = "Check if 2FA is enabled for current user",
-            security = @SecurityRequirement(name = "bearer-jwt")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<Boolean>> get2FAStatus(
             Authentication authentication

@@ -40,9 +40,17 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+/** Trả về route home tương ứng với role của user */
+function getRedirectByRole(roles: string[]): string {
+    if (roles.includes("ROLE_ADMIN")) return "/admin";
+    if (roles.includes("ROLE_HR")) return "/hr-profile";
+    if (roles.includes("ROLE_MANAGER")) return "/manager-profile";
+    return "/employee"; // ROLE_EMPLOYEE or unknown
+}
+
 export const LoginPage = () => {
     const navigate = useNavigate();
-    const { login, isAuthenticated } = useAuth();
+    const { login, isAuthenticated, user } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
 
     const {
@@ -61,13 +69,12 @@ export const LoginPage = () => {
     });
 
     // Redirect nếu đã đăng nhập và không đang trong quá trình submit
-    // Thêm !isSubmitting để tránh trường hợp này chạy đè lên lúc đang hiện thị lỗi
     useEffect(() => {
-        if (isAuthenticated && !isSubmitting) {
-            navigate("/admin", { replace: true });
+        if (isAuthenticated && !isSubmitting && user) {
+            navigate(getRedirectByRole(user.roles), { replace: true });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated, isSubmitting, navigate]);
+    }, [isAuthenticated, isSubmitting, navigate, user]);
 
     useEffect(() => {
         const savedEmail = localStorage.getItem("rememberedEmail");
@@ -79,7 +86,7 @@ export const LoginPage = () => {
 
     const onSubmit = async (data: LoginFormValues) => {
         try {
-            await login(data.email, data.password);
+            const userInfo = await login(data.email, data.password);
 
             if (data.remember) {
                 localStorage.setItem("rememberedEmail", data.email);
@@ -87,7 +94,7 @@ export const LoginPage = () => {
                 localStorage.removeItem("rememberedEmail");
             }
 
-            navigate("/admin", { replace: true });
+            navigate(getRedirectByRole(userInfo.roles), { replace: true });
         } catch (error: unknown) {
             const err = error as { response?: { data?: { message?: string } } };
             console.error("Login error:", error);

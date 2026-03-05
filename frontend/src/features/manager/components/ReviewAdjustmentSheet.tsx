@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
     Sheet,
     SheetContent,
@@ -8,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowRight, Check, Reply, X } from "lucide-react"
+import { ArrowRight, Check, Loader2, Reply, X } from "lucide-react"
 import { format } from "date-fns"
 import type { AdjustmentRequest } from "../../employee/adjustment-request.constants"
 import { DATETIME_FORMAT, DATE_FORMAT, AUDIT_ACTION_CONFIG } from "../../employee/adjustment-request.constants"
@@ -17,9 +18,36 @@ interface ReviewAdjustmentSheetProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     request: AdjustmentRequest | null;
+    onApprove?: (id: string, reason: string) => Promise<void>;
+    onReject?: (id: string, reason: string) => Promise<void>;
+    onReturn?: (id: string, reason: string) => Promise<void>;
 }
 
-export function ReviewAdjustmentSheet({ open, onOpenChange, request }: ReviewAdjustmentSheetProps) {
+export function ReviewAdjustmentSheet({
+    open,
+    onOpenChange,
+    request,
+    onApprove,
+    onReject,
+    onReturn,
+}: ReviewAdjustmentSheetProps) {
+    const [note, setNote] = useState("")
+    const [submitting, setSubmitting] = useState<"approve" | "reject" | "return" | null>(null)
+
+    const handleAction = async (action: "approve" | "reject" | "return") => {
+        if (!request) return
+        const handler = action === "approve" ? onApprove : action === "reject" ? onReject : onReturn
+        if (!handler) return
+        setSubmitting(action)
+        try {
+            await handler(request.id, note)
+            setNote("")
+            onOpenChange(false)
+        } finally {
+            setSubmitting(null)
+        }
+    }
+
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-slate-50 p-6 flex flex-col">
@@ -96,6 +124,8 @@ export function ReviewAdjustmentSheet({ open, onOpenChange, request }: ReviewAdj
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Internal Notes</h4>
                                 <Textarea
                                     placeholder="Add a note for the HR record..."
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
                                     className="resize-none h-28 bg-white rounded-xl border-slate-200 shadow-sm placeholder:text-slate-400 p-4"
                                 />
                             </div>
@@ -146,16 +176,30 @@ export function ReviewAdjustmentSheet({ open, onOpenChange, request }: ReviewAdj
                         {/* Footer Buttons */}
                         {(request.status === "PENDING" || request.status === "RETURNED") && (
                             <div className="mt-10 flex gap-3">
-                                <Button variant="outline" className="flex-[0.8] text-amber-500 border-amber-200 hover:bg-amber-50 hover:text-amber-600 bg-white shadow-sm font-semibold">
-                                    <Reply className="mr-2 h-4 w-4" />
+                                <Button
+                                    variant="outline"
+                                    className="flex-[0.8] text-amber-500 border-amber-200 hover:bg-amber-50 hover:text-amber-600 bg-white shadow-sm font-semibold"
+                                    disabled={!!submitting}
+                                    onClick={() => handleAction("return")}
+                                >
+                                    {submitting === "return" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Reply className="mr-2 h-4 w-4" />}
                                     Gửi lại
                                 </Button>
-                                <Button variant="destructive" className="flex-[0.8] bg-rose-500 hover:bg-rose-600 text-white shadow-sm font-semibold border-none">
-                                    <X className="mr-2 h-4 w-4" />
+                                <Button
+                                    variant="destructive"
+                                    className="flex-[0.8] bg-rose-500 hover:bg-rose-600 text-white shadow-sm font-semibold border-none"
+                                    disabled={!!submitting}
+                                    onClick={() => handleAction("reject")}
+                                >
+                                    {submitting === "reject" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
                                     Từ chối
                                 </Button>
-                                <Button className="flex-[1.4] bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm font-semibold border-none">
-                                    <Check className="mr-2 h-4 w-4" />
+                                <Button
+                                    className="flex-[1.4] bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm font-semibold border-none"
+                                    disabled={!!submitting}
+                                    onClick={() => handleAction("approve")}
+                                >
+                                    {submitting === "approve" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                                     Duyệt yêu cầu
                                 </Button>
                             </div>
