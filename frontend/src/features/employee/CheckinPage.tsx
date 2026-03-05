@@ -1,6 +1,8 @@
-import { Play, Square, Coffee, CalendarClock, Plane } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Play, Square, Coffee, CalendarClock, Loader2 } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
+import { format, subDays } from "date-fns"
+import { toast } from "sonner"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,120 +12,145 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
-const TEXT = {
-    breadcrumb: "Cổng thông tin > Chấm công",
-    title: "Điểm danh nhân viên",
-    subtitle: "Quản lý thời gian làm việc và lịch sử chấm công của bạn.",
-    currentDate: "Thứ Ba, 24 Tháng 10, 2023",
-    statusUnchecked: "Chưa điểm danh",
-    currentTime: "08:30:45 AM",
-    greeting: "Chào buổi sáng! Hãy bắt đầu ngày làm việc đầy năng lượng.",
-    greetingCheckedIn: "Bạn đang trong ca làm việc. Chúc một ngày làm việc hiệu quả!",
-    greetingCheckedOut: "Bạn đã kết thúc ca làm việc hôm nay. Nghỉ ngơi tốt nhé!",
-    btnCheckIn: "Check In Ngay",
-    btnCheckOut: "Check Out",
-    btnReport: "Báo cáo sự cố",
-    weeklyExtraHours: "+2.5h",
-    weeklyHoursLabel: "Tổng giờ làm tuần này",
-    weeklyHoursValue: "32.5h",
-    lateAlertIcon: "!",
-    lateAlertLabel: "Tháng này",
-    lateDaysLabel: "Số ngày đi muộn",
-    lateDaysValue: "1 ngày",
-    leaveRemainingLabel: "Phép năm còn lại",
-    leaveRemainingValue: "10 ngày",
-    historyTitle: "Lịch sử điểm danh (7 ngày gần nhất)",
-    viewAllPrompt: "Xem tất cả",
-    colDate: "Ngày",
-    colCheckIn: "Check-in",
-    colCheckOut: "Check-out",
-    colTotalHours: "Tổng giờ",
-    colStatus: "Trạng thái",
-    statusOnTime: "Đúng giờ",
-    statusLate: "Đi muộn",
-    statusEarly: "Về sớm",
+import { attendanceService, AttendanceRecord, AttendanceSummary } from "@/services/attendanceService"
+import { CameraModal } from "./components/CameraModal"
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function fmtTime(iso: string | null) {
+    if (!iso) return "—"
+    return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
 }
 
-const historyData = [
-    {
-        date: "23/10/2023",
-        checkIn: "08:25 AM",
-        checkOut: "05:30 PM",
-        totalHours: "9h 05m",
-        status: TEXT.statusOnTime,
-        statusColor: "bg-primary/10 text-primary",
-    },
-    {
-        date: "22/10/2023",
-        checkIn: "08:45 AM",
-        checkOut: "05:45 PM",
-        totalHours: "9h 00m",
-        status: TEXT.statusLate,
-        statusColor: "bg-destructive/10 text-destructive",
-    },
-    {
-        date: "21/10/2023",
-        checkIn: "08:30 AM",
-        checkOut: "05:30 PM",
-        totalHours: "9h 00m",
-        status: TEXT.statusOnTime,
-        statusColor: "bg-primary/10 text-primary",
-    },
-    {
-        date: "20/10/2023",
-        checkIn: "08:15 AM",
-        checkOut: "04:30 PM",
-        totalHours: "8h 15m",
-        status: TEXT.statusEarly,
-        statusColor: "bg-accent text-accent-foreground",
-    },
-]
+function fmtDate(iso: string | null) {
+    if (!iso) return "—"
+    return format(new Date(iso), "dd/MM/yyyy")
+}
+
+function fmtWorkHours(minutes: number | null) {
+    if (minutes == null) return "—"
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return `${h}h ${m.toString().padStart(2, "0")}m`
+}
+
+function statusLabel(s: AttendanceRecord["status"]) {
+    const map: Record<string, { label: string; cls: string }> = {
+        PRESENT: { label: "Đúng giờ", cls: "bg-primary/10 text-primary" },
+        LATE: { label: "Đi muộn", cls: "bg-destructive/10 text-destructive" },
+        ABSENT: { label: "Vắng", cls: "bg-muted text-muted-foreground" },
+        HALF_DAY: { label: "Nửa ngày", cls: "bg-accent text-accent-foreground" },
+        ON_LEAVE: { label: "Nghỉ phép", cls: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
+    }
+    return map[s] ?? { label: s, cls: "bg-muted text-muted-foreground" }
+}
+
+type CheckStatus = "unchecked" | "checked_in" | "checked_out"
 
 export default function CheckinPage() {
-    const navigate = useNavigate();
-    const [status, setStatus] = useState<"unchecked" | "checked_in" | "checked_out">(() => {
-        return (localStorage.getItem("emp_status") as "unchecked" | "checked_in" | "checked_out") || "unchecked";
-    });
+    const navigate = useNavigate()
 
-    const [checkInTime, setCheckInTime] = useState<string | null>(() => {
-        return localStorage.getItem("emp_checkin_time");
-    });
-
-    const [checkOutTime, setCheckOutTime] = useState<string | null>(() => {
-        return localStorage.getItem("emp_checkout_time");
-    });
-
-    const [currentTime, setCurrentTime] = useState<string>(() =>
-        new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    );
-
+    // ── Live clock ────────────────────────────────────────────────────────────
+    const [currentTime, setCurrentTime] = useState(() =>
+        new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    )
     useEffect(() => {
-        const tick = () => {
-            setCurrentTime(new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-        };
-        const timer = setInterval(tick, 1000);
-        return () => clearInterval(timer);
-    }, []);
+        const timer = setInterval(() => {
+            setCurrentTime(new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))
+        }, 1000)
+        return () => clearInterval(timer)
+    }, [])
 
-    const handleCheckIn = () => {
-        const nowStr = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' });
-        setStatus("checked_in");
-        setCheckInTime(nowStr);
+    const todayDisplay = format(new Date(), "EEEE, dd 'Tháng' MM, yyyy")
 
-        localStorage.setItem("emp_status", "checked_in");
-        localStorage.setItem("emp_checkin_time", nowStr);
-        localStorage.removeItem("emp_checkout_time");
-        setCheckOutTime(null);
-    };
+    // ── Attendance state derived from today's record ──────────────────────────
+    const [todayRecord, setTodayRecord] = useState<AttendanceRecord | null>(null)
+    const [summary, setSummary] = useState<AttendanceSummary | null>(null)
+    const [history, setHistory] = useState<AttendanceRecord[]>([])
+    const [loading, setLoading] = useState(true)
+    const [actionLoading, setActionLoading] = useState(false)
 
-    const handleCheckOut = () => {
-        const nowStr = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' });
-        setStatus("checked_out");
-        setCheckOutTime(nowStr);
+    // ── Camera modal ──────────────────────────────────────────────────────────
+    const [cameraOpen, setCameraOpen] = useState(false)
+    const [pendingAction, setPendingAction] = useState<"checkIn" | "checkOut" | null>(null)
 
-        localStorage.setItem("emp_status", "checked_out");
-        localStorage.setItem("emp_checkout_time", nowStr);
-    };
+    // ── Derive status ─────────────────────────────────────────────────────────
+    const status: CheckStatus = todayRecord == null
+        ? "unchecked"
+        : todayRecord.checkOutTime
+            ? "checked_out"
+            : "checked_in"
+
+    // ── Fetch today's record + summary + recent history ───────────────────────
+    const fetchAll = useCallback(async () => {
+        try {
+            const today = format(new Date(), "yyyy-MM-dd")
+            const sevenDaysAgo = format(subDays(new Date(), 6), "yyyy-MM-dd")
+
+            const [historyPage, sum] = await Promise.all([
+                attendanceService.getAttendance({ page: 0, size: 7, startDate: sevenDaysAgo, endDate: today }),
+                attendanceService.getSummary(),
+            ])
+
+            const records = historyPage.content
+            setSummary(sum)
+            setHistory(records)
+
+            // Today's record is the most recent one on today's date
+            const todayRec = records.find(r => r.date === today) ?? null
+            setTodayRecord(todayRec)
+        } catch {
+            // Silently fail - user may not have attendance records yet
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => { fetchAll() }, [fetchAll])
+
+    // ── Open camera handler ───────────────────────────────────────────────────
+    const openCameraFor = (action: "checkIn" | "checkOut") => {
+        setPendingAction(action)
+        setCameraOpen(true)
+    }
+
+    // ── Camera capture complete ───────────────────────────────────────────────
+    const handleCapture = async (result: { photoBase64: string; latitude: number; longitude: number; locationLabel: string }) => {
+        if (!pendingAction) return
+        setActionLoading(true)
+        try {
+            if (pendingAction === "checkIn") {
+                const rec = await attendanceService.checkIn({
+                    latitude: result.latitude,
+                    longitude: result.longitude,
+                    photoBase64: result.photoBase64,
+                    locationLabel: result.locationLabel,
+                    checkInMethod: "CAMERA_GEO",
+                })
+                setTodayRecord(rec)
+                toast.success("Check-in thành công!")
+            } else {
+                const rec = await attendanceService.checkOut({
+                    latitude: result.latitude,
+                    longitude: result.longitude,
+                    photoBase64: result.photoBase64,
+                    locationLabel: result.locationLabel,
+                })
+                setTodayRecord(rec)
+                toast.success("Check-out thành công!")
+            }
+            await fetchAll()
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Có lỗi xảy ra"
+            toast.error(msg)
+        } finally {
+            setActionLoading(false)
+            setPendingAction(null)
+        }
+    }
+
+    // ── Summary stats ─────────────────────────────────────────────────────────
+    const workHoursPct = summary ? Math.min(100, (summary.totalWorkHours / (summary.totalDays * 8)) * 100) : 0
+    const latePct = summary && summary.totalDays > 0 ? (summary.lateDays / summary.totalDays) * 100 : 0
 
     return (
         <SidebarProvider>
@@ -132,16 +159,15 @@ export default function CheckinPage() {
                 <SiteHeader />
 
                 <main className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-background dark:bg-background min-h-screen">
+                    {/* Page header */}
                     <div className="flex flex-col md:flex-row items-center justify-between space-y-2 mb-6">
                         <div>
-                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">{TEXT.breadcrumb}</p>
-                            <h2 className="text-3xl font-bold tracking-tight text-foreground mt-1">{TEXT.title}</h2>
-                            <p className="text-muted-foreground font-medium mt-1">
-                                {TEXT.subtitle}
-                            </p>
+                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cổng thông tin &gt; Chấm công</p>
+                            <h2 className="text-3xl font-bold tracking-tight text-foreground mt-1">Điểm danh nhân viên</h2>
+                            <p className="text-muted-foreground font-medium mt-1">Quản lý thời gian làm việc và lịch sử chấm công của bạn.</p>
                         </div>
-                        <div className="text-sm font-semibold text-muted-foreground bg-card px-5 py-2.5 rounded-xl border-border border shadow-sm">
-                            {TEXT.currentDate}
+                        <div className="text-sm font-semibold text-muted-foreground bg-card px-5 py-2.5 rounded-xl border-border border shadow-sm capitalize">
+                            {todayDisplay}
                         </div>
                     </div>
 
@@ -151,76 +177,86 @@ export default function CheckinPage() {
                             <div className="z-10 flex flex-col items-start gap-4">
                                 {status === "unchecked" && (
                                     <Badge variant="outline" className="text-destructive border-destructive/20 bg-destructive/10 font-medium px-3 py-1">
-                                        {TEXT.statusUnchecked}
+                                        Chưa điểm danh
                                     </Badge>
                                 )}
                                 {status === "checked_in" && (
                                     <Badge variant="outline" className="text-primary border-primary/20 bg-primary/10 font-medium px-3 py-1">
-                                        Đang làm việc (Vào lúc {checkInTime})
+                                        Đang làm việc (Vào lúc {fmtTime(todayRecord?.checkInTime ?? null)})
                                     </Badge>
                                 )}
                                 {status === "checked_out" && (
                                     <Badge variant="outline" className="text-muted-foreground border-border bg-muted font-medium px-3 py-1">
-                                        Đã Check-out (Vào: {checkInTime} - Ra: {checkOutTime})
+                                        Đã Check-out (Vào: {fmtTime(todayRecord?.checkInTime ?? null)} — Ra: {fmtTime(todayRecord?.checkOutTime ?? null)})
                                     </Badge>
                                 )}
 
                                 <h1 className="text-5xl font-extrabold text-foreground">{currentTime}</h1>
 
                                 <p className="text-muted-foreground text-lg">
-                                    {status === "unchecked" && TEXT.greeting}
-                                    {status === "checked_in" && TEXT.greetingCheckedIn}
-                                    {status === "checked_out" && TEXT.greetingCheckedOut}
+                                    {status === "unchecked" && "Chào buổi sáng! Hãy bắt đầu ngày làm việc đầy năng lượng."}
+                                    {status === "checked_in" && "Bạn đang trong ca làm việc. Chúc một ngày làm việc hiệu quả!"}
+                                    {status === "checked_out" && "Bạn đã kết thúc ca làm việc hôm nay. Nghỉ ngơi tốt nhé!"}
                                 </p>
 
                                 <div className="flex gap-4 mt-2">
                                     {(status === "unchecked" || status === "checked_out") && (
                                         <Button
-                                            onClick={handleCheckIn}
+                                            onClick={() => openCameraFor("checkIn")}
+                                            disabled={loading || actionLoading}
                                             size="lg"
                                             className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2"
                                         >
-                                            <Play className="fill-current w-5 h-5" />
-                                            {TEXT.btnCheckIn}
+                                            {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="fill-current w-5 h-5" />}
+                                            Check In Ngay
                                         </Button>
                                     )}
 
                                     {status === "checked_in" && (
                                         <Button
-                                            onClick={handleCheckOut}
+                                            onClick={() => openCameraFor("checkOut")}
+                                            disabled={actionLoading}
                                             size="lg"
                                             className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2"
                                         >
-                                            <Square className="fill-current w-5 h-5" />
-                                            {TEXT.btnCheckOut}
+                                            {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Square className="fill-current w-5 h-5" />}
+                                            Check Out
                                         </Button>
                                     )}
 
-                                    <Button size="lg" variant="outline" className="bg-background hover:bg-muted text-foreground rounded-xl px-8 h-12 font-medium flex items-center gap-2">
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        onClick={() => navigate("/adjustment-requests")}
+                                        className="bg-background hover:bg-muted text-foreground rounded-xl px-8 h-12 font-medium flex items-center gap-2"
+                                    >
                                         <Coffee className="w-5 h-5 text-muted-foreground" />
-                                        {TEXT.btnReport}
+                                        Điều chỉnh chấm công
                                     </Button>
                                 </div>
                             </div>
 
-                            {/* Right side illustration/image placeholder */}
+                            {/* Right side — camera placeholder / captured photo */}
                             <div className="hidden md:block w-72 h-40 rounded-2xl overflow-hidden shadow-lg border-4 border-background z-10 bg-muted relative">
-                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?q=80&w=2662&auto=format&fit=crop')" }}></div>
-                                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-background/40 flex items-center justify-center backdrop-blur-sm">
-                                    <div className="w-6 h-6 rounded-full border-2 border-foreground/50 flex">
-                                        <div className="w-px h-2.5 bg-foreground/50 ml-[10px] mt-0.5 origin-bottom rotate-45"></div>
-                                        <div className="w-px h-3 bg-foreground/50 -ml-px mt-0.5"></div>
-                                    </div>
-                                </div>
+                                {todayRecord?.checkInPhotoUrl ? (
+                                    <img
+                                        src={`http://localhost:8080${todayRecord.checkInPhotoUrl}`}
+                                        alt="Check-in photo"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?q=80&w=2662&auto=format&fit=crop')" }} />
+                                )}
                             </div>
 
-                            {/* Background decorations */}
-                            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/3"></div>
+                            {/* Background decoration */}
+                            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/3" />
                         </CardContent>
                     </Card>
 
                     {/* Summary Cards */}
                     <div className="grid gap-4 md:grid-cols-3">
+                        {/* Total work hours this month */}
                         <Card className="border-border shadow-sm">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
@@ -228,50 +264,56 @@ export default function CheckinPage() {
                                         <CalendarClock className="w-6 h-6" />
                                     </div>
                                     <Badge variant="secondary" className="bg-primary/10 text-primary font-medium">
-                                        {TEXT.weeklyExtraHours}
+                                        Tháng này
                                     </Badge>
                                 </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">{TEXT.weeklyHoursLabel}</p>
-                                <div className="text-3xl font-bold text-foreground">{TEXT.weeklyHoursValue}</div>
-                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden flex">
-                                    <div className="h-full bg-primary w-[65%] rounded-full"></div>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">Tổng giờ làm</p>
+                                {loading ? (
+                                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                ) : (
+                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.totalWorkHours.toFixed(1)}h` : "—"}</div>
+                                )}
+                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
+                                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${workHoursPct}%` }} />
                                 </div>
                             </CardContent>
                         </Card>
 
+                        {/* Late days */}
                         <Card className="border-border shadow-sm">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
-                                    <div className="w-12 h-12 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mb-4 text-xl font-bold">
-                                        {TEXT.lateAlertIcon}
-                                    </div>
-                                    <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">
-                                        {TEXT.lateAlertLabel}
-                                    </Badge>
+                                    <div className="w-12 h-12 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mb-4 text-xl font-bold">!</div>
+                                    <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">Tháng này</Badge>
                                 </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">{TEXT.lateDaysLabel}</p>
-                                <div className="text-3xl font-bold text-foreground">
-                                    {TEXT.lateDaysValue}
-                                </div>
-                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden flex">
-                                    <div className="h-full bg-destructive w-[10%] rounded-full"></div>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">Số ngày đi muộn</p>
+                                {loading ? (
+                                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                ) : (
+                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.lateDays} ngày` : "—"}</div>
+                                )}
+                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
+                                    <div className="h-full bg-destructive rounded-full transition-all" style={{ width: `${latePct}%` }} />
                                 </div>
                             </CardContent>
                         </Card>
 
+                        {/* Attendance rate */}
                         <Card className="border-border shadow-sm">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
-                                    <div className="w-12 h-12 bg-accent text-accent-foreground rounded-full flex items-center justify-center mb-4">
-                                        <Plane className="w-6 h-6" />
+                                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-4 text-sm font-bold">
+                                        %
                                     </div>
                                 </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">{TEXT.leaveRemainingLabel}</p>
-                                <div className="text-3xl font-bold text-foreground">
-                                    {TEXT.leaveRemainingValue}
-                                </div>
-                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden flex">
-                                    <div className="h-full bg-accent-foreground/50 w-[50%] rounded-full"></div>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">Tỷ lệ chuyên cần</p>
+                                {loading ? (
+                                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                ) : (
+                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.attendancePercentage.toFixed(0)}%` : "—"}</div>
+                                )}
+                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
+                                    <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${summary?.attendancePercentage ?? 0}%` }} />
                                 </div>
                             </CardContent>
                         </Card>
@@ -281,44 +323,62 @@ export default function CheckinPage() {
                     <Card className="border-border shadow-sm">
                         <CardContent className="p-6">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-lg text-foreground">{TEXT.historyTitle}</h3>
+                                <h3 className="font-bold text-lg text-foreground">Lịch sử điểm danh (7 ngày gần nhất)</h3>
                                 <Button variant="ghost" onClick={() => navigate("/attendance")} className="text-muted-foreground text-sm hover:text-foreground group">
-                                    {TEXT.viewAllPrompt} <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+                                    Xem tất cả <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
                                 </Button>
                             </div>
 
                             <div className="w-full overflow-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="text-xs text-muted-foreground uppercase border-b border-border bg-muted/50">
-                                        <tr>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colDate}</th>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colCheckIn}</th>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colCheckOut}</th>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colTotalHours}</th>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colStatus}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {historyData.map((row, i) => (
-                                            <tr key={i} className="hover:bg-muted/30 transition-colors">
-                                                <td className="px-4 py-5 font-medium text-foreground">{row.date}</td>
-                                                <td className="px-4 py-5 text-primary font-medium">{row.checkIn}</td>
-                                                <td className="px-4 py-5 text-primary font-medium">{row.checkOut}</td>
-                                                <td className="px-4 py-5 font-semibold text-foreground">{row.totalHours}</td>
-                                                <td className="px-4 py-5">
-                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${row.statusColor}`}>
-                                                        {row.status}
-                                                    </span>
-                                                </td>
+                                {loading ? (
+                                    <div className="flex justify-center py-8">
+                                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : history.length === 0 ? (
+                                    <p className="text-center text-sm text-muted-foreground py-8">Chưa có dữ liệu chấm công.</p>
+                                ) : (
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="text-xs text-muted-foreground uppercase border-b border-border bg-muted/50">
+                                            <tr>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">Ngày</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">Check-in</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">Check-out</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">Tổng giờ</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">Trạng thái</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-border">
+                                            {history.map((row) => {
+                                                const { label, cls } = statusLabel(row.status)
+                                                return (
+                                                    <tr key={row.id} className="hover:bg-muted/30 transition-colors">
+                                                        <td className="px-4 py-5 font-medium text-foreground">{fmtDate(row.date)}</td>
+                                                        <td className="px-4 py-5 text-primary font-medium">{fmtTime(row.checkInTime)}</td>
+                                                        <td className="px-4 py-5 text-primary font-medium">{fmtTime(row.checkOutTime)}</td>
+                                                        <td className="px-4 py-5 font-semibold text-foreground">{fmtWorkHours(row.workHours)}</td>
+                                                        <td className="px-4 py-5">
+                                                            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${cls}`}>{label}</span>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
                 </main>
             </SidebarInset>
+
+            {/* Camera Modal */}
+            <CameraModal
+                open={cameraOpen}
+                title={pendingAction === "checkIn" ? "Xác nhận Check-in" : "Xác nhận Check-out"}
+                description="Chụp ảnh khuôn mặt và xác nhận vị trí của bạn để điểm danh."
+                onCapture={handleCapture}
+                onClose={() => { setCameraOpen(false); setPendingAction(null) }}
+            />
         </SidebarProvider>
     )
 }

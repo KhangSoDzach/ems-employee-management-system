@@ -28,5 +28,10 @@ public enum CheckInMethod {
     /**
      * Manually entered by HR/manager
      */
-    MANUAL
+    MANUAL,
+
+    /**
+     * Checked in via Camera + Geolocation validation (web/mobile)
+     */
+    CAMERA_GEO
 }
