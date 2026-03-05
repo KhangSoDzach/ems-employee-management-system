@@ -3,6 +3,7 @@ package com.company.ems.backend.common.exception;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.company.ems.backend.asset.exception.AssetStateException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -221,5 +222,21 @@ public class GlobalExceptionHandler {
                 return ResponseEntity
                                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body(ApiResponse.error("Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau."));
+        }
+
+        @ExceptionHandler(AssetStateException.class)
+        public ResponseEntity<ApiResponse<Void>> handleAssetStateException(
+                AssetStateException ex) {
+                log.warn("Asset state violation: {}", ex.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.error(ex.getMessage()));
+        }
+
+        @ExceptionHandler(ConflictException.class)
+        public ResponseEntity<ApiResponse<Void>> handleConflictException(
+                ConflictException ex) {
+                log.warn("Conflict: {}", ex.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.error(ex.getMessage()));
         }
 }
