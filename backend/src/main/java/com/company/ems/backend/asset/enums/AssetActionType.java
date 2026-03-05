@@ -1,7 +1,11 @@
 package com.company.ems.backend.asset.enums;
 
-import lombok.Getter;
-
-@Getter
 public enum AssetActionType {
+    CREATE_ASSET,
+    UPDATE_ASSET,
+    ASSIGN_ASSET,
+    RETURN_ASSET,
+    CHANGE_CONDITION,
+    RETIRE_ASSET,
+    SOFT_DELETE
 }
