@@ -74,7 +74,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
               },
               {
                 title: "Tài sản nhóm",
-                url: "/manager-assets",
+                url: "/view-group-asset",
               },
               {
                 title: "Tài sản của tôi",

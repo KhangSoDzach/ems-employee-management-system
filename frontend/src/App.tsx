@@ -14,8 +14,7 @@ import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
 import AssetManagementPage from "./features/admin/Asset-Management";
 import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentRequest";
 import MyAssetsPage from "./features/employee/MyAssetsPage";
-
-
+import AssetGroupManagement from "./features/manager/AssetGroupManagement";
 function App() {
   return (
     <AuthProvider>
@@ -38,13 +37,25 @@ function App() {
           <Route path="/request" element={<LeaveRequestPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/attendance" element={<AttendanceHistoryPage />} />
-          <Route path="/adjustment-requests" element={<AdjustmentRequestPage />} />
+          <Route
+            path="/adjustment-requests"
+            element={<AdjustmentRequestPage />}
+          />
           <Route path="/approve" element={<ApproveLeaveRequest />} />
-          <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
+          <Route path="/view-group-asset" element={<AssetGroupManagement />} />
+          <Route
+            path="/approve-adjustments"
+            element={<ApproveAdjustmentRequest />}
+          />
           <Route path="/my-assets" element={<MyAssetsPage />} />
-          <Route path="/manager-my-assets" element={<MyAssetsPage sidebarRole="manager" />} />
-          <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
-
+          <Route
+            path="/manager-my-assets"
+            element={<MyAssetsPage sidebarRole="manager" />}
+          />
+          <Route
+            path="/hr-my-assets"
+            element={<MyAssetsPage sidebarRole="hr" />}
+          />
         </Routes>
       </BrowserRouter>
       <Toaster richColors position="top-right" />
