@@ -14,6 +14,8 @@ import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
 import AssetManagementPage from "./features/admin/Asset-Management";
 import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentRequest";
 import MyAssetsPage from "./features/employee/MyAssetsPage";
+import ManagerProfilePage from "./features/manager/ManagerProfilePage";
+import HRProfilePage from "./features/hr/HRProfilePage";
 
 
 function App() {
@@ -44,6 +46,8 @@ function App() {
           <Route path="/my-assets" element={<MyAssetsPage />} />
           <Route path="/manager-my-assets" element={<MyAssetsPage sidebarRole="manager" />} />
           <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
+          <Route path="/manager-profile" element={<ManagerProfilePage />} />
+          <Route path="/hr-profile" element={<HRProfilePage />} />
 
         </Routes>
       </BrowserRouter>
