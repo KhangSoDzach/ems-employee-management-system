@@ -267,8 +267,9 @@ export default function Page() {
                             </label>
                             <input
                               {...form.register("fullName")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            />
+                              className=" w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
+                           placeholder='Nhập họ và tên nhân viên'
+                           />
                           </div>
 
                           <div className="space-y-1">
@@ -278,6 +279,7 @@ export default function Page() {
                             <input
                               {...form.register("nationalId")}
                               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
+                            placeholder="Nhập căn cước công nhân 12 số"
                             />
                           </div>
 
@@ -313,6 +315,7 @@ export default function Page() {
                             <input
                               {...form.register("phoneNumber")}
                               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
+                            placeholder="Nhập số điện thoại nhân viên"
                             />
                           </div>
 
@@ -323,6 +326,7 @@ export default function Page() {
                             <input
                               {...form.register("companyEmail")}
                               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
+                            placeholder="Nhập email cá nhân của nhân viên"
                             />
                           </div>
 
@@ -334,6 +338,7 @@ export default function Page() {
                               rows={2}
                               {...form.register("address")}
                               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm resize-none focus:ring-primary focus:border-primary"
+                            placeholder="Nhập địa chỉ thường trú của nhân viên"
                             />
                           </div>
                         </div>
@@ -373,6 +378,7 @@ export default function Page() {
                             <input
                               {...form.register("position")}
                               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-medium focus:ring-primary focus:border-primary"
+                            placeholder="Nhập vị trí công việc của nhân viên"
                             />
                           </div>
 
