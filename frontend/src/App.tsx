@@ -5,7 +5,7 @@ import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import EmployeeDashboard from "./features/employee/EmployeeDashboard";
 import LeaveRequestPage from "./features/employee/LeaveRequestPage";
 import { AuthProvider } from "@/contexts/AuthContext";
-// import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import CheckinPage from "./features/employee/CheckinPage";
 import { Toaster } from "@/components/ui/sonner";
 import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
@@ -17,37 +17,45 @@ import MyAssetsPage from "./features/employee/MyAssetsPage";
 import ManagerProfilePage from "./features/manager/ManagerProfilePage";
 import HRProfilePage from "./features/hr/HRProfilePage";
 
-
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          {/* Protected: must be logged in */}
-          {/* <Route element={<ProtectedRoute />}> */}
           {/* Admin only */}
-          {/* <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}> */}
-          <Route path="/admin" element={<Dashboard />} />
-          <Route path="/asset" element={<AssetManagementPage />} />
-          {/* </Route> */}
+          <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN"]} />}>
+            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/asset" element={<AssetManagementPage />} />
+          </Route>
 
           {/* Employee only */}
-          <Route path="/employee" element={<EmployeeDashboard />} />
-          <Route path="/request" element={<LeaveRequestPage />} />
-          <Route path="/checkin" element={<CheckinPage />} />
-          <Route path="/attendance" element={<AttendanceHistoryPage />} />
-          <Route path="/adjustment-requests" element={<AdjustmentRequestPage />} />
-          <Route path="/approve" element={<ApproveLeaveRequest />} />
-          <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
-          <Route path="/my-assets" element={<MyAssetsPage />} />
-          <Route path="/manager-my-assets" element={<MyAssetsPage sidebarRole="manager" />} />
-          <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
-          <Route path="/manager-profile" element={<ManagerProfilePage />} />
-          <Route path="/hr-profile" element={<HRProfilePage />} />
+          <Route element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE"]} />}>
+            <Route path="/employee" element={<EmployeeDashboard />} />
+            <Route path="/request" element={<LeaveRequestPage />} />
+            <Route path="/checkin" element={<CheckinPage />} />
+            <Route path="/attendance" element={<AttendanceHistoryPage />} />
+            <Route path="/adjustment-requests" element={<AdjustmentRequestPage />} />
+            <Route path="/my-assets" element={<MyAssetsPage />} />
+          </Route>
+
+          {/* Manager only */}
+          <Route element={<ProtectedRoute allowedRoles={["ROLE_MANAGER"]} />}>
+            <Route path="/manager-profile" element={<ManagerProfilePage />} />
+            <Route path="/approve" element={<ApproveLeaveRequest />} />
+            <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
+            <Route path="/manager-my-assets" element={<MyAssetsPage sidebarRole="manager" />} />
+          </Route>
+
+          {/* HR only */}
+          <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
+            <Route path="/hr-profile" element={<HRProfilePage />} />
+            <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
+          </Route>
 
         </Routes>
       </BrowserRouter>
