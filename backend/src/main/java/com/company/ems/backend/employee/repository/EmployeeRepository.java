@@ -119,4 +119,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
      */
     @Query("SELECT DISTINCT e.position FROM Employee e WHERE e.position IS NOT NULL ORDER BY e.position.title")
     List<Position> findAllPositions();
+
+    @Query("""
+       SELECT e.id
+       FROM Employee e
+       WHERE e.user.id = :userId
+       """)
+    Optional<Long> findEmployeeIdByUserId(@Param("userId") Long userId);
+
+    @Query("""
+       SELECT e.department.id
+       FROM Employee e
+       WHERE e.user.id = :userId
+       """)
+    Optional<Long> findDepartmentIdByUserId(@Param("userId") Long userId);
 }

@@ -126,7 +126,7 @@ function AssetCard({ asset, onReportIssue }: { asset: Asset; onReportIssue: (ass
 
 /* ─────────────── MAIN PAGE ─────────────── */
 
-export default function MyAssetsPage() {
+export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole?: "employee" | "manager" | "hr" }) {
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [incidentType, setIncidentType] = useState("")
@@ -157,7 +157,7 @@ export default function MyAssetsPage() {
 
     return (
         <SidebarProvider>
-            <AppSidebar role="employee" variant="inset" />
+            <AppSidebar role={sidebarRole} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 

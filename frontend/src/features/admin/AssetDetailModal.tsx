@@ -1,16 +1,16 @@
-import React from "react"
-import { X, Edit, MapPin, History, FileText } from "lucide-react"
-
+import { X, Edit, MapPin, History, FileText } from "lucide-react";
+import AssetFullHistoryModal from "./AssetFullHistoryModal";
+import { useState } from "react";
 interface AssetDetailModalProps {
-  open: boolean
-  onClose: () => void
+  open: boolean;
+  onClose: () => void;
 }
 
 export default function AssetDetailModal({
   open,
   onClose,
 }: AssetDetailModalProps) {
-  if (!open) return null
+  if (!open) return null;
 
   const asset = {
     name: "MacBook Pro M2 2023",
@@ -26,23 +26,23 @@ export default function AssetDetailModal({
     location: "Kho trung tâm (Khu A-12)",
     description:
       "MacBook Pro M2 2023 - RAM 16GB, SSD 512GB. Thiết bị còn mới, không trầy xước, pin 100%. Được sử dụng cho bộ phận IT Development.",
-  }
-
+  };
+  const [openHistory, setOpenHistory] = useState(false);
   const getConditionStyle = (condition: string) => {
     switch (condition) {
       case "Mới":
       case "Tốt":
-        return "bg-emerald-100 text-emerald-700"
+        return "bg-emerald-100 text-emerald-700";
       case "Hỏng":
-        return "bg-amber-100 text-amber-700"
+        return "bg-amber-100 text-amber-700";
       case "Thất lạc":
-        return "bg-red-100 text-red-700"
+        return "bg-red-100 text-red-700";
       case "Thanh lý":
-        return "bg-slate-200 text-slate-700"
+        return "bg-slate-200 text-slate-700";
       default:
-        return "bg-slate-100 text-slate-600"
+        return "bg-slate-100 text-slate-600";
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -52,7 +52,6 @@ export default function AssetDetailModal({
       />
 
       <div className="relative bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl shadow-2xl flex flex-col">
-
         {/* HEADER */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <div>
@@ -63,9 +62,7 @@ export default function AssetDetailModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:text-primary">
-              <Edit size={18} />
-            </button>
+            
             <button onClick={onClose} className="p-2 hover:text-primary">
               <X size={20} />
             </button>
@@ -75,7 +72,6 @@ export default function AssetDetailModal({
         {/* BODY */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900/40">
           <div className="grid grid-cols-12 gap-6">
-
             {/* LEFT COLUMN */}
             <div className="col-span-12 lg:col-span-4 space-y-6">
               <div className="bg-white dark:bg-slate-900 rounded-lg border shadow-sm overflow-hidden">
@@ -93,11 +89,6 @@ export default function AssetDetailModal({
                 </div>
 
                 <div className="p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <MapPin size={16} className="text-primary" />
-                    {asset.location}
-                  </div>
-
                   <button className="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg text-sm font-semibold">
                     Cấp phát tài sản
                   </button>
@@ -110,9 +101,7 @@ export default function AssetDetailModal({
 
               {/* Extra Info */}
               <div className="bg-white dark:bg-slate-900 rounded-lg border shadow-sm p-4">
-                <h3 className="text-sm font-bold mb-3">
-                  Thông tin phụ trợ
-                </h3>
+                <h3 className="text-sm font-bold mb-3">Thông tin phụ trợ</h3>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -125,9 +114,7 @@ export default function AssetDetailModal({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Hợp đồng:</span>
-                    <span className="text-primary">
-                      {asset.contract}
-                    </span>
+                    <span className="text-primary">{asset.contract}</span>
                   </div>
                 </div>
               </div>
@@ -135,18 +122,14 @@ export default function AssetDetailModal({
 
             {/* RIGHT COLUMN */}
             <div className="col-span-12 lg:col-span-8 space-y-6">
-
               {/* BASIC INFO */}
               <div className="bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
                 <div className="px-4 py-3 border-b flex items-center justify-between">
-                  <h3 className="font-bold text-sm">
-                    Thông tin cơ bản
-                  </h3>
+                  <h3 className="font-bold text-sm">Thông tin cơ bản</h3>
                   <FileText size={18} />
                 </div>
 
                 <div className="p-5 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-
                   <div>
                     <p className="text-slate-400 text-xs">Mã tài sản</p>
                     <p className="font-medium">{asset.code}</p>
@@ -171,11 +154,20 @@ export default function AssetDetailModal({
                     <p className="text-slate-400 text-xs">Tình trạng</p>
                     <span
                       className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getConditionStyle(
-                        asset.condition
+                        asset.condition,
                       )}`}
                     >
                       {asset.condition}
                     </span>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs flex items-center gap-1">
+                      <MapPin size={12} />
+                      Vị trí / Người sử dụng
+                    </p>
+                    <p className="font-medium text-slate-700">
+                      {asset.location}
+                    </p>
                   </div>
 
                   {/* DESCRIPTION FULL WIDTH */}
@@ -187,54 +179,46 @@ export default function AssetDetailModal({
                       {asset.description}
                     </p>
                   </div>
-
                 </div>
               </div>
 
               {/* HISTORY */}
               <div className="bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
                 <div className="px-4 py-3 border-b flex items-center justify-between">
-                  <h3 className="font-bold text-sm">
-                    Lịch sử tài sản
-                  </h3>
+                  <h3 className="font-bold text-sm">Lịch sử tài sản</h3>
                   <History size={18} />
                 </div>
 
                 <div className="p-5 space-y-4 text-sm">
                   <div className="border-l-2 border-primary pl-4">
-                    <p className="font-semibold">
-                      Thu hồi tài sản
-                    </p>
-                    <p className="text-slate-500 text-xs">
-                      10:30, 20/01/2024
-                    </p>
-                    <p className="text-slate-600">
-                      Thu hồi từ Nguyễn Văn A.
-                    </p>
+                    <p className="font-semibold">Thu hồi tài sản</p>
+                    <p className="text-slate-500 text-xs">10:30, 20/01/2024</p>
+                    <p className="text-slate-600">Thu hồi từ Nguyễn Văn A.</p>
                   </div>
 
                   <div className="border-l-2 border-blue-500 pl-4">
-                    <p className="font-semibold">
-                      Cấp phát tài sản
-                    </p>
-                    <p className="text-slate-500 text-xs">
-                      14:00, 15/05/2023
-                    </p>
-                    <p className="text-slate-600">
-                      Cấp phát cho Nguyễn Văn A.
-                    </p>
+                    <p className="font-semibold">Cấp phát tài sản</p>
+                    <p className="text-slate-500 text-xs">14:00, 15/05/2023</p>
+                    <p className="text-slate-600">Cấp phát cho Nguyễn Văn A.</p>
                   </div>
                 </div>
 
-                <button className="w-full border-t py-2 text-xs text-slate-500 hover:text-primary">
+                <button
+                  onClick={() => setOpenHistory(true)}
+                  className="w-full border-t py-2 text-xs text-slate-500 hover:text-primary"
+                >
                   XEM TOÀN BỘ LỊCH SỬ
                 </button>
               </div>
-
             </div>
           </div>
         </div>
       </div>
+
+      <AssetFullHistoryModal
+        open={openHistory}
+        onClose={() => setOpenHistory(false)}
+      />
     </div>
-  )
+  );
 }

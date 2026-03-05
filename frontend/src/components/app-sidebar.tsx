@@ -23,7 +23,7 @@ const data = {
   versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"]
 }
 
-export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" | "manager" }) {
+export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" | "manager" | "hr" }) {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout } = useAuth()
@@ -51,7 +51,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
               title: "Quản lý nhân viên",
               url: "/admin",
             },
-             {
+            {
               title: "Quản lý tài sản",
               url: "/asset",
             },
@@ -64,7 +64,6 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
             title: "Quản lý đội nhóm",
             url: "#",
             items: [
-
               {
                 title: "Duyệt đơn nghỉ phép",
                 url: "/approve",
@@ -73,37 +72,63 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 title: "Duyệt điều chỉnh chấm công",
                 url: "/approve-adjustments",
               },
-            ],
-          },
-        ]
-        : [
-          {
-            title: "Thông tin cá nhân",
-            url: "#",
-            items: [
               {
-                title: "Hồ sơ của tôi",
-                url: "/employee",
-              },
-              {
-                title: "Chấm công",
-                url: "/checkin",
-              },
-              {
-                title: "Tạo đơn nghỉ phép",
-                url: "/request",
-              },
-              {
-                title: "Điều chỉnh chấm công",
-                url: "/adjustment-requests",
+                title: "Tài sản nhóm",
+                url: "/manager-assets",
               },
               {
                 title: "Tài sản của tôi",
-                url: "/my-assets",
+                url: "/manager-my-assets",
               },
             ],
           },
-        ];
+        ]
+        : role === "hr"
+          ? [
+            {
+              title: "Quản lý nhân sự",
+              url: "#",
+              items: [
+                {
+                  title: "Tài sản của tôi",
+                  url: "/hr-my-assets",
+                },
+                {
+                  title: "Quản lý tài sản",
+                  url: "/hr-assets",
+                },
+              ],
+            },
+          ]
+          : [
+            {
+              title: "Thông tin cá nhân",
+              url: "#",
+              items: [
+                {
+                  title: "Hồ sơ của tôi",
+                  url: "/employee",
+                },
+                {
+                  title: "Chấm công",
+                  url: "/checkin",
+                },
+                {
+                  title: "Tạo đơn nghỉ phép",
+                  url: "/request",
+                },
+                {
+                  title: "Điều chỉnh chấm công",
+                  url: "/adjustment-requests",
+                },
+                {
+                  title: "Tài sản của tôi",
+                  url: "/my-assets",
+                },
+              ],
+            },
+          ];
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
