@@ -112,18 +112,20 @@ export const LeaveDetailSheet = ({ request, open, onClose }: DetailSheetProps) =
 
                     <div className="relative">
                         <SheetHeader className="text-left space-y-1">
-                            <div className="flex items-center justify-between mb-2">
+                            
+                            <SheetTitle className="text-xl font-bold tracking-tight text-foreground">
+                                Chi tiết đơn nghỉ
+                            </SheetTitle>
+                             <div className="flex items-center justify-between ">
                                 <Badge variant="secondary" className="font-mono px-2 py-0.5 text-xs bg-background shadow-sm border">
                                     {request.id}
                                 </Badge>
                                 <StatusBadge status={request.status} />
                             </div>
-                            <SheetTitle className="text-xl font-bold tracking-tight text-foreground">
-                                Chi tiết đơn nghỉ
-                            </SheetTitle>
                             <SheetDescription className="text-sm font-medium text-muted-foreground">
                                 Tạo lúc {format(request.dateCreated, DATETIME_FORMAT)}
                             </SheetDescription>
+                           
                         </SheetHeader>
                     </div>
                 </div>
@@ -150,7 +152,9 @@ export const LeaveDetailSheet = ({ request, open, onClose }: DetailSheetProps) =
                                     <p className="text-xs font-medium text-muted-foreground mb-1">Phòng ban</p>
                                     <p className="text-sm font-semibold">{CURRENT_USER.department}</p>
                                 </div>
+                                
                             </div>
+                            
                         </section>
 
                         {/* ── Leave Info ── */}
@@ -170,12 +174,14 @@ export const LeaveDetailSheet = ({ request, open, onClose }: DetailSheetProps) =
                                         <p className="text-sm font-semibold">{format(request.endDate, DATE_FORMAT)}</p>
                                     </div>
                                 </div>
-                                <div className="p-4 bg-background flex justify-between items-center">
+                                <div className="p-4 bg-background flex justify-between items-center ">
                                     <div>
                                         <p className="text-xs font-medium text-muted-foreground mb-1">Tổng thời gian</p>
                                         <p className="text-sm font-bold text-primary">{daysCount} ngày</p>
                                     </div>
+                                    
                                 </div>
+
                             </div>
                         </section>
 

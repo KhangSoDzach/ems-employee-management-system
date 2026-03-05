@@ -28,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-import ApproveLeaveDialog from "./ApproveLeaveModal";
+import ApproveLeaveDialog from "./components/ApproveLeaveModal";
 
 /* ================= TYPES ================= */
 
