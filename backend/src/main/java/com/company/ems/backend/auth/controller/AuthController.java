@@ -3,8 +3,13 @@ package com.company.ems.backend.auth.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.company.ems.backend.auditlog.dto.RequestContext;
 import com.company.ems.backend.auth.dto.AuthResponse;
 import com.company.ems.backend.auth.dto.ForgotPasswordRequest;
 import com.company.ems.backend.auth.dto.LoginRequest;
@@ -12,7 +17,6 @@ import com.company.ems.backend.auth.dto.RefreshTokenRequest;
 import com.company.ems.backend.auth.dto.ResetPasswordRequest;
 import com.company.ems.backend.auth.service.AuthenticationService;
 import com.company.ems.backend.auth.service.PasswordResetService;
-import com.company.ems.backend.auditlog.dto.RequestContext;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.user.entity.User;
 
@@ -108,7 +112,7 @@ public class AuthController {
          * @return Success message
          */
         @PostMapping("/logout-all")
-        @SecurityRequirement(name = "bearer-jwt")
+        @SecurityRequirement(name = "bearerAuth")
         @Operation(summary = "Logout from all devices", description = "Revoke all refresh tokens for the user")
         public ResponseEntity<ApiResponse<Void>> logoutAllDevices(
                         @AuthenticationPrincipal UserDetails userDetails,
@@ -210,7 +214,7 @@ public class AuthController {
          * @return User details
          */
         @GetMapping("/me")
-        @SecurityRequirement(name = "bearer-jwt")
+        @SecurityRequirement(name = "bearerAuth")
         @Operation(summary = "Get current user", description = "Returns the authenticated user's profile info")
         public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> getCurrentUser(
                         @AuthenticationPrincipal UserDetails userDetails) {

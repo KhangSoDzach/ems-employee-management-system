@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -19,26 +20,19 @@ public class PageResponse<T> {
     private int totalPages;
     private boolean first;
     private boolean last;
-    private String displayInfo;
-    public static <T> PageResponse<T> of(
-            List<T> content,
-            int page,
-            int size,
-            long totalElements,
-            int totalPages,
-            String entityName) {
 
-        int from = totalElements == 0 ? 0 : page * size + 1;
-        int to   = (int) Math.min((long)(page + 1) * size, totalElements);
-        String info = String.format("Hiển thị %d-%d trên %d %s", from, to, totalElements, entityName);
-
+    /**
+     * Creates a {@link PageResponse} from a Spring Data {@link Page}.
+     */
+    public static <T> PageResponse<T> of(Page<T> page) {
         return PageResponse.<T>builder()
-                .content(content)
-                .page(page)
-                .size(size)
-                .totalElements(totalElements)
-                .totalPages(totalPages)
-                .displayInfo(info)
+                .content(page.getContent())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
                 .build();
     }
 }

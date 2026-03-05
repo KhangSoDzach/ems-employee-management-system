@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { format } from "date-fns"
 import {
-    MoreHorizontal, Plus, Search, SlidersHorizontal, X,
+    MoreHorizontal, Plus, Search, SlidersHorizontal, X, Loader2, ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -35,9 +35,7 @@ import {
     ADJUSTMENT_TYPE_CONFIG,
     ADJUSTMENT_TYPE_OPTIONS,
     ALL_LABEL,
-    CURRENT_USER,
     DATE_FORMAT,
-    MOCK_DATA,
 } from "./adjustment-request.constants"
 import type { AdjustmentFormValues } from "./adjustment-request.constants"
 import { ActiveFilterBadge, StatusBadge, TypeBadge } from "./components/AdjustmentBadges"
@@ -45,8 +43,73 @@ import { DetailSheet } from "./components/AdjustmentDetailSheet"
 import { CreateRequestModal } from "./components/CreateRequestModal"
 import { EditRequestModal } from "./components/EditRequestModal"
 
-/* ══════════════ EMPTY STATE ══════════════ */
+import {
+    attendanceService,
+    type AdjustmentRequestSummary,
+    type AdjustmentReason,
+    type CreateAdjustmentPayload,
+} from "@/services/attendanceService"
 
+// ─── Backend ↔ UI mappers ─────────────────────────────────────────────────────
+
+function mapStatus(s: AdjustmentRequestSummary["status"]): AdjustmentStatus {
+    if (s === "APPROVED") return "APPROVED"
+    if (s === "REJECTED") return "REJECTED"
+    if (s === "RETURNED_TO_EMPLOYEE") return "RETURNED"
+    return "PENDING"
+}
+
+function deriveType(inTime: string | null, outTime: string | null): AdjustmentType {
+    if (inTime && outTime) return "BOTH"
+    if (inTime) return "CHECK_IN"
+    return "CHECK_OUT"
+}
+
+function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
+    return {
+        id: String(s.id),
+        dateCreated: new Date(s.createdAt),
+        adjustmentDate: new Date(s.requestDate),
+        type: deriveType(s.proposedCheckInTime, s.proposedCheckOutTime),
+        proposedTimeIn: s.proposedCheckInTime
+            ? format(new Date(s.proposedCheckInTime), "HH:mm")
+            : undefined,
+        proposedTimeOut: s.proposedCheckOutTime
+            ? format(new Date(s.proposedCheckOutTime), "HH:mm")
+            : undefined,
+        status: mapStatus(s.status),
+        reason: s.reasonText,
+        auditTrail: [],
+    }
+}
+
+function typeToReason(type: AdjustmentType): AdjustmentReason {
+    if (type === "CHECK_IN") return "FORGOT_CHECKIN"
+    if (type === "CHECK_OUT") return "FORGOT_CHECKOUT"
+    return "OTHER"
+}
+
+function toISODateTime(date: Date, time: string): string {
+    return `${format(date, "yyyy-MM-dd")}T${time}:00`
+}
+
+function buildPayload(data: AdjustmentFormValues): CreateAdjustmentPayload {
+    return {
+        requestDate: format(data.adjustmentDate, "yyyy-MM-dd"),
+        proposedCheckInTime:
+            (data.type === "CHECK_IN" || data.type === "BOTH") && data.timeIn
+                ? toISODateTime(data.adjustmentDate, data.timeIn)
+                : undefined,
+        proposedCheckOutTime:
+            (data.type === "CHECK_OUT" || data.type === "BOTH") && data.timeOut
+                ? toISODateTime(data.adjustmentDate, data.timeOut)
+                : undefined,
+        reasonType: typeToReason(data.type),
+        reasonText: data.reason,
+    }
+}
+
+/* ══════════════ EMPTY STATE ══════════════ */
 const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
     <TableRow>
         <TableCell colSpan={7} className="h-64 text-center">
@@ -69,18 +132,43 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
     </TableRow>
 )
 
-/* ══════════════ MAIN PAGE ══════════════ */
+const PAGE_SIZE = 10
 
+/* ══════════════ MAIN PAGE ══════════════ */
 export default function AdjustmentRequestPage() {
-    const [requests, setRequests] = useState<AdjustmentRequest[]>(MOCK_DATA)
+    const [requests, setRequests] = useState<AdjustmentRequest[]>([])
+    const [totalElements, setTotalElements] = useState(0)
+    const [totalPages, setTotalPages] = useState(0)
+    const [page, setPage] = useState(0)
+    const [loading, setLoading] = useState(true)
+
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<AdjustmentStatus | "ALL">("ALL")
     const [typeFilter, setTypeFilter] = useState<AdjustmentType | "ALL">("ALL")
+
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [detailRequest, setDetailRequest] = useState<AdjustmentRequest | null>(null)
     const [editRequest, setEditRequest] = useState<AdjustmentRequest | null>(null)
 
-    /* ── Filtered rows ── */
+    // ── Fetch my adjustments ───────────────────────────────────────────────────
+    const fetchRequests = useCallback(async () => {
+        setLoading(true)
+        try {
+            const res = await attendanceService.getMyAdjustments({ page, size: PAGE_SIZE })
+            setRequests(res.content.map(mapToFrontend))
+            setTotalElements(res.totalElements)
+            setTotalPages(res.totalPages)
+        } catch {
+            toast.error("Không thể tải danh sách yêu cầu.")
+        } finally {
+            setLoading(false)
+        }
+    }, [page])
+
+    useEffect(() => { fetchRequests() }, [fetchRequests])
+    useEffect(() => { setPage(0) }, [statusFilter, typeFilter])
+
+    // ── Client-side filters (on current page) ─────────────────────────────────
     const filtered = requests.filter((r) => {
         const q = searchQuery.toLowerCase()
         return (
@@ -97,56 +185,21 @@ export default function AdjustmentRequestPage() {
 
     const hasFilter = statusFilter !== "ALL" || typeFilter !== "ALL" || searchQuery !== ""
 
-    /* ── Handlers ── */
+    // ── Handlers ──────────────────────────────────────────────────────────────
     const handleCreate = async (data: AdjustmentFormValues) => {
-        await new Promise((r) => setTimeout(r, 1200))
-        const newReq: AdjustmentRequest = {
-            id: `ADJ-${String(requests.length + 1).padStart(3, "0")}`,
-            dateCreated: new Date(),
-            adjustmentDate: data.adjustmentDate,
-            type: data.type,
-            proposedTimeIn: data.timeIn,
-            proposedTimeOut: data.timeOut,
-            status: "PENDING",
-            reason: data.reason,
-            auditTrail: [
-                { id: "a1", action: "CREATED", actor: CURRENT_USER.name, timestamp: new Date() },
-            ],
-        }
-        setRequests((prev) => [newReq, ...prev])
+        const payload = buildPayload(data)
+        await attendanceService.submitAdjustment(payload)
+        await fetchRequests()
         toast.success("Yêu cầu đã được gửi thành công!", {
-            description: `Mã ${newReq.id} đang chờ quản lý phê duyệt.`,
+            description: "Yêu cầu đang chờ quản lý phê duyệt.",
         })
     }
 
     const handleEdit = async (id: string, data: AdjustmentFormValues) => {
-        await new Promise((r) => setTimeout(r, 1000))
-        setRequests((prev) =>
-            prev.map((r) =>
-                r.id === id
-                    ? {
-                        ...r,
-                        adjustmentDate: data.adjustmentDate,
-                        type: data.type,
-                        proposedTimeIn: data.timeIn,
-                        proposedTimeOut: data.timeOut,
-                        reason: data.reason,
-                        auditTrail: [
-                            ...r.auditTrail,
-                            { id: `e${Date.now()}`, action: "EDITED" as const, actor: CURRENT_USER.name, timestamp: new Date() },
-                        ],
-                    }
-                    : r,
-            ),
-        )
-        toast.success("Đã cập nhật yêu cầu!", {
-            description: `Mã ${id} đã được chỉnh sửa và vẫn đang chờ duyệt.`,
-        })
-    }
-
-    const handleCancel = (id: string) => {
-        setRequests((prev) => prev.filter((r) => r.id !== id))
-        toast.info("Đã hủy yêu cầu điều chỉnh.")
+        const payload = buildPayload(data)
+        await attendanceService.resubmitAdjustment(Number(id), payload)
+        await fetchRequests()
+        toast.success("Đã gửi lại yêu cầu thành công!")
     }
 
     const clearAllFilters = () => {
@@ -155,7 +208,7 @@ export default function AdjustmentRequestPage() {
         setSearchQuery("")
     }
 
-    /* ── Render ── */
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <SidebarProvider>
             <AppSidebar role="employee" variant="inset" />
@@ -164,7 +217,7 @@ export default function AdjustmentRequestPage() {
 
                 <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
 
-                    {/* ── Page Header ── */}
+                    {/* Page Header */}
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -188,10 +241,8 @@ export default function AdjustmentRequestPage() {
                         </Button>
                     </div>
 
-                    {/* ── Filter Bar ── */}
+                    {/* Filter Bar */}
                     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-
-                        {/* Search */}
                         <div className="relative flex-1 min-w-[180px] max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input
@@ -211,7 +262,6 @@ export default function AdjustmentRequestPage() {
                             )}
                         </div>
 
-                        {/* Status filter */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
@@ -254,7 +304,6 @@ export default function AdjustmentRequestPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        {/* Type filter */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
@@ -297,65 +346,52 @@ export default function AdjustmentRequestPage() {
                         </DropdownMenu>
 
                         {hasFilter && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-9 text-sm text-muted-foreground"
-                                onClick={clearAllFilters}
-                            >
+                            <Button variant="ghost" size="sm" className="h-9 text-sm text-muted-foreground" onClick={clearAllFilters}>
                                 Xóa bộ lọc
                             </Button>
                         )}
                     </div>
 
-                    {/* ── Table ── */}
+                    {/* Table */}
                     <div className="bg-background rounded-2xl border border-border shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/40 hover:bg-muted/40">
                                         {["Mã yêu cầu", "Ngày tạo", "Ngày điều chỉnh", "Loại chấm công", "Thời gian đề xuất", "Trạng thái"].map((h) => (
-                                            <TableHead
-                                                key={h}
-                                                className="py-4 font-semibold text-foreground px-6"
-                                            >
-                                                {h}
-                                            </TableHead>
+                                            <TableHead key={h} className="py-4 font-semibold text-foreground px-6">{h}</TableHead>
                                         ))}
                                         <TableHead className="py-4 w-10" />
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filtered.length === 0
-                                        ? <EmptyState hasFilter={hasFilter} />
-                                        : filtered.map((req) => (
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="h-32 text-center">
+                                                <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : filtered.length === 0 ? (
+                                        <EmptyState hasFilter={hasFilter} />
+                                    ) : (
+                                        filtered.map((req) => (
                                             <TableRow
                                                 key={req.id}
                                                 className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
                                                 onClick={() => setDetailRequest(req)}
                                             >
-                                                <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
-                                                    {req.id}
-                                                </TableCell>
-                                                <TableCell className="px-6 py-4 font-medium text-foreground">
-                                                    {format(req.dateCreated, DATE_FORMAT)}
-                                                </TableCell>
-                                                <TableCell className="px-6 py-4 font-medium text-foreground">
-                                                    {format(req.adjustmentDate, DATE_FORMAT)}
-                                                </TableCell>
-                                                <TableCell className="px-6 py-4">
-                                                    <TypeBadge type={req.type} />
-                                                </TableCell>
+                                                <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">#{req.id}</TableCell>
+                                                <TableCell className="px-6 py-4 font-medium text-foreground">{format(req.dateCreated, DATE_FORMAT)}</TableCell>
+                                                <TableCell className="px-6 py-4 font-medium text-foreground">{format(req.adjustmentDate, DATE_FORMAT)}</TableCell>
+                                                <TableCell className="px-6 py-4"><TypeBadge type={req.type} /></TableCell>
                                                 <TableCell className="px-6 py-4">
                                                     <span className="font-mono text-sm font-medium text-foreground">
                                                         {req.proposedTimeIn && req.proposedTimeOut
                                                             ? `${req.proposedTimeIn} – ${req.proposedTimeOut}`
-                                                            : req.proposedTimeIn ?? req.proposedTimeOut}
+                                                            : req.proposedTimeIn ?? req.proposedTimeOut ?? "—"}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="px-6 py-4">
-                                                    <StatusBadge status={req.status} />
-                                                </TableCell>
+                                                <TableCell className="px-6 py-4"><StatusBadge status={req.status} /></TableCell>
                                                 <TableCell className="py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
@@ -374,30 +410,20 @@ export default function AdjustmentRequestPage() {
                                                             >
                                                                 Xem chi tiết
                                                             </DropdownMenuItem>
-                                                            {(req.status === "PENDING" || req.status === "RETURNED") && (
-                                                                <DropdownMenuItem
-                                                                    className="cursor-pointer text-sm"
-                                                                    onClick={() => setEditRequest(req)}
-                                                                >
-                                                                    Chỉnh sửa
-                                                                </DropdownMenuItem>
-                                                            )}
                                                             {req.status === "RETURNED" && (
                                                                 <>
-                                                                    <DropdownMenuSeparator />
-                                                                    <DropdownMenuItem className="cursor-pointer text-sm text-primary font-medium">
-                                                                        Gửi lại
+                                                                    <DropdownMenuItem
+                                                                        className="cursor-pointer text-sm"
+                                                                        onClick={() => setEditRequest(req)}
+                                                                    >
+                                                                        Chỉnh sửa &amp; gửi lại
                                                                     </DropdownMenuItem>
-                                                                </>
-                                                            )}
-                                                            {req.status === "PENDING" && (
-                                                                <>
                                                                     <DropdownMenuSeparator />
                                                                     <DropdownMenuItem
-                                                                        className="cursor-pointer text-sm text-destructive focus:text-destructive"
-                                                                        onClick={() => handleCancel(req.id)}
+                                                                        className="cursor-pointer text-sm text-primary font-medium"
+                                                                        onClick={() => setEditRequest(req)}
                                                                     >
-                                                                        Hủy yêu cầu
+                                                                        Gửi lại
                                                                     </DropdownMenuItem>
                                                                 </>
                                                             )}
@@ -405,53 +431,34 @@ export default function AdjustmentRequestPage() {
                                                     </DropdownMenu>
                                                 </TableCell>
                                             </TableRow>
-                                        ))}
+                                        ))
+                                    )}
                                 </TableBody>
                             </Table>
                         </div>
 
-                        {/* Summary footer */}
-                        {filtered.length > 0 && (
-                            <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-                                <span>Hiển thị {filtered.length} / {requests.length} yêu cầu</span>
-                                <div className="flex gap-4">
-                                    {(["PENDING", "APPROVED", "REJECTED", "RETURNED"] as AdjustmentStatus[]).map((s) => {
-                                        const count = requests.filter((r) => r.status === s).length
-                                        return count > 0 ? (
-                                            <span key={s}>
-                                                <span className="font-semibold text-foreground">{count}</span>{" "}
-                                                {ADJUSTMENT_STATUS_CONFIG[s].label}
-                                            </span>
-                                        ) : null
-                                    })}
+                        {/* Footer */}
+                        <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Tổng {totalElements} yêu cầu</span>
+                            {totalPages > 1 && (
+                                <div className="flex items-center gap-2">
+                                    <Button size="icon" variant="outline" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </Button>
+                                    <span>{page + 1} / {totalPages}</span>
+                                    <Button size="icon" variant="outline" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </main>
             </SidebarInset>
 
-            {/* Create Modal */}
-            <CreateRequestModal
-                open={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSubmit={handleCreate}
-            />
-
-            {/* Detail Sheet */}
-            <DetailSheet
-                request={detailRequest}
-                open={!!detailRequest}
-                onClose={() => setDetailRequest(null)}
-            />
-
-            {/* Edit Modal */}
-            <EditRequestModal
-                request={editRequest}
-                open={!!editRequest}
-                onClose={() => setEditRequest(null)}
-                onSubmit={handleEdit}
-            />
+            <CreateRequestModal open={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleCreate} />
+            <DetailSheet request={detailRequest} open={!!detailRequest} onClose={() => setDetailRequest(null)} />
+            <EditRequestModal request={editRequest} open={!!editRequest} onClose={() => setEditRequest(null)} onSubmit={handleEdit} />
         </SidebarProvider>
     )
 }
