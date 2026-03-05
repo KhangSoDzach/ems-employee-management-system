@@ -96,9 +96,9 @@ app:
   # Office location used for geolocation validation on check-in/check-out.
   # Override via env vars (APP_OFFICE_LATITUDE, etc.) in production.
   office:
-    latitude:  ${APP_OFFICE_LATITUDE:10.762622}    # Default: Ho Chi Minh City center (mock)
-    longitude: ${APP_OFFICE_LONGITUDE:106.660172}   # Default: Ho Chi Minh City center (mock)
-    radius-meters: ${APP_OFFICE_RADIUS_METERS:30}   # Allowed radius in metres (default 30m)
+    latitude:  ${APP_OFFICE_LATITUDE:10.803746}    # Office location
+    longitude: ${APP_OFFICE_LONGITUDE:106.689661}   # Office location
+    radius-meters: ${APP_OFFICE_RADIUS_METERS:200}  # Allowed radius in metres (200m — accounts for GPS drift)
 
   # Filesystem storage root for check-in/check-out photos
   storage:

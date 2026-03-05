@@ -172,8 +172,12 @@ public class AttendanceServiceImpl implements AttendanceService {
         // Employees can only see their own records
         Long resolvedEmployeeId = resolveEmployeeIdForQuery(employeeId, principal);
 
+        AttendanceStatus statusEnum = (status != null && !status.isBlank())
+                ? AttendanceStatus.valueOf(status.toUpperCase())
+                : null;
+
         Page<Attendance> pageResult = attendanceRepository.searchAttendances(
-                resolvedEmployeeId, status, startDate, endDate,
+                resolvedEmployeeId, statusEnum, startDate, endDate,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date")));
 
         return PageResponse.of(pageResult.map(this::mapToResponse));
@@ -195,13 +199,13 @@ public class AttendanceServiceImpl implements AttendanceService {
         LocalDate to   = endDate   != null ? endDate   : LocalDate.now();
 
         long present  = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
-                employee, AttendanceStatus.PRESENT.name(), from, to);
+                employee, AttendanceStatus.PRESENT, from, to);
         long late     = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
-                employee, AttendanceStatus.LATE.name(), from, to);
+                employee, AttendanceStatus.LATE, from, to);
         long absent   = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
-                employee, AttendanceStatus.ABSENT.name(), from, to);
+                employee, AttendanceStatus.ABSENT, from, to);
         long halfDay  = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
-                employee, AttendanceStatus.HALF_DAY.name(), from, to);
+                employee, AttendanceStatus.HALF_DAY, from, to);
 
         long totalDays = from.until(to).getDays() + 1;
         double percentage = totalDays > 0

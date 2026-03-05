@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.company.ems.backend.attendance.entity.Attendance;
+import com.company.ems.backend.attendance.enums.AttendanceStatus;
 import com.company.ems.backend.employee.entity.Employee;
 
 /**
@@ -110,7 +111,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
            "AND a.status = :status AND a.date BETWEEN :startDate AND :endDate")
     long countByEmployeeAndStatusAndDateBetween(
             @Param("employee") Employee employee,
-            @Param("status") String status,
+            @Param("status") AttendanceStatus status,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
@@ -125,7 +126,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
            "AND (:endDate IS NULL OR a.date <= :endDate)")
     Page<Attendance> searchAttendances(
             @Param("employeeId") Long employeeId,
-            @Param("status") String status,
+            @Param("status") AttendanceStatus status,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             Pageable pageable

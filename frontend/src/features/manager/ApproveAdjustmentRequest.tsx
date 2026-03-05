@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Search, Calendar, Download, SlidersHorizontal } from "lucide-react"
+import { Search, Calendar, Download, SlidersHorizontal, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,8 +24,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { format } from "date-fns"
+import { toast } from "sonner"
 import {
-    MOCK_DATA,
     DATE_FORMAT,
     AdjustmentRequest,
     ADJUSTMENT_STATUS_CONFIG,
@@ -34,27 +34,86 @@ import {
 import { StatusBadge, TypeBadge, ActiveFilterBadge } from "../employee/components/AdjustmentBadges"
 import { cn } from "@/lib/utils"
 
+import {
+    attendanceService,
+    type AdjustmentRequestSummary,
+} from "@/services/attendanceService"
+import type { AdjustmentType } from "../employee/adjustment-request.constants"
+
+// ── Mapper ────────────────────────────────────────────────────────────────────
+function deriveType(inT: string | null, outT: string | null): AdjustmentType {
+    if (inT && outT) return "BOTH"
+    if (inT) return "CHECK_IN"
+    return "CHECK_OUT"
+}
+
+function mapStatus(s: AdjustmentRequestSummary["status"]) {
+    if (s === "APPROVED") return "APPROVED" as const
+    if (s === "REJECTED") return "REJECTED" as const
+    if (s === "RETURNED_TO_EMPLOYEE") return "RETURNED" as const
+    return "PENDING" as const
+}
+
+function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
+    return {
+        id: String(s.id),
+        dateCreated: new Date(s.createdAt),
+        adjustmentDate: new Date(s.requestDate),
+        type: deriveType(s.proposedCheckInTime, s.proposedCheckOutTime),
+        proposedTimeIn: s.proposedCheckInTime ? format(new Date(s.proposedCheckInTime), "HH:mm") : undefined,
+        proposedTimeOut: s.proposedCheckOutTime ? format(new Date(s.proposedCheckOutTime), "HH:mm") : undefined,
+        status: mapStatus(s.status),
+        reason: s.reasonText,
+        auditTrail: [{ id: "0", action: "CREATED", actor: s.employeeName, timestamp: new Date(s.createdAt) }],
+    }
+}
+
+const PAGE_SIZE = 10
+
 const ApproveAdjustmentRequest: React.FC = () => {
     const [openReview, setOpenReview] = useState(false)
     const [detailRequest, setDetailRequest] = useState<AdjustmentRequest | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("PENDING")
+    const [page, setPage] = useState(0)
 
-    const requests = MOCK_DATA
+    const [requests, setRequests] = useState<AdjustmentRequest[]>([])
+    const [totalElements, setTotalElements] = useState(0)
+    const [totalPages, setTotalPages] = useState(0)
+    const [loading, setLoading] = useState(true)
 
+    // ── Fetch pending adjustments ──────────────────────────────────────────────
+    const fetchData = useCallback(async () => {
+        setLoading(true)
+        try {
+            const res = await attendanceService.getPendingAdjustments({ page, size: PAGE_SIZE })
+            setRequests(res.content.map(mapToFrontend))
+            setTotalElements(res.totalElements)
+            setTotalPages(res.totalPages)
+        } catch {
+            toast.error("Không thể tải danh sách yêu cầu.")
+        } finally {
+            setLoading(false)
+        }
+    }, [page])
+
+    useEffect(() => { fetchData() }, [fetchData])
+
+    // ── Client-side filter ─────────────────────────────────────────────────────
     const filtered = requests.filter((r) => {
         const q = searchQuery.toLowerCase()
         return (
             (statusFilter === "ALL" || r.status === statusFilter) &&
             (
                 q === "" ||
-                r.id.toLowerCase().includes(q) ||
-                r.reason.toLowerCase().includes(q)
+                r.id.includes(q) ||
+                r.reason.toLowerCase().includes(q) ||
+                r.auditTrail[0]?.actor?.toLowerCase().includes(q)
             )
         )
     })
 
-    const pendingCount = requests.filter(r => r.status === "PENDING").length;
+    const pendingCount = requests.filter(r => r.status === "PENDING").length
 
     const handleRowClick = (req: AdjustmentRequest) => {
         setDetailRequest(req)
@@ -66,6 +125,24 @@ const ApproveAdjustmentRequest: React.FC = () => {
         setSearchQuery("")
     }
 
+    // ── Approval actions ──────────────────────────────────────────────────────
+    const handleApprove = async (id: string, reason: string) => {
+        await attendanceService.approveAdjustment(Number(id), { reason })
+        toast.success("Đã duyệt yêu cầu thành công!")
+        await fetchData()
+    }
+
+    const handleReject = async (id: string, reason: string) => {
+        await attendanceService.rejectAdjustment(Number(id), { reason })
+        toast.success("Đã từ chối yêu cầu.")
+        await fetchData()
+    }
+
+    const handleReturn = async (id: string, reason: string) => {
+        await attendanceService.returnAdjustment(Number(id), { reason })
+        toast.success("Đã trả yêu cầu về nhân viên.")
+        await fetchData()
+    }
 
     return (
         <SidebarProvider>
@@ -74,7 +151,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                 <SiteHeader />
                 <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
 
-                    {/* ── Page Header ── */}
+                    {/* Page Header */}
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -93,15 +170,14 @@ const ApproveAdjustmentRequest: React.FC = () => {
                             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1 pl-1">Yêu cầu chờ duyệt</span>
                             <div className="flex items-baseline gap-3">
                                 <span className="text-4xl font-black text-foreground">{pendingCount}</span>
-                                <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-200">+3 hôm nay</span>
+                                {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
                             </div>
                         </div>
                     </div>
 
-                    {/* ── Filter Bar ── */}
+                    {/* Filter Bar */}
                     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                            {/* Search */}
                             <div className="relative flex-1 min-w-[180px] w-full sm:w-auto sm:max-w-xs">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input
@@ -112,7 +188,6 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                 />
                             </div>
 
-                            {/* Status filter */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
@@ -156,12 +231,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                             </DropdownMenu>
 
                             {(statusFilter !== "ALL" || searchQuery !== "") && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-9 text-sm text-muted-foreground"
-                                    onClick={clearAllFilters}
-                                >
+                                <Button variant="ghost" size="sm" className="h-9 text-sm text-muted-foreground" onClick={clearAllFilters}>
                                     Xóa bộ lọc
                                 </Button>
                             )}
@@ -179,7 +249,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* ── Table ── */}
+                    {/* Table */}
                     <div className="bg-background rounded-2xl border border-border shadow-sm overflow-hidden mt-2">
                         <div className="overflow-x-auto">
                             <Table>
@@ -193,7 +263,13 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filtered.length === 0 ? (
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-32 text-center">
+                                                <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : filtered.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
                                                 Không có dữ liệu
@@ -215,7 +291,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                                     </Avatar>
                                                     <div className="flex flex-col">
                                                         <span className="font-semibold text-sm text-foreground">{row.auditTrail[0]?.actor || "Unknown"}</span>
-                                                        <span className="text-[11px] font-medium text-muted-foreground">{row.id}</span>
+                                                        <span className="text-[11px] font-medium text-muted-foreground">#{row.id}</span>
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -267,13 +343,21 @@ const ApproveAdjustmentRequest: React.FC = () => {
                             </Table>
                         </div>
 
-
-                        {/* Summary footer */}
-                        {filtered.length > 0 && (
-                            <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-                                <span>Hiển thị {filtered.length} / {requests.length} yêu cầu</span>
-                            </div>
-                        )}
+                        {/* Footer */}
+                        <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Tổng {totalElements} yêu cầu</span>
+                            {totalPages > 1 && (
+                                <div className="flex items-center gap-2">
+                                    <Button size="icon" variant="outline" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </Button>
+                                    <span>{page + 1} / {totalPages}</span>
+                                    <Button size="icon" variant="outline" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </main>
             </SidebarInset>
@@ -282,6 +366,9 @@ const ApproveAdjustmentRequest: React.FC = () => {
                 open={openReview}
                 onOpenChange={setOpenReview}
                 request={detailRequest}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onReturn={handleReturn}
             />
         </SidebarProvider>
     )

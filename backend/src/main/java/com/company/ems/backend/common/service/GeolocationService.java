@@ -63,10 +63,10 @@ public class GeolocationService {
                 officeProps.getLatitude(), officeProps.getLongitude()
         );
 
-        log.debug("Geolocation check: user=({}, {}), office=({}, {}), distance={:.2f}m, allowed={}m",
+        log.debug("Geolocation check: user=({}, {}), office=({}, {}), distance={}m, allowed={}m",
                 latitude, longitude,
                 officeProps.getLatitude(), officeProps.getLongitude(),
-                distance, officeProps.getRadiusMeters());
+                String.format("%.2f", distance), officeProps.getRadiusMeters());
 
         if (distance > officeProps.getRadiusMeters()) {
             throw new BusinessException(
