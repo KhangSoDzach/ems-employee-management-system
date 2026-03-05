@@ -133,7 +133,7 @@ const defaultValues: Partial<ProfileFormValues> = {
 }
 
 interface ProfilePageProps {
-    sidebarRole: "employee" | "manager" | "hr"
+    sidebarRole: "admin" | "employee" | "manager" | "hr"
 }
 
 export default function ProfilePage({ sidebarRole }: ProfilePageProps) {

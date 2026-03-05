@@ -16,6 +16,7 @@ import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentReques
 import MyAssetsPage from "./features/employee/MyAssetsPage";
 import ManagerProfilePage from "./features/manager/ManagerProfilePage";
 import HRProfilePage from "./features/hr/HRProfilePage";
+import AdminProfilePage from "./features/admin/AdminProfilePage";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN"]} />}>
             <Route path="/admin" element={<Dashboard />} />
             <Route path="/asset" element={<AssetManagementPage />} />
+            <Route path="/admin-profile" element={<AdminProfilePage />} />
           </Route>
 
           {/* Employee only */}

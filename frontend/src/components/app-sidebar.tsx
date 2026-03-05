@@ -44,9 +44,13 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
     role === "admin"
       ? [
         {
-          title: "Quản lý tài khoản",
+          title: "Quản lý hệ thống",
           url: "#",
           items: [
+            {
+              title: "Hồ sơ của tôi",
+              url: "/admin-profile",
+            },
             {
               title: "Quản lý nhân viên",
               url: "/admin",
