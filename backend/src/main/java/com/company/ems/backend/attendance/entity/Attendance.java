@@ -132,6 +132,19 @@ public class Attendance extends BaseEntity {
     private String approvalNotes;
 
     /**
+     * Relative filesystem path to the photo captured at check-in.
+     * Stored under {@code app.storage.photo-dir}.
+     */
+    @Column(length = 500)
+    private String checkInPhotoUrl;
+
+    /**
+     * Relative filesystem path to the photo captured at check-out.
+     */
+    @Column(length = 500)
+    private String checkOutPhotoUrl;
+
+    /**
      * Calculate total work hours between check-in and check-out
      */
     public void calculateWorkHours() {

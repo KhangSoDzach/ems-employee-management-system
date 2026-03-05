@@ -1,5 +1,7 @@
 package com.company.ems.backend.auditlog.controller;
 
+import java.time.LocalDateTime;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,8 +23,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
-
 /**
  * REST controller exposing read-only Audit Log endpoints.
  * <p>
@@ -35,7 +35,7 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/v1/audit-logs")
 @RequiredArgsConstructor
 @Tag(name = "Audit Log", description = "Authentication audit log endpoints – Admin only")
-@SecurityRequirement(name = "bearer-jwt")
+@SecurityRequirement(name = "bearerAuth")
 public class AuditLogController {
 
     private final AuditLogService auditLogService;

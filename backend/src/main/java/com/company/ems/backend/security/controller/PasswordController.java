@@ -1,17 +1,22 @@
 package com.company.ems.backend.security.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.security.dto.ChangePasswordRequest;
 import com.company.ems.backend.security.service.PasswordService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -25,7 +30,7 @@ public class PasswordController {
     @Operation(
             summary = "Change password",
             description = "Change current user password. Requires current password verification. New password must meet strength requirements.",
-            security = @SecurityRequirement(name = "Bearer Authentication")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<Void>> changePassword(
             Authentication authentication,

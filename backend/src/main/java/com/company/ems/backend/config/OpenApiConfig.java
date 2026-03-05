@@ -46,13 +46,13 @@ public class OpenApiConfig {
                                 .url("https://api.company.com")
                                 .description("Production Server")))
                 .components(new Components()
-                        .addSecuritySchemes("bearer-jwt", new SecurityScheme()
+                        .addSecuritySchemes("bearerAuth", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
                                 .in(SecurityScheme.In.HEADER)
                                 .name("Authorization")
                                 .description("JWT token for authentication")))
-                .addSecurityItem(new SecurityRequirement().addList("bearer-jwt"));
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
     }
 }

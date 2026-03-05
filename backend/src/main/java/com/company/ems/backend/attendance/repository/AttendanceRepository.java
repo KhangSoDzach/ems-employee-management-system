@@ -1,7 +1,9 @@
 package com.company.ems.backend.attendance.repository;
 
-import com.company.ems.backend.attendance.entity.Attendance;
-import com.company.ems.backend.employee.entity.Employee;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,9 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import com.company.ems.backend.attendance.entity.Attendance;
+import com.company.ems.backend.employee.entity.Employee;
 
 /**
  * Repository interface for Attendance entity
@@ -26,9 +27,19 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     Optional<Attendance> findByEmployeeAndDate(Employee employee, LocalDate date);
 
     /**
+     * Find attendance by employee ID and date (preferred — avoids loading the Employee entity).
+     */
+    Optional<Attendance> findByEmployeeIdAndDate(Long employeeId, LocalDate date);
+
+    /**
      * Check if attendance exists for employee on specific date
      */
     boolean existsByEmployeeAndDate(Employee employee, LocalDate date);
+
+    /**
+     * Check attendance existence by employee ID (avoids loading the Employee entity).
+     */
+    boolean existsByEmployeeIdAndDate(Long employeeId, LocalDate date);
 
     /**
      * Find all attendances for an employee
