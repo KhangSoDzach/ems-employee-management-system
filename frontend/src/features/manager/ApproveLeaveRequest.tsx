@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   SlidersHorizontal,
   MoreHorizontal,
   X,
+  Loader2,
 } from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
@@ -29,66 +32,53 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import ApproveLeaveDialog from "./components/ApproveLeaveModal";
+import { leaveService, type LeaveResponseDTO } from "@/services/leaveService";
 
 /* ================= TYPES ================= */
 
-type LeaveRequest = {
-  id: string;
+export type LeaveRequest = {
+  id: number;
   name: string;
   dept: string;
-  type: "annual" | "sick" | "unpaid";
-  time: string;
+  leaveType: string;
+  startDate: string;
+  endDate: string;
+  duration: number | null;
   reason: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: string;
+  createdAt: string;
 };
 
-/* ================= MOCK DATA ================= */
-
-const MOCK_DATA: LeaveRequest[] = [
-  {
-    id: "LR-001",
-    name: "Nguyễn Văn A",
-    dept: "Kỹ thuật",
-    type: "annual",
-    time: "01/10 - 03/10",
-    reason: "Việc gia đình cá nhân cần xử lý gấp...",
-    status: "PENDING",
-  },
-  {
-    id: "LR-002",
-    name: "Trần Thị B",
-    dept: "Marketing",
-    type: "sick",
-    time: "05/10 - 05/10",
-    reason: "Khám bệnh định kỳ tại bệnh viện...",
-    status: "PENDING",
-  },
-];
+function mapDto(dto: LeaveResponseDTO): LeaveRequest {
+  return {
+    id: dto.id,
+    name: dto.employeeName ?? "—",
+    dept: "—",
+    leaveType: dto.leaveType,
+    startDate: dto.startDate,
+    endDate: dto.endDate,
+    duration: dto.duration,
+    reason: dto.reason,
+    status: dto.status,
+    createdAt: dto.createdAt,
+  };
+}
 
 /* ================= TYPE BADGE ================= */
 
-const renderLeaveType = (type: LeaveRequest["type"]) => {
-  switch (type) {
-    case "annual":
-      return (
-        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-          Nghỉ phép năm
-        </Badge>
-      );
-    case "sick":
-      return (
-        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-          Nghỉ ốm
-        </Badge>
-      );
-    case "unpaid":
-      return (
-        <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100">
-          Nghỉ không lương
-        </Badge>
-      );
-  }
+const LEAVE_TYPE_MAP: Record<string, { label: string; cls: string }> = {
+  ANNUAL:   { label: "Nghỉ phép năm",  cls: "bg-blue-100 text-blue-700 hover:bg-blue-100" },
+  SICK:     { label: "Nghỉ ốm",        cls: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" },
+  UNPAID:   { label: "Nghỉ không lương", cls: "bg-rose-100 text-rose-700 hover:bg-rose-100" },
+  PERSONAL: { label: "Việc riêng",     cls: "bg-violet-100 text-violet-700 hover:bg-violet-100" },
 };
+
+const renderLeaveType = (type: string) => {
+  const cfg = LEAVE_TYPE_MAP[type] ?? { label: type, cls: "bg-muted text-muted-foreground" };
+  return <Badge className={cfg.cls}>{cfg.label}</Badge>;
+};
+
+const isPending = (status: string) => status.startsWith("PENDING");
 
 /* ================= EMPTY STATE ================= */
 
@@ -106,40 +96,34 @@ const EmptyState = () => (
 
 export default function ApproveLeaveRequest() {
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState<
-    "all" | "annual" | "sick" | "unpaid"
-  >("all");
+  const [filterType, setFilterType] = useState("all");
+  const [data, setData] = useState<LeaveRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
 
-  const [data, setData] = useState<LeaveRequest[]>(MOCK_DATA);
-  const [selectedRequest, setSelectedRequest] =
-    useState<LeaveRequest | null>(null);
+  /* ================= LOAD TEAM LEAVES ================= */
+
+  useEffect(() => {
+    leaveService.getTeamLeaves()
+      .then((page) => setData(page.content.map(mapDto)))
+      .catch(() => toast.error("Không thể tải danh sách nghỉ phép."))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   /* ================= FILTER LOGIC ================= */
 
   const filtered = data
-    .filter((r) => r.status === "PENDING")
+    .filter((r) => isPending(r.status))
     .filter((r) => {
-      const matchSearch = r.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
-
-      const matchType =
-        filterType === "all" ? true : r.type === filterType;
-
+      const matchSearch = r.name.toLowerCase().includes(search.toLowerCase());
+      const matchType = filterType === "all" ? true : r.leaveType === filterType.toUpperCase();
       return matchSearch && matchType;
     });
 
-  /* ================= UPDATE STATUS ================= */
+  /* ================= UPDATE STATUS LOCALLY ================= */
 
-  const handleUpdateStatus = (
-    id: string,
-    status: "APPROVED" | "REJECTED"
-  ) => {
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status } : item
-      )
-    );
+  const handleUpdateStatus = (id: number, status: string) => {
+    setData((prev) => prev.map((item) => item.id === id ? { ...item, status } : item));
   };
 
   return (
@@ -174,10 +158,7 @@ export default function ApproveLeaveRequest() {
                 className="pl-9"
               />
               {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
-                >
+                <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               )}
@@ -187,26 +168,15 @@ export default function ApproveLeaveRequest() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <SlidersHorizontal className="w-4 h-4" />
-                  {filterType === "all" && "Tất cả"}
-                  {filterType === "annual" && "Nghỉ phép năm"}
-                  {filterType === "sick" && "Nghỉ ốm"}
-                  {filterType === "unpaid" && "Nghỉ không lương"}
+                  {{ all: "Tất cả", annual: "Nghỉ phép năm", sick: "Nghỉ ốm", unpaid: "Nghỉ không lương", personal: "Việc riêng" }[filterType] ?? "Tất cả"}
                 </Button>
               </DropdownMenuTrigger>
-
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setFilterType("all")}>
-                  Tất cả
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("annual")}>
-                  Nghỉ phép năm
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("sick")}>
-                  Nghỉ ốm
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("unpaid")}>
-                  Nghỉ không lương
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("all")}>Tất cả</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("annual")}>Nghỉ phép năm</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("sick")}>Nghỉ ốm</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("unpaid")}>Nghỉ không lương</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("personal")}>Việc riêng</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -226,7 +196,16 @@ export default function ApproveLeaveRequest() {
               </TableHeader>
 
               <TableBody>
-                {filtered.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-64 text-center">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span className="text-sm">Đang tải dữ liệu...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filtered.length === 0 ? (
                   <EmptyState />
                 ) : (
                   filtered.map((row) => (
@@ -238,45 +217,35 @@ export default function ApproveLeaveRequest() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
-                            <AvatarFallback>
-                              {row.name.charAt(0)}
-                            </AvatarFallback>
+                            <AvatarFallback>{row.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <span className="font-semibold">
-                            {row.name}
-                          </span>
+                          <span className="font-semibold">{row.name}</span>
                         </div>
                       </TableCell>
-
                       <TableCell>{row.dept}</TableCell>
-                      <TableCell>
-                        {renderLeaveType(row.type)}
+                      <TableCell>{renderLeaveType(row.leaveType)}</TableCell>
+                      <TableCell className="text-sm">
+                        {format(new Date(row.startDate + "T00:00:00"), "dd/MM")}
+                        {row.startDate !== row.endDate && ` – ${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
+                        {row.duration != null && (
+                          <span className="ml-1 text-muted-foreground">({row.duration}n)</span>
+                        )}
                       </TableCell>
-                      <TableCell>{row.time}</TableCell>
-
                       <TableCell>
-                        <Badge className="bg-amber-100 text-amber-700 border border-amber-200">
-                          Chờ duyệt
-                        </Badge>
+                        <Badge className="bg-amber-100 text-amber-700 border border-amber-200">Chờ duyệt</Badge>
                       </TableCell>
-
-                     <TableCell onClick={(e) => e.stopPropagation()}>
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button size="icon" variant="ghost">
-        <MoreHorizontal className="w-4 h-4" />
-      </Button>
-    </DropdownMenuTrigger>
-
-    <DropdownMenuContent align="end">
-      <DropdownMenuItem
-        onClick={() => setSelectedRequest(row)}
-      >
-        Xem chi tiết
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-</TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setSelectedRequest(row)}>Xem chi tiết</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

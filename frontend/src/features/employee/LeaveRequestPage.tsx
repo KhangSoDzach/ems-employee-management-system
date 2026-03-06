@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import {
-  MoreHorizontal, Plane, Plus, Search, SlidersHorizontal, X,
+  Loader2, MoreHorizontal, Plane, Plus, Search, SlidersHorizontal, X,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -36,8 +36,9 @@ import {
   LEAVE_STATUS_OPTIONS,
   LEAVE_TYPE_CONFIG,
   LEAVE_TYPE_OPTIONS,
-  MOCK_DATA,
 } from "./leave-request.constants"
+import { leaveService } from "@/services/leaveService"
+import { employeeService } from "@/services/employeeService"
 import { ActiveFilterBadge, StatusBadge, TypeBadge } from "./components/LeaveBadges"
 import { LeaveDetailSheet } from "./components/LeaveDetailSheet"
 import { CreateLeaveModal } from "./components/CreateLeaveModal"
@@ -70,12 +71,52 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
 /* ══════════════ MAIN PAGE ══════════════ */
 
 export default function LeaveRequestPage() {
-  const [requests, setRequests] = useState<LeaveRequest[]>(MOCK_DATA)
+  const [requests, setRequests] = useState<LeaveRequest[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [employeeId, setEmployeeId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<LeaveStatus | "ALL">("ALL")
   const [typeFilter, setTypeFilter] = useState<LeaveType | "ALL">("ALL")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null)
+
+  /* ── Backend status → frontend union ── */
+  const mapBackendStatus = (status: string): LeaveStatus => {
+    if (status.startsWith("PENDING")) return "PENDING"
+    if (status === "RETURNED_TO_EMPLOYEE") return "RETURNED"
+    if (status === "APPROVED" || status === "REJECTED") return status as LeaveStatus
+    return "PENDING"
+  }
+
+  /* ── Load data on mount ── */
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [leavePage, profile] = await Promise.all([
+          leaveService.getMyLeaves(),
+          employeeService.getMyProfile(),
+        ])
+        setEmployeeId(profile.id)
+        setRequests(
+          leavePage.content.map((dto) => ({
+            id: String(dto.id),
+            dateCreated: new Date(dto.createdAt),
+            startDate: new Date(dto.startDate + "T00:00:00"),
+            endDate: new Date(dto.endDate + "T00:00:00"),
+            type: dto.leaveType.toLowerCase() as LeaveType,
+            status: mapBackendStatus(dto.status),
+            reason: dto.reason,
+            auditTrail: [],
+          }))
+        )
+      } catch {
+        toast.error("Không thể tải dữ liệu nghỉ phép.")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [])
 
   /* ── Filtered rows ── */
   const filtered = requests.filter((r) => {
@@ -96,15 +137,21 @@ export default function LeaveRequestPage() {
 
   /* ── Handlers ── */
   const handleCreate = async (data: LeaveFormValues) => {
-    await new Promise((r) => setTimeout(r, 1200))
-    const newReq: LeaveRequest = {
-      id: `LV-${String(requests.length + 1).padStart(3, "0")}`,
-      dateCreated: new Date(),
-      startDate: data.startDate,
-      endDate: data.endDate,
-      type: data.leaveType,
-      status: "PENDING",
+    const dto = await leaveService.createLeave({
+      employeeId: employeeId ?? 1,
+      leaveType: data.leaveType.toUpperCase(),
+      startDate: format(data.startDate, "yyyy-MM-dd"),
+      endDate: format(data.endDate, "yyyy-MM-dd"),
       reason: data.reason,
+    })
+    const newReq: LeaveRequest = {
+      id: String(dto.id),
+      dateCreated: new Date(dto.createdAt),
+      startDate: new Date(dto.startDate + "T00:00:00"),
+      endDate: new Date(dto.endDate + "T00:00:00"),
+      type: dto.leaveType.toLowerCase() as LeaveType,
+      status: mapBackendStatus(dto.status),
+      reason: dto.reason,
       auditTrail: [
         { id: "a1", action: "CREATED", actor: CURRENT_USER.name, timestamp: new Date() },
       ],
@@ -115,9 +162,14 @@ export default function LeaveRequestPage() {
     })
   }
 
-  const handleCancel = (id: string) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id))
-    toast.info("Đã hủy đơn nghỉ phép.")
+  const handleCancel = async (id: string) => {
+    try {
+      await leaveService.cancelLeave(Number(id))
+      setRequests((prev) => prev.filter((r) => r.id !== id))
+      toast.info("Đã hủy đơn nghỉ phép.")
+    } catch {
+      toast.error("Không thể hủy đơn nghỉ phép.")
+    }
   }
 
   const clearAllFilters = () => {
@@ -297,9 +349,18 @@ export default function LeaveRequestPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.length === 0
-                    ? <EmptyState hasFilter={hasFilter} />
-                    : filtered.map((req) => (
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-[400px] text-center">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span className="text-sm">Đang tải dữ liệu...</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filtered.length === 0 ? (
+                    <EmptyState hasFilter={hasFilter} />
+                  ) : filtered.map((req) => (
                       <TableRow
                         key={req.id}
                         className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"

@@ -148,6 +148,29 @@
 		</dependency>
 	</dependencies>
 	<build>
+		<resources>
+			<!-- Replicate Spring Boot parent defaults: filter YAML/properties, not SQL -->
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/application*.yml</include>
+					<include>**/application*.yaml</include>
+					<include>**/application*.properties</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+				<excludes>
+					<exclude>**/application*.yml</exclude>
+					<exclude>**/application*.yaml</exclude>
+					<exclude>**/application*.properties</exclude>
+					<!-- Placeholder only – real content lives in V14__leave_multi_level_approval.sql -->
+					<exclude>db/migration/V12__leave_multi_level_approval.sql</exclude>
+				</excludes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
