@@ -19,6 +19,7 @@ import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
 import com.company.ems.backend.employee.service.EmployeeService;
 
 import jakarta.validation.Valid;
@@ -57,6 +58,16 @@ public class EmployeeController {
             @RequestParam(required = false) String search) {
         // TODO: Implement service layer
         return ResponseEntity.ok(ApiResponse.success("success", employeeService.getAllEmployees(page, size, department, position, status, search)));
+    }
+
+    /**
+     * Get current authenticated employee profile
+     * GET /api/v1/employees/me
+     */
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<PublicEmployeeResponse>> getMyProfile() {
+        return ResponseEntity.ok(ApiResponse.success("success", employeeService.getMyProfile()));
     }
 
     /**

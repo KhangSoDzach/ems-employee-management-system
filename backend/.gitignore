@@ -36,3 +36,4 @@ build/
 /system-prompts-and-models-of-ai-tools/
 
 .env
+uploads/attendance-photos/
