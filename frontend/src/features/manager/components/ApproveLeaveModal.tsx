@@ -1,33 +1,24 @@
 import { useState } from "react"
+import { format } from "date-fns"
 import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 
-/* ================= TYPES ================= */
+import { leaveService } from "@/services/leaveService"
+import type { LeaveRequest } from "../ApproveLeaveRequest"
 
-export type LeaveRequest = {
-  id: string
-  name: string
-  dept: string
-  type: "annual" | "sick" | "unpaid"
-  time: string
-  reason: string
-  status: "PENDING" | "APPROVED" | "REJECTED"
-}
+/* ================= TYPES ================= */
 
 type Props = {
   request: LeaveRequest | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onUpdateStatus?: (
-    id: string,
-    status: "APPROVED" | "REJECTED"
-  ) => void
+  onUpdateStatus?: (id: number, status: string) => void
 }
 
 export default function ApproveLeaveDialog({
@@ -41,47 +32,44 @@ export default function ApproveLeaveDialog({
 
   if (!request) return null
 
-  const startDate = request.time.split(" - ")[0]
-  const endDate = request.time.split(" - ")[1]
+  const fmt = (d: string) => format(new Date(d + "T00:00:00"), "dd/MM/yyyy")
 
-  const handleApprove = async () => {
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      onUpdateStatus?.(request.id, "APPROVED")
-      toast.success("Đã phê duyệt đơn nghỉ phép")
-      onOpenChange(false)
-      setComment("")
-    }, 1000)
-  }
-
-  const handleReject = async () => {
-    if (!comment.trim()) {
-      toast.error("Vui lòng nhập lý do từ chối")
+  const doAction = async (action: "APPROVE" | "REJECT" | "SEND_BACK") => {
+    if ((action === "REJECT" || action === "SEND_BACK") && !comment.trim()) {
+      toast.error("Vui lòng nhập lý do")
       return
     }
-
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      onUpdateStatus?.(request.id, "REJECTED")
-      toast.success("Đã từ chối đơn nghỉ phép")
+    try {
+      const updated = await leaveService.processAction(request.id, { action, comments: comment || undefined })
+      onUpdateStatus?.(request.id, updated.status)
+      const msg = action === "APPROVE" ? "Đã phê duyệt đơn nghỉ phép" : action === "REJECT" ? "Đã từ chối đơn nghỉ phép" : "Đã trả đơn về cho nhân viên"
+      toast.success(msg)
       onOpenChange(false)
       setComment("")
-    }, 1000)
+    } catch {
+      toast.error("Thao tác thất bại. Vui lòng thử lại.")
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const handleApprove = () => doAction("APPROVE")
+  const handleReject  = () => doAction("REJECT")
+  const handleSendBack = () => doAction("SEND_BACK")
 
   const getStatusLabel = () => {
     if (request.status === "APPROVED") return "Đã duyệt"
     if (request.status === "REJECTED") return "Từ chối"
-    return "Chờ duyệt"
+    if (request.status === "RETURNED_TO_EMPLOYEE") return "Trả về"
+    if (request.status.startsWith("PENDING")) return "Chờ duyệt"
+    return request.status
   }
 
   const getStatusColor = () => {
-    if (request.status === "APPROVED")
-      return "bg-green-100 text-green-600"
-    if (request.status === "REJECTED")
-      return "bg-red-100 text-red-600"
+    if (request.status === "APPROVED") return "bg-green-100 text-green-600"
+    if (request.status === "REJECTED") return "bg-red-100 text-red-600"
+    if (request.status === "RETURNED_TO_EMPLOYEE") return "bg-orange-100 text-orange-600"
     return "bg-yellow-100 text-yellow-600"
   }
 
@@ -161,30 +149,18 @@ export default function ApproveLeaveDialog({
             <div className="rounded-xl border shadow-sm overflow-hidden">
               <div className="grid grid-cols-2 divide-x border-b bg-muted/20">
                 <div className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Ngày bắt đầu
-                  </p>
-                  <p className="font-semibold text-sm">
-                    {startDate}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-1">Ngày bắt đầu</p>
+                  <p className="font-semibold text-sm">{fmt(request.startDate)}</p>
                 </div>
-
                 <div className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Ngày kết thúc
-                  </p>
-                  <p className="font-semibold text-sm">
-                    {endDate}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-1">Ngày kết thúc</p>
+                  <p className="font-semibold text-sm">{fmt(request.endDate)}</p>
                 </div>
               </div>
-
               <div className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">
-                  Tổng thời gian
-                </p>
+                <p className="text-xs text-muted-foreground mb-1">Tổng thời gian</p>
                 <p className="font-bold text-red-500">
-                  2 ngày
+                  {request.duration != null ? `${request.duration} ngày` : "—"}
                 </p>
               </div>
             </div>
@@ -219,19 +195,25 @@ export default function ApproveLeaveDialog({
         </div>
 
         {/* ================= FOOTER ================= */}
-        <div className="p-4 border-t bg-muted/20 flex gap-3">
+        <div className="p-4 border-t bg-muted/20 flex gap-2">
           <Button
             variant="secondary"
             disabled={loading}
             onClick={handleReject}
             className="flex-1 rounded-xl text-red-500 bg-muted hover:bg-muted/70 flex items-center justify-center gap-2"
           >
-            {loading ? (
-              <Loader2 className="animate-spin" size={18} />
-            ) : (
-              <XCircle size={18} />
-            )}
+            {loading ? <Loader2 className="animate-spin" size={18} /> : <XCircle size={18} />}
             Từ chối
+          </Button>
+
+          <Button
+            variant="outline"
+            disabled={loading}
+            onClick={handleSendBack}
+            className="flex-1 rounded-xl text-orange-500 border-orange-200 hover:bg-orange-50 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="animate-spin" size={18} /> : <RotateCcw size={18} />}
+            Trả về
           </Button>
 
           <Button
@@ -239,11 +221,7 @@ export default function ApproveLeaveDialog({
             onClick={handleApprove}
             className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2"
           >
-            {loading ? (
-              <Loader2 className="animate-spin" size={18} />
-            ) : (
-              <CheckCircle2 size={18} />
-            )}
+            {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
             Phê duyệt
           </Button>
         </div>

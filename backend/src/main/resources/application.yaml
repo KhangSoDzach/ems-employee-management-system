@@ -40,7 +40,6 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
-        enable_lazy_load_no_trans: false
         use_sql_comments: true
         jdbc:
           batch_size: 20

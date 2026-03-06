@@ -88,6 +88,15 @@ SELECT 'Le', 'Employee2', 'employee2@ems.company.com', '0933333333',
        NOW(), NOW(), FALSE, 0
 FROM users u WHERE u.username = 'employee2';
 
+-- Đảm bảo reporting_manager_id đúng ngay cả khi row đã tồn tại trước đó (INSERT IGNORE bỏ qua update)
+UPDATE employees e
+    JOIN users u       ON e.user_id   = u.id
+    JOIN employees mgr ON mgr.user_id = (SELECT id FROM users WHERE username = 'manager1' LIMIT 1)
+SET e.reporting_manager_id = mgr.id,
+    e.updated_at            = NOW()
+WHERE u.username IN ('employee1', 'employee2')
+  AND (e.reporting_manager_id IS NULL OR e.reporting_manager_id != mgr.id);
+
 -- 6. LEAVE REQUESTS (PENDING - để test approve)
 INSERT IGNORE INTO leaves (
     employee_id, leave_type, start_date, end_date, total_days,

@@ -100,7 +100,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="font-semibold text-sm">Loại phép</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
                                         <FormControl>
                                             <SelectTrigger className="h-10">
                                                 <SelectValue placeholder="Chọn loại phép..." />
