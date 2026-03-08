@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import ApproveLeaveDialog from "./components/ApproveLeaveModal";
 import { leaveService, type LeaveResponseDTO } from "@/services/leaveService";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 /* ================= TYPES ================= */
 
@@ -52,8 +53,8 @@ export type LeaveRequest = {
 function mapDto(dto: LeaveResponseDTO): LeaveRequest {
   return {
     id: dto.id,
-    name: dto.employeeName ?? "—",
-    dept: "—",
+    name: dto.employeeName ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
+    dept: SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
     leaveType: dto.leaveType,
     startDate: dto.startDate,
     endDate: dto.endDate,
@@ -137,7 +138,7 @@ export default function ApproveLeaveRequest() {
           {/* HEADER */}
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold">
+              <h1 className="page-heading">
                 Danh sách nghỉ phép chờ duyệt
               </h1>
               <p className="text-muted-foreground mt-1">
@@ -182,7 +183,7 @@ export default function ApproveLeaveRequest() {
           </div>
 
           {/* TABLE */}
-          <div className="bg-background rounded-2xl border shadow-sm overflow-hidden">
+          <div className="card-soft">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">

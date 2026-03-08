@@ -16,25 +16,11 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-
-const TEXT = {
-    title: "Chào mừng trở lại",
-    desc: "Đăng nhập vào hệ thống quản lý nhân sự EMS",
-    labelEmail: "Email",
-    placeholderEmail: "admin@ems.com",
-    labelPassword: "Mật khẩu",
-    placeholderPassword: "••••••••",
-    labelRemember: "Ghi nhớ đăng nhập",
-    btnLogin: "Đăng nhập",
-    btnProcessing: "Đang xử lý...",
-    errEmailReq: "Vui lòng nhập Username/Email",
-    errPassReq: "Vui lòng nhập mật khẩu",
-    errDefault: "Email hoặc mật khẩu không chính xác",
-}
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 const loginSchema = z.object({
-    email: z.string().min(1, TEXT.errEmailReq),
-    password: z.string().min(1, TEXT.errPassReq),
+    email: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.EMAIL_REQUIRED),
+    password: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.PASSWORD_REQUIRED),
     remember: z.boolean().optional(),
 });
 
@@ -99,7 +85,7 @@ export const LoginPage = () => {
             const err = error as { response?: { data?: { message?: string } } };
             console.error("Login error:", error);
             setError("root", {
-                message: err.response?.data?.message || TEXT.errDefault,
+                message: err.response?.data?.message || SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID,
             });
         }
     };
@@ -136,21 +122,21 @@ export const LoginPage = () => {
                     <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
                         <User className="text-primary w-8 h-8" />
                     </div>
-                    <CardTitle className="text-2xl font-bold">{TEXT.title}</CardTitle>
+                    <CardTitle className="text-2xl font-bold">{SYSTEM_MESSAGES.LOGIN.TITLE}</CardTitle>
                     <CardDescription>
-                        {TEXT.desc}
+                        {SYSTEM_MESSAGES.LOGIN.DESC}
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="email">{TEXT.labelEmail}</Label>
+                            <Label htmlFor="email">{SYSTEM_MESSAGES.LOGIN.LABEL_EMAIL}</Label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                                 <Input
                                     id="email"
-                                    placeholder={TEXT.placeholderEmail}
+                                    placeholder={SYSTEM_MESSAGES.LOGIN.PLACEHOLDER_EMAIL}
                                     className={`pl-9 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                     {...register("email")}
                                 />
@@ -158,14 +144,14 @@ export const LoginPage = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">{TEXT.labelPassword}</Label>
+                            <Label htmlFor="password">{SYSTEM_MESSAGES.LOGIN.LABEL_PASSWORD}</Label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
 
                                 <Input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder={TEXT.placeholderPassword}
+                                    placeholder={SYSTEM_MESSAGES.LOGIN.PLACEHOLDER_PASSWORD}
                                     className={`pl-9 pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                     {...register("password")}
                                 />
@@ -195,7 +181,7 @@ export const LoginPage = () => {
                                     htmlFor="remember"
                                     className="text-sm font-medium leading-none cursor-pointer"
                                 >
-                                    {TEXT.labelRemember}
+                                    {SYSTEM_MESSAGES.LOGIN.LABEL_REMEMBER}
                                 </Label>
                             </div>
                             <button
@@ -203,7 +189,7 @@ export const LoginPage = () => {
                                 onClick={() => navigate("/forgot-password")}
                                 className="text-sm text-primary hover:underline font-medium"
                             >
-                                Quên mật khẩu?
+                                {SYSTEM_MESSAGES.LOGIN.LINK_FORGOT}
                             </button>
                         </div>
 
@@ -216,10 +202,10 @@ export const LoginPage = () => {
                         <Button className="w-full font-bold" size="lg" disabled={isSubmitting}>
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {TEXT.btnProcessing}
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {SYSTEM_MESSAGES.LOGIN.BTN_PROCESSING}
                                 </>
                             ) : (
-                                TEXT.btnLogin
+                                SYSTEM_MESSAGES.LOGIN.BTN_LOGIN
                             )}
                         </Button>
                     </form>

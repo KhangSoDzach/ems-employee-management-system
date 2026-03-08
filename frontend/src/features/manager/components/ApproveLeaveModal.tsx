@@ -11,6 +11,7 @@ import { toast } from "sonner"
 
 import { leaveService } from "@/services/leaveService"
 import type { LeaveRequest } from "../ApproveLeaveRequest"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 /* ================= TYPES ================= */
 
@@ -104,7 +105,7 @@ export default function ApproveLeaveDialog({
 
           {/* ===== THÔNG TIN CHUNG ===== */}
           <section className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <h4 className="section-title-muted">
               THÔNG TIN CHUNG
             </h4>
 
@@ -142,7 +143,7 @@ export default function ApproveLeaveDialog({
 
           {/* ===== CHI TIẾT NGHỈ PHÉP ===== */}
           <section className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <h4 className="section-title-muted">
               CHI TIẾT NGHỈ PHÉP
             </h4>
 
@@ -160,7 +161,7 @@ export default function ApproveLeaveDialog({
               <div className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Tổng thời gian</p>
                 <p className="font-bold text-red-500">
-                  {request.duration != null ? `${request.duration} ngày` : "—"}
+                  {request.duration != null ? `${request.duration} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                 </p>
               </div>
             </div>
@@ -168,7 +169,7 @@ export default function ApproveLeaveDialog({
 
           {/* ===== LÝ DO CHI TIẾT ===== */}
           <section className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <h4 className="section-title-muted">
               LÝ DO CHI TIẾT
             </h4>
 

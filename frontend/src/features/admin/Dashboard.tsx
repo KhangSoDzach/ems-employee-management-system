@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,25 +8,37 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { EMPLOYEE_STATUS_MAP } from "@/constants/theme";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+
 /* ====================== */
 /* ====== SCHEMA ======== */
 /* ====================== */
 
 const employeeSchema = z.object({
-  fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
-  nationalId: z
-    .string()
-    .regex(/^(\d{9}|\d{12})$/, "CMND/CCCD phải là 9 hoặc 12 số"),
-  companyEmail: z.string().email("Email không hợp lệ"),
-  phoneNumber: z
-    .string()
-    .regex(/^\d{10,13}$/, "Số điện thoại phải từ 10-13 số"),
-  dateOfBirth: z
-    .string()
-    .refine(
-      (date) => differenceInYears(new Date(), new Date(date)) >= 18,
-      "Nhân viên phải từ 18 tuổi trở lên",
-    ),
+    fullName: z.string().min(2, FORM_VALIDATION_MESSAGES.NAME_MIN),
+    nationalId: z
+        .string()
+        .regex(/^(\d{9}|\d{12})$/, FORM_VALIDATION_MESSAGES.ID_FORMAT),
+    companyEmail: z.string().email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
+    phoneNumber: z
+        .string()
+        .regex(/^\d{10,13}$/, FORM_VALIDATION_MESSAGES.PHONE_FORMAT),
+    dateOfBirth: z
+        .string()
+        .refine(
+            (date) => differenceInYears(new Date(), new Date(date)) >= 18,
+            FORM_VALIDATION_MESSAGES.AGE_MIN,
+        ),
+    gender: z.string().optional(),
+    address: z.string().optional(),
+    department: z.string().optional(),
+    position: z.string().optional(),
+    manager: z.string().optional(),
+    joinDate: z.string().optional(),
+    endDate: z.string().optional(),
+    contractType: z.string().optional(),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
@@ -36,69 +48,69 @@ type EmployeeFormValues = z.infer<typeof employeeSchema>;
 /* ====================== */
 
 interface EmployeeCardProps {
-  name: string;
-  code: string;
-  status: string;
-  statusColor: string;
-  avatar?: string;
-  id: string | number;
-  email: string;
-  phone: string;
-  onEdit?: () => void;
+    name: string;
+    code: string;
+    status: string;
+    statusColor: string;
+    avatar?: string;
+    id: string | number;
+    email: string;
+    phone: string;
+    onEdit?: () => void;
 }
 
 function EmployeeCard({
-  name,
-  code,
-  status,
-  statusColor,
-  avatar,
-  id,
-  email,
-  phone,
-  onEdit,
+    name,
+    code,
+    status,
+    statusColor,
+    avatar,
+    id,
+    email,
+    phone,
+    onEdit,
 }: EmployeeCardProps) {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-            {avatar ? (
-              <img src={avatar} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-gray-400 text-xl font-bold">
-                {name.charAt(0)}
-              </span>
-            )}
-          </div>
+    return (
+        <div className="item-card">
+            <div className="item-card-header">
+                <div className="flex items-center gap-3">
+                    <div className="avatar-medium">
+                        {avatar ? (
+                            <img src={avatar} className="w-full h-full object-cover" />
+                        ) : (
+                            <span className="text-gray-400 text-xl font-bold">
+                                {name.charAt(0)}
+                            </span>
+                        )}
+                    </div>
 
-          <div>
-            <h3 className="font-bold text-gray-900 dark:text-white">{name}</h3>
-            <p className="text-xs text-primary font-medium">Mã: {code}</p>
+                    <div>
+                        <h3 className="font-bold text-gray-900 dark:text-white">{name}</h3>
+                        <p className="text-xs text-primary font-medium">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}: {code}</p>
 
-            <button
-              onClick={onEdit}
-              className="mt-2 text-xs text-blue-600 hover:underline font-medium"
-            >
-              ✏ Chỉnh sửa
-            </button>
-          </div>
+                        <button
+                            onClick={onEdit}
+                            className="mt-2 text-xs text-blue-600 hover:underline font-medium"
+                        >
+                            ✏ {SYSTEM_MESSAGES.BTN_EDIT}
+                        </button>
+                    </div>
+                </div>
+
+                <span
+                    className={`status-badge-pill ${statusColor}`}
+                >
+                    {status}
+                </span>
+            </div>
+
+            <div className="item-card-body">
+                <div>{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}: {id}</div>
+                <div className="truncate">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMAIL}: {email}</div>
+                <div>{SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}: {phone}</div>
+            </div>
         </div>
-
-        <span
-          className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${statusColor}`}
-        >
-          {status}
-        </span>
-      </div>
-
-      <div className="grid gap-2 border-t border-gray-50 dark:border-gray-700 pt-3 text-sm text-gray-600 dark:text-gray-400">
-        <div>ID: {id}</div>
-        <div className="truncate">Email: {email}</div>
-        <div>Phone: {phone}</div>
-      </div>
-    </div>
-  );
+    );
 }
 
 /* ====================== */
@@ -106,377 +118,375 @@ function EmployeeCard({
 /* ====================== */
 
 export default function Page() {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [selectedEmployee, setSelectedEmployee] =
-    useState<EmployeeCardProps | null>(null);
+    const [open, setOpen] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] =
+        useState<EmployeeCardProps | null>(null);
 
-  const form = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeSchema),
-    mode: "onChange",
-  });
+    const form = useForm<EmployeeFormValues>({
+        resolver: zodResolver(employeeSchema),
+        mode: "onChange",
+    });
 
-  useEffect(() => {
-    if (selectedEmployee) {
-      form.reset({
-        fullName: selectedEmployee.name,
-        nationalId: String(selectedEmployee.id),
-        companyEmail: selectedEmployee.email,
-        phoneNumber: selectedEmployee.phone,
-        dateOfBirth: "1995-05-15",
-      });
-    } else {
-      form.reset();
+    useEffect(() => {
+        if (selectedEmployee) {
+            form.reset({
+                fullName: selectedEmployee.name,
+                nationalId: String(selectedEmployee.id),
+                companyEmail: selectedEmployee.email,
+                phoneNumber: selectedEmployee.phone,
+                dateOfBirth: "1995-05-15",
+            });
+        } else {
+            form.reset();
+        }
+    }, [selectedEmployee]);
+
+    function onSubmit(data: EmployeeFormValues) {
+        if (selectedEmployee) {
+            console.log("Updated employee:", data);
+            alert(SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_SUCCESS);
+        } else {
+            console.log("Created employee:", data);
+            alert(SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_SUCCESS);
+        }
+
+        setOpen(false);
+        setSelectedEmployee(null);
+        form.reset();
     }
-  }, [selectedEmployee]);
 
-  function onSubmit(data: EmployeeFormValues) {
-    if (selectedEmployee) {
-      console.log("Updated employee:", data);
-      alert("Cập nhật nhân viên thành công!");
-    } else {
-      console.log("Created employee:", data);
-      alert("Tạo nhân viên thành công!");
-    }
+    return (
+        <SidebarProvider>
+            <AppSidebar variant="inset" />
+            <SidebarInset>
+                <SiteHeader />
 
-    setOpen(false);
-    setSelectedEmployee(null);
-    form.reset();
-  }
+                <main className="page-layout-main">
+                    <div className="page-header">
+                        <h1 className="page-title">{SYSTEM_MESSAGES.EMPLOYEE.TITLE}</h1>
 
-  return (
-    <SidebarProvider>
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-
-        <main className="flex flex-1 flex-col p-6 gap-6 pb-28 bg-gray-50 dark:bg-gray-950">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold">Danh sách nhân viên</h1>
-
-            <button
-              onClick={() => {
-                setSelectedEmployee(null);
-                setOpen(true);
-              }}
-              className="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-            >
-              + Thêm nhân viên
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            <EmployeeCard
-              name="Nguyễn Văn An"
-              code="NV001"
-              status="Hoạt động"
-              statusColor="bg-green-100 text-green-600"
-              id="123456789012"
-              email="an.nguyen@company.vn"
-              phone="0912345678"
-              onEdit={() => {
-                setSelectedEmployee({
-                  name: "Nguyễn Văn An",
-                  code: "NV001",
-                  status: "Hoạt động",
-                  statusColor: "bg-green-100 text-green-600",
-                  id: "123456789012",
-                  email: "an.nguyen@company.vn",
-                  phone: "0912345678",
-                });
-                setOpen(true);
-              }}
-            />
-          </div>
-
-          {open && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-              <div className="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-lg shadow-2xl flex flex-col">
-                {/* ================= HEADER ================= */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-white">
-                    {selectedEmployee
-                      ? "Cập nhật hồ sơ nhân viên"
-                      : "Thêm nhân viên mới"}
-                  </h2>
-
-                  <button
-                    onClick={() => {
-                      setOpen(false);
-                      setSelectedEmployee(null);
-                    }}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
-                </div>
-
-                {/* ================= BODY ================= */}
-                <div className="flex-1 overflow-y-auto p-6">
-                  <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* ================= CỘT 1 ================= */}
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-2 text-primary border-b border-slate-100 pb-2">
-                          <span className="material-symbols-outlined">
-                            person
-                          </span>
-                          <h3 className="font-bold uppercase text-sm tracking-wider">
-                            Thông tin cá nhân
-                          </h3>
-                        </div>
-
-                        {/* Avatar */}
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="relative group">
-                            <img
-                              src={
-                                selectedEmployee?.avatar ||
-                                "https://i.pravatar.cc/150"
-                              }
-                              className="size-20 rounded-full ring-2 ring-slate-100 object-cover"
-                            />
-                            <button
-                              type="button"
-                              className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full border-2 border-white shadow-sm"
-                            >
-                              <span className="material-symbols-outlined text-xs">
-                                photo_camera
-                              </span>
-                            </button>
-                          </div>
-
-                          <div>
-                            <div className="text-xs font-semibold text-slate-400 uppercase">
-                              Mã nhân viên
-                            </div>
-                            <div className="font-mono font-bold">
-                              {selectedEmployee?.code || "NV--"}
-                            </div>
-
-                            <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 uppercase">
-                              {selectedEmployee?.status || "Chưa xác định"}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500">
-                              Họ và tên
-                            </label>
-                            <input
-                              {...form.register("fullName")}
-                              className=" w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                           placeholder='Nhập họ và tên nhân viên'
-                           />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500">
-                              CMND/CCCD
-                            </label>
-                            <input
-                              {...form.register("nationalId")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            placeholder="Nhập căn cước công nhân 12 số"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500">
-                              Ngày sinh
-                            </label>
-                            <input
-                              type="date"
-                              {...form.register("dateOfBirth")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500">
-                              Giới tính
-                            </label>
-                            <select
-                              {...form.register("gender")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            >
-                              <option>Nam</option>
-                              <option>Nữ</option>
-                              <option>Khác</option>
-                            </select>
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500">
-                              Số điện thoại
-                            </label>
-                            <input
-                              {...form.register("phoneNumber")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            placeholder="Nhập số điện thoại nhân viên"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500">
-                              Email liên hệ
-                            </label>
-                            <input
-                              {...form.register("companyEmail")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            placeholder="Nhập email cá nhân của nhân viên"
-                            />
-                          </div>
-
-                          <div className="space-y-1 col-span-2">
-                            <label className="text-xs font-bold text-slate-500">
-                              Địa chỉ thường trú
-                            </label>
-                            <textarea
-                              rows={2}
-                              {...form.register("address")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm resize-none focus:ring-primary focus:border-primary"
-                            placeholder="Nhập địa chỉ thường trú của nhân viên"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* ================= CỘT 2 ================= */}
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-2 text-primary border-b border-slate-100 pb-2">
-                          <span className="material-symbols-outlined">
-                            badge
-                          </span>
-                          <h3 className="font-bold uppercase text-sm tracking-wider">
-                            Thông tin công việc
-                          </h3>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase">
-                              Phòng ban
-                            </label>
-                            <select
-                              {...form.register("department")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            >
-                              <option>Phòng Phần mềm</option>
-                              <option>Phòng Nhân sự</option>
-                              <option>Phòng Kinh doanh</option>
-                              <option>Ban Giám đốc</option>
-                            </select>
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase">
-                              Vị trí công việc
-                            </label>
-                            <input
-                              {...form.register("position")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-medium focus:ring-primary focus:border-primary"
-                            placeholder="Nhập vị trí công việc của nhân viên"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase">
-                              Quản lý trực tiếp
-                            </label>
-                            <select
-                              {...form.register("manager")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            >
-                              <option>Nguyễn Văn A</option>
-                              <option>Trần Thị B</option>
-                              <option>Lê Văn C</option>
-                            </select>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                              <label className="text-xs font-bold text-slate-500 uppercase">
-                                Ngày vào làm
-                              </label>
-                              <input
-                                type="date"
-                                {...form.register("joinDate")}
-                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                              />
-                            </div>
-
-                            <div className="space-y-1">
-                              <label className="text-xs font-bold text-slate-500 uppercase">
-                                Ngày kết thúc (tùy chọn)
-                              </label>
-                              <input
-                                type="date"
-                                {...form.register("endDate")}
-                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase">
-                              Loại hợp đồng
-                            </label>
-                            <select
-                              {...form.register("contractType")}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary"
-                            >
-                              <option>Hợp đồng không xác định thời hạn</option>
-                              <option>Hợp đồng 1 năm</option>
-                              <option>Thử việc</option>
-                            </select>
-                          </div>
-
-                          {/* Info box */}
-                          <div className="p-4 bg-primary/5 border border-primary/10 rounded-md mt-4">
-                            <div className="flex items-start gap-3">
-                              <span className="material-symbols-outlined text-primary text-lg">
-                                info
-                              </span>
-                              <p className="text-[11px] text-slate-600 leading-relaxed">
-                                Các thay đổi về chức danh và phòng ban sẽ cần sự
-                                phê duyệt của trưởng bộ phận.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                        <button
+                            onClick={() => {
+                                setSelectedEmployee(null);
+                                setOpen(true);
+                            }}
+                            className="btn-primary"
+                        >
+                            {SYSTEM_MESSAGES.EMPLOYEE.BTN_ADD}
+                        </button>
                     </div>
-                  </form>
-                </div>
 
-                {/* ================= FOOTER ================= */}
-                <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-slate-50/50">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      setSelectedEmployee(null);
-                    }}
-                    className="px-6 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-md hover:bg-slate-50 transition-colors text-slate-600"
-                  >
-                    Hủy
-                  </button>
+                    <div className="space-y-4">
+                        <EmployeeCard
+                            name="Nguyễn Văn An"
+                            code="NV001"
+                            status={SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE}
+                            statusColor={EMPLOYEE_STATUS_MAP['Hoạt động'].className}
+                            id="123456789012"
+                            email="an.nguyen@company.vn"
+                            phone="0912345678"
+                            onEdit={() => {
+                                setSelectedEmployee({
+                                    name: "Nguyễn Văn An",
+                                    code: "NV001",
+                                    status: SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE,
+                                    statusColor: EMPLOYEE_STATUS_MAP['Hoạt động'].className,
+                                    id: "123456789012",
+                                    email: "an.nguyen@company.vn",
+                                    phone: "0912345678",
+                                });
+                                setOpen(true);
+                            }}
+                        />
+                    </div>
 
-                  <button
-                    onClick={form.handleSubmit(onSubmit)}
-                    className="px-8 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 transition-all shadow-md"
-                  >
-                    {selectedEmployee ? "Cập nhật" : "Tạo mới"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
-  );
+                    {open && (
+                        <div className="modal-overlay">
+                            <div className="modal-content">
+                                {/* ================= HEADER ================= */}
+                                <div className="modal-header">
+                                    <h2 className="modal-title">
+                                        {selectedEmployee
+                                            ? SYSTEM_MESSAGES.EMPLOYEE.MODAL_UPDATE_TITLE
+                                            : SYSTEM_MESSAGES.EMPLOYEE.MODAL_CREATE_TITLE}
+                                    </h2>
+
+                                    <button
+                                        onClick={() => {
+                                            setOpen(false);
+                                            setSelectedEmployee(null);
+                                        }}
+                                        className="text-slate-400 hover:text-slate-600 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+
+                                {/* ================= BODY ================= */}
+                                <div className="modal-body">
+                                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                            {/* ================= CỘT 1 ================= */}
+                                            <div className="space-y-6">
+                                                <div className="section-header">
+                                                    <span className="material-symbols-outlined">
+                                                        person
+                                                    </span>
+                                                    <h3 className="section-header-title">
+                                                        {SYSTEM_MESSAGES.EMPLOYEE.SECTION_PERSONAL}
+                                                    </h3>
+                                                </div>
+
+                                                {/* Avatar */}
+                                                <div className="flex items-center gap-4 mb-4">
+                                                    <div className="relative group">
+                                                        <img
+                                                            src={
+                                                                selectedEmployee?.avatar ||
+                                                                "https://i.pravatar.cc/150"
+                                                            }
+                                                            className="size-20 rounded-full ring-2 ring-slate-100 object-cover"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full border-2 border-white shadow-sm"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">
+                                                                photo_camera
+                                                            </span>
+                                                        </button>
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="form-label-required">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}
+                                                        </div>
+                                                        <div className="font-mono font-bold">
+                                                            {selectedEmployee?.code || "NV--"}
+                                                        </div>
+
+                                                        <div className="mt-1 inline-flex items-center status-badge-pill bg-green-100 text-green-700">
+                                                            {selectedEmployee?.status || SYSTEM_MESSAGES.EMPLOYEE.STATUS_PENDING}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-secondary">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NAME}
+                                                        </label>
+                                                        <input
+                                                            {...form.register("fullName")}
+                                                            className="form-input"
+                                                            placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_NAME}
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-secondary">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONAL_ID}
+                                                        </label>
+                                                        <input
+                                                            {...form.register("nationalId")}
+                                                            className="form-input"
+                                                            placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONAL_ID}
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-secondary">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DOB}
+                                                        </label>
+                                                        <input
+                                                            type="date"
+                                                            {...form.register("dateOfBirth")}
+                                                            className="form-input"
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-secondary">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_GENDER}
+                                                        </label>
+                                                        <select
+                                                            {...form.register("gender")}
+                                                            className="form-select"
+                                                        >
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.GENDER_MALE}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.GENDER_FEMALE}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.GENDER_OTHER}</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-secondary">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}
+                                                        </label>
+                                                        <input
+                                                            {...form.register("phoneNumber")}
+                                                            className="form-input"
+                                                            placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-secondary">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMAIL}
+                                                        </label>
+                                                        <input
+                                                            {...form.register("companyEmail")}
+                                                            className="form-input"
+                                                            placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMAIL}
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-1 col-span-2">
+                                                        <label className="form-label-secondary">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_ADDRESS}
+                                                        </label>
+                                                        <textarea
+                                                            rows={2}
+                                                            {...form.register("address")}
+                                                            className="form-textarea"
+                                                            placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_ADDRESS}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* ================= CỘT 2 ================= */}
+                                            <div className="space-y-6">
+                                                <div className="section-header">
+                                                    <span className="material-symbols-outlined">
+                                                        badge
+                                                    </span>
+                                                    <h3 className="section-header-title">
+                                                        {SYSTEM_MESSAGES.EMPLOYEE.SECTION_JOB}
+                                                    </h3>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-required">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DEPARTMENT}
+                                                        </label>
+                                                        <select
+                                                            {...form.register("department")}
+                                                            className="form-select"
+                                                        >
+                                                            <option>Phòng Phần mềm</option>
+                                                            <option>Phòng Nhân sự</option>
+                                                            <option>Phòng Kinh doanh</option>
+                                                            <option>Ban Giám đốc</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-required">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_POSITION}
+                                                        </label>
+                                                        <input
+                                                            {...form.register("position")}
+                                                            className="form-input"
+                                                            placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_POSITION}
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-required">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_MANAGER}
+                                                        </label>
+                                                        <select
+                                                            {...form.register("manager")}
+                                                            className="form-select"
+                                                        >
+                                                            <option>Nguyễn Văn A</option>
+                                                            <option>Trần Thị B</option>
+                                                            <option>Lê Văn C</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-1">
+                                                            <label className="form-label-required">
+                                                                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_JOIN_DATE}
+                                                            </label>
+                                                            <input
+                                                                type="date"
+                                                                {...form.register("joinDate")}
+                                                                className="form-input"
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-1">
+                                                            <label className="form-label-secondary">
+                                                                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_END_DATE}
+                                                            </label>
+                                                            <input
+                                                                type="date"
+                                                                {...form.register("endDate")}
+                                                                className="form-input"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <label className="form-label-required">
+                                                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_CONTRACT}
+                                                        </label>
+                                                        <select
+                                                            {...form.register("contractType")}
+                                                            className="form-select"
+                                                        >
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_INDEFINITE}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_ONE_YEAR}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_PROBATION}</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Info box */}
+                                                    <div className="info-box">
+                                                        <div className="info-box-content">
+                                                            <span className="material-symbols-outlined info-box-icon">
+                                                                info
+                                                            </span>
+                                                            <p className="info-box-text">
+                                                                {SYSTEM_MESSAGES.EMPLOYEE.INFO_NOTE}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                {/* ================= FOOTER ================= */}
+                                <div className="modal-footer">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setOpen(false);
+                                            setSelectedEmployee(null);
+                                        }}
+                                        className="btn-secondary"
+                                    >
+                                        {SYSTEM_MESSAGES.EMPLOYEE.BTN_CANCEL}
+                                    </button>
+
+                                    <button
+                                        onClick={form.handleSubmit(onSubmit)}
+                                        className="btn-action"
+                                    >
+                                        {selectedEmployee ? SYSTEM_MESSAGES.EMPLOYEE.BTN_UPDATE : SYSTEM_MESSAGES.EMPLOYEE.BTN_CREATE}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
 }

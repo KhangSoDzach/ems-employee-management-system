@@ -13,18 +13,19 @@ import {
 } from "../adjustment-request.constants"
 import type { AdjustmentRequest, AuditEntry } from "../adjustment-request.constants"
 import { StatusBadge } from "./AdjustmentBadges"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 /* ══════════════ SHEET LABELS ══════════════ */
 
 export const SHEET_LABELS = {
-    timeSection: "Thời gian điều chỉnh",
-    oldCheckin: "Check-in cũ",
-    oldCheckout: "Check-out cũ",
-    proposed: "Đề xuất",
-    reason: "Lý do",
-    history: "Lịch sử thao tác",
-    createdAt: "Tạo lúc",
-    empty: "—",
+    timeSection: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_TIME_SECTION,
+    oldCheckin: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_OLD_CHECKIN,
+    oldCheckout: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_OLD_CHECKOUT,
+    proposed: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_PROPOSED,
+    reason: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_REASON,
+    history: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_HISTORY,
+    createdAt: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_CREATED_AT,
+    empty: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_EMPTY,
 } as const
 
 /* ══════════════ AUDIT TIMELINE ══════════════ */
@@ -164,7 +165,7 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
 
                     {/* Lịch sử thao tác */}
                     <section>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
+                        <h4 className="section-title-muted mb-4">
                             {SHEET_LABELS.history}
                         </h4>
                         <AuditTimeline entries={request.auditTrail} />

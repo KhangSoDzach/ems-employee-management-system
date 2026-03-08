@@ -35,85 +35,28 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
-const TEXT = {
-    breadcrumb: "Cổng thông tin > Hồ sơ của tôi",
-    title: "Thông tin cá nhân",
-    btnCancel: "Hủy thay đổi",
-    btnUpdate: "Cập nhật hồ sơ",
-    modalSuccess: "Cập nhật thông tin thành công!",
-    departmentPrefix: "Phòng ",
-    officeLocation: "Văn phòng Hà Nội",
-    empCodeLabel: "Mã nhân viên",
-    managerLabel: "Quản lý",
-    sectionContact: "Thông tin liên hệ & Cá nhân",
-    labelFullName: "Họ và tên",
-    placeholderFullName: "Nhập họ và tên",
-    labelEmail: "Email công ty",
-    labelNationalId: "CCCD/CMND",
-    labelPhone: "Số điện thoại (Tùy chọn)",
-    labelDob: "Ngày sinh",
-    selectDate: "Chọn ngày",
-    sectionJob: "Thông tin công việc",
-    labelWorkStatus: "Trạng thái làm việc",
-    placeholderStatus: "Chọn trạng thái",
-    statusActive: "Đang làm việc",
-    statusInactive: "Nghỉ việc",
-    statusSuspended: "Đình chỉ",
-    labelDepartment: "Phòng ban",
-    placeholderDepartment: "Chọn phòng ban",
-    deptDesign: "Thiết kế sản phẩm",
-    deptEngineering: "Kỹ thuật",
-    deptHR: "Nhân sự",
-    deptMarketing: "Marketing",
-    labelRole: "Vị trí công việc",
-    placeholderRole: "Chọn vị trí",
-    roleDesigner: "Chuyên viên UI/UX",
-    roleFrontend: "Kỹ sư Frontend",
-    roleBackend: "Kỹ sư Backend",
-    roleManager: "Quản lý sản phẩm",
-    labelContract: "Loại hợp đồng",
-    placeholderContract: "Chọn loại hợp đồng",
-    contractFullTime: "Toàn thời gian",
-    contractPartTime: "Bán thời gian",
-    contractProbation: "Hợp đồng thử việc",
-    contractIntern: "Thực tập sinh",
-    placeholderManager: "Chọn quản lý",
-    labelStartDate: "Ngày bắt đầu",
-    labelEndDate: "Ngày kết thúc (Tùy chọn)",
-    sectionDocs: "Tài liệu của tôi",
-    fileSigned: "Đã ký • Thg 8, 2021",
-    fileVerified: "Đã xác minh • Thg 8, 2021",
-    labelUploadNew: "Tải lên tài liệu mới",
-    dragDrop: "Kéo & thả tệp vào đây",
-    orBrowse: "hoặc nhấn để duyệt tệp",
-    allowedFormats: "Định dạng cho phép: PDF, JPG, PNG",
-    maxSize: "Kích thước tối đa: 50MB",
-    readyUploadPrefix: "Sẵn sàng tải lên (",
-    readyUploadSuffix: ")",
-    mbText: " MB",
-    statsTitle: "Thống kê nhanh",
-    statsLeaveLabel: "Ngày phép còn lại",
-    statsAttendanceLabel: "Chuyên cần",
-    percentSign: "%"
-}
+import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { DEPARTMENT_OPTIONS, ROLE_OPTIONS, CONTRACT_OPTIONS, WORK_STATUS_OPTIONS } from "@/constants/options"
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
+import { THEME_CLASSES } from "@/constants/theme"
 
 const profileSchema = z.object({
     employeeCode: z.string(),
-    fullName: z.string().min(2, "Họ tên phải từ 2 ký tự").max(255, "Họ tên không quá 255 ký tự"),
-    nationalId: z.string().regex(/^(\d{9}|\d{12})$/, "CMND/CCCD phải là 9 hoặc 12 số"),
-    companyEmail: z.string().email("Email không hợp lệ"),
-    phoneNumber: z.string().regex(/^\d{10,13}$/, "SĐT phải từ 10-13 số").optional().or(z.literal("")),
+    fullName: z.string().min(2, FORM_VALIDATION_MESSAGES.NAME_MIN).max(255, FORM_VALIDATION_MESSAGES.NAME_MAX),
+    nationalId: z.string().regex(/^(\d{9}|\d{12})$/, FORM_VALIDATION_MESSAGES.ID_FORMAT),
+    companyEmail: z.string().email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
+    phoneNumber: z.string().regex(/^\d{10,13}$/, FORM_VALIDATION_MESSAGES.PHONE_FORMAT).optional().or(z.literal("")),
     dateOfBirth: z.date({
-        message: "Vui lòng chọn ngày sinh",
-    }).refine((date) => differenceInYears(new Date(), date) >= 18, "Nhân viên phải từ 18 tuổi trở lên"),
+        message: FORM_VALIDATION_MESSAGES.DOB_REQUIRED,
+    }).refine((date) => differenceInYears(new Date(), date) >= 18, FORM_VALIDATION_MESSAGES.AGE_MIN),
     contractType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]),
     startDate: z.date({
-        message: "Vui lòng chọn ngày bắt đầu",
+        message: FORM_VALIDATION_MESSAGES.START_DATE_REQUIRED,
     }),
     endDate: z.date().optional().nullable(),
-    department: z.string().min(1, "Vui lòng chọn phòng ban"),
-    jobRole: z.string().min(1, "Vui lòng chọn vị trí"),
-    lineManager: z.string().min(1, "Vui lòng chọn quản lý"),
+    department: z.string().min(1, FORM_VALIDATION_MESSAGES.DEPT_REQUIRED),
+    jobRole: z.string().min(1, FORM_VALIDATION_MESSAGES.ROLE_REQUIRED),
+    lineManager: z.string().min(1, FORM_VALIDATION_MESSAGES.MANAGER_REQUIRED),
     workStatus: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]),
 })
 
@@ -169,7 +112,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                     contractType: "FULL_TIME",
                 })
             })
-            .catch(() => setProfileError("Không thể tải hồ sơ. Vui lòng thử lại."))
+            .catch(() => setProfileError(SYSTEM_MESSAGES.API_ERROR))
             .finally(() => setProfileLoading(false))
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
@@ -177,13 +120,13 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
 
     function onSubmit(data: ProfileFormValues) {
         console.log("Form submitted: ", data)
-        alert(TEXT.modalSuccess)
+        alert(SYSTEM_MESSAGES.PROFILE.MODAL_SUCCESS)
     }
 
     const hrDocuments = [
-        { name: "Hợp đồng lao động", type: "pdf", date: "Thg 8, 2021", status: "Đã ký" },
-        { name: "Thư mời nhận việc", type: "pdf", date: "Thg 7, 2021", status: "Đã xác minh" },
-        { name: "Bảng mô tả công việc", type: "pdf", date: "Thg 8, 2021", status: "Đã xác minh" },
+        { name: SYSTEM_MESSAGES.DOCUMENTS.DOC_1_NAME || "Hợp đồng lao động", type: "pdf", date: "Thg 8, 2021", status: SYSTEM_MESSAGES.DOCUMENTS.STATUS_SIGNED },
+        { name: SYSTEM_MESSAGES.DOCUMENTS.DOC_2_NAME || "Thư mời nhận việc", type: "pdf", date: "Thg 7, 2021", status: SYSTEM_MESSAGES.DOCUMENTS.STATUS_VERIFIED },
+        { name: SYSTEM_MESSAGES.DOCUMENTS.DOC_3_NAME || "Bảng mô tả công việc", type: "pdf", date: "Thg 8, 2021", status: SYSTEM_MESSAGES.DOCUMENTS.STATUS_VERIFIED },
     ]
 
     // Loading skeleton
@@ -194,7 +137,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                 <SidebarInset>
                     <SiteHeader />
                     <main className="flex flex-1 items-center justify-center min-h-screen">
-                        <p className="text-muted-foreground animate-pulse">Đang tải hồ sơ…</p>
+                        <p className="text-muted-foreground animate-pulse">{SYSTEM_MESSAGES.LOADING}</p>
                     </main>
                 </SidebarInset>
             </SidebarProvider>
@@ -222,36 +165,36 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
             <SidebarInset>
                 <SiteHeader />
 
-                <main className="flex flex-1 flex-col p-4 md:p-8 bg-gray-50/50 dark:bg-background-dark min-h-screen">
+                <main className="page-layout-wrapper">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <div>
-                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{TEXT.breadcrumb}</p>
+                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{SYSTEM_MESSAGES.PROFILE.BREADCRUMB}</p>
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                {TEXT.title}
+                                {SYSTEM_MESSAGES.PROFILE.TITLE}
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
                             {canEdit ? (
                                 <>
                                     <Button variant="outline" className="font-semibold" onClick={() => form.reset()}>
-                                        {TEXT.btnCancel}
+                                        {SYSTEM_MESSAGES.BTN_CANCEL}
                                     </Button>
                                     <Button onClick={form.handleSubmit(onSubmit)} className="font-bold bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all">
-                                        {TEXT.btnUpdate}
+                                        {SYSTEM_MESSAGES.BTN_UPDATE}
                                     </Button>
                                 </>
                             ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
+                                <span className={cn("status-badge")}>
                                     <ShieldCheck className="w-3.5 h-3.5" />
-                                    Chế độ xem
+                                    {SYSTEM_MESSAGES.VIEW_MODE}
                                 </span>
                             )}
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 mb-6 border shadow-sm flex flex-col md:flex-row items-center md:items-start justify-between gap-6 relative overflow-hidden">
+                    <div className="content-card-header mb-6">
                         <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
-                        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
                             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg relative flex items-center justify-center">
                                 <span className="text-3xl font-bold text-gray-400">
                                     {form.watch("fullName")?.charAt(0) || "?"}
@@ -260,30 +203,30 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                             <div className="text-center md:text-left pt-2">
                                 <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
                                     <h2 className="text-2xl font-bold">{form.watch("fullName")}</h2>
-                                    <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase">
+                                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full uppercase", THEME_CLASSES.CONTRACT[form.watch("contractType") as keyof typeof THEME_CLASSES.CONTRACT] || THEME_CLASSES.CONTRACT.DEFAULT)}>
                                         {form.watch("contractType").replace("_", " ")}
                                     </span>
                                 </div>
                                 <p className="text-muted-foreground font-medium">
-                                    {form.watch("jobRole")} &bull; {TEXT.departmentPrefix}{form.watch("department")}
+                                    {form.watch("jobRole")} &bull; {SYSTEM_MESSAGES.PROFILE.DEPARTMENT_PREFIX}{form.watch("department")}
                                 </p>
                                 <div className="flex items-center justify-center md:justify-start gap-4 mt-3 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-1.5">
-                                        <MapPin className="w-4 h-4" /> {TEXT.officeLocation}
+                                        <MapPin className="w-4 h-4" /> {SYSTEM_MESSAGES.PROFILE.OFFICE_LOCATION}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-row md:flex-col gap-6 md:gap-4 md:text-right text-left bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border">
-                            <div>
-                                <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{TEXT.empCodeLabel}</p>
+                        <div className="flex flex-row md:flex-col gap-6 md:gap-4 w-full md:w-auto md:text-right text-left bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border">
+                            <div className="flex-1 md:flex-none">
+                                <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{SYSTEM_MESSAGES.PROFILE.EMP_CODE}</p>
                                 <p className="font-bold">{form.watch("employeeCode")}</p>
                             </div>
                             {sidebarRole === "employee" && (
-                                <div>
-                                    <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{TEXT.managerLabel}</p>
-                                    <div className="flex items-center gap-2">
+                                <div className="flex-1 md:flex-none">
+                                    <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{SYSTEM_MESSAGES.PROFILE.MANAGER}</p>
+                                    <div className="flex items-center gap-2 justify-start md:justify-end">
                                         <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">
                                             {form.watch("lineManager")?.charAt(0) || "?"}
                                         </div>
@@ -298,10 +241,10 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                         <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                             <div className="lg:col-span-2 space-y-6">
-                                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm">
-                                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-4">
+                                <div className="content-card">
+                                    <h3 className="section-title">
                                         <ShieldCheck className="w-5 h-5 text-primary" />
-                                        {TEXT.sectionContact}
+                                        {SYSTEM_MESSAGES.PROFILE.CONTACT_SECTION}
                                     </h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -310,9 +253,9 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="fullName"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelFullName}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.FULL_NAME}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder={TEXT.placeholderFullName} {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
+                                                        <Input readOnly={!canEdit} placeholder="Nhập họ và tên" {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -324,9 +267,9 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="companyEmail"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelEmail}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.EMAIL}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="email@company.com" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
+                                                        <Input readOnly={!canEdit} placeholder="email@company.com" {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -338,9 +281,9 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="nationalId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelNationalId}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.NATIONAL_ID}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="012345678912" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
+                                                        <Input readOnly={!canEdit} placeholder="012345678912" {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -352,9 +295,9 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="phoneNumber"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelPhone}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.PHONE}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="0912345678" {...field} className={cn("bg-gray-50/50", !canEdit && "focus-visible:ring-0")} />
+                                                        <Input readOnly={!canEdit} placeholder="0912345678" {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -365,8 +308,8 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             control={form.control}
                                             name="dateOfBirth"
                                             render={({ field }) => (
-                                                <FormItem className="flex flex-col pt-1">
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelDob}</FormLabel>
+                                                <FormItem className="form-data-item">
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.DOB}</FormLabel>
                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <FormControl>
@@ -375,11 +318,12 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                                     disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
+                                                                        canEdit && "bg-background text-foreground",
                                                                         !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >
-                                                                    {field.value ? format(field.value, "PPP") : <span>{TEXT.selectDate}</span>}
+                                                                    {field.value ? format(field.value, "PPP") : <span>{SYSTEM_MESSAGES.PROFILE.SELECT_DATE}</span>}
                                                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -404,10 +348,10 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm">
-                                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-4">
+                                <div className="content-card">
+                                    <h3 className="section-title">
                                         <Briefcase className="w-5 h-5 text-primary" />
-                                        {TEXT.sectionJob}
+                                        {SYSTEM_MESSAGES.PROFILE.JOB_SECTION}
                                     </h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -416,9 +360,9 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="employeeCode"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.empCodeLabel}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.EMP_CODE}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly {...field} className="bg-gray-100 dark:bg-gray-800 focus-visible:ring-0" />
+                                                        <Input readOnly {...field} className="input-readonly bg-gray-100 dark:bg-gray-800" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -430,17 +374,17 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="workStatus"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelWorkStatus}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.WORK_STATUS}</FormLabel>
                                                     <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderStatus} />
+                                                            <SelectTrigger className={cn("input-readonly", canEdit && "bg-background")}>
+                                                                <SelectValue placeholder={SYSTEM_MESSAGES.SELECT_PLACEHOLDER} />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="ACTIVE">{TEXT.statusActive}</SelectItem>
-                                                            <SelectItem value="INACTIVE">{TEXT.statusInactive}</SelectItem>
-                                                            <SelectItem value="SUSPENDED">{TEXT.statusSuspended}</SelectItem>
+                                                            <SelectItem value="ACTIVE">{WORK_STATUS_OPTIONS.ACTIVE}</SelectItem>
+                                                            <SelectItem value="INACTIVE">{WORK_STATUS_OPTIONS.INACTIVE}</SelectItem>
+                                                            <SelectItem value="SUSPENDED">{WORK_STATUS_OPTIONS.SUSPENDED}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -453,18 +397,18 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="department"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelDepartment}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.LABEL_DEPARTMENT}</FormLabel>
                                                     <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderDepartment} />
+                                                            <SelectTrigger className={cn("input-readonly", canEdit && "bg-background")}>
+                                                                <SelectValue placeholder={SYSTEM_MESSAGES.SELECT_PLACEHOLDER} />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="Product Design">{TEXT.deptDesign}</SelectItem>
-                                                            <SelectItem value="Engineering">{TEXT.deptEngineering}</SelectItem>
-                                                            <SelectItem value="Human Resources">{TEXT.deptHR}</SelectItem>
-                                                            <SelectItem value="Marketing">{TEXT.deptMarketing}</SelectItem>
+                                                            <SelectItem value="Product Design">{DEPARTMENT_OPTIONS.DESIGN}</SelectItem>
+                                                            <SelectItem value="Engineering">{DEPARTMENT_OPTIONS.ENGINEERING}</SelectItem>
+                                                            <SelectItem value="Human Resources">{DEPARTMENT_OPTIONS.HR}</SelectItem>
+                                                            <SelectItem value="Marketing">{DEPARTMENT_OPTIONS.MARKETING}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -477,18 +421,18 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="jobRole"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelRole}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.LABEL_ROLE}</FormLabel>
                                                     <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderRole} />
+                                                            <SelectTrigger className={cn("input-readonly", canEdit && "bg-background")}>
+                                                                <SelectValue placeholder={SYSTEM_MESSAGES.SELECT_PLACEHOLDER} />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="Senior UI/UX Designer">{TEXT.roleDesigner}</SelectItem>
-                                                            <SelectItem value="Frontend Engineer">{TEXT.roleFrontend}</SelectItem>
-                                                            <SelectItem value="Backend Engineer">{TEXT.roleBackend}</SelectItem>
-                                                            <SelectItem value="Product Manager">{TEXT.roleManager}</SelectItem>
+                                                            <SelectItem value="Senior UI/UX Designer">{ROLE_OPTIONS.DESIGNER}</SelectItem>
+                                                            <SelectItem value="Frontend Engineer">{ROLE_OPTIONS.FRONTEND}</SelectItem>
+                                                            <SelectItem value="Backend Engineer">{ROLE_OPTIONS.BACKEND}</SelectItem>
+                                                            <SelectItem value="Product Manager">{ROLE_OPTIONS.MANAGER}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -501,18 +445,18 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             name="contractType"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelContract}</FormLabel>
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.CONTRACT}</FormLabel>
                                                     <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                <SelectValue placeholder={TEXT.placeholderContract} />
+                                                            <SelectTrigger className={cn("input-readonly", canEdit && "bg-background")}>
+                                                                <SelectValue placeholder={SYSTEM_MESSAGES.SELECT_PLACEHOLDER} />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="FULL_TIME">{TEXT.contractFullTime}</SelectItem>
-                                                            <SelectItem value="PART_TIME">{TEXT.contractPartTime}</SelectItem>
-                                                            <SelectItem value="CONTRACT">{TEXT.contractProbation}</SelectItem>
-                                                            <SelectItem value="INTERN">{TEXT.contractIntern}</SelectItem>
+                                                            <SelectItem value="FULL_TIME">{CONTRACT_OPTIONS.FULL_TIME}</SelectItem>
+                                                            <SelectItem value="PART_TIME">{CONTRACT_OPTIONS.PART_TIME}</SelectItem>
+                                                            <SelectItem value="CONTRACT">{CONTRACT_OPTIONS.PROBATION}</SelectItem>
+                                                            <SelectItem value="INTERN">{CONTRACT_OPTIONS.INTERN}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -526,11 +470,11 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                 name="lineManager"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="font-bold text-gray-700">{TEXT.managerLabel}</FormLabel>
+                                                        <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.MANAGER}</FormLabel>
                                                         <Select disabled={!canEdit} onValueChange={field.onChange} defaultValue={field.value}>
                                                             <FormControl>
-                                                                <SelectTrigger className={cn("bg-gray-50/50", !canEdit && "disabled:opacity-100")}>
-                                                                    <SelectValue placeholder={TEXT.placeholderManager} />
+                                                                <SelectTrigger className={cn("input-readonly", canEdit && "bg-background")}>
+                                                                    <SelectValue placeholder={SYSTEM_MESSAGES.SELECT_PLACEHOLDER} />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
@@ -549,8 +493,8 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             control={form.control}
                                             name="startDate"
                                             render={({ field }) => (
-                                                <FormItem className="flex flex-col pt-1">
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelStartDate}</FormLabel>
+                                                <FormItem className="form-data-item">
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.START_DATE}</FormLabel>
                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <FormControl>
@@ -559,11 +503,12 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                                     disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
+                                                                        canEdit && "bg-background text-foreground",
                                                                         !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >
-                                                                    {field.value ? format(field.value, "PPP") : <span>{TEXT.selectDate}</span>}
+                                                                    {field.value ? format(field.value, "PPP") : <span>{SYSTEM_MESSAGES.PROFILE.SELECT_DATE}</span>}
                                                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -587,8 +532,8 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             control={form.control}
                                             name="endDate"
                                             render={({ field }) => (
-                                                <FormItem className="flex flex-col pt-1">
-                                                    <FormLabel className="font-bold text-gray-700">{TEXT.labelEndDate}</FormLabel>
+                                                <FormItem className="form-data-item">
+                                                    <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.END_DATE}</FormLabel>
                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <FormControl>
@@ -597,11 +542,12 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                                     disabled={!canEdit}
                                                                     className={cn(
                                                                         "w-full pl-3 text-left font-normal bg-gray-50/50",
+                                                                        canEdit && "bg-background text-foreground",
                                                                         !canEdit && "disabled:opacity-100 dark:disabled:opacity-100",
                                                                         !field.value && "text-muted-foreground"
                                                                     )}
                                                                 >
-                                                                    {field.value ? format(field.value, "PPP") : <span>{TEXT.selectDate}</span>}
+                                                                    {field.value ? format(field.value, "PPP") : <span>{SYSTEM_MESSAGES.PROFILE.SELECT_DATE}</span>}
                                                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -626,8 +572,8 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
 
                             <div className="space-y-6">
 
-                                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm h-min">
-                                    <h3 className="text-lg font-bold mb-4 border-b pb-4">{TEXT.sectionDocs}</h3>
+                                <div className="content-card h-min">
+                                    <h3 className="section-title">{SYSTEM_MESSAGES.PROFILE.DOCS_SECTION}</h3>
                                     <div className="space-y-3">
                                         {hrDocuments.map((doc, i) => (
                                             <div key={i} className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100/70 dark:hover:bg-gray-800 transition-colors">
@@ -649,7 +595,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                 <button
                                                     type="button"
                                                     className="ml-2 p-1.5 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
-                                                    title="Tải xuống"
+                                                    title={SYSTEM_MESSAGES.DOWNLOAD_TOOLTIP}
                                                 >
                                                     <Download className="w-4 h-4" />
                                                 </button>
@@ -658,16 +604,16 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm">
-                                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">{TEXT.statsTitle}</h3>
+                                <div className="content-card">
+                                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">{SYSTEM_MESSAGES.PROFILE.STATS_TITLE}</h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="border bg-purple-50/50 dark:bg-purple-900/10 rounded-xl p-4 text-center">
                                             <p className="text-3xl font-black text-purple-600 mb-1">0</p>
-                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{TEXT.statsLeaveLabel}</p>
+                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{SYSTEM_MESSAGES.PROFILE.STATS_LEAVE}</p>
                                         </div>
                                         <div className="border bg-teal-50/50 dark:bg-teal-900/10 rounded-xl p-4 text-center">
-                                            <p className="text-3xl font-black text-teal-600 mb-1">0<span className="text-xl">{TEXT.percentSign}</span></p>
-                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{TEXT.statsAttendanceLabel}</p>
+                                            <p className="text-3xl font-black text-teal-600 mb-1">0<span className="text-xl">{SYSTEM_MESSAGES.PROFILE.PERCENT_SIGN}</span></p>
+                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{SYSTEM_MESSAGES.PROFILE.STATS_ATTENDANCE}</p>
                                         </div>
                                     </div>
                                 </div>

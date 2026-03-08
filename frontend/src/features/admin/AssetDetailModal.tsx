@@ -1,4 +1,4 @@
-import { X, Edit, MapPin, History, FileText } from "lucide-react";
+import { X, MapPin, History, FileText } from "lucide-react";
 import AssetFullHistoryModal from "./AssetFullHistoryModal";
 import { useState } from "react";
 interface AssetDetailModalProps {

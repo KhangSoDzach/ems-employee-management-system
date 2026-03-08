@@ -16,50 +16,28 @@ import {
 } from "@/components/ui/card";
 import { forgotPassword, resetPassword } from "./authService";
 import { toast } from "sonner";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
-const TEXT = {
-    titleForgot: "Quên mật khẩu?",
-    titleOtp: "Xác thực OTP",
-    titleNewPass: "Đặt mật khẩu mới",
-    descForgot: "Nhập email để nhận mã xác thực.",
-    descOtpPrefix: "Đã gửi mã 6 số đến ",
-    descNewPass: "Nhập mật khẩu mới cho tài khoản của bạn.",
-    labelEmail: "Email công ty",
-    btnSendMail: "Gửi mã xác thực",
-    btnSending: "Đang gửi...",
-    btnVerify: "Xác nhận & Đặt mật khẩu",
-    btnVerifying: "Đang xử lý...",
-    labelOtp: "Mã OTP",
-    labelNewPass: "Mật khẩu mới",
-    labelConfirmPass: "Xác nhận mật khẩu",
-    otpValidSuffix: "Mã hết hạn sau ",
-    otpExpired: "Mã đã hết hạn",
-    btnResend: "Gửi lại mã mới",
-    btnResending: "Đang gửi lại...",
-    linkBackLogin: "Quay lại đăng nhập",
-    btnBackEmail: "Nhập lại Email",
-    successTitle: "Đặt lại mật khẩu thành công!",
-    successDesc: "Bạn có thể đăng nhập bằng mật khẩu mới.",
-    btnGoLogin: "Về trang đăng nhập",
-};
+const TEXT = SYSTEM_MESSAGES.FORGOT_PASSWORD;
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const emailSchema = z.object({
-    email: z.string().email("Địa chỉ email không hợp lệ"),
+    email: z.string().email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
 });
 
 const otpAndPasswordSchema = z.object({
     otp: z
         .string()
-        .length(6, "Mã OTP phải có đúng 6 chữ số")
-        .regex(/^\d+$/, "Mã OTP chỉ được chứa số"),
+        .length(6, FORM_VALIDATION_MESSAGES.OTP_LENGTH)
+        .regex(/^\d+$/, FORM_VALIDATION_MESSAGES.OTP_NUMERIC),
     newPassword: z
         .string()
-        .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
     confirmPassword: z.string(),
 }).refine((d) => d.newPassword === d.confirmPassword, {
-    message: "Mật khẩu xác nhận không khớp",
+    message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
     path: ["confirmPassword"],
 });
 
@@ -125,12 +103,12 @@ export const ForgotPasswordPage = () => {
             setStep(2);
             setTimeLeft(300);
             setIsTimerRunning(true);
-            toast.success("Mã OTP đã được gửi đến email của bạn.");
+            toast.success(TEXT.TOAST_OTP_SENT);
         } catch (err: unknown) {
             // Anti-enumeration: backend always returns 200, so errors here are network issues
             const message =
                 (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-                ?? "Không thể gửi mã. Vui lòng thử lại.";
+                ?? TEXT.TOAST_SEND_ERROR;
             toast.error(message);
         }
     };
@@ -139,13 +117,14 @@ export const ForgotPasswordPage = () => {
         try {
             await resetPassword(savedEmail, data.otp, data.newPassword);
             setStep(3);
+            toast.success(TEXT.TOAST_SUCCESS);
         } catch (err: unknown) {
             const message =
                 (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-                ?? "Mã OTP không hợp lệ hoặc đã hết hạn.";
+                ?? TEXT.TOAST_OTP_INVALID;
 
             if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
-                setFormError("otp", { message: "Mã OTP đã hết hạn. Vui lòng gửi lại mã mới." });
+                setFormError("otp", { message: TEXT.TOAST_OTP_INVALID });
             } else {
                 setFormError("otp", { message });
             }
@@ -159,9 +138,9 @@ export const ForgotPasswordPage = () => {
             await forgotPassword(savedEmail);
             setTimeLeft(300);
             setIsTimerRunning(true);
-            toast.success("Đã gửi lại mã OTP mới.");
+            toast.success(TEXT.TOAST_OTP_RESENT);
         } catch {
-            toast.error("Không thể gửi lại mã. Vui lòng thử lại.");
+            toast.error(TEXT.TOAST_RESEND_ERROR);
         } finally {
             setIsResending(false);
         }
@@ -200,15 +179,15 @@ export const ForgotPasswordPage = () => {
                     </div>
 
                     <CardTitle className="text-2xl font-bold">
-                        {step === 1 && TEXT.titleForgot}
-                        {step === 2 && TEXT.titleOtp}
-                        {step === 3 && TEXT.successTitle}
+                        {step === 1 && TEXT.TITLE}
+                        {step === 2 && TEXT.TITLE_OTP}
+                        {step === 3 && TEXT.SUCCESS_TITLE}
                     </CardTitle>
 
                     <CardDescription>
-                        {step === 1 && TEXT.descForgot}
-                        {step === 2 && <>{TEXT.descOtpPrefix}<span className="font-semibold text-foreground">{savedEmail}</span></>}
-                        {step === 3 && TEXT.successDesc}
+                        {step === 1 && TEXT.DESC}
+                        {step === 2 && <>{TEXT.DESC_OTP_PREFIX}<span className="font-semibold text-foreground">{savedEmail}</span></>}
+                        {step === 3 && TEXT.SUCCESS_DESC}
                     </CardDescription>
                 </CardHeader>
 
@@ -218,12 +197,12 @@ export const ForgotPasswordPage = () => {
                     {step === 1 && (
                         <form onSubmit={handleSubmitEmail(onSendCode)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="space-y-2">
-                                <Label htmlFor="email">{TEXT.labelEmail}</Label>
+                                <Label htmlFor="email">{TEXT.LABEL_EMAIL}</Label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                                     <Input
                                         id="email"
-                                        placeholder="user@example.com"
+                                        placeholder={TEXT.PLACEHOLDER_EMAIL}
                                         className={`pl-9 ${emailErrors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
                                         disabled={isEmailSubmitting}
                                         {...registerEmail("email")}
@@ -235,7 +214,7 @@ export const ForgotPasswordPage = () => {
                             </div>
 
                             <Button type="submit" className="w-full font-bold" size="lg" disabled={isEmailSubmitting}>
-                                {isEmailSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.btnSending}</> : TEXT.btnSendMail}
+                                {isEmailSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_SENDING}</> : TEXT.BTN_SEND}
                             </Button>
                         </form>
                     )}
@@ -246,11 +225,11 @@ export const ForgotPasswordPage = () => {
 
                             {/* OTP input */}
                             <div className="space-y-2">
-                                <Label htmlFor="otp" className="sr-only">{TEXT.labelOtp}</Label>
+                                <Label htmlFor="otp" className="sr-only">{TEXT.LABEL_OTP}</Label>
                                 <Input
                                     id="otp"
                                     type="text"
-                                    placeholder="000000"
+                                    placeholder={TEXT.PLACEHOLDER_OTP}
                                     className={`text-center text-2xl tracking-[0.5em] font-bold h-14 ${formErrors.otp ? "border-destructive focus-visible:ring-destructive" : ""}`}
                                     maxLength={6}
                                     inputMode="numeric"
@@ -271,7 +250,7 @@ export const ForgotPasswordPage = () => {
                             <div className="flex items-center justify-between text-xs">
                                 <p className={`flex items-center gap-1 ${timeLeft === 0 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
                                     <Timer className="w-3 h-3" />
-                                    {timeLeft > 0 ? `${TEXT.otpValidSuffix}${formatTime(timeLeft)}` : TEXT.otpExpired}
+                                    {timeLeft > 0 ? `${TEXT.OTP_VALID_SUFFIX}${formatTime(timeLeft)}` : TEXT.OTP_EXPIRED}
                                 </p>
                                 <button
                                     type="button"
@@ -279,18 +258,18 @@ export const ForgotPasswordPage = () => {
                                     disabled={timeLeft > 0 || isResending}
                                     className={`font-medium transition-colors ${timeLeft > 0 || isResending ? "text-muted-foreground cursor-not-allowed opacity-50" : "text-primary hover:underline cursor-pointer"}`}
                                 >
-                                    {isResending ? <><Loader2 className="inline mr-1 h-3 w-3 animate-spin" />{TEXT.btnResending}</> : TEXT.btnResend}
+                                    {isResending ? <><Loader2 className="inline mr-1 h-3 w-3 animate-spin" />{TEXT.BTN_RESENDING}</> : TEXT.BTN_RESEND}
                                 </button>
                             </div>
 
                             {/* New Password */}
                             <div className="space-y-2">
-                                <Label htmlFor="newPassword">{TEXT.labelNewPass}</Label>
+                                <Label htmlFor="newPassword">{TEXT.LABEL_PASSWORD}</Label>
                                 <div className="relative">
                                     <Input
                                         id="newPassword"
                                         type={showPassword ? "text" : "password"}
-                                        placeholder="Tối thiểu 8 ký tự"
+                                        placeholder={TEXT.PLACEHOLDER_PASSWORD}
                                         className={`pr-10 ${formErrors.newPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
                                         disabled={isFormSubmitting}
                                         {...registerForm("newPassword")}
@@ -311,12 +290,12 @@ export const ForgotPasswordPage = () => {
 
                             {/* Confirm Password */}
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">{TEXT.labelConfirmPass}</Label>
+                                <Label htmlFor="confirmPassword">{TEXT.LABEL_CONFIRM}</Label>
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"
                                         type={showConfirm ? "text" : "password"}
-                                        placeholder="Nhập lại mật khẩu mới"
+                                        placeholder={TEXT.PLACEHOLDER_CONFIRM}
                                         className={`pr-10 ${formErrors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
                                         disabled={isFormSubmitting}
                                         {...registerForm("confirmPassword")}
@@ -336,7 +315,7 @@ export const ForgotPasswordPage = () => {
                             </div>
 
                             <Button className="w-full font-bold" size="lg" disabled={isFormSubmitting}>
-                                {isFormSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.btnVerifying}</> : TEXT.btnVerify}
+                                {isFormSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_VERIFYING}</> : TEXT.BTN_VERIFY}
                             </Button>
                         </form>
                     )}
@@ -348,7 +327,7 @@ export const ForgotPasswordPage = () => {
                                 <CheckCircle2 className="w-10 h-10 text-green-500" />
                             </div>
                             <Button className="w-full font-bold" size="lg" onClick={() => navigate("/login")}>
-                                {TEXT.btnGoLogin}
+                                {TEXT.BTN_GO_LOGIN}
                             </Button>
                         </div>
                     )}
@@ -359,7 +338,7 @@ export const ForgotPasswordPage = () => {
                             {step === 1 ? (
                                 <Link to="/login" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                                     <ArrowLeft className="mr-2 h-4 w-4" />
-                                    {TEXT.linkBackLogin}
+                                    {TEXT.LINK_BACK_LOGIN}
                                 </Link>
                             ) : (
                                 <button
@@ -368,7 +347,7 @@ export const ForgotPasswordPage = () => {
                                     className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     <ArrowLeft className="mr-2 h-4 w-4" />
-                                    {TEXT.btnBackEmail}
+                                    {TEXT.BTN_BACK_EMAIL}
                                 </button>
                             )}
                         </div>
