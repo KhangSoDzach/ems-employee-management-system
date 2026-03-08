@@ -42,7 +42,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 /** Trả về route home tương ứng với role của user */
 function getRedirectByRole(roles: string[]): string {
-    if (roles.includes("ROLE_ADMIN")) return "/admin";
+    if (roles.includes("ROLE_ADMIN")) return "/admin-profile";
     if (roles.includes("ROLE_HR")) return "/hr-profile";
     if (roles.includes("ROLE_MANAGER")) return "/manager-profile";
     return "/employee"; // ROLE_EMPLOYEE or unknown
