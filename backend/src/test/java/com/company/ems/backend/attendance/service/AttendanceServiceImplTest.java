@@ -8,6 +8,7 @@ import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.service.GeolocationService;
 import com.company.ems.backend.common.service.PhotoStorageService;
+import com.company.ems.backend.config.StorageProperties;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
@@ -53,6 +54,8 @@ class AttendanceServiceImplTest {
         DataScopeService dataScopeService;
         @Mock
         MessageService messages;
+        @Mock
+        StorageProperties storageProperties;
 
         @InjectMocks
         AttendanceServiceImpl service;
@@ -72,6 +75,10 @@ class AttendanceServiceImplTest {
                 employee.setId(10L);
 
                 when(employeeRepository.findByUserId(1L)).thenReturn(Optional.of(employee));
+
+                // Provide a base URL so buildPhotoUrl() doesn't NPE
+                lenient().when(storageProperties.getBaseUrl())
+                                .thenReturn("http://localhost:8080/uploads/attendance-photos");
 
                 // Mock messages
                 lenient().when(messages.get(any(MessageCode.class), any())).thenReturn("Mocked Message");

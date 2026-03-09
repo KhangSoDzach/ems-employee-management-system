@@ -102,6 +102,8 @@ app:
   # Filesystem storage root for check-in/check-out photos
   storage:
     photo-dir: ${APP_STORAGE_PHOTO_DIR:./uploads/attendance-photos}
+    # Public base URL under which photos are served (static resource handler)
+    base-url: ${APP_STORAGE_BASE_URL:http://localhost:8080/uploads/attendance-photos}
 
   # Leave workflow configuration
   # Externalized to support per-environment overrides without code changes.
