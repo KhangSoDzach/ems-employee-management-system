@@ -24,64 +24,75 @@ import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.service.EmployeeService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 
 @RestController
 @RequestMapping("/api/v1/employees")
 @RequiredArgsConstructor
+@Tag(name = "Employee Management", description = "APIs for managing employee information")
 public class EmployeeController {
     private final EmployeeService employeeService;
     private final MessageService messages;
+
     @PostMapping
     @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')")
+    @Operation(summary = "Create a new employee", description = "Creates a new employee record and returns the basic employee details")
     public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(
             @Valid @RequestBody EmployeeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_CREATED), employeeService.createEmployee(request)));
+                .body(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_CREATED),
+                        employeeService.createEmployee(request)));
     }
 
     @GetMapping
     @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
+    @Operation(summary = "Get all employees", description = "Retrieves a paginated list of employees with optional filtering (subject to user's DataScope)")
     public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAllEmployees(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String department,
-            @RequestParam(required = false) String position,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String search) {
-        // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getAllEmployees(page, size, department, position, status, search)));
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Department ID filter") @RequestParam(required = false) String department,
+            @Parameter(description = "Position ID filter") @RequestParam(required = false) String position,
+            @Parameter(description = "Status filter") @RequestParam(required = false) String status,
+            @Parameter(description = "Search keyword (name/email)") @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS),
+                employeeService.getAllEmployees(page, size, department, position, status, search)));
     }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get my profile", description = "Retrieves the read-only public profile of the currently authenticated employee")
     public ResponseEntity<ApiResponse<PublicEmployeeResponse>> getMyProfile() {
-        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getMyProfile()));
+        return ResponseEntity
+                .ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getMyProfile()));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('EMPLOYEE_VIEW') and @empSec.canAccessEmployee(authentication, #id)")
+    @Operation(summary = "Get employee by ID", description = "Retrieves complete employee details by ID")
     public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployeeById(@PathVariable Long id) {
-        // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getEmployeeById(id)));
+        return ResponseEntity
+                .ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getEmployeeById(id)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE') and @empSec.canAccessEmployee(authentication, #id)")
+    @Operation(summary = "Update employee", description = "Updates an existing employee's details")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
             @PathVariable Long id,
             @Valid @RequestBody EmployeeRequest request) {
         EmployeeResponse response = employeeService.updateEmployee(id, request);
-        // TODO: Implement service layer
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_UPDATED), response));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('EMPLOYEE_DELETE')")
+    @Operation(summary = "Delete employee", description = "Permanently deletes an employee record")
     public ResponseEntity<ApiResponse<Void>> deleteEmployee(@PathVariable Long id) {
-        // TODO: Implement service layer
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_DELETED), null));
     }
