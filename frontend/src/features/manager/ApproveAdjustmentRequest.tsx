@@ -159,7 +159,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                 <span className="text-muted-foreground text-sm">/</span>
                                 <span className="text-sm font-semibold text-foreground">Điều chỉnh chấm công</span>
                             </div>
-                            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                            <h1 className="page-heading">
                                 Danh sách chờ duyệt
                             </h1>
                             <p className="text-muted-foreground mt-1">
@@ -250,7 +250,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                     </div>
 
                     {/* Table */}
-                    <div className="bg-background rounded-2xl border border-border shadow-sm overflow-hidden mt-2">
+                    <div className="card-soft mt-2">
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>

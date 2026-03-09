@@ -22,8 +22,6 @@ import com.company.ems.backend.leave.dto.LeaveRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
 import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.leave.enums.LeaveStatus;
-import com.company.ems.backend.common.message.MessageCode;
-import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.leave.repository.LeaveRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
 import com.company.ems.backend.user.enums.DataScope;
@@ -39,7 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 public class LeaveServiceImpl implements LeaveService {
 
     private final LeaveRepository leaveRepository;
-    private final MessageService messages;
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final DataScopeService dataScopeService;
@@ -50,13 +47,16 @@ public class LeaveServiceImpl implements LeaveService {
 
         Employee employee = employeeRepository.findByUserId(principal.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
+                        "Employee record không tồn tại cho userId: " + principal.getUserId()));
 
+        // Validate dates
         if (request.getEndDate().isBefore(request.getStartDate())) {
-            throw new BusinessException("INVALID_DATE_RANGE", messages.get(MessageCode.LEAVE_INVALID_DATE_RANGE));
+            throw new BusinessException("INVALID_DATE_RANGE",
+                    "Ngày kết thúc không thể trước ngày bắt đầu.");
         }
         if (request.getStartDate().isBefore(LocalDate.now())) {
-            throw new BusinessException("INVALID_START_DATE", messages.get(MessageCode.LEAVE_INVALID_START_DATE));
+            throw new BusinessException("INVALID_START_DATE",
+                    "Ngày bắt đầu không thể ở quá khứ.");
         }
 
         Leave leave = Leave.builder()
@@ -88,12 +88,13 @@ public class LeaveServiceImpl implements LeaveService {
         } else if (principal.hasDataScope(DataScope.TEAM)) {
             Employee manager = employeeRepository.findByUserId(principal.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
+                            "Employee record không tồn tại cho userId: " + principal.getUserId()));
             leaves = leaveRepository.findByReportingManagerUserId(principal.getUserId(), pageable);
         } else {
+            // SELF
             Employee self = employeeRepository.findByUserId(principal.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
+                            "Employee record không tồn tại cho userId: " + principal.getUserId()));
             leaves = leaveRepository.findByEmployeeId(self.getId(), pageable);
         }
 
@@ -118,21 +119,38 @@ public class LeaveServiceImpl implements LeaveService {
                 .orElseThrow(() -> new ResourceNotFoundException("Leave", "id", id));
         return mapToResponse(leave);
     }
+
+    /**
+     * Approve hoặc Reject leave.
+     *
+     * request.status = "APPROVED" hoặc "REJECTED"
+     * request.notes  = ghi chú của người duyệt (nullable)
+     *
+     * DataScope: assertCanApproveLeave đã kiểm tra TEAM/ALL scope.
+     */
     @Override
     public LeaveResponse approveLeave(Long id, ApproveLeaveRequest request) {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+
+        // DataScope check: chỉ TEAM hoặc ALL scope
         dataScopeService.assertCanApproveLeave(principal, id);
 
         Leave leave = leaveRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave", "id", id));
 
         if (leave.getStatus() != LeaveStatus.PENDING) {
-            throw new BusinessException("LEAVE_NOT_PENDING", messages.get(MessageCode.LEAVE_NOT_PENDING, leave.getStatus()));
+            throw new BusinessException("LEAVE_NOT_PENDING",
+                    "Chỉ có thể xử lý yêu cầu đang ở trạng thái chờ duyệt. " +
+                            "Trạng thái hiện tại: " + leave.getStatus());
         }
+
+        // Không cho tự approve leave của chính mình
         if (leave.getEmployee().getUser() != null
                 && leave.getEmployee().getUser().getId().equals(principal.getUserId())) {
-            throw new ForbiddenException(messages.get(MessageCode.LEAVE_CANNOT_SELF_APPROVE));
+            throw new ForbiddenException("Bạn không thể tự phê duyệt yêu cầu nghỉ phép của chính mình.");
         }
+
+        // Lấy User của người duyệt
         var approver = userRepository.findById(principal.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", principal.getUserId()));
 
@@ -144,7 +162,8 @@ public class LeaveServiceImpl implements LeaveService {
             leave.reject(approver, request.getNotes());
             log.info("User [{}] REJECTED leave [{}]", principal.getUsername(), id);
         } else {
-            throw new BusinessException("INVALID_STATUS", messages.get(MessageCode.LEAVE_INVALID_STATUS, request.getStatus()));
+            throw new BusinessException("INVALID_STATUS",
+                    "Trạng thái không hợp lệ: '" + request.getStatus() + "'. Chỉ chấp nhận APPROVED hoặc REJECTED.");
         }
 
         Leave updated = leaveRepository.save(leave);
@@ -158,6 +177,7 @@ public class LeaveServiceImpl implements LeaveService {
         Leave leave = leaveRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave", "id", id));
 
+        // Ownership check: chỉ chủ nhân mới được hủy
         if (leave.getEmployee().getUser() == null
                 || !leave.getEmployee().getUser().getId().equals(principal.getUserId())) {
             log.warn("User [{}] attempted to cancel leave [{}] belonging to another employee",
@@ -166,13 +186,17 @@ public class LeaveServiceImpl implements LeaveService {
         }
 
         if (leave.getStatus() != LeaveStatus.PENDING) {
-            throw new BusinessException("LEAVE_CANNOT_CANCEL", messages.get(MessageCode.LEAVE_CANNOT_CANCEL, leave.getStatus()));
+            throw new BusinessException("LEAVE_CANNOT_CANCEL",
+                    "Chỉ có thể hủy yêu cầu đang ở trạng thái chờ duyệt. " +
+                            "Trạng thái hiện tại: " + leave.getStatus());
         }
 
         leave.cancel();
         leaveRepository.save(leave);
         log.info("User [{}] cancelled leave [{}]", principal.getUsername(), id);
     }
+
+    // ─── Private helpers ──────────────────────────────────────────────────────
 
     private LeaveResponse mapToResponse(Leave leave) {
         if (leave == null) return null;

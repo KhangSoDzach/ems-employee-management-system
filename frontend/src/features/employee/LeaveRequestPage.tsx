@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import {
-  MoreHorizontal, Plane, Plus, Search, SlidersHorizontal, X,
+  Loader2, MoreHorizontal, Plane, Plus, Search, SlidersHorizontal, X,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -36,11 +36,14 @@ import {
   LEAVE_STATUS_OPTIONS,
   LEAVE_TYPE_CONFIG,
   LEAVE_TYPE_OPTIONS,
-  MOCK_DATA,
 } from "./leave-request.constants"
+import { leaveService } from "@/services/leaveService"
+import { employeeService } from "@/services/employeeService"
 import { ActiveFilterBadge, StatusBadge, TypeBadge } from "./components/LeaveBadges"
 import { LeaveDetailSheet } from "./components/LeaveDetailSheet"
 import { CreateLeaveModal } from "./components/CreateLeaveModal"
+
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 /* ══════════════ EMPTY STATE ══════════════ */
 
@@ -53,13 +56,13 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
         </div>
         {hasFilter ? (
           <>
-            <p className="text-base font-medium text-foreground mb-1">Không tìm thấy kết quả</p>
-            <p className="text-sm">Hãy thử thay đổi hoặc xóa bộ lọc để xem kết quả.</p>
+            <p className="text-base font-medium text-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.EMPTY_FILTER_TITLE}</p>
+            <p className="text-sm">{SYSTEM_MESSAGES.LEAVE.EMPTY_FILTER_DESC}</p>
           </>
         ) : (
           <>
-            <p className="text-base font-medium text-foreground mb-1">Chưa có đơn nghỉ phép</p>
-            <p className="text-sm">Bạn chưa tạo đơn xin nghỉ phép nào.</p>
+            <p className="text-base font-medium text-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.EMPTY_TITLE}</p>
+            <p className="text-sm">{SYSTEM_MESSAGES.LEAVE.EMPTY_DESC}</p>
           </>
         )}
       </div>
@@ -70,12 +73,52 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
 /* ══════════════ MAIN PAGE ══════════════ */
 
 export default function LeaveRequestPage() {
-  const [requests, setRequests] = useState<LeaveRequest[]>(MOCK_DATA)
+  const [requests, setRequests] = useState<LeaveRequest[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [employeeId, setEmployeeId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<LeaveStatus | "ALL">("ALL")
   const [typeFilter, setTypeFilter] = useState<LeaveType | "ALL">("ALL")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null)
+
+  /* ── Backend status → frontend union ── */
+  const mapBackendStatus = (status: string): LeaveStatus => {
+    if (status.startsWith("PENDING")) return "PENDING"
+    if (status === "RETURNED_TO_EMPLOYEE") return "RETURNED"
+    if (status === "APPROVED" || status === "REJECTED") return status as LeaveStatus
+    return "PENDING"
+  }
+
+  /* ── Load data on mount ── */
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [leavePage, profile] = await Promise.all([
+          leaveService.getMyLeaves(),
+          employeeService.getMyProfile(),
+        ])
+        setEmployeeId(profile.id)
+        setRequests(
+          leavePage.content.map((dto) => ({
+            id: String(dto.id),
+            dateCreated: new Date(dto.createdAt),
+            startDate: new Date(dto.startDate + "T00:00:00"),
+            endDate: new Date(dto.endDate + "T00:00:00"),
+            type: dto.leaveType.toLowerCase() as LeaveType,
+            status: mapBackendStatus(dto.status),
+            reason: dto.reason,
+            auditTrail: [],
+          }))
+        )
+      } catch {
+        toast.error(SYSTEM_MESSAGES.API_ERROR)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [])
 
   /* ── Filtered rows ── */
   const filtered = requests.filter((r) => {
@@ -96,28 +139,39 @@ export default function LeaveRequestPage() {
 
   /* ── Handlers ── */
   const handleCreate = async (data: LeaveFormValues) => {
-    await new Promise((r) => setTimeout(r, 1200))
-    const newReq: LeaveRequest = {
-      id: `LV-${String(requests.length + 1).padStart(3, "0")}`,
-      dateCreated: new Date(),
-      startDate: data.startDate,
-      endDate: data.endDate,
-      type: data.leaveType,
-      status: "PENDING",
+    const dto = await leaveService.createLeave({
+      employeeId: employeeId ?? 1,
+      leaveType: data.leaveType.toUpperCase(),
+      startDate: format(data.startDate, "yyyy-MM-dd"),
+      endDate: format(data.endDate, "yyyy-MM-dd"),
       reason: data.reason,
+    })
+    const newReq: LeaveRequest = {
+      id: String(dto.id),
+      dateCreated: new Date(dto.createdAt),
+      startDate: new Date(dto.startDate + "T00:00:00"),
+      endDate: new Date(dto.endDate + "T00:00:00"),
+      type: dto.leaveType.toLowerCase() as LeaveType,
+      status: mapBackendStatus(dto.status),
+      reason: dto.reason,
       auditTrail: [
         { id: "a1", action: "CREATED", actor: CURRENT_USER.name, timestamp: new Date() },
       ],
     }
     setRequests((prev) => [newReq, ...prev])
-    toast.success("Đơn nghỉ phép đã được gửi!", {
-      description: `Mã ${newReq.id} đang chờ quản lý phê duyệt.`,
+    toast.success(SYSTEM_MESSAGES.TOAST.LEAVE_SUBMITTED, {
+      description: SYSTEM_MESSAGES.TOAST.LEAVE_SUBMITTED_DESC(newReq.id),
     })
   }
 
-  const handleCancel = (id: string) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id))
-    toast.info("Đã hủy đơn nghỉ phép.")
+  const handleCancel = async (id: string) => {
+    try {
+      await leaveService.cancelLeave(Number(id))
+      setRequests((prev) => prev.filter((r) => r.id !== id))
+      toast.info(SYSTEM_MESSAGES.TOAST.LEAVE_CANCELLED)
+    } catch {
+      toast.error(SYSTEM_MESSAGES.ERROR)
+    }
   }
 
   const clearAllFilters = () => {
@@ -133,21 +187,19 @@ export default function LeaveRequestPage() {
       <SidebarInset>
         <SiteHeader />
 
-        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+        <main className="page-layout-wrapper">
 
           {/* ── Page Header ── */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-muted-foreground text-sm">Chấm công</span>
-                <span className="text-muted-foreground text-sm">/</span>
-                <span className="text-sm font-semibold text-foreground">Đơn nghỉ phép</span>
+                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.LEAVE.BREADCRUMB}</span>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Đơn xin nghỉ phép
+              <h1 className="page-heading">
+                {SYSTEM_MESSAGES.LEAVE.TITLE}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Quản lý và theo dõi trạng thái các đơn xin nghỉ phép của bạn.
+                {SYSTEM_MESSAGES.LEAVE.DESC}
               </p>
             </div>
             <Button
@@ -155,18 +207,18 @@ export default function LeaveRequestPage() {
               className="shrink-0 h-10 px-5 font-semibold gap-1.5 shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              Tạo đơn mới
+              {SYSTEM_MESSAGES.LEAVE.BTN_CREATE}
             </Button>
           </div>
 
           {/* ── Filter Bar ── */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-6">
 
             {/* Search */}
             <div className="relative flex-1 min-w-[180px] max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Tìm kiếm mã, lý do..."
+                placeholder={SYSTEM_MESSAGES.SEARCH_PLACEHOLDER}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9 w-full text-sm"
@@ -186,7 +238,7 @@ export default function LeaveRequestPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap">
                   <SlidersHorizontal className="w-4 h-4" />
-                  Trạng thái
+                  {SYSTEM_MESSAGES.LEAVE.FILTER_STATUS}
                   {statusFilter !== "ALL" && (
                     <>
                       <div className="w-px h-4 bg-border mx-1" />
@@ -230,7 +282,7 @@ export default function LeaveRequestPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap">
                   <SlidersHorizontal className="w-4 h-4" />
-                  Loại phép
+                  {SYSTEM_MESSAGES.LEAVE.FILTER_TYPE}
                   {typeFilter !== "ALL" && (
                     <>
                       <div className="w-px h-4 bg-border mx-1" />
@@ -277,7 +329,7 @@ export default function LeaveRequestPage() {
                 className="h-9 px-3 text-muted-foreground hover:text-foreground gap-1.5"
               >
                 <X className="w-4 h-4" />
-                Xóa lọc
+                {SYSTEM_MESSAGES.LEAVE.BTN_CLEAR}
               </Button>
             )}
           </div>
@@ -288,87 +340,96 @@ export default function LeaveRequestPage() {
               <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="py-4 font-semibold text-foreground px-6">Mã đơn</TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">Ngày tạo</TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">Thời gian nghỉ</TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">Loại phép</TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">Trạng thái</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_ID}</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_DATE_CREATED}</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_DATE_LEAVE}</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_TYPE}</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_STATUS}</TableHead>
                     <TableHead className="py-4 w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.length === 0
-                    ? <EmptyState hasFilter={hasFilter} />
-                    : filtered.map((req) => (
-                      <TableRow
-                        key={req.id}
-                        className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
-                        onClick={() => setDetailRequest(req)}
-                      >
-                        <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
-                          {req.id}
-                        </TableCell>
-                        <TableCell className="px-6 py-4 font-medium text-foreground">
-                          {format(req.dateCreated, DATE_FORMAT)}
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <span className="font-medium text-foreground">
-                            {format(req.startDate, DATE_FORMAT)}
-                            {req.startDate.getTime() !== req.endDate.getTime()
-                              && ` – ${format(req.endDate, DATE_FORMAT)}`}
-                          </span>
-                          <span className="text-muted-foreground text-xs block mt-0.5">
-                            {Math.ceil((req.endDate.getTime() - req.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1} ngày
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <TypeBadge type={req.type} />
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <StatusBadge status={req.status} />
-                        </TableCell>
-                        <TableCell className="py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem
-                                className="cursor-pointer text-sm"
-                                onClick={() => setDetailRequest(req)}
-                              >
-                                Xem chi tiết
-                              </DropdownMenuItem>
-                              {req.status === "RETURNED" && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="cursor-pointer text-sm text-primary font-medium">
-                                    Gửi lại
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              {req.status === "PENDING" && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="cursor-pointer text-sm text-destructive focus:text-destructive"
-                                    onClick={() => handleCancel(req.id)}
-                                  >
-                                    Hủy đơn
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-[400px] text-center">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span className="text-sm">{SYSTEM_MESSAGES.LOADING}</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filtered.length === 0 ? (
+                    <EmptyState hasFilter={hasFilter} />
+                  ) : filtered.map((req) => (
+                    <TableRow
+                      key={req.id}
+                      className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
+                      onClick={() => setDetailRequest(req)}
+                    >
+                      <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
+                        {req.id}
+                      </TableCell>
+                      <TableCell className="px-6 py-4 font-medium text-foreground">
+                        {format(req.dateCreated, DATE_FORMAT)}
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <span className="font-medium text-foreground">
+                          {format(req.startDate, DATE_FORMAT)}
+                          {req.startDate.getTime() !== req.endDate.getTime()
+                            && ` – ${format(req.endDate, DATE_FORMAT)}`}
+                        </span>
+                        <span className="text-muted-foreground text-xs block mt-0.5">
+                          {Math.ceil((req.endDate.getTime() - req.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1} {SYSTEM_MESSAGES.LEAVE.DAYS}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <TypeBadge type={req.type} />
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <StatusBadge status={req.status} />
+                      </TableCell>
+                      <TableCell className="py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem
+                              className="cursor-pointer text-sm"
+                              onClick={() => setDetailRequest(req)}
+                            >
+                              {SYSTEM_MESSAGES.LEAVE.BTN_DETAIL}
+                            </DropdownMenuItem>
+                            {req.status === "RETURNED" && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="cursor-pointer text-sm text-primary font-medium">
+                                  {SYSTEM_MESSAGES.LEAVE.BTN_RESEND}
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {req.status === "PENDING" && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="cursor-pointer text-sm text-destructive focus:text-destructive"
+                                  onClick={() => handleCancel(req.id)}
+                                >
+                                  {SYSTEM_MESSAGES.LEAVE.BTN_CANCEL}
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
@@ -376,7 +437,7 @@ export default function LeaveRequestPage() {
             {/* Summary footer */}
             {filtered.length > 0 && (
               <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Hiển thị {filtered.length} / {requests.length} đơn</span>
+                <span>{SYSTEM_MESSAGES.LEAVE.SUMMARY_SHOW} {filtered.length} {SYSTEM_MESSAGES.LEAVE.SUMMARY_DIVIDER} {requests.length} {SYSTEM_MESSAGES.LEAVE.SUMMARY_UNIT}</span>
                 <div className="flex gap-4">
                   {(["PENDING", "APPROVED", "REJECTED", "RETURNED"] as LeaveStatus[]).map((s) => {
                     const count = requests.filter((r) => r.status === s).length

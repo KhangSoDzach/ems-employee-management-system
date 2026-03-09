@@ -39,6 +39,7 @@ import {
     LEAVE_TYPE_CONFIG,
     LEAVE_TYPE_OPTIONS,
 } from "../leave-request.constants"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 /* ══════════════ CREATE LEAVE MODAL ══════════════ */
 
@@ -81,10 +82,10 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                             <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                                 <CalendarIcon className="w-4 h-4 text-primary" />
                             </span>
-                            Tạo Đơn Nghỉ Phép
+                            {SYSTEM_MESSAGES.LEAVE.CREATE_TITLE}
                         </DialogTitle>
                         <DialogDescription className="text-sm text-muted-foreground mt-1">
-                            Vui lòng điền thông tin để xin nghỉ phép.
+                            {SYSTEM_MESSAGES.LEAVE.CREATE_DESC}
                         </DialogDescription>
                     </DialogHeader>
                 </div>
@@ -99,11 +100,11 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                             name="leaveType"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-sm">Loại phép</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.LEAVE.CREATE_TYPE}</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
                                         <FormControl>
                                             <SelectTrigger className="h-10">
-                                                <SelectValue placeholder="Chọn loại phép..." />
+                                                <SelectValue placeholder={SYSTEM_MESSAGES.LEAVE.CREATE_TYPE_PLACEHOLDER} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -137,7 +138,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                 name="startDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel className="font-semibold text-sm">Ngày bắt đầu</FormLabel>
+                                        <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -149,7 +150,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                                         )}
                                                     >
                                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {field.value ? format(field.value, DATE_FORMAT) : "Chọn ngày"}
+                                                        {field.value ? format(field.value, DATE_FORMAT) : SYSTEM_MESSAGES.LEAVE.CREATE_DATE_PLACEHOLDER}
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
@@ -172,7 +173,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                 name="endDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel className="font-semibold text-sm">Ngày kết thúc</FormLabel>
+                                        <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.LEAVE.CREATE_DATE_END}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -184,7 +185,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                                         )}
                                                     >
                                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {field.value ? format(field.value, DATE_FORMAT) : "Chọn ngày"}
+                                                        {field.value ? format(field.value, DATE_FORMAT) : SYSTEM_MESSAGES.LEAVE.CREATE_DATE_PLACEHOLDER}
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
@@ -209,11 +210,11 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                             name="reason"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-sm">Lý do nghỉ</FormLabel>
+                                    <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.LEAVE.CREATE_REASON}</FormLabel>
                                     <FormControl>
                                         <Textarea
                                             rows={3}
-                                            placeholder="Nhập lý do chi tiết..."
+                                            placeholder={SYSTEM_MESSAGES.LEAVE.CREATE_REASON_PLACEHOLDER}
                                             className="resize-none"
                                             {...field}
                                         />
@@ -225,7 +226,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
 
                         {/* Summary Info Box */}
                         <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-                            Đơn xin nghỉ phép sẽ được gửi đến quản lý trực tiếp của bạn để phê duyệt.
+                            {SYSTEM_MESSAGES.LEAVE.CREATE_WARNING}
                         </div>
 
                         {/* ── Actions ── */}
@@ -237,7 +238,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                 disabled={isSubmitting}
                                 className="h-9 px-5"
                             >
-                                Hủy
+                                {SYSTEM_MESSAGES.LEAVE.CREATE_BTN_CANCEL}
                             </Button>
                             <Button
                                 type="submit"
@@ -245,7 +246,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                 className="h-9 px-5 gap-2"
                             >
                                 {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                {isSubmitting ? "Đang gửi..." : "Gửi đơn"}
+                                {isSubmitting ? SYSTEM_MESSAGES.LEAVE.CREATE_BTN_SUBMITTING : SYSTEM_MESSAGES.LEAVE.CREATE_BTN_SUBMIT}
                             </Button>
                         </div>
                     </form>

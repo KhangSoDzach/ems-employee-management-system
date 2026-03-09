@@ -15,31 +15,34 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { attendanceService, AttendanceRecord, AttendanceSummary } from "@/services/attendanceService"
 import { CameraModal } from "./components/CameraModal"
 
+import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { CHECKIN_STATUS } from "@/constants/theme"
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function fmtTime(iso: string | null) {
-    if (!iso) return "—"
+    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
     return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
 }
 
 function fmtDate(iso: string | null) {
-    if (!iso) return "—"
+    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
     return format(new Date(iso), "dd/MM/yyyy")
 }
 
 function fmtWorkHours(minutes: number | null) {
-    if (minutes == null) return "—"
+    if (minutes == null) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
     const h = Math.floor(minutes / 60)
     const m = minutes % 60
-    return `${h}h ${m.toString().padStart(2, "0")}m`
+    return `${h}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${m.toString().padStart(2, "0")}m`
 }
 
 function statusLabel(s: AttendanceRecord["status"]) {
     const map: Record<string, { label: string; cls: string }> = {
-        PRESENT: { label: "Đúng giờ", cls: "bg-primary/10 text-primary" },
-        LATE: { label: "Đi muộn", cls: "bg-destructive/10 text-destructive" },
-        ABSENT: { label: "Vắng", cls: "bg-muted text-muted-foreground" },
-        HALF_DAY: { label: "Nửa ngày", cls: "bg-accent text-accent-foreground" },
-        ON_LEAVE: { label: "Nghỉ phép", cls: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
+        PRESENT: { label: SYSTEM_MESSAGES.CHECKIN.STATUS_PRESENT, cls: "bg-primary/10 text-primary" },
+        LATE: { label: SYSTEM_MESSAGES.CHECKIN.STATUS_LATE, cls: "bg-destructive/10 text-destructive" },
+        ABSENT: { label: SYSTEM_MESSAGES.CHECKIN.STATUS_ABSENT, cls: "bg-muted text-muted-foreground" },
+        HALF_DAY: { label: SYSTEM_MESSAGES.CHECKIN.STATUS_HALF, cls: "bg-accent text-accent-foreground" },
+        ON_LEAVE: { label: SYSTEM_MESSAGES.CHECKIN.STATUS_ON_LEAVE, cls: CHECKIN_STATUS.ON_LEAVE.cls },
     }
     return map[s] ?? { label: s, cls: "bg-muted text-muted-foreground" }
 }
@@ -127,7 +130,7 @@ export default function CheckinPage() {
                     checkInMethod: "CAMERA_GEO",
                 })
                 setTodayRecord(rec)
-                toast.success("Check-in thành công!")
+                toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE)
             } else {
                 const rec = await attendanceService.checkOut({
                     latitude: result.latitude,
@@ -136,11 +139,11 @@ export default function CheckinPage() {
                     locationLabel: result.locationLabel,
                 })
                 setTodayRecord(rec)
-                toast.success("Check-out thành công!")
+                toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE)
             }
             await fetchAll()
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : "Có lỗi xảy ra"
+            const msg = err instanceof Error ? err.message : SYSTEM_MESSAGES.ERROR
             toast.error(msg)
         } finally {
             setActionLoading(false)
@@ -152,21 +155,52 @@ export default function CheckinPage() {
     const workHoursPct = summary ? Math.min(100, (summary.totalWorkHours / (summary.totalDays * 8)) * 100) : 0
     const latePct = summary && summary.totalDays > 0 ? (summary.lateDays / summary.totalDays) * 100 : 0
 
+    const getStatusBadge = () => {
+        const checkInTime = fmtTime(todayRecord?.checkInTime ?? null)
+        const checkOutTime = fmtTime(todayRecord?.checkOutTime ?? null)
+        
+        if (status === "unchecked") {
+            return (
+                <Badge variant="outline" className="text-destructive border-destructive/20 bg-destructive/10 font-medium px-3 py-1">
+                    {SYSTEM_MESSAGES.CHECKIN.STATUS_NOT_CHECKED}
+                </Badge>
+            )
+        }
+        if (status === "checked_in") {
+            return (
+                <Badge variant="outline" className="text-primary border-primary/20 bg-primary/10 font-medium px-3 py-1">
+                    {SYSTEM_MESSAGES.CHECKIN.STATUS_WORKING(checkInTime)}
+                </Badge>
+            )
+        }
+        return (
+            <Badge variant="outline" className="text-muted-foreground border-border bg-muted font-medium px-3 py-1">
+                {SYSTEM_MESSAGES.CHECKIN.STATUS_CHECKED_OUT(checkInTime, checkOutTime)}
+            </Badge>
+        )
+    }
+
+    const getGreetingMessage = () => {
+        if (status === "unchecked") return SYSTEM_MESSAGES.CHECKIN.MSG_MORNING
+        if (status === "checked_in") return SYSTEM_MESSAGES.CHECKIN.MSG_WORKING
+        return SYSTEM_MESSAGES.CHECKIN.MSG_DONE
+    }
+
     return (
         <SidebarProvider>
             <AppSidebar role="employee" variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 
-                <main className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-background dark:bg-background min-h-screen">
+                <main className="page-layout-wrapper">
                     {/* Page header */}
                     <div className="flex flex-col md:flex-row items-center justify-between space-y-2 mb-6">
                         <div>
-                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cổng thông tin &gt; Chấm công</p>
-                            <h2 className="text-3xl font-bold tracking-tight text-foreground mt-1">Điểm danh nhân viên</h2>
-                            <p className="text-muted-foreground font-medium mt-1">Quản lý thời gian làm việc và lịch sử chấm công của bạn.</p>
+                            <p className="section-title text-muted-foreground uppercase tracking-wider mb-1">{SYSTEM_MESSAGES.CHECKIN.BREADCRUMB}</p>
+                            <h2 className="page-heading mt-1">{SYSTEM_MESSAGES.CHECKIN.TITLE}</h2>
+                            <p className="text-muted-foreground font-medium mt-1">{SYSTEM_MESSAGES.CHECKIN.DESC}</p>
                         </div>
-                        <div className="text-sm font-semibold text-muted-foreground bg-card px-5 py-2.5 rounded-xl border-border border shadow-sm capitalize">
+                        <div className="btn-date capitalize">
                             {todayDisplay}
                         </div>
                     </div>
@@ -175,28 +209,12 @@ export default function CheckinPage() {
                     <Card className="border-border shadow-sm bg-linear-to-br from-primary/5 to-background overflow-hidden relative">
                         <CardContent className="p-8 flex items-center justify-between">
                             <div className="z-10 flex flex-col items-start gap-4">
-                                {status === "unchecked" && (
-                                    <Badge variant="outline" className="text-destructive border-destructive/20 bg-destructive/10 font-medium px-3 py-1">
-                                        Chưa điểm danh
-                                    </Badge>
-                                )}
-                                {status === "checked_in" && (
-                                    <Badge variant="outline" className="text-primary border-primary/20 bg-primary/10 font-medium px-3 py-1">
-                                        Đang làm việc (Vào lúc {fmtTime(todayRecord?.checkInTime ?? null)})
-                                    </Badge>
-                                )}
-                                {status === "checked_out" && (
-                                    <Badge variant="outline" className="text-muted-foreground border-border bg-muted font-medium px-3 py-1">
-                                        Đã Check-out (Vào: {fmtTime(todayRecord?.checkInTime ?? null)} — Ra: {fmtTime(todayRecord?.checkOutTime ?? null)})
-                                    </Badge>
-                                )}
+                                {getStatusBadge()}
 
                                 <h1 className="text-5xl font-extrabold text-foreground">{currentTime}</h1>
 
                                 <p className="text-muted-foreground text-lg">
-                                    {status === "unchecked" && "Chào buổi sáng! Hãy bắt đầu ngày làm việc đầy năng lượng."}
-                                    {status === "checked_in" && "Bạn đang trong ca làm việc. Chúc một ngày làm việc hiệu quả!"}
-                                    {status === "checked_out" && "Bạn đã kết thúc ca làm việc hôm nay. Nghỉ ngơi tốt nhé!"}
+                                    {getGreetingMessage()}
                                 </p>
 
                                 <div className="flex gap-4 mt-2">
@@ -205,10 +223,10 @@ export default function CheckinPage() {
                                             onClick={() => openCameraFor("checkIn")}
                                             disabled={loading || actionLoading}
                                             size="lg"
-                                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2"
+                                            className="btn-checkin"
                                         >
                                             {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="fill-current w-5 h-5" />}
-                                            Check In Ngay
+                                            {SYSTEM_MESSAGES.CHECKIN.BTN_CHECKIN}
                                         </Button>
                                     )}
 
@@ -217,10 +235,10 @@ export default function CheckinPage() {
                                             onClick={() => openCameraFor("checkOut")}
                                             disabled={actionLoading}
                                             size="lg"
-                                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2"
+                                            className="btn-checkout"
                                         >
                                             {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Square className="fill-current w-5 h-5" />}
-                                            Check Out
+                                            {SYSTEM_MESSAGES.CHECKIN.BTN_CHECKOUT}
                                         </Button>
                                     )}
 
@@ -228,16 +246,16 @@ export default function CheckinPage() {
                                         size="lg"
                                         variant="outline"
                                         onClick={() => navigate("/adjustment-requests")}
-                                        className="bg-background hover:bg-muted text-foreground rounded-xl px-8 h-12 font-medium flex items-center gap-2"
+                                        className="btn-cancel"
                                     >
                                         <Coffee className="w-5 h-5 text-muted-foreground" />
-                                        Điều chỉnh chấm công
+                                        {SYSTEM_MESSAGES.CHECKIN.BTN_ADJUST}
                                     </Button>
                                 </div>
                             </div>
 
                             {/* Right side — camera placeholder / captured photo */}
-                            <div className="hidden md:block w-72 h-40 rounded-2xl overflow-hidden shadow-lg border-4 border-background z-10 bg-muted relative">
+                            <div className="asset-image-placeholder hidden md:block">
                                 {todayRecord?.checkInPhotoUrl ? (
                                     <img
                                         src={`http://localhost:8080${todayRecord.checkInPhotoUrl}`}
@@ -257,40 +275,40 @@ export default function CheckinPage() {
                     {/* Summary Cards */}
                     <div className="grid gap-4 md:grid-cols-3">
                         {/* Total work hours this month */}
-                        <Card className="border-border shadow-sm">
+                        <Card className="card-border">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
-                                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
+                                    <div className="icon-box bg-primary/10 text-primary">
                                         <CalendarClock className="w-6 h-6" />
                                     </div>
                                     <Badge variant="secondary" className="bg-primary/10 text-primary font-medium">
-                                        Tháng này
+                                        {SYSTEM_MESSAGES.CHECKIN.THIS_MONTH}
                                     </Badge>
                                 </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">Tổng giờ làm</p>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">{SYSTEM_MESSAGES.CHECKIN.WORK_HOURS}</p>
                                 {loading ? (
                                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                                 ) : (
-                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.totalWorkHours.toFixed(1)}h` : "—"}</div>
+                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.totalWorkHours.toFixed(1)}h` : SYSTEM_MESSAGES.CHECKIN.NO_DATA_SHORT}</div>
                                 )}
                                 <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${workHoursPct}%` }} />
+                                    <div className="progress-bar" style={{ width: `${workHoursPct}%` }} />
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Late days */}
-                        <Card className="border-border shadow-sm">
+                        <Card className="card-border">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
-                                    <div className="w-12 h-12 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mb-4 text-xl font-bold">!</div>
-                                    <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">Tháng này</Badge>
+                                    <div className="icon-box bg-destructive/10 text-destructive text-xl font-bold">!</div>
+                                    <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">{SYSTEM_MESSAGES.CHECKIN.THIS_MONTH}</Badge>
                                 </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">Số ngày đi muộn</p>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">{SYSTEM_MESSAGES.CHECKIN.LATE_DAYS}</p>
                                 {loading ? (
                                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                                 ) : (
-                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.lateDays} ngày` : "—"}</div>
+                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.lateDays} ngày` : SYSTEM_MESSAGES.CHECKIN.NO_DATA_SHORT}</div>
                                 )}
                                 <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
                                     <div className="h-full bg-destructive rounded-full transition-all" style={{ width: `${latePct}%` }} />
@@ -299,52 +317,52 @@ export default function CheckinPage() {
                         </Card>
 
                         {/* Attendance rate */}
-                        <Card className="border-border shadow-sm">
+                        <Card className="card-border">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
-                                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-4 text-sm font-bold">
+                                    <div className="icon-box bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm font-bold">
                                         %
                                     </div>
                                 </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">Tỷ lệ chuyên cần</p>
+                                <p className="text-sm font-medium text-muted-foreground mb-1">{SYSTEM_MESSAGES.CHECKIN.ATTENDANCE_RATE}</p>
                                 {loading ? (
                                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                                 ) : (
-                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.attendancePercentage.toFixed(0)}%` : "—"}</div>
+                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.attendancePercentage.toFixed(0)}%` : SYSTEM_MESSAGES.CHECKIN.NO_DATA_SHORT}</div>
                                 )}
                                 <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
-                                    <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${summary?.attendancePercentage ?? 0}%` }} />
+                                    <div className="progress-bar" style={{ width: `${summary?.attendancePercentage ?? 0}%` }} />
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* History Table */}
-                    <Card className="border-border shadow-sm">
+                    <Card className="card-border">
                         <CardContent className="p-6">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-lg text-foreground">Lịch sử điểm danh (7 ngày gần nhất)</h3>
+                                <h3 className="font-bold text-lg text-foreground">{SYSTEM_MESSAGES.CHECKIN.HISTORY_TITLE}</h3>
                                 <Button variant="ghost" onClick={() => navigate("/attendance")} className="text-muted-foreground text-sm hover:text-foreground group">
-                                    Xem tất cả <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+                                    {SYSTEM_MESSAGES.CHECKIN.VIEW_ALL} <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
                                 </Button>
                             </div>
 
                             <div className="w-full overflow-auto">
                                 {loading ? (
-                                    <div className="flex justify-center py-8">
-                                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                    <div className="loading-spinner justify-center py-8">
+                                        <Loader2 className="w-6 h-6 animate-spin" />
                                     </div>
                                 ) : history.length === 0 ? (
-                                    <p className="text-center text-sm text-muted-foreground py-8">Chưa có dữ liệu chấm công.</p>
+                                    <p className="text-center text-sm text-muted-foreground py-8">{SYSTEM_MESSAGES.CHECKIN.NO_DATA}</p>
                                 ) : (
                                     <table className="w-full text-sm text-left">
                                         <thead className="text-xs text-muted-foreground uppercase border-b border-border bg-muted/50">
                                             <tr>
-                                                <th className="px-4 py-4 font-semibold tracking-wider">Ngày</th>
-                                                <th className="px-4 py-4 font-semibold tracking-wider">Check-in</th>
-                                                <th className="px-4 py-4 font-semibold tracking-wider">Check-out</th>
-                                                <th className="px-4 py-4 font-semibold tracking-wider">Tổng giờ</th>
-                                                <th className="px-4 py-4 font-semibold tracking-wider">Trạng thái</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">{SYSTEM_MESSAGES.CHECKIN.TABLE_DATE}</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">{SYSTEM_MESSAGES.CHECKIN.TABLE_CHECKIN}</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">{SYSTEM_MESSAGES.CHECKIN.TABLE_CHECKOUT}</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">{SYSTEM_MESSAGES.CHECKIN.TABLE_TOTAL_HOURS}</th>
+                                                <th className="px-4 py-4 font-semibold tracking-wider">{SYSTEM_MESSAGES.CHECKIN.TABLE_STATUS}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border">
@@ -374,8 +392,8 @@ export default function CheckinPage() {
             {/* Camera Modal */}
             <CameraModal
                 open={cameraOpen}
-                title={pendingAction === "checkIn" ? "Xác nhận Check-in" : "Xác nhận Check-out"}
-                description="Chụp ảnh khuôn mặt và xác nhận vị trí của bạn để điểm danh."
+                title={pendingAction === "checkIn" ? SYSTEM_MESSAGES.CHECKIN.CONFIRM_IN : SYSTEM_MESSAGES.CHECKIN.CONFIRM_OUT}
+                description={SYSTEM_MESSAGES.CHECKIN.CAMERA_DESC}
                 onCapture={handleCapture}
                 onClose={() => { setCameraOpen(false); setPendingAction(null) }}
             />

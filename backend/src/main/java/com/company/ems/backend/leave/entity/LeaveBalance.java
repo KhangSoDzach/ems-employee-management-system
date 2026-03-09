@@ -94,7 +94,9 @@ public class LeaveBalance extends BaseEntity {
      * Calculate remaining days
      */
     public void calculateRemainingDays() {
-        this.remainingDays = (totalDays != null ? totalDays : 0) - (usedDays != null ? usedDays : 0);
+        this.remainingDays = (totalDays != null ? totalDays : 0)
+                + (carriedForwardDays != null ? carriedForwardDays : 0)
+                - (usedDays != null ? usedDays : 0);
     }
 
     /**

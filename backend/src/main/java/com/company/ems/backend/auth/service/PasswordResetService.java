@@ -100,6 +100,9 @@ public class PasswordResetService {
             emailPort.sendPasswordResetOtp(user.getEmail(), otp);
             log.info("Password reset OTP sent successfully for user [{}]", user.getUsername());
 
+        } catch (BusinessException e) {
+            log.error("!!! initiatePasswordReset FAILED for user [{}]: {}", user.getUsername(), e.toString());
+            throw e;
         } catch (Exception e) {
             log.error("!!! initiatePasswordReset FAILED for user [{}]: {} - {}",
                     user.getUsername(), e.getClass().getName(), e.getMessage(), e);

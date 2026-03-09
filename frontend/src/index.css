@@ -227,3 +227,670 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+
+  /* =========================================
+     Shared UI utilities
+     ========================================= */
+  .page-layout-wrapper {
+    @apply flex flex-1 flex-col p-4 md:p-8 bg-gray-50/50 dark:bg-gray-950 min-h-screen;
+  }
+
+  .content-card {
+    @apply bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm;
+  }
+
+  .content-card-header {
+    @apply border shadow-sm flex flex-col items-center justify-between gap-6 relative overflow-hidden rounded-2xl p-6 md:p-8 md:flex-row md:items-start bg-white dark:bg-gray-900;
+  }
+
+  .section-title {
+    @apply text-lg font-bold flex items-center gap-2 border-b pb-4 mb-6;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 text-gray-600;
+  }
+
+  .form-label-bold {
+    @apply font-bold text-gray-700;
+  }
+
+  .input-readonly {
+    @apply bg-gray-50/50 focus-visible:ring-0 disabled:opacity-100;
+  }
+
+  .form-data-item {
+    @apply flex flex-col pt-1;
+  }
+
+  /* =========================================
+     PAGE LAYOUTS
+     ========================================= */
+  .page-layout-main {
+    @apply flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950;
+  }
+
+  .page-header {
+    @apply flex items-center justify-between;
+  }
+
+  .page-title {
+    @apply text-2xl font-semibold;
+  }
+
+  .page-header-actions {
+    @apply flex items-center gap-4;
+  }
+
+  /* =========================================
+     SEARCH & INPUTS
+     ========================================= */
+  .search-input {
+    @apply px-4 py-2 w-64 rounded-full bg-gray-100 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary;
+  }
+
+  .search-input-full {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+  }
+
+  /* =========================================
+     FILTER TABS
+     ========================================= */
+  .filter-tabs {
+    @apply flex gap-3;
+  }
+
+  .filter-tab {
+    @apply px-4 py-2 rounded-full text-sm font-semibold transition;
+  }
+
+  .filter-tab-active {
+    @apply bg-primary text-white;
+  }
+
+  .filter-tab-inactive {
+    @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+  }
+
+  /* =========================================
+     DATA TABLE
+     ========================================= */
+  .data-table-container {
+    @apply bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden;
+  }
+
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table-header {
+    @apply bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase text-xs;
+  }
+
+  .data-table-header-cell {
+    @apply px-6 py-4 text-left;
+  }
+
+  .data-table-cell {
+    @apply px-6 py-4;
+  }
+
+  .data-table-row {
+    @apply border-t hover:bg-gray-50 dark:hover:bg-gray-800 transition;
+  }
+
+  .data-table-cell-primary {
+    @apply px-6 py-4 font-medium text-gray-700;
+  }
+
+  .data-table-cell-muted {
+    @apply px-6 py-4 text-gray-600;
+  }
+
+  /* =========================================
+     STATUS BADGE
+     ========================================= */
+  .status-badge-base {
+    @apply text-xs font-bold px-3 py-1 rounded-full;
+  }
+
+  .status-badge-pill {
+    @apply text-[10px] font-bold px-2 py-1 rounded-full uppercase;
+  }
+
+  /* =========================================
+     PAGINATION
+     ========================================= */
+  .pagination-container {
+    @apply flex items-center justify-between px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 text-sm;
+  }
+
+  .pagination-info {
+    @apply text-gray-500;
+  }
+
+  .pagination-buttons {
+    @apply flex items-center gap-2;
+  }
+
+  .pagination-btn-active {
+    @apply w-8 h-8 rounded-full bg-primary text-white font-bold;
+  }
+
+  .pagination-btn-inactive {
+    @apply w-8 h-8 rounded-full hover:bg-gray-200;
+  }
+
+  /* =========================================
+     MODAL / DIALOG
+     ========================================= */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm;
+  }
+
+  .modal-content {
+    @apply bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-lg shadow-2xl flex flex-col;
+  }
+
+  .modal-header {
+    @apply px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center;
+  }
+
+  .modal-title {
+    @apply text-xl font-bold text-slate-800 dark:text-white;
+  }
+
+  .modal-body {
+    @apply flex-1 overflow-y-auto p-6;
+  }
+
+  .modal-footer {
+    @apply px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-slate-50/50;
+  }
+
+  /* =========================================
+     FORM ELEMENTS
+     ========================================= */
+  .form-label-required {
+    @apply text-xs font-bold text-slate-500 uppercase;
+  }
+
+  .form-label-secondary {
+    @apply text-xs font-bold text-slate-500;
+  }
+
+  .form-input {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+  }
+
+  .form-textarea {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm resize-none focus:ring-primary focus:border-primary;
+  }
+
+  .form-select {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+  }
+
+  /* =========================================
+     SECTION HEADERS
+     ========================================= */
+  .section-header {
+    @apply flex items-center gap-2 text-primary border-b border-slate-100 pb-2;
+  }
+
+  .section-header-title {
+    @apply font-bold uppercase text-sm tracking-wider;
+  }
+
+  /* =========================================
+     INFO BOX
+     ========================================= */
+  .info-box {
+    @apply p-4 bg-primary/5 border border-primary/10 rounded-md mt-4;
+  }
+
+  .info-box-content {
+    @apply flex items-start gap-3;
+  }
+
+  .info-box-icon {
+    @apply text-primary text-lg;
+  }
+
+  .info-box-text {
+    @apply text-[11px] text-slate-600 leading-relaxed;
+  }
+
+  /* =========================================
+     BUTTONS
+     ========================================= */
+  .btn-primary {
+    @apply px-5 py-2 bg-primary text-white rounded-full font-semibold hover:bg-primary/90;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-md hover:bg-slate-50 transition-colors text-slate-600;
+  }
+
+  .btn-action {
+    @apply px-8 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 transition-all shadow-md;
+  }
+
+  .btn-icon {
+    @apply w-8 h-8 rounded-full flex items-center justify-center;
+  }
+
+  /* =========================================
+     AVATAR
+     ========================================= */
+  .avatar-large {
+    @apply w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg relative flex items-center justify-center;
+  }
+
+  .avatar-medium {
+    @apply w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden;
+  }
+
+  .avatar-small {
+    @apply w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500;
+  }
+
+  .avatar-initials {
+    @apply text-3xl font-bold text-gray-400;
+  }
+
+  /* =========================================
+     CARD (Employee/Asset)
+     ========================================= */
+  .item-card {
+    @apply bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm;
+  }
+
+  .item-card-header {
+    @apply flex justify-between items-start mb-3;
+  }
+
+  .item-card-body {
+    @apply grid gap-2 border-t border-gray-50 dark:border-gray-700 pt-3 text-sm text-gray-600 dark:text-gray-400;
+  }
+
+  /* =========================================
+     DOCUMENT ITEM
+     ========================================= */
+  .document-item {
+    @apply flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100/70 dark:hover:bg-gray-800 transition-colors;
+  }
+
+  .document-icon-pdf {
+    @apply w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0;
+  }
+
+  .document-icon-image {
+    @apply w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0;
+  }
+
+  /* =========================================
+     STATS CARD
+     ========================================= */
+  .stats-card {
+    @apply border rounded-xl p-4 text-center;
+  }
+
+  .stats-card-value {
+    @apply text-3xl font-black mb-1;
+  }
+
+  .stats-card-label {
+    @apply text-xs font-bold text-gray-600 uppercase tracking-wider;
+  }
+
+  /* =========================================
+     PAGE HEADINGS
+     ========================================= */
+  .page-heading {
+    @apply text-3xl font-bold tracking-tight text-foreground;
+  }
+
+  .page-heading-sm {
+    @apply text-2xl font-semibold;
+  }
+
+  .page-subtitle {
+    @apply text-lg text-muted-foreground;
+  }
+
+  /* =========================================
+     SECTION LABELS
+     ========================================= */
+  .section-label {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
+  }
+
+  .section-label-with-icon {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2;
+  }
+
+  /* =========================================
+     CARD VARIANTS
+     ========================================= */
+  .card-base {
+    @apply rounded-xl border shadow-sm;
+  }
+
+  .card-elevated {
+    @apply rounded-xl border shadow-md hover:shadow-lg transition;
+  }
+
+  .data-card {
+    @apply rounded-2xl border shadow-sm overflow-hidden;
+  }
+
+  .data-card-soft {
+    @apply bg-background rounded-2xl border border-border shadow-sm overflow-hidden;
+  }
+
+  /* =========================================
+     ICON BOXES
+     ========================================= */
+  .icon-box {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center;
+  }
+
+  .icon-box-sm {
+    @apply w-9 h-9 rounded-lg flex items-center justify-center;
+  }
+
+  .icon-box-lg {
+    @apply w-16 h-16 rounded-2xl flex items-center justify-center;
+  }
+
+  /* =========================================
+     BADGE COLORS
+     ========================================= */
+  .badge-success {
+    @apply bg-green-100 text-green-700;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-700;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-700;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-700;
+  }
+
+  .badge-purple {
+    @apply bg-purple-100 text-purple-700;
+  }
+
+  .badge-gray {
+    @apply bg-gray-100 text-gray-700;
+  }
+
+  /* Badge with hover */
+  .badge-success-hover {
+    @apply bg-green-100 text-green-700 hover:bg-green-100;
+  }
+
+  .badge-info-hover {
+    @apply bg-blue-100 text-blue-700 hover:bg-blue-100;
+  }
+
+  .badge-warning-hover {
+    @apply bg-yellow-100 text-yellow-700 hover:bg-yellow-100;
+  }
+
+  .badge-error-hover {
+    @apply bg-red-100 text-red-700 hover:bg-red-100;
+  }
+
+  /* =========================================
+     FORM GROUPS
+     ========================================= */
+  .form-group {
+    @apply space-y-1;
+  }
+
+  .form-input-full {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+  }
+
+  .form-textarea-full {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm resize-none focus:ring-primary focus:border-primary;
+  }
+
+  .form-select-full {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+  }
+
+  .form-input-mono {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono focus:ring-primary focus:border-primary;
+  }
+
+  /* =========================================
+     STAT CARDS
+     ========================================= */
+  .stat-card-default {
+    @apply bg-card rounded-xl border p-6 shadow-sm;
+  }
+
+  .stat-card-colored {
+    @apply rounded-xl border p-6 text-center;
+  }
+
+  .stat-value-lg {
+    @apply text-3xl font-bold mt-1;
+  }
+
+  .stat-value-md {
+    @apply text-2xl font-bold mt-1;
+  }
+
+  .stat-label-default {
+    @apply text-xs font-bold text-gray-600 uppercase tracking-wider;
+  }
+
+  /* =========================================
+     DETAIL ROW
+     ========================================= */
+  .detail-row {
+    @apply flex items-center justify-between p-3 rounded-xl border bg-muted/30;
+  }
+
+  .detail-grid {
+    @apply grid grid-cols-2 gap-y-4 gap-x-6 bg-muted/20 p-4 rounded-xl border border-border/50;
+  }
+
+  /* =========================================
+     ACTION BUTTONS
+     ========================================= */
+  .btn-checkin {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2;
+  }
+
+  .btn-checkout {
+    @apply bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2;
+  }
+
+  .btn-cancel {
+    @apply bg-background hover:bg-muted text-foreground rounded-xl px-8 h-12 font-medium flex items-center gap-2;
+  }
+
+  .btn-approve {
+    @apply flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2;
+  }
+
+  .btn-reject {
+    @apply flex-1 rounded-xl text-red-500 bg-muted hover:bg-muted/70 flex items-center justify-center gap-2;
+  }
+
+  .btn-request-more {
+    @apply flex-1 rounded-xl text-orange-500 border-orange-200 hover:bg-orange-50 flex items-center justify-center gap-2;
+  }
+
+  /* =========================================
+     APPROVAL BUTTONS
+     ========================================= */
+  .btn-primary-lg {
+    @apply flex-1 h-9 font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm;
+  }
+
+  .btn-danger-lg {
+    @apply flex-1 h-9 font-semibold bg-red-50 text-red-500 border-red-200 hover:bg-red-100 hover:text-red-600;
+  }
+
+  /* =========================================
+     LOADING STATES
+     ========================================= */
+  .loading-spinner {
+    @apply flex items-center justify-center gap-2 text-muted-foreground;
+  }
+
+  .loading-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm;
+  }
+
+  /* =========================================
+     EMPTY STATE
+     ========================================= */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-muted-foreground p-8;
+  }
+
+  .empty-state-icon {
+    @apply w-16 h-16 mb-4 rounded-full bg-muted/50 flex items-center justify-center;
+  }
+
+  /* =========================================
+     DIALOG/CONTENT
+     ========================================= */
+  .dialog-content-base {
+    @apply w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-lg shadow-2xl flex flex-col bg-white dark:bg-slate-900;
+  }
+
+  .dialog-content-sm {
+    @apply sm:max-w-[480px] p-0 gap-0 rounded-xl overflow-hidden;
+  }
+
+  /* =========================================
+     PROGRESS BAR
+     ========================================= */
+  .progress-bar {
+    @apply h-full bg-green-500 rounded-full transition-all;
+  }
+
+  /* =========================================
+     ASSET SPECIFIC
+     ========================================= */
+  .asset-image-placeholder {
+    @apply w-full h-40 rounded-2xl overflow-hidden shadow-lg border-4 border-background z-10 bg-muted relative;
+  }
+
+  .asset-detail-section {
+    @apply border rounded-xl p-4 space-y-4;
+  }
+
+  .asset-history-item {
+    @apply flex items-center justify-between bg-white p-5 rounded-xl border border-slate-200 shadow-sm;
+  }
+
+  /* =========================================
+     MISC
+     ========================================= */
+  .text-mono {
+    @apply font-mono;
+  }
+
+  .text-truncate {
+    @apply truncate;
+  }
+
+  .center-content {
+    @apply flex items-center justify-center;
+  }
+
+  .center-content-between {
+    @apply flex items-center justify-between;
+  }
+
+  .gap-2-center {
+    @apply flex items-center gap-2;
+  }
+
+  /* =========================================
+     CARD REUSABLE PATTERNS
+     ========================================= */
+  .card-border {
+    @apply border border-border shadow-sm;
+  }
+
+  .card-border-hover {
+    @apply border p-6 shadow-sm hover:shadow-md transition;
+  }
+
+  .card-full {
+    @apply bg-white dark:bg-slate-900 rounded-lg border shadow-sm;
+  }
+
+  .card-overflow {
+    @apply rounded-lg border shadow-sm overflow-hidden;
+  }
+
+  .card-soft {
+    @apply bg-background rounded-2xl border border-border shadow-sm overflow-hidden;
+  }
+
+  .card-soft-sm {
+    @apply bg-background rounded-xl border border-border shadow-sm overflow-hidden;
+  }
+
+  .card-elevated-hover {
+    @apply rounded-xl border shadow-sm hover:shadow-md transition;
+  }
+
+  /* =========================================
+     BADGE REUSABLE
+     ========================================= */
+  .badge-status {
+    @apply px-2.5 py-0.5 text-xs font-semibold rounded-full;
+  }
+
+  .badge-outline {
+    @apply px-3 py-1 text-xs font-semibold rounded-md;
+  }
+
+  /* =========================================
+     BUTTON REUSABLE
+     ========================================= */
+  .btn-date {
+    @apply bg-card px-5 py-2.5 rounded-xl border border-border shadow-sm;
+  }
+
+  .btn-icon-upload {
+    @apply absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full border-2 border-white shadow-sm;
+  }
+
+  /* =========================================
+     FORM REUSABLE
+     ========================================= */
+  .form-textarea-resize {
+    @apply resize-none h-28 bg-white rounded-xl border-slate-200 shadow-sm placeholder:text-slate-400 p-4;
+  }
+
+  /* =========================================
+     SECTION HEADERS
+     ========================================= */
+  .section-title {
+    @apply text-xs font-bold uppercase tracking-wider;
+  }
+
+  .section-title-muted {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
+  }
+}

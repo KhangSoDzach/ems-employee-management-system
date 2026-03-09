@@ -28,33 +28,36 @@ import {
 
 import { attendanceService, AttendanceRecord, AttendanceSummary } from "@/services/attendanceService"
 
+import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { ATTENDANCE_STATUS } from "@/constants/theme"
+
 // ─── Formatters ───────────────────────────────────────────────────────────────
 function fmtTime(iso: string | null) {
-    if (!iso) return "—"
+    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
     return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
 }
 
 function fmtDate(iso: string | null) {
-    if (!iso) return "—"
+    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
     return format(new Date(iso), "dd/MM/yyyy")
 }
 
 function fmtWorkHours(minutes: number | null) {
-    if (minutes == null) return "—"
+    if (minutes == null) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
     const h = Math.floor(minutes / 60)
     const m = minutes % 60
-    return `${h}h ${m.toString().padStart(2, "0")}m`
+    return `${h}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${m.toString().padStart(2, "0")}m`
 }
 
 type StatusKey = AttendanceRecord["status"]
 
 function statusInfo(s: StatusKey): { label: string; cls: string } {
     const map: Record<string, { label: string; cls: string }> = {
-        PRESENT: { label: "Đúng giờ", cls: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-        LATE: { label: "Đi muộn", cls: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-        ABSENT: { label: "Vắng mặt", cls: "bg-red-500/10 text-red-600 border-red-500/20" },
-        HALF_DAY: { label: "Nửa ngày", cls: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-        ON_LEAVE: { label: "Nghỉ phép", cls: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
+        PRESENT: { label: ATTENDANCE_STATUS.PRESENT.label, cls: ATTENDANCE_STATUS.PRESENT.cls },
+        LATE: { label: ATTENDANCE_STATUS.LATE.label, cls: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
+        ABSENT: { label: ATTENDANCE_STATUS.ABSENT.label, cls: ATTENDANCE_STATUS.ABSENT.cls },
+        HALF_DAY: { label: ATTENDANCE_STATUS.HALF_DAY.label, cls: ATTENDANCE_STATUS.HALF_DAY.cls },
+        ON_LEAVE: { label: ATTENDANCE_STATUS.ON_LEAVE.label, cls: ATTENDANCE_STATUS.ON_LEAVE.cls },
     }
     return map[s] ?? { label: s, cls: "bg-muted text-muted-foreground" }
 }
@@ -62,9 +65,9 @@ function statusInfo(s: StatusKey): { label: string; cls: string } {
 // ─── Summary Card ─────────────────────────────────────────────────────────────
 function SummaryCard({ label, value, sub, color, loading }: { label: string; value: string; sub: string; color: string; loading?: boolean }) {
     return (
-        <Card className="border-border shadow-sm">
+        <Card className="card-border">
             <CardContent className="p-5">
-                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-1">{label}</p>
+                <p className="section-title-muted mb-1">{label}</p>
                 {loading ? <Loader2 className="w-5 h-5 animate-spin my-1 text-muted-foreground" /> : (
                     <p className={`text-3xl font-extrabold ${color}`}>{value}</p>
                 )}
@@ -155,9 +158,9 @@ export default function AttendanceHistoryPage() {
             <SidebarInset>
                 <SiteHeader />
 
-                <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+                <main className="page-layout-wrapper">
                     {/* Header */}
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <button
@@ -169,37 +172,37 @@ export default function AttendanceHistoryPage() {
                                 <span className="text-muted-foreground text-sm">/</span>
                                 <span className="text-sm font-semibold text-foreground">Lịch sử điểm danh</span>
                             </div>
-                            <h2 className="text-3xl font-bold tracking-tight text-foreground">Lịch sử điểm danh</h2>
+                            <h2 className="page-heading">{SYSTEM_MESSAGES.ATTENDANCE.TITLE}</h2>
                             <p className="text-muted-foreground mt-1">Xem toàn bộ lịch sử chấm công của bạn</p>
                         </div>
                     </div>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <SummaryCard
-                            label="Ngày đi làm"
-                            value={summary ? `${summary.presentDays}` : "—"}
+                            label={SYSTEM_MESSAGES.ATTENDANCE.STATS_PRESENT}
+                            value={summary ? `${summary.presentDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                             sub={`Tháng ${monthLabel}`}
                             color="text-emerald-600"
                             loading={summaryLoading}
                         />
                         <SummaryCard
-                            label="Ngày đi muộn"
-                            value={summary ? `${summary.lateDays}` : "—"}
+                            label={SYSTEM_MESSAGES.ATTENDANCE.STATS_LATE}
+                            value={summary ? `${summary.lateDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                             sub={`Tháng ${monthLabel}`}
                             color="text-amber-600"
                             loading={summaryLoading}
                         />
                         <SummaryCard
-                            label="Ngày vắng mặt"
-                            value={summary ? `${summary.absentDays}` : "—"}
+                            label={SYSTEM_MESSAGES.ATTENDANCE.STATS_ABSENT}
+                            value={summary ? `${summary.absentDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                             sub={`Tháng ${monthLabel}`}
                             color="text-red-600"
                             loading={summaryLoading}
                         />
                         <SummaryCard
-                            label="Tổng giờ làm"
-                            value={summary ? `${summary.totalWorkHours.toFixed(1)}h` : "—"}
+                            label={SYSTEM_MESSAGES.ATTENDANCE.STATS_WORK_HOURS}
+                            value={summary ? `${summary.totalWorkHours.toFixed(1)}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                             sub={`Tháng ${monthLabel}`}
                             color="text-foreground"
                             loading={summaryLoading}
@@ -207,7 +210,7 @@ export default function AttendanceHistoryPage() {
                     </div>
 
                     {/* Data Table */}
-                    <Card className="border-border shadow-sm">
+                    <Card className="card-border">
                         <CardHeader className="pb-4">
                             <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
                                 <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -219,7 +222,7 @@ export default function AttendanceHistoryPage() {
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                         <Input
-                                            placeholder="Tìm ngày, trạng thái..."
+                                            placeholder={SYSTEM_MESSAGES.SEARCH_PLACEHOLDER}
                                             value={search}
                                             onChange={e => setSearch(e.target.value)}
                                             className="pl-9 h-9 w-full sm:w-64 text-sm"
@@ -250,7 +253,7 @@ export default function AttendanceHistoryPage() {
                             ) : filtered.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                                     <Calendar className="w-12 h-12 mb-3 opacity-30" />
-                                    <p className="text-sm font-medium">Không tìm thấy dữ liệu</p>
+                                    <p className="text-sm font-medium">{SYSTEM_MESSAGES.NO_DATA}</p>
                                 </div>
                             ) : (
                                 <Table>
@@ -274,10 +277,10 @@ export default function AttendanceHistoryPage() {
                                                     <TableCell className="px-6 py-4 text-primary font-medium">{fmtTime(row.checkOutTime)}</TableCell>
                                                     <TableCell className="px-6 py-4 font-semibold text-foreground">{fmtWorkHours(row.workHours)}</TableCell>
                                                     <TableCell className="px-6 py-4 text-xs text-muted-foreground">
-                                                        {row.checkInMethod === "CAMERA_GEO" ? "Camera+GPS" : row.checkInMethod === "MANUAL" ? "Thủ công" : "—"}
+                                                        {row.checkInMethod === "CAMERA_GEO" ? SYSTEM_MESSAGES.COMMON.METHOD_CAMERA_GPS : row.checkInMethod === "MANUAL" ? SYSTEM_MESSAGES.COMMON.METHOD_MANUAL : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                                                     </TableCell>
                                                     <TableCell className="px-6 py-4">
-                                                        <Badge variant="outline" className={`text-xs font-semibold px-2.5 py-0.5 ${cls}`}>
+                                                        <Badge variant="outline" className={`status-badge px-2.5 py-0.5 ${cls}`}>
                                                             {label}
                                                         </Badge>
                                                     </TableCell>

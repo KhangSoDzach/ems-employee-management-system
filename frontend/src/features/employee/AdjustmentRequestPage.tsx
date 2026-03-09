@@ -49,6 +49,7 @@ import {
     type AdjustmentReason,
     type CreateAdjustmentPayload,
 } from "@/services/attendanceService"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 // ─── Backend ↔ UI mappers ─────────────────────────────────────────────────────
 
@@ -119,12 +120,12 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
                 </div>
                 <div>
                     <p className="font-semibold text-sm">
-                        {hasFilter ? "Không tìm thấy kết quả phù hợp" : "Bạn chưa có yêu cầu điều chỉnh nào"}
+                        {hasFilter ? SYSTEM_MESSAGES.ADJUSTMENT.EMPTY_FILTER_TITLE : SYSTEM_MESSAGES.ADJUSTMENT.EMPTY_TITLE}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                         {hasFilter
-                            ? "Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"
-                            : "Nhấn \"+ Tạo yêu cầu mới\" để bắt đầu"}
+                            ? SYSTEM_MESSAGES.ADJUSTMENT.EMPTY_FILTER_DESC
+                            : SYSTEM_MESSAGES.ADJUSTMENT.EMPTY_DESC}
                     </p>
                 </div>
             </div>
@@ -159,7 +160,7 @@ export default function AdjustmentRequestPage() {
             setTotalElements(res.totalElements)
             setTotalPages(res.totalPages)
         } catch {
-            toast.error("Không thể tải danh sách yêu cầu.")
+            toast.error(SYSTEM_MESSAGES.ADJUSTMENT.MSG_FETCH_ERROR)
         } finally {
             setLoading(false)
         }
@@ -190,8 +191,8 @@ export default function AdjustmentRequestPage() {
         const payload = buildPayload(data)
         await attendanceService.submitAdjustment(payload)
         await fetchRequests()
-        toast.success("Yêu cầu đã được gửi thành công!", {
-            description: "Yêu cầu đang chờ quản lý phê duyệt.",
+        toast.success(SYSTEM_MESSAGES.ADJUSTMENT.MSG_SUBMIT_SUCCESS, {
+            description: SYSTEM_MESSAGES.ADJUSTMENT.MSG_SUBMIT_DESC,
         })
     }
 
@@ -199,7 +200,7 @@ export default function AdjustmentRequestPage() {
         const payload = buildPayload(data)
         await attendanceService.resubmitAdjustment(Number(id), payload)
         await fetchRequests()
-        toast.success("Đã gửi lại yêu cầu thành công!")
+        toast.success(SYSTEM_MESSAGES.ADJUSTMENT.MSG_RESUBMIT_SUCCESS)
     }
 
     const clearAllFilters = () => {
@@ -215,21 +216,19 @@ export default function AdjustmentRequestPage() {
             <SidebarInset>
                 <SiteHeader />
 
-                <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+                <main className="page-layout-wrapper">
 
                     {/* Page Header */}
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="text-muted-foreground text-sm">Chấm công</span>
-                                <span className="text-muted-foreground text-sm">/</span>
-                                <span className="text-sm font-semibold text-foreground">Yêu cầu điều chỉnh</span>
+                                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.ADJUSTMENT.BREADCRUMB}</span>
                             </div>
-                            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                                Yêu cầu điều chỉnh chấm công
+                            <h1 className="page-heading">
+                                {SYSTEM_MESSAGES.ADJUSTMENT.TITLE}
                             </h1>
                             <p className="text-muted-foreground mt-1">
-                                Theo dõi lịch sử và trạng thái các yêu cầu điều chỉnh chấm công của bạn.
+                                {SYSTEM_MESSAGES.ADJUSTMENT.DESC}
                             </p>
                         </div>
                         <Button
@@ -237,7 +236,7 @@ export default function AdjustmentRequestPage() {
                             className="shrink-0 h-10 px-5 font-semibold gap-1.5 shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
-                            Tạo yêu cầu mới
+                            {SYSTEM_MESSAGES.ADJUSTMENT.BTN_CREATE}
                         </Button>
                     </div>
 
@@ -246,7 +245,7 @@ export default function AdjustmentRequestPage() {
                         <div className="relative flex-1 min-w-[180px] max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input
-                                placeholder="Tìm kiếm mã, lý do..."
+                                placeholder={SYSTEM_MESSAGES.ADJUSTMENT.SEARCH_PLACEHOLDER}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-9 h-9 w-full text-sm"
@@ -266,7 +265,7 @@ export default function AdjustmentRequestPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
                                     <SlidersHorizontal className="w-3.5 h-3.5" />
-                                    Trạng thái
+                                    {SYSTEM_MESSAGES.ADJUSTMENT.FILTER_STATUS}
                                     {statusFilter !== "ALL" && (
                                         <ActiveFilterBadge
                                             value={ADJUSTMENT_STATUS_CONFIG[statusFilter as AdjustmentStatus].label}
@@ -308,7 +307,7 @@ export default function AdjustmentRequestPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
                                     <SlidersHorizontal className="w-3.5 h-3.5" />
-                                    Loại chấm công
+                                    {SYSTEM_MESSAGES.ADJUSTMENT.FILTER_TYPE}
                                     {typeFilter !== "ALL" && (
                                         <ActiveFilterBadge
                                             value={ADJUSTMENT_TYPE_CONFIG[typeFilter as AdjustmentType].label}
@@ -347,7 +346,7 @@ export default function AdjustmentRequestPage() {
 
                         {hasFilter && (
                             <Button variant="ghost" size="sm" className="h-9 text-sm text-muted-foreground" onClick={clearAllFilters}>
-                                Xóa bộ lọc
+                                {SYSTEM_MESSAGES.ADJUSTMENT.BTN_CLEAR}
                             </Button>
                         )}
                     </div>
@@ -358,7 +357,7 @@ export default function AdjustmentRequestPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                        {["Mã yêu cầu", "Ngày tạo", "Ngày điều chỉnh", "Loại chấm công", "Thời gian đề xuất", "Trạng thái"].map((h) => (
+                                        {[SYSTEM_MESSAGES.ADJUSTMENT.TABLE_ID, SYSTEM_MESSAGES.ADJUSTMENT.TABLE_DATE_CREATED, SYSTEM_MESSAGES.ADJUSTMENT.TABLE_DATE_ADJUSTMENT, SYSTEM_MESSAGES.ADJUSTMENT.TABLE_TYPE, SYSTEM_MESSAGES.ADJUSTMENT.TABLE_TIME_PROPOSED, SYSTEM_MESSAGES.ADJUSTMENT.TABLE_STATUS].map((h) => (
                                             <TableHead key={h} className="py-4 font-semibold text-foreground px-6">{h}</TableHead>
                                         ))}
                                         <TableHead className="py-4 w-10" />
@@ -388,7 +387,7 @@ export default function AdjustmentRequestPage() {
                                                     <span className="font-mono text-sm font-medium text-foreground">
                                                         {req.proposedTimeIn && req.proposedTimeOut
                                                             ? `${req.proposedTimeIn} – ${req.proposedTimeOut}`
-                                                            : req.proposedTimeIn ?? req.proposedTimeOut ?? "—"}
+                                                            : req.proposedTimeIn ?? req.proposedTimeOut ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4"><StatusBadge status={req.status} /></TableCell>
@@ -408,7 +407,7 @@ export default function AdjustmentRequestPage() {
                                                                 className="cursor-pointer text-sm"
                                                                 onClick={() => setDetailRequest(req)}
                                                             >
-                                                                Xem chi tiết
+                                                                {SYSTEM_MESSAGES.ADJUSTMENT.BTN_DETAIL}
                                                             </DropdownMenuItem>
                                                             {req.status === "RETURNED" && (
                                                                 <>
@@ -416,14 +415,14 @@ export default function AdjustmentRequestPage() {
                                                                         className="cursor-pointer text-sm"
                                                                         onClick={() => setEditRequest(req)}
                                                                     >
-                                                                        Chỉnh sửa &amp; gửi lại
+                                                                        {SYSTEM_MESSAGES.ADJUSTMENT.BTN_EDIT_RESEND}
                                                                     </DropdownMenuItem>
                                                                     <DropdownMenuSeparator />
                                                                     <DropdownMenuItem
                                                                         className="cursor-pointer text-sm text-primary font-medium"
                                                                         onClick={() => setEditRequest(req)}
                                                                     >
-                                                                        Gửi lại
+                                                                        {SYSTEM_MESSAGES.ADJUSTMENT.BTN_RESEND}
                                                                     </DropdownMenuItem>
                                                                 </>
                                                             )}
@@ -439,7 +438,7 @@ export default function AdjustmentRequestPage() {
 
                         {/* Footer */}
                         <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Tổng {totalElements} yêu cầu</span>
+                            <span>{SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_TOTAL} {totalElements} {SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_UNIT}</span>
                             {totalPages > 1 && (
                                 <div className="flex items-center gap-2">
                                     <Button size="icon" variant="outline" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}>

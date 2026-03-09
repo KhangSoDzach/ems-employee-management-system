@@ -3,7 +3,6 @@ import {
   Search,
   SlidersHorizontal,
   MoreHorizontal,
-  Plus,
   X,
 } from "lucide-react";
 
@@ -157,10 +156,10 @@ export default function AssetGroupManagement() {
           {/* SUMMARY CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Tổng tài sản */}
-            <div className="bg-card rounded-2xl border p-6 shadow-sm hover:shadow-md transition">
+            <div className="card-elevated-hover">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                  <p className="section-title-muted font-medium">
                     Tổng tài sản nhóm
                   </p>
                   <h3 className="text-3xl font-bold mt-1">128</h3>
@@ -176,10 +175,10 @@ export default function AssetGroupManagement() {
             </div>
 
             {/* Đang sử dụng */}
-            <div className="bg-card rounded-2xl border p-6 shadow-sm hover:shadow-md transition">
+            <div className="card-elevated-hover">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                  <p className="section-title-muted font-medium">
                     Đang sử dụng
                   </p>
                   <h3 className="text-3xl font-bold mt-1">115</h3>
@@ -198,7 +197,7 @@ export default function AssetGroupManagement() {
             <div className="bg-card rounded-2xl border border-l-4 border-l-red-500 p-6 shadow-sm hover:shadow-md transition">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                  <p className="section-title-muted font-medium">
                     Cần bảo trì
                   </p>
                   <h3 className="text-3xl font-bold mt-1 text-red-600">13</h3>
