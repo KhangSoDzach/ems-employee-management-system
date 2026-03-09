@@ -20,6 +20,8 @@ import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
 import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.service.EmployeeService;
 
 import jakarta.validation.Valid;
@@ -31,22 +33,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmployeeController {
     private final EmployeeService employeeService;
-    /**
-     * Create a new employee
-     * POST /api/v1/employees
-     */
+    private final MessageService messages;
     @PostMapping
     @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')")
     public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(
             @Valid @RequestBody EmployeeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Employee created successfully", employeeService.createEmployee(request)));
+                .body(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_CREATED), employeeService.createEmployee(request)));
     }
 
-    /**
-     * Get all employees with pagination and filtering
-     * GET /api/v1/employees
-     */
     @GetMapping
     @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
     public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAllEmployees(
@@ -57,34 +52,22 @@ public class EmployeeController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search) {
         // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success("success", employeeService.getAllEmployees(page, size, department, position, status, search)));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getAllEmployees(page, size, department, position, status, search)));
     }
 
-    /**
-     * Get current authenticated employee profile
-     * GET /api/v1/employees/me
-     */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PublicEmployeeResponse>> getMyProfile() {
-        return ResponseEntity.ok(ApiResponse.success("success", employeeService.getMyProfile()));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getMyProfile()));
     }
 
-    /**
-     * Get employee by ID
-     * GET /api/v1/employees/{id}
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('EMPLOYEE_VIEW') and @empSec.canAccessEmployee(authentication, #id)")
     public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployeeById(@PathVariable Long id) {
         // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success("success", employeeService.getEmployeeById(id)));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getEmployeeById(id)));
     }
 
-    /**
-     * Update employee
-     * PUT /api/v1/employees/{id}
-     */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE') and @empSec.canAccessEmployee(authentication, #id)")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
@@ -92,25 +75,17 @@ public class EmployeeController {
             @Valid @RequestBody EmployeeRequest request) {
         EmployeeResponse response = employeeService.updateEmployee(id, request);
         // TODO: Implement service layer
-        return ResponseEntity.ok(ApiResponse.success("Employee updated successfully",response));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_UPDATED), response));
     }
 
-    /**
-     * Delete employee
-     * DELETE /api/v1/employees/{id}
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('EMPLOYEE_DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteEmployee(@PathVariable Long id) {
         // TODO: Implement service layer
         employeeService.deleteEmployee(id);
-        return ResponseEntity.ok(ApiResponse.success("Employee deleted successfully", null));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_DELETED), null));
     }
 
-    /**
-     * Upload files for employee (documents, avatar, etc.)
-     * POST /api/v1/employees/{id}/files
-     */
     @PostMapping(value = "/{id}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE') and @empSec.canAccessEmployee(authentication, #id)")
     public ResponseEntity<ApiResponse<String>> uploadEmployeeFiles(
@@ -118,25 +93,17 @@ public class EmployeeController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String fileType) {
         // TODO: Implement file upload service
-        return ResponseEntity.ok(ApiResponse.success("File uploaded successfully", null));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_FILE_UPLOADED), null));
     }
 
-    /**
-     * Import employees from CSV/Excel file
-     * POST /api/v1/employees/import
-     */
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('EMPLOYEE_IMPORT')")
     public ResponseEntity<ApiResponse<String>> importEmployees(
             @RequestParam("file") MultipartFile file) {
         // TODO: Implement import service
-        return ResponseEntity.ok(ApiResponse.success("Employees imported successfully", null));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_IMPORTED), null));
     }
 
-    /**
-     * Export employees to CSV/Excel
-     * GET /api/v1/employees/export
-     */
     @GetMapping("/export")
     @PreAuthorize("hasAuthority('EMPLOYEE_EXPORT')")
     public ResponseEntity<byte[]> exportEmployees(

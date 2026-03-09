@@ -32,7 +32,7 @@ public class LeaveController {
         // TODO: Implement leave request service
         LeaveResponse response = leaveService.createLeaveRequest(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Leave request submitted successfully",response));
+                .body(ApiResponse.success(response));
     }
 
     /**
@@ -52,7 +52,7 @@ public class LeaveController {
         PageResponse<LeaveResponse> response =
                 leaveService.getAllLeaves(page, size, employeeId, status, leaveType, startDate, endDate);
         // TODO: Implement get leaves service
-        return ResponseEntity.ok(ApiResponse.success("success", null));
+        return ResponseEntity.ok(ApiResponse.success( null));
     }
 
     /**
@@ -64,7 +64,7 @@ public class LeaveController {
     public ResponseEntity<ApiResponse<String>> getLeaveById(@PathVariable Long id) {
         LeaveResponse response = leaveService.getLeaveById(id);
         // TODO: Implement get leave by id service
-        return ResponseEntity.ok(ApiResponse.success(null, "success"));
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     /**
@@ -78,7 +78,7 @@ public class LeaveController {
             @Valid @RequestBody ApproveLeaveRequest request) {
         LeaveResponse response = leaveService.approveLeave(id, request);
         // TODO: Implement leave approval service
-        return ResponseEntity.ok(ApiResponse.success("Leave request processed successfully",response));
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -88,6 +88,6 @@ public class LeaveController {
     @PreAuthorize("hasPermission(null, 'LEAVE_CANCEL')")
     public ResponseEntity<ApiResponse<Void>> cancelLeave(@PathVariable Long id) {
         leaveService.cancelLeave(id);
-        return ResponseEntity.ok(ApiResponse.success("Hủy yêu cầu nghỉ phép thành công", null));
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

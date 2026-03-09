@@ -59,7 +59,6 @@ public class AdminIncidentController {
             @PathVariable Long id,
             @RequestBody(required = false) IncidentDto.ProcessRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
-
         return ResponseEntity.ok(
                 incidentService.approveReport(id, request, principal));
     }
@@ -70,7 +69,6 @@ public class AdminIncidentController {
             @PathVariable Long id,
             @RequestBody(required = false) IncidentDto.ProcessRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
-
         return ResponseEntity.ok(
                 incidentService.rejectReport(id, request, principal));
     }

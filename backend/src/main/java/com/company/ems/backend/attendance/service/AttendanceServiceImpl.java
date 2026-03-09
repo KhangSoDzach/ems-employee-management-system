@@ -17,6 +17,8 @@ import com.company.ems.backend.attendance.dto.CheckOutRequest;
 import com.company.ems.backend.attendance.entity.Attendance;
 import com.company.ems.backend.attendance.enums.AttendanceStatus;
 import com.company.ems.backend.attendance.enums.CheckInMethod;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.attendance.repository.AttendanceRepository;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.PageResponse;
@@ -53,6 +55,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     private final AttendanceRepository  attendanceRepository;
     private final EmployeeRepository    employeeRepository;
+    private final MessageService        messages;
     private final GeolocationService    geolocationService;
     private final PhotoStorageService   photoStorageService;
 
@@ -65,8 +68,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         // Guard: already checked in today?
         LocalDate today = LocalDate.now();
         if (attendanceRepository.existsByEmployeeIdAndDate(employee.getId(), today)) {
-            throw new BusinessException("ALREADY_CHECKED_IN",
-                    "Bạn đã check-in hôm nay rồi. Vui lòng check-out trước.");
+            throw new BusinessException("ALREADY_CHECKED_IN", messages.get(MessageCode.ATTENDANCE_ALREADY_CHECKIN));
         }
 
         // Validate distance (throws BusinessException if out of range)
@@ -118,12 +120,10 @@ public class AttendanceServiceImpl implements AttendanceService {
         LocalDate today = LocalDate.now();
         Attendance attendance = attendanceRepository
                 .findByEmployeeIdAndDate(employee.getId(), today)
-                .orElseThrow(() -> new BusinessException("NOT_CHECKED_IN",
-                        "Không tìm thấy bản ghi check-in hôm nay. Vui lòng check-in trước."));
+                .orElseThrow(() -> new BusinessException("NOT_CHECKED_IN", messages.get(MessageCode.ATTENDANCE_NOT_CHECKED_IN)));
 
         if (attendance.getCheckOutTime() != null) {
-            throw new BusinessException("ALREADY_CHECKED_OUT",
-                    "Bạn đã check-out hôm nay rồi.");
+            throw new BusinessException("ALREADY_CHECKED_OUT", messages.get(MessageCode.ATTENDANCE_ALREADY_CHECKOUT));
         }
 
         // Validate distance
@@ -232,7 +232,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     private Employee resolveEmployee(CustomUserPrincipal principal) {
         return employeeRepository.findByUserId(principal.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Employee record không tồn tại cho userId: " + principal.getUserId()));
+                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
     }
 
     /**
@@ -242,7 +242,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     private Long resolveEmployeeIdForQuery(Long requestedEmployeeId, CustomUserPrincipal principal) {
         boolean isEmployee = principal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ROLE_EMPLOYEE")
-                            || a.getAuthority().equals("ROLE_EMPLOYEE"));
+                        || a.getAuthority().equals("ROLE_EMPLOYEE"));
         if (isEmployee) {
             Employee e = resolveEmployee(principal);
             return e.getId();

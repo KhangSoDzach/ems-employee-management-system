@@ -20,6 +20,8 @@ import com.company.ems.backend.attendance.entity.AttendanceAdjustmentRequest;
 import com.company.ems.backend.attendance.enums.AdjustmentAction;
 import com.company.ems.backend.attendance.enums.AdjustmentRequestStatus;
 import com.company.ems.backend.attendance.repository.AttendanceAdjustmentHistoryRepository;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.attendance.repository.AttendanceAdjustmentRequestRepository;
 import com.company.ems.backend.attendance.repository.AttendanceRepository;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
@@ -62,6 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentService {
 
     private final AttendanceAdjustmentRequestRepository requestRepository;
+    private final MessageService       messages;
     private final AttendanceAdjustmentHistoryRepository historyRepository;
     private final AttendanceRepository                  attendanceRepository;
     private final EmployeeRepository                    employeeRepository;
@@ -128,7 +131,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                 null, AdjustmentRequestStatus.PENDING_LEVEL_1));
 
         // Notify level-1 approvers
-        notifyApprovers(saved, template, 1, "Yêu cầu điều chỉnh chấm công mới cần phê duyệt.");
+        notifyApprovers(saved, template, 1, messages.get(MessageCode.ADJUSTMENT_NOTIFY_NEW));
 
         log.info("Employee [{}] submitted adjustment request [{}] for date {}",
                 employee.getEmployeeCode(), saved.getId(), dto.getRequestDate());
@@ -137,16 +140,15 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
 
     @Override
     public AdjustmentRequestResponse resubmit(Long requestId,
-                                               AdjustmentRequestCreateDto dto,
-                                               CustomUserPrincipal principal) {
+                                              AdjustmentRequestCreateDto dto,
+                                              CustomUserPrincipal principal) {
         validateAtLeastOneProposedTime(dto);
 
         AttendanceAdjustmentRequest request = loadAndAssertOwnership(requestId, principal);
 
         if (request.getStatus() != AdjustmentRequestStatus.RETURNED_TO_EMPLOYEE) {
             throw new BusinessException("INVALID_REQUEST_STATE",
-                    "Chỉ có thể gửi lại yêu cầu đang ở trạng thái RETURNED_TO_EMPLOYEE. "
-                    + "Trạng thái hiện tại: " + request.getStatus());
+                    messages.get(MessageCode.ADJUSTMENT_INVALID_STATE, request.getStatus()));
         }
 
         AdjustmentRequestStatus previousStatus = request.getStatus();
@@ -179,7 +181,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
         // Re-notify level-1 approvers
         WorkflowTemplate template = workflowEngineService.getActiveTemplate(
                 WorkflowType.MANUAL_ATTENDANCE_ADJUSTMENT);
-        notifyApprovers(request, template, 1, "Yêu cầu điều chỉnh chấm công đã được gửi lại.");
+        notifyApprovers(request, template, 1, messages.get(MessageCode.ADJUSTMENT_NOTIFY_RESUBMIT));
 
         log.info("Employee [{}] resubmitted adjustment request [{}]",
                 request.getEmployee().getEmployeeCode(), requestId);
@@ -212,19 +214,18 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
             applyApprovedCorrectionToAttendance(request);
             historyRepository.save(AttendanceAdjustmentHistory.of(
                     request, null, AdjustmentAction.APPLIED_TO_ATTENDANCE,
-                    null, "Bản ghi chấm công đã được cập nhật tự động sau khi phê duyệt.",
+                    null, messages.get(MessageCode.ADJUSTMENT_AUTO_UPDATED),
                     AdjustmentRequestStatus.APPROVED, AdjustmentRequestStatus.APPROVED));
 
             // Notify employee
-            notifyEmployee(request, "ADJUSTMENT_REQUEST_APPROVED",
-                    "Yêu cầu điều chỉnh chấm công của bạn đã được phê duyệt.");
+            notifyEmployee(request, "ADJUSTMENT_REQUEST_APPROVED", messages.get(MessageCode.ADJUSTMENT_NOTIFY_APPROVED));
             log.info("Adjustment request [{}] APPROVED by user [{}]", requestId, principal.getUsername());
         } else {
             // Notify next level approvers
             WorkflowTemplate template = workflowEngineService.getActiveTemplate(
                     WorkflowType.MANUAL_ATTENDANCE_ADJUSTMENT);
             notifyApprovers(request, template, request.getCurrentApprovalLevel(),
-                    "Yêu cầu điều chỉnh chấm công cần được phê duyệt ở cấp " + request.getCurrentApprovalLevel());
+                    messages.get(MessageCode.ADJUSTMENT_NOTIFY_NEXT_LEVEL, request.getCurrentApprovalLevel()));
             log.info("Adjustment request [{}] advanced to level {} by user [{}]",
                     requestId, request.getCurrentApprovalLevel(), principal.getUsername());
         }
@@ -236,7 +237,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
     public AdjustmentRequestResponse reject(Long requestId,
                                             ApprovalActionDto dto,
                                             CustomUserPrincipal principal) {
-        assertNonBlankReason(dto.getReason(), "Lý do từ chối là bắt buộc.");
+        assertNonBlankReason(dto.getReason(), messages.get(MessageCode.ADJUSTMENT_REJECT_REASON));
 
         AttendanceAdjustmentRequest request = loadPendingRequest(requestId);
         assertApproverPermission(principal);
@@ -253,8 +254,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                 levelActedOn, dto.getReason(),
                 statusBefore, AdjustmentRequestStatus.REJECTED));
 
-        notifyEmployee(request, "ADJUSTMENT_REQUEST_REJECTED",
-                "Yêu cầu điều chỉnh chấm công của bạn đã bị từ chối. Lý do: " + dto.getReason());
+        notifyEmployee(request, "ADJUSTMENT_REQUEST_REJECTED", messages.get(MessageCode.ADJUSTMENT_NOTIFY_REJECTED, dto.getReason()));
 
         log.info("Adjustment request [{}] REJECTED by user [{}] — reason: {}",
                 requestId, principal.getUsername(), dto.getReason());
@@ -265,7 +265,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
     public AdjustmentRequestResponse returnToEmployee(Long requestId,
                                                       ApprovalActionDto dto,
                                                       CustomUserPrincipal principal) {
-        assertNonBlankReason(dto.getReason(), "Lý do gửi lại là bắt buộc.");
+        assertNonBlankReason(dto.getReason(), messages.get(MessageCode.ADJUSTMENT_RETURN_REASON));
 
         AttendanceAdjustmentRequest request = loadPendingRequest(requestId);
         assertApproverPermission(principal);
@@ -282,8 +282,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                 levelActedOn, dto.getReason(),
                 statusBefore, AdjustmentRequestStatus.RETURNED_TO_EMPLOYEE));
 
-        notifyEmployee(request, "ADJUSTMENT_REQUEST_RETURNED",
-                "Yêu cầu điều chỉnh chấm công của bạn đã được trả lại để chỉnh sửa. Ghi chú: " + dto.getReason());
+        notifyEmployee(request, "ADJUSTMENT_REQUEST_RETURNED", messages.get(MessageCode.ADJUSTMENT_NOTIFY_RETURNED, dto.getReason()));
 
         log.info("Adjustment request [{}] RETURNED_TO_EMPLOYEE by user [{}] — reason: {}",
                 requestId, principal.getUsername(), dto.getReason());
@@ -402,13 +401,13 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
     private void validateAtLeastOneProposedTime(AdjustmentRequestCreateDto dto) {
         if (dto.getProposedCheckInTime() == null && dto.getProposedCheckOutTime() == null) {
             throw new BusinessException("MISSING_PROPOSED_TIME",
-                    "Phải cung cấp ít nhất một trong hai: giờ check-in hoặc giờ check-out đề xuất.");
+                    messages.get(MessageCode.ADJUSTMENT_MISSING_TIME));
         }
     }
 
     private void assertNonBlankReason(String reason, String errorMessage) {
         if (reason == null || reason.isBlank()) {
-            throw new BusinessException("REASON_REQUIRED", errorMessage);
+            throw new BusinessException("REASON_REQUIRED", messages.get(MessageCode.ADJUSTMENT_REASON_REQUIRED, errorMessage));
         }
     }
 
@@ -429,7 +428,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                         "AttendanceAdjustmentRequest", "id", requestId));
         if (!request.isPending()) {
             throw new BusinessException("INVALID_REQUEST_STATE",
-                    "Yêu cầu không ở trạng thái chờ duyệt. Trạng thái hiện tại: " + request.getStatus());
+                    messages.get(MessageCode.ADJUSTMENT_INVALID_STATE, request.getStatus()));
         }
         return request;
     }
@@ -482,7 +481,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
     private Employee resolveEmployee(CustomUserPrincipal principal) {
         return employeeRepository.findByUserId(principal.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Employee record không tồn tại cho userId: " + principal.getUserId()));
+                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
     }
 
     private User resolveUser(CustomUserPrincipal principal) {
@@ -493,7 +492,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
     private boolean hasRole(CustomUserPrincipal p, String role) {
         return p.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals(role)
-                            || a.getAuthority().equals("ROLE_" + role));
+                        || a.getAuthority().equals("ROLE_" + role));
     }
 
     private boolean hasAuthority(CustomUserPrincipal p, String authority) {

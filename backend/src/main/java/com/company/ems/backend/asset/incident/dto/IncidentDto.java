@@ -2,6 +2,7 @@ package com.company.ems.backend.asset.incident.dto;
 
 import com.company.ems.backend.asset.incident.entity.IncidentType;
 import com.company.ems.backend.asset.incident.entity.ReportStatus;
+import com.company.ems.backend.common.validation.ValidationMessages;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,11 +16,11 @@ public class IncidentDto {
 
     @Data
     public static class SubmitRequest {
-        @NotNull(message = "Incident type is required")
+        @NotNull(message = ValidationMessages.INCIDENT_TYPE_REQUIRED)
         private IncidentType incidentType;
 
-        @NotBlank(message = "Description is required")
-        @Size(min = 10, max = 2000, message = "Description must be 10–2000 characters")
+        @NotBlank(message = ValidationMessages.DESCRIPTION_REQUIRED)
+        @Size(min = 10, max = 2000, message = ValidationMessages.DESCRIPTION_SIZE)
         private String description;
     }
 
