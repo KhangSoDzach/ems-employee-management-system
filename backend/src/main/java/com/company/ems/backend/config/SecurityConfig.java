@@ -51,7 +51,6 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/api/v1/asset/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
@@ -60,6 +59,8 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/info"
                         ).permitAll()
+                        // Allow Spring's internal error dispatch to pass through without auth
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

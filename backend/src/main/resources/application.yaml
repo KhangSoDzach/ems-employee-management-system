@@ -2,6 +2,11 @@ spring:
   application:
     name: ems-backend
 
+  # Active profile: dev (XAMPP), docker (Docker Compose)
+  # Override at runtime: SPRING_PROFILES_ACTIVE=docker
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
   # Mail / SMTP Configuration (for Forgot Password OTP)
   mail:
     host: ${MAIL_HOST:smtp.mailtrap.io}
@@ -16,21 +21,11 @@ spring:
       mail.smtp.timeout: 3000
       mail.smtp.writetimeout: 5000
   # Database Configuration
-  # Hybrid dev: DB chạy trong Docker (port 3306 publish ra host), BE/FE chạy trên host.
-  # Default credentials khớp với docker-compose.yml (MYSQL_ROOT_PASSWORD=root123).
-  # Override bằng env vars khi deploy.
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root123}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-  
+  # Datasource settings are defined per-profile:
+  #   application-dev.yaml    → XAMPP / local MySQL (localhost:3306)
+  #   application-docker.yaml → Docker Compose MySQL service (mysql:3306)
+  # Do NOT set datasource defaults here; use profile files instead.
+
   # JPA/Hibernate Configuration
   jpa:
     hibernate:

@@ -8,9 +8,7 @@ import com.company.ems.backend.leave.dto.LeaveApprovalRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
 import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.leave.entity.LeaveApprovalHistory;
-import com.company.ems.backend.leave.enums.LeaveApprovalAction;
 import com.company.ems.backend.leave.enums.LeaveStatus;
-import com.company.ems.backend.leave.entity.LeaveBalance;
 import com.company.ems.backend.leave.repository.LeaveApprovalHistoryRepository;
 import com.company.ems.backend.leave.repository.LeaveRepository;
 import com.company.ems.backend.user.entity.User;
@@ -24,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 

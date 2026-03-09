@@ -1,16 +1,12 @@
 package com.company.ems.backend.asset.incident.dto;
 
 import com.company.ems.backend.asset.incident.entity.IncidentType;
-import com.company.ems.backend.asset.incident.entity.ReportStatus;
 import com.company.ems.backend.common.validation.ValidationMessages;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 public class IncidentDto {
 
