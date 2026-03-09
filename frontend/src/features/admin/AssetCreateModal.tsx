@@ -268,6 +268,3 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
     </div>
   );
 }
-
-  );
-}

@@ -23,43 +23,48 @@ public class IncidentDto {
         private String description;
     }
 
-    @Data @Builder
+    @Data
+    @Builder
     public static class ReportRow {
-        private Long    id;
-        private String  reportId;
-        private String  asset;
-        private String  assetTag;
-        private String  issueType;
-        private String  dateReported;
-        private String  status;
-        private String  statusLabel;
-        private String  statusColor;
+        private Long id;
+        private String reportId;
+        private String asset;
+        private String assetTag;
+        private String issueType;
+        private String dateReported;
+        private String status;
+        private String statusLabel;
+        private String statusColor;
     }
 
-    @Data @Builder
+    @Data
+    @Builder
     public static class ReportDetail {
-        private Long          id;
-        private String        reportId;
-        private String        asset;
-        private String        assetCode;
-        private String        assetTag;
-        private String        incidentType;
-        private String        incidentTypeLabel;
-        private String        description;
-        private String        attachmentUrl;
-        private String        status;
-        private String        statusLabel;
-        private String        statusColor;
-        private String        reportedBy;
-        private String        reportedAt;
-        private String        processedBy;
-        private String        processedAt;
-        private String        processNote;
+        private Long id;
+        private String reportId;
+        private String asset;
+        private String assetCode;
+        private String assetTag;
+        private String incidentType;
+        private String incidentTypeLabel;
+        private String description;
+        private String attachmentUrl;
+        private String status;
+        private String statusLabel;
+        private String statusColor;
+        private String reportedBy;
+        private String reportedAt;
+        private String processedBy;
+        private String processedAt;
+        private String processNote;
+        private String assetCondition;
+        private String assetStatus;
     }
 
-    @Data @Builder
+    @Data
+    @Builder
     public static class MyAsset {
-        private Long   id;
+        private Long id;
         private String name;
         private String tag;
         private String assetType;
@@ -72,9 +77,10 @@ public class IncidentDto {
         private String note;
     }
 
-    @Data @Builder
+    @Data
+    @Builder
     public static class AdminListItem {
-        private Long   id;
+        private Long id;
         private String reportId;
         private String asset;
         private String employeeName;

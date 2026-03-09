@@ -67,6 +67,8 @@ public class IncidentMapper {
                                 .processedBy(r.getProcessedBy() != null ? r.getProcessedBy().getUsername() : null)
                                 .processedAt(r.getProcessedAt() != null ? r.getProcessedAt().format(DETAIL_FMT) : null)
                                 .processNote(r.getProcessNote())
+                                .assetCondition(r.getAsset().getCondition().name())
+                                .assetStatus(r.getAsset().getStatus().name())
                                 .build();
         }
 

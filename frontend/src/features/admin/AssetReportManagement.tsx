@@ -22,7 +22,15 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { assetService, AdminIncidentListItem, IncidentReportDetail } from "@/services/assetService"
+import {
+    assetService,
+    AdminIncidentListItem,
+    IncidentReportDetail,
+    ASSET_CONDITION_LABELS,
+    AssetCondition,
+    ASSET_STATUS_LABELS,
+    AssetStatus
+} from "@/services/assetService"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -299,9 +307,17 @@ export default function AssetReportManagement() {
                                                 Thông tin tài sản
                                             </h4>
                                             <div className="bg-slate-50/50 p-5 rounded-3xl border-2 border-slate-50 space-y-4">
-                                                <div>
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên tài sản</p>
-                                                    <p className="text-lg font-black text-slate-900 tracking-tight">{selectedReport.asset}</p>
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên tài sản</p>
+                                                        <p className="text-lg font-black text-slate-900 tracking-tight">{selectedReport.asset}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</p>
+                                                        <p className="text-xs font-black text-blue-600 tracking-tighter uppercase whitespace-nowrap">
+                                                            {ASSET_STATUS_LABELS[selectedReport.assetStatus as AssetStatus] || selectedReport.assetStatus}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                                 <div className="flex items-center justify-between">
                                                     <div>
@@ -312,6 +328,26 @@ export default function AssetReportManagement() {
                                                         {selectedReport.assetTag}
                                                     </Badge>
                                                 </div>
+
+                                                {/* AC-05: Show current state before approving */}
+                                                {(selectedReport.status === 'PENDING' || selectedReport.status === 'APPROVED') && (
+                                                    <div className="grid grid-cols-2 gap-4 pt-2">
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tình trạng hiện tại</p>
+                                                            <p className="text-sm font-black text-slate-800 tracking-tighter">
+                                                                {ASSET_CONDITION_LABELS[selectedReport.assetCondition as AssetCondition] || selectedReport.assetCondition}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                                                                {selectedReport.status === 'PENDING' ? 'Mục tiêu cập nhật' : 'Đã cập nhật thành'}
+                                                            </p>
+                                                            <p className="text-sm font-black text-rose-600 tracking-tighter">
+                                                                {selectedReport.incidentType === 'DAMAGED' ? 'Hư hỏng (DAMAGED)' : 'Mất mát (LOST)'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 

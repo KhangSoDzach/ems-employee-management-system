@@ -1,26 +1,26 @@
 import api from '@/lib/axios';
 
 // ─── Enums (mirror backend) ───────────────────────────────────────────────────
-export type AssetStatus    = 'AVAILABLE' | 'ASSIGNED' | 'RETIRED';
+export type AssetStatus = 'AVAILABLE' | 'ASSIGNED' | 'RETIRED';
 export type AssetCondition = 'NEW' | 'GOOD' | 'DAMAGED' | 'LOST' | 'DISPOSED';
 
 export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {
     AVAILABLE: 'Sẵn dùng',
-    ASSIGNED:  'Đang cấp phát',
-    RETIRED:   'Đã thu hồi',
+    ASSIGNED: 'Đang cấp phát',
+    RETIRED: 'Đã thu hồi',
 };
 
 export const ASSET_STATUS_COLORS: Record<AssetStatus, string> = {
     AVAILABLE: 'bg-green-100 text-green-700',
-    ASSIGNED:  'bg-blue-100 text-blue-700',
-    RETIRED:   'bg-yellow-100 text-yellow-700',
+    ASSIGNED: 'bg-blue-100 text-blue-700',
+    RETIRED: 'bg-yellow-100 text-yellow-700',
 };
 
 export const ASSET_CONDITION_LABELS: Record<AssetCondition, string> = {
-    NEW:      'Mới',
-    GOOD:     'Tốt',
-    DAMAGED:  'Hư hỏng',
-    LOST:     'Thất lạc',
+    NEW: 'Mới',
+    GOOD: 'Tốt',
+    DAMAGED: 'Hư hỏng',
+    LOST: 'Thất lạc',
     DISPOSED: 'Thanh lý',
 };
 
@@ -155,6 +155,8 @@ export interface IncidentReportDetail {
     processedBy: string | null;
     processedAt: string | null;
     processNote: string | null;
+    assetCondition: string;
+    assetStatus: string;
 }
 
 export interface AdminIncidentListItem {
