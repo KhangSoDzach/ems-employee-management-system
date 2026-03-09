@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { AlertTriangle, FileText, Laptop, Monitor, Mouse, XCircle } from "lucide-react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { AlertTriangle, FileText, Laptop, Monitor, Mouse, XCircle, Calendar, ChevronRight, Upload, Loader2, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -31,89 +31,52 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { assetService, MyAsset, IncidentReportRow } from "@/services/assetService"
 
-/* ─────────────── MOCK DATA ─────────────── */
-
-type AssetStatus = "PENDING" | "APPROVED" | "REJECTED"
-
-interface Asset {
-    id: string
-    name: string
-    tag: string
-    icon: React.ElementType
-}
-
-interface Report {
-    id: string
-    asset: string
-    issueType: string
-    dateReported: string
-    status: AssetStatus
-}
-
-const assignedAssets: Asset[] = [
-    { id: "1", name: "MacBook Pro 16\"", tag: "AST-10042", icon: Laptop },
-    { id: "2", name: "Dell UltraSharp 27\"", tag: "AST-10087", icon: Monitor },
-    { id: "3", name: "Logitech MX Master 3", tag: "AST-10112", icon: Mouse },
-]
-
-const recentReports: Report[] = [
-    { id: "REP-2025-089", asset: "Dell UltraSharp 27\"", issueType: "Screen Flickering", dateReported: "Oct 26, 2025", status: "PENDING" },
-    { id: "REP-2025-042", asset: "MacBook Pro 16\"", issueType: "Battery not holding charge", dateReported: "Sep 12, 2025", status: "APPROVED" },
-    { id: "REP-2025-015", asset: "Logitech MX Master 3", issueType: "Scroll wheel sticky", dateReported: "Jul 05, 2025", status: "REJECTED" },
-    { id: "REP-2025-008", asset: "MacBook Pro 16\"", issueType: "Keyboard key stuck", dateReported: "May 18, 2025", status: "APPROVED" },
-    { id: "REP-2024-231", asset: "Dell UltraSharp 27\"", issueType: "Dead pixel on display", dateReported: "Dec 02, 2024", status: "APPROVED" },
-    { id: "REP-2024-198", asset: "Logitech MX Master 3", issueType: "Bluetooth disconnecting", dateReported: "Oct 15, 2024", status: "REJECTED" },
-]
+/* ─────────────── CONSTANTS ─────────────── */
 
 const INCIDENT_TYPES = [
-    "Hardware Malfunction",
-    "Screen Flickering",
-    "Battery Issue",
-    "Peripheral Not Working",
-    "Software / OS Issue",
-    "Other",
+    { value: "DAMAGED", label: "Hư hỏng (Damaged)" },
+    { value: "LOST", label: "Mất mát (Lost)" },
 ]
-
-/* ─────────────── STATUS BADGE ─────────────── */
-
-const STATUS_CONFIG: Record<AssetStatus, { label: string; className: string }> = {
-    PENDING: {
-        label: "Pending",
-        className: "bg-amber-50 text-amber-600 border border-amber-300 hover:bg-amber-50",
-    },
-    APPROVED: {
-        label: "Approved",
-        className: "bg-emerald-50 text-emerald-600 border border-emerald-300 hover:bg-emerald-50",
-    },
-    REJECTED: {
-        label: "Rejected",
-        className: "bg-red-50 text-red-600 border border-red-300 hover:bg-red-50",
-    },
-}
 
 /* ─────────────── ASSET CARD ─────────────── */
 
-function AssetCard({ asset, onReportIssue }: { asset: Asset; onReportIssue: (asset: Asset) => void }) {
-    const Icon = asset.icon
+function AssetCard({ asset, onReportIssue }: { asset: MyAsset; onReportIssue: (asset: MyAsset) => void }) {
+    const isLaptop = asset.assetType?.toLowerCase().includes("laptop")
+    const isMonitor = asset.assetType?.toLowerCase().includes("monitor")
+    const Icon = isLaptop ? Laptop : (isMonitor ? Monitor : Mouse)
+
     return (
-        <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden flex flex-col">
+        <div className="group rounded-xl border border-border bg-card hover:border-blue-500/50 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col">
             {/* Icon area */}
-            <div className="h-36 bg-muted/40 flex items-center justify-center">
-                <Icon className="w-14 h-14 text-muted-foreground/50 stroke-[1.3]" />
+            <div className="h-40 bg-muted/30 flex items-center justify-center relative overflow-hidden text-muted-foreground/40 group-hover:text-blue-500/30">
+                <Icon className="w-16 h-16 stroke-[1] group-hover:scale-110 transition-transform duration-500" />
+                {asset.imageUrl && (
+                    <img
+                        src={asset.imageUrl}
+                        alt={asset.name}
+                        className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    />
+                )}
             </div>
 
             {/* Info area */}
-            <div className="p-4 flex flex-col gap-3 flex-1">
+            <div className="p-5 flex flex-col gap-4 flex-1">
                 <div>
-                    <p className="font-semibold text-foreground text-sm leading-tight">{asset.name}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">Asset Tag: {asset.tag}</p>
+                    <h3 className="font-bold text-foreground text-base tracking-tight leading-tight line-clamp-1">{asset.name}</h3>
+                    <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground font-medium uppercase tracking-widest">
+                        <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0 h-4 uppercase tracking-tighter bg-muted/50 border-none">
+                            {asset.tag}
+                        </Badge>
+                        <span>{asset.assetType}</span>
+                    </div>
                 </div>
 
                 <Button
                     variant="outline"
                     size="sm"
-                    className="w-full h-8 gap-1.5 text-xs font-semibold text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600"
+                    className="w-full h-9 gap-2 text-xs font-bold text-rose-500 border-rose-100 bg-rose-50/30 hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all active:scale-[0.98]"
                     onClick={() => onReportIssue(asset)}
                 >
                     <AlertTriangle className="w-3.5 h-3.5" />
@@ -126,116 +89,207 @@ function AssetCard({ asset, onReportIssue }: { asset: Asset; onReportIssue: (ass
 
 /* ─────────────── MAIN PAGE ─────────────── */
 
-export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole?: "employee" | "manager" | "hr" }) {
-    const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole?: "employee" | "manager" | "hr" | "admin" }) {
+    const [assets, setAssets] = useState<MyAsset[]>([])
+    const [reports, setReports] = useState<IncidentReportRow[]>([])
+    const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
+
+    const [selectedAsset, setSelectedAsset] = useState<MyAsset | null>(null)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [incidentType, setIncidentType] = useState("")
     const [description, setDescription] = useState("")
-    const [showAll, setShowAll] = useState(false)
+    const [attachment, setAttachment] = useState<File | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const PREVIEW_COUNT = 3
-    const displayedReports = showAll ? recentReports : recentReports.slice(0, PREVIEW_COUNT)
+    const fetchContent = useCallback(async () => {
+        try {
+            const [assetList, reportList] = await Promise.all([
+                assetService.getMyAssets(),
+                assetService.getMyReports(0, 50)
+            ])
+            setAssets(assetList)
+            setReports(reportList.content)
+        } catch (error) {
+            toast.error("Lỗi khi tải dữ liệu")
+            console.error(error)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
 
-    const handleReportIssue = (asset: Asset) => {
+    useEffect(() => {
+        fetchContent()
+    }, [fetchContent])
+
+    const handleReportIssue = (asset: MyAsset) => {
         setSelectedAsset(asset)
         setIncidentType("")
         setDescription("")
+        setAttachment(null)
         setDialogOpen(true)
     }
 
-    const handleSubmit = () => {
-        setDialogOpen(false)
-        // Simulate forbidden 403 toast
-        setTimeout(() => {
-            toast.error("Forbidden", {
-                description: "You do not have permission to perform this action.",
-                icon: <XCircle className="w-5 h-5 text-red-500" />,
-                style: { borderColor: "#fca5a5" },
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error("File quá lớn. Vui lòng chọn file dưới 5MB.")
+                return
+            }
+            setAttachment(file)
+        }
+    }
+
+    const handleSubmit = async () => {
+        if (!selectedAsset) return
+        if (!incidentType) {
+            toast.warning("Vui lòng chọn loại sự cố")
+            return
+        }
+        if (!description || description.length < 10) {
+            toast.warning("Vui lòng nhập mô tả chi tiết (tối thiểu 10 ký tự)")
+            return
+        }
+
+        setSubmitting(true)
+        try {
+            await assetService.submitReport(selectedAsset.id, {
+                incidentType,
+                description
+            }, attachment || undefined)
+
+            toast.success("Báo cáo thành công", {
+                description: "Báo cáo của bạn đã được gửi tới HR để xử lý.",
+                icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />
             })
-        }, 200)
+            setDialogOpen(false)
+            fetchContent()
+        } catch (error: any) {
+            toast.error("Gửi báo cáo thất bại", {
+                description: error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại sau."
+            })
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     return (
         <SidebarProvider>
-            <AppSidebar role={sidebarRole} variant="inset" />
+            <AppSidebar role={sidebarRole === "admin" ? "admin" : (sidebarRole === "hr" ? "hr" : (sidebarRole === "manager" ? "manager" : "employee"))} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 
-                <main className="flex-1 space-y-8 p-4 md:p-8 pt-6 bg-background min-h-screen">
+                <main className="flex-1 space-y-10 p-4 md:p-8 pt-6 bg-[#fafafa] min-h-screen">
 
                     {/* ── Page Header ── */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-muted-foreground text-sm">Tài sản</span>
-                            <span className="text-muted-foreground text-sm">/</span>
-                            <span className="text-sm font-semibold text-foreground">Tài sản của tôi</span>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground/80">
+                                <span>Trang quản lý</span>
+                                <ChevronRight className="w-3.5 h-3.5" />
+                                <span className="text-foreground/90 font-bold uppercase tracking-widest text-[11px]">Tài sản của tôi</span>
+                            </div>
+                            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 drop-shadow-sm">My Equipment</h1>
+                            <p className="text-slate-500 font-medium max-w-2xl text-sm">
+                                Dưới đây là các tài sản công ty đã cấp phát cho bạn. Hãy giữ gìn cẩn thận và báo cáo ngay nếu có sự cố xảy ra.
+                            </p>
                         </div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">My Assets</h1>
-                        <p className="text-muted-foreground mt-1 text-sm">
-                            Manage your assigned equipment and report any issues.
-                        </p>
                     </div>
 
                     {/* ── Assigned Equipment ── */}
-                    <section>
-                        <h2 className="text-base font-bold text-foreground mb-4">Assigned Equipment</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {assignedAssets.map((asset) => (
-                                <AssetCard key={asset.id} asset={asset} onReportIssue={handleReportIssue} />
-                            ))}
+                    <section className="space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.3)]" />
+                            <h2 className="text-xl font-bold text-slate-800 tracking-tight">Cấp phát hiện có</h2>
                         </div>
+
+                        {loading ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="h-72 rounded-xl border border-border animate-pulse bg-slate-100" />
+                                ))}
+                            </div>
+                        ) : assets.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {assets.map((asset) => (
+                                    <AssetCard key={asset.id} asset={asset} onReportIssue={handleReportIssue} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm text-center">
+                                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                                    <Laptop className="w-8 h-8 text-slate-300" />
+                                </div>
+                                <h3 className="font-bold text-lg text-slate-900">Không có tài sản nào</h3>
+                                <p className="text-slate-500 mt-1 max-w-xs text-sm">Bạn chưa được cấp phát tài sản nào từ đơn vị trang thiết bị.</p>
+                            </div>
+                        )}
                     </section>
 
                     {/* ── Recent Reports ── */}
-                    <section>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-base font-bold text-foreground">Recent Reports</h2>
+                    <section className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-1.5 h-6 bg-rose-500 rounded-full shadow-[0_0_10px_rgba(244,63,94,0.3)]" />
+                                <h2 className="text-xl font-bold text-slate-800 tracking-tight">Lịch sử báo cáo sự cố</h2>
+                            </div>
                         </div>
 
-                        <div className="bg-background rounded-xl border border-border shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Report ID</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Asset</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Issue Type</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date Reported</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</TableHead>
+                                    <TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-b border-slate-100">
+                                        <TableHead className="h-12 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Mã báo cáo</TableHead>
+                                        <TableHead className="h-12 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Tài sản</TableHead>
+                                        <TableHead className="h-12 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Loại lỗi</TableHead>
+                                        <TableHead className="h-12 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Ngày báo</TableHead>
+                                        <TableHead className="h-12 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Trạng thái</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {displayedReports.map((report) => (
-                                        <TableRow key={report.id} className="hover:bg-muted/20 transition-colors border-border">
-                                            <TableCell className="px-5 py-3 text-sm font-medium text-blue-600">{report.id}</TableCell>
-                                            <TableCell className="px-5 py-3 text-sm text-foreground">{report.asset}</TableCell>
-                                            <TableCell className="px-5 py-3 text-sm text-muted-foreground">{report.issueType}</TableCell>
-                                            <TableCell className="px-5 py-3 text-sm text-muted-foreground">{report.dateReported}</TableCell>
-                                            <TableCell className="px-5 py-3">
-                                                <Badge className={STATUS_CONFIG[report.status].className}>
-                                                    {STATUS_CONFIG[report.status].label}
-                                                </Badge>
+                                    {reports.length > 0 ? (
+                                        reports.map((report) => (
+                                            <TableRow key={report.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-0 group">
+                                                <TableCell className="px-6 py-4 font-bold text-blue-600 text-[13px] group-hover:underline cursor-pointer">#{report.reportId}</TableCell>
+                                                <TableCell className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-slate-800 text-[13px]">{report.asset}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tighter uppercase">{report.assetTag}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-6 py-4 text-[13px] font-bold text-slate-600">{report.issueType}</TableCell>
+                                                <TableCell className="px-6 py-4">
+                                                    <div className="flex items-center gap-2 text-slate-500 font-bold text-[11px] uppercase">
+                                                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                                        {report.dateReported}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-6 py-4">
+                                                    <div className="flex justify-center">
+                                                        <Badge className={`${report.statusColor} border-none px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm`}>
+                                                            {report.statusLabel}
+                                                        </Badge>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-48 text-center">
+                                                {loading ? (
+                                                    <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
+                                                ) : (
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <FileText className="w-10 h-10 text-slate-200" />
+                                                        <span className="text-slate-400 font-medium">Chưa có báo cáo nào được ghi nhận.</span>
+                                                    </div>
+                                                )}
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )}
                                 </TableBody>
                             </Table>
-
-                            {/* Footer toggle */}
-                            {recentReports.length > PREVIEW_COUNT && (
-                                <div className="border-t border-border px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-muted/10">
-                                    <span>
-                                        {showAll
-                                            ? `Showing all ${recentReports.length} reports`
-                                            : `Showing ${PREVIEW_COUNT} of ${recentReports.length} reports`}
-                                    </span>
-                                    <button
-                                        className="text-blue-600 font-medium hover:underline"
-                                        onClick={() => setShowAll((v) => !v)}
-                                    >
-                                        {showAll ? "Show Less" : `View All (${recentReports.length})`}
-                                    </button>
-                                </div>
-                            )}
                         </div>
                     </section>
                 </main>
@@ -243,77 +297,129 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
 
             {/* ── Report Asset Issue Dialog ── */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="sm:max-w-[480px] p-0 gap-0 rounded-xl overflow-hidden">
-                    <div className="px-6 pt-6 pb-4 border-b border-border">
-                        <DialogHeader>
-                            <DialogTitle className="text-lg font-bold text-foreground">
-                                Report Asset Issue{selectedAsset ? ` — ${selectedAsset.name}` : ""}
+                <DialogContent className="sm:max-w-[520px] p-0 gap-0 rounded-[2rem] overflow-hidden border-none shadow-2xl">
+                    <div className="px-8 pt-8 pb-7 bg-gradient-to-br from-slate-900 to-black text-white relative">
+                        <div className="absolute top-0 right-0 p-8 opacity-10">
+                            <AlertTriangle className="w-24 h-24 stroke-[1]" />
+                        </div>
+                        <DialogHeader className="relative z-10">
+                            <div className="w-14 h-14 bg-rose-500/20 rounded-2xl flex items-center justify-center mb-5 ring-1 ring-rose-500/50 backdrop-blur-md">
+                                <AlertTriangle className="w-7 h-7 text-rose-400" />
+                            </div>
+                            <DialogTitle className="text-3xl font-black tracking-tight leading-none mb-2">
+                                Report Issue
                             </DialogTitle>
-                            <DialogDescription className="text-sm text-muted-foreground mt-0.5">
-                                Please provide details about the asset issue to help us resolve it quickly.
+                            <DialogDescription className="text-slate-400 font-bold text-[13px] uppercase tracking-widest">
+                                {selectedAsset ? `${selectedAsset.name} • ${selectedAsset.tag}` : "Mô tả sự cố của bạn"}
                             </DialogDescription>
                         </DialogHeader>
                     </div>
 
-                    <div className="px-6 py-5 space-y-5">
+                    <div className="px-8 py-8 space-y-8 bg-white">
                         {/* Incident Type */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground">Incident Type</label>
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                                Loại sự cố
+                            </label>
                             <Select value={incidentType} onValueChange={setIncidentType}>
-                                <SelectTrigger className="w-full h-9 text-sm">
-                                    <SelectValue placeholder="Select incident type..." />
+                                <SelectTrigger className="w-full h-12 text-sm border-slate-200 focus:ring-blue-600/20 rounded-2xl transition-all font-bold text-slate-800 bg-slate-50/50 border-2">
+                                    <SelectValue placeholder="Chọn loại sự cố..." />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
                                     {INCIDENT_TYPES.map((t) => (
-                                        <SelectItem key={t} value={t} className="text-sm">{t}</SelectItem>
+                                        <SelectItem key={t.value} value={t.value} className="rounded-xl py-3 font-bold text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors uppercase text-[11px] tracking-widest">{t.label}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
 
                         {/* Description */}
-                        <div className="space-y-1.5">
+                        <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-foreground">Description</label>
-                                <span className="text-xs text-muted-foreground">Required</span>
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                                    Mô tả chi tiết
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Min 10 chars</span>
+                                    <Badge className="text-[9px] font-black bg-rose-500 hover:bg-rose-500 text-white border-none px-2 rounded-full uppercase tracking-tighter">Required</Badge>
+                                </div>
                             </div>
                             <Textarea
-                                placeholder="Please describe the issue in detail..."
-                                className="resize-none h-28 text-sm"
+                                placeholder="Mô tả cụ thể vấn đề: Thời điểm xảy ra, nguyên nhân, tình trạng hiện tại..."
+                                className="resize-none h-36 text-sm border-slate-200 focus:ring-blue-600/20 rounded-2xl transition-all font-bold text-slate-800 placeholder:text-slate-300 bg-slate-50/50 border-2 leading-relaxed"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                             />
                         </div>
 
                         {/* Upload Evidence */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground">Upload Evidence</label>
-                            <div className="flex items-center gap-3 border border-border rounded-lg px-4 py-3">
-                                <FileText className="w-8 h-8 text-muted-foreground/50 shrink-0" />
-                                <div className="flex flex-col flex-1 min-w-0">
-                                    <span className="text-sm font-medium text-foreground">No file chosen</span>
-                                    <span className="text-[11px] text-muted-foreground">Max file size: 5MB (JPG, PNG, PDF)</span>
-                                </div>
-                                <Button variant="outline" size="sm" className="shrink-0 h-8 text-xs font-medium">
-                                    Browse
-                                </Button>
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                                Hình ảnh minh chứng
+                            </label>
+
+                            <div
+                                className={`group relative flex flex-col items-center justify-center border-2 border-dashed rounded-3xl p-8 transition-all duration-500 cursor-pointer ${attachment ? "border-emerald-500 bg-emerald-50/30 scale-[1.02]" : "border-slate-200 hover:border-blue-500/50 hover:bg-slate-50 hover:scale-[1.01]"}`}
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    accept=".jpg,.jpeg,.png,.pdf"
+                                />
+
+                                {attachment ? (
+                                    <>
+                                        <div className="w-16 h-16 bg-emerald-500/20 rounded-[1.25rem] flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/20">
+                                            <FileText className="w-8 h-8 text-emerald-600" />
+                                        </div>
+                                        <span className="text-sm font-black text-slate-900 line-clamp-1">{attachment.name}</span>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                                {(attachment.size / 1024 / 1024).toFixed(2)} MB
+                                            </span>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ready to upload</span>
+                                        </div>
+                                        <button
+                                            className="absolute top-4 right-4 p-2 hover:bg-rose-500 hover:text-white bg-white shadow-md rounded-full transition-all text-slate-400 hover:rotate-90"
+                                            onClick={(e) => { e.stopPropagation(); setAttachment(null); }}
+                                        >
+                                            <XCircle className="w-4 h-4" />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-16 h-16 bg-slate-100 rounded-[1.25rem] flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-blue-600 group-hover:shadow-2xl group-hover:shadow-blue-600/40 transition-all duration-500 shadow-inner">
+                                            <Upload className="w-8 h-8 text-slate-400 group-hover:text-white transition-colors" />
+                                        </div>
+                                        <p className="text-sm font-black text-slate-700 group-hover:text-blue-600 transition-colors uppercase tracking-widest">Click to upload file</p>
+                                        <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">JPG, PNG, PDF (Max 5MB)</p>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    <DialogFooter className="px-6 py-4 border-t border-border flex gap-2">
+                    <DialogFooter className="px-8 py-8 bg-slate-50/50 border-t border-slate-100 flex gap-4">
                         <Button
-                            variant="outline"
-                            className="flex-1 h-9 font-medium"
+                            variant="ghost"
+                            className="flex-1 h-14 font-black uppercase tracking-[0.2em] text-[11px] text-slate-500 hover:text-slate-900 rounded-2xl hover:bg-slate-100"
                             onClick={() => setDialogOpen(false)}
                         >
-                            Cancel
+                            Hủy bỏ
                         </Button>
                         <Button
-                            className="flex-1 h-9 font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                            className="flex-[2] h-14 font-black uppercase tracking-[0.2em] text-[11px] bg-blue-600 hover:bg-black text-white shadow-2xl shadow-blue-600/30 active:scale-[0.98] transition-all rounded-2xl gap-3"
                             onClick={handleSubmit}
+                            disabled={submitting}
                         >
-                            Submit Report
+                            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                            {submitting ? "Processing..." : "Submit Report"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

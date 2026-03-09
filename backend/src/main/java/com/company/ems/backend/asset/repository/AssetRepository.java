@@ -16,75 +16,78 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
     Optional<Asset> findActiveById(@Param("id") Long id);
 
     @Query("""
-        SELECT a FROM Asset a
-        WHERE a.deleted = false
-          AND (:status IS NULL OR a.status = :status)
-          AND (:assetType IS NULL OR a.assetType = :assetType)
-          AND (:keyword IS NULL OR :keyword = ''
-               OR LOWER(a.assetName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        ORDER BY a.createdAt DESC
-        """)
+            SELECT a FROM Asset a
+            WHERE a.deleted = false
+              AND (:status IS NULL OR a.status = :status)
+              AND (:assetType IS NULL OR a.assetType = :assetType)
+              AND (:keyword IS NULL OR :keyword = ''
+                   OR LOWER(a.assetName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            ORDER BY a.createdAt DESC
+            """)
     Page<Asset> findFiltered(
-            @Param("status")    AssetStatus status,
+            @Param("status") AssetStatus status,
             @Param("assetType") String assetType,
-            @Param("keyword")   String keyword,
+            @Param("keyword") String keyword,
             Pageable pageable);
 
     @Query("""
-        SELECT a FROM Asset a
-        WHERE a.deleted = false
-          AND (:status IS NULL OR a.status = :status)
-          AND (:assetType IS NULL OR a.assetType = :assetType)
-          AND (:keyword IS NULL OR :keyword = ''
-               OR LOWER(a.assetName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        ORDER BY a.createdAt DESC
-        """)
+            SELECT a FROM Asset a
+            WHERE a.deleted = false
+              AND (:status IS NULL OR a.status = :status)
+              AND (:assetType IS NULL OR a.assetType = :assetType)
+              AND (:keyword IS NULL OR :keyword = ''
+                   OR LOWER(a.assetName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            ORDER BY a.createdAt DESC
+            """)
     Page<Asset> searchAll(
-            @Param("status")    AssetStatus status,
+            @Param("status") AssetStatus status,
             @Param("assetType") String assetType,
-            @Param("keyword")   String keyword,
+            @Param("keyword") String keyword,
             Pageable pageable);
 
     @Query("""
         SELECT a FROM Asset a
         WHERE a.deleted = false
-          AND (a.assignedTo IS NULL OR a.assignedTo.department.id = :deptId)
+          AND (a.assignedTo IS NOT NULL AND a.assignedTo.department.id = :deptId)
           AND (:status IS NULL OR a.status = :status)
           AND (:assetType IS NULL OR a.assetType = :assetType)
           AND (:keyword IS NULL OR :keyword = ''
                OR LOWER(a.assetName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        ORDER BY a.createdAt DESC
-        """)
+                   OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            ORDER BY a.createdAt DESC
+            """)
     Page<Asset> searchByDepartment(
-            @Param("deptId")    Long deptId,
-            @Param("status")    AssetStatus status,
+            @Param("deptId") Long deptId,
+            @Param("status") AssetStatus status,
             @Param("assetType") String assetType,
-            @Param("keyword")   String keyword,
+            @Param("keyword") String keyword,
             Pageable pageable);
 
     @Query("""
-        SELECT a FROM Asset a
-        WHERE a.deleted = false
-          AND a.assignedTo.id = :empId
-          AND (:status IS NULL OR a.status = :status)
-          AND (:assetType IS NULL OR a.assetType = :assetType)
-          AND (:keyword IS NULL OR :keyword = ''
-               OR LOWER(a.assetName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        ORDER BY a.createdAt DESC
-        """)
+            SELECT a FROM Asset a
+            WHERE a.deleted = false
+              AND a.assignedTo.id = :empId
+              AND (:status IS NULL OR a.status = :status)
+              AND (:assetType IS NULL OR a.assetType = :assetType)
+              AND (:keyword IS NULL OR :keyword = ''
+                   OR LOWER(a.assetName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            ORDER BY a.createdAt DESC
+            """)
     Page<Asset> searchByEmployee(
-            @Param("empId")     Long empId,
-            @Param("status")    AssetStatus status,
+            @Param("empId") Long empId,
+            @Param("status") AssetStatus status,
             @Param("assetType") String assetType,
-            @Param("keyword")   String keyword,
+            @Param("keyword") String keyword,
             Pageable pageable);
 
     @Query("SELECT COUNT(a) FROM Asset a WHERE a.assetCode LIKE :prefix%")
     long countByAssetCodeStartingWith(@Param("prefix") String prefix);
 
     boolean existsByAssetCode(String assetCode);
+
+    @Query("SELECT a FROM Asset a WHERE a.assignedTo.id = :empId AND a.deleted = false")
+    java.util.List<Asset> findByAssignedToId(@Param("empId") Long empId);
 }
