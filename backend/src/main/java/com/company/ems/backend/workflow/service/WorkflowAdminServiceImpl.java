@@ -1,5 +1,7 @@
 package com.company.ems.backend.workflow.service;
 
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
 import com.company.ems.backend.user.entity.User;
@@ -26,10 +28,9 @@ import java.util.stream.Collectors;
 public class WorkflowAdminServiceImpl implements WorkflowAdminService {
 
     private final WorkflowTemplateRepository templateRepository;
+    private final MessageService       messages;
     private final WorkflowLevelRepository    levelRepository;
     private final UserRepository             userRepository;
-
-    // ─── Query ───────────────────────────────────────────────────────────────
 
     @Override
     public List<WorkflowTemplateResponse> getAll() {
@@ -45,8 +46,6 @@ public class WorkflowAdminServiceImpl implements WorkflowAdminService {
     public WorkflowTemplateResponse getById(Long templateId) {
         return toResponse(findActiveTemplate(templateId));
     }
-
-    // ─── Mutations ───────────────────────────────────────────────────────────
 
     @Override
     @Transactional
@@ -80,15 +79,12 @@ public class WorkflowAdminServiceImpl implements WorkflowAdminService {
         WorkflowTemplate template = findActiveTemplate(templateId);
 
         if (request.isActive() && !template.isActive()) {
-            // Activating this template — deactivate others of the same type
             deactivateExistingActive(template.getWorkflowType().name());
         }
 
         template.setName(request.getName());
         template.setDescription(request.getDescription());
         template.setActive(request.isActive());
-
-        // Replace levels (orphanRemoval handles deletion of old rows)
         template.getLevels().clear();
         if (request.getLevels() != null) {
             for (WorkflowLevelRequest lr : request.getLevels()) {
@@ -120,8 +116,7 @@ public class WorkflowAdminServiceImpl implements WorkflowAdminService {
                 .filter(l -> !l.isDeleted())
                 .anyMatch(l -> l.getLevelNumber() == request.getLevelNumber());
         if (duplicateLevel) {
-            throw new BusinessException("DUPLICATE_LEVEL",
-                    "Level " + request.getLevelNumber() + " already exists in template " + templateId);
+            throw new BusinessException("DUPLICATE_LEVEL", messages.get(MessageCode.WORKFLOW_DUPLICATE_LEVEL, request.getLevelNumber(), templateId));
         }
 
         WorkflowLevel level = buildLevel(request, template);
@@ -134,10 +129,10 @@ public class WorkflowAdminServiceImpl implements WorkflowAdminService {
     @Override
     @Transactional
     public WorkflowLevelResponse updateLevel(Long templateId, Long levelId, WorkflowLevelRequest request) {
-        findActiveTemplate(templateId); // existence check
+        findActiveTemplate(templateId);
         WorkflowLevel level = levelRepository.findById(levelId)
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted())
-                             && l.getTemplate().getId().equals(templateId))
+                        && l.getTemplate().getId().equals(templateId))
                 .orElseThrow(() -> new ResourceNotFoundException("WorkflowLevel", "id", levelId));
 
         level.setLevelNumber(request.getLevelNumber());
@@ -163,14 +158,12 @@ public class WorkflowAdminServiceImpl implements WorkflowAdminService {
         findActiveTemplate(templateId);
         WorkflowLevel level = levelRepository.findById(levelId)
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted())
-                             && l.getTemplate().getId().equals(templateId))
+                        && l.getTemplate().getId().equals(templateId))
                 .orElseThrow(() -> new ResourceNotFoundException("WorkflowLevel", "id", levelId));
         level.setIsDeleted(true);
         levelRepository.save(level);
         log.info("Soft-deleted level id={} from template id={}", levelId, templateId);
     }
-
-    // ─── Private helpers ─────────────────────────────────────────────────────
 
     private WorkflowTemplate findActiveTemplate(Long templateId) {
         return templateRepository.findById(templateId)
@@ -181,8 +174,8 @@ public class WorkflowAdminServiceImpl implements WorkflowAdminService {
     private void deactivateExistingActive(String workflowTypeName) {
         templateRepository.findAll().stream()
                 .filter(t -> !Boolean.TRUE.equals(t.getIsDeleted())
-                             && t.isActive()
-                             && t.getWorkflowType().name().equals(workflowTypeName))
+                        && t.isActive()
+                        && t.getWorkflowType().name().equals(workflowTypeName))
                 .forEach(t -> {
                     t.setActive(false);
                     templateRepository.save(t);
@@ -201,14 +194,12 @@ public class WorkflowAdminServiceImpl implements WorkflowAdminService {
 
         if (lr.getAssigneeType() == AssigneeType.ROLE) {
             if (lr.getAssigneeRole() == null || lr.getAssigneeRole().isBlank()) {
-                throw new BusinessException("MISSING_ASSIGNEE_ROLE",
-                        "assigneeRole is required when assigneeType is ROLE");
+                throw new BusinessException("MISSING_ASSIGNEE_ROLE", messages.get(MessageCode.WORKFLOW_MISSING_ROLE));
             }
             level.setAssigneeRole(lr.getAssigneeRole());
         } else {
             if (lr.getAssigneeUserId() == null) {
-                throw new BusinessException("MISSING_ASSIGNEE_USER",
-                        "assigneeUserId is required when assigneeType is USER");
+                throw new BusinessException("MISSING_ASSIGNEE_USER", messages.get(MessageCode.WORKFLOW_MISSING_USER));
             }
             level.setAssigneeUser(resolveUser(lr.getAssigneeUserId()));
         }
@@ -219,8 +210,6 @@ public class WorkflowAdminServiceImpl implements WorkflowAdminService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
     }
-
-    // ─── Mapping ─────────────────────────────────────────────────────────────
 
     private WorkflowTemplateResponse toResponse(WorkflowTemplate t) {
         List<WorkflowLevelResponse> levels = t.getLevels().stream()

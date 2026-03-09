@@ -3,9 +3,12 @@ package com.company.ems.backend.asset.controller;
 import com.company.ems.backend.asset.dto.AssetDto;
 import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.asset.service.AssetService;
+import com.company.ems.backend.common.constant.AppRole;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -21,15 +24,17 @@ import java.time.LocalDate;
 public class AssetController {
 
     private final AssetService assetService;
+    private final MessageService messages;
+
     @GetMapping("/next-code")
-    @PreAuthorize("hasAuthority('ASSET_MANAGE')")
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.CodePreview>> nextCode() {
         return ResponseEntity.ok(ApiResponse.success(
-                "Preview mã tài sản", assetService.previewNextCode()));
+                messages.get(MessageCode.ASSET_CODE_PREVIEW), assetService.previewNextCode()));
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ASSET_VIEW')")
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<PageResponse<AssetDto.Summary>>> listAssets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
@@ -37,78 +42,76 @@ public class AssetController {
             @RequestParam(required = false)   String type,
             @RequestParam(required = false)   String keyword) {
 
-        return ResponseEntity.ok(ApiResponse.success("Danh sách tài sản",
-                assetService.listAssets(page, size, status, type, keyword)));
+        return ResponseEntity.ok(ApiResponse.success(assetService.listAssets(page, size, status, type, keyword)));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ASSET_VIEW')")
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> getAsset(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Chi tiết tài sản",
-                assetService.getAssetById(id)));
+        return ResponseEntity.ok(ApiResponse.success(assetService.getAssetById(id)));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ASSET_MANAGE')")
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> createAsset(
             @Valid @RequestBody AssetDto.CreateRequest request) {
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Tạo tài sản thành công",
+                .body(ApiResponse.success(messages.get(MessageCode.ASSET_CREATED),
                         assetService.createAsset(request)));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ASSET_MANAGE')")
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> updateAsset(
             @PathVariable Long id,
             @Valid @RequestBody AssetDto.UpdateRequest request) {
 
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật tài sản thành công",
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.ASSET_UPDATED),
                 assetService.updateAsset(id, request)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ASSET_DELETE')")
+    @PreAuthorize(AppRole.HAS_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<Void>> deleteAsset(@PathVariable Long id) {
         assetService.deleteAsset(id);
-        return ResponseEntity.ok(ApiResponse.success("Xóa tài sản thành công", null));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.ASSET_DELETED), null));
     }
 
     @PostMapping("/{id}/assign")
-    @PreAuthorize("hasAuthority('ASSET_MANAGE')")
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> assignAsset(
             @PathVariable Long id,
             @Valid @RequestBody AssetDto.AssignRequest request) {
 
-        return ResponseEntity.ok(ApiResponse.success("Cấp phát tài sản thành công",
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.ASSET_ASSIGNED),
                 assetService.assignAsset(id, request)));
     }
 
     @PostMapping("/{id}/return")
-    @PreAuthorize("hasAuthority('ASSET_MANAGE')")
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> returnAsset(
             @PathVariable Long id,
             @Valid @RequestBody AssetDto.ReturnRequest request) {
 
-        return ResponseEntity.ok(ApiResponse.success("Thu hồi tài sản thành công",
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.ASSET_RETURNED),
                 assetService.returnAsset(id, request)));
     }
 
     @GetMapping("/{id}/history")
-    @PreAuthorize("hasAuthority('ASSET_VIEW')")
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<PageResponse<AssetDto.HistoryItem>>> getHistory(
             @PathVariable Long id,
             @RequestParam(defaultValue = "all") String historyType,
             @RequestParam(defaultValue = "0")   int page,
             @RequestParam(defaultValue = "20")  int size) {
 
-        return ResponseEntity.ok(ApiResponse.success("Lịch sử tài sản",
+        return ResponseEntity.ok(ApiResponse.success(
                 assetService.getHistory(id, historyType, page, size)));
     }
 
     @GetMapping("/{id}/history/export")
-    @PreAuthorize("hasAuthority('ASSET_MANAGE')")
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<byte[]> exportHistory(@PathVariable Long id) {
         byte[] csv      = assetService.exportHistoryCsv(id);
         String filename = "lich-su-tai-san-" + id + "-" + LocalDate.now() + ".csv";

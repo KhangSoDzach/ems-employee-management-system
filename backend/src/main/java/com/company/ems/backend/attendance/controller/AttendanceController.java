@@ -26,10 +26,8 @@ import java.time.LocalDate;
 /**
  * REST controller for attendance check-in / check-out and record queries.
  *
- * <p>
- * All endpoints require authentication. The employee identity is resolved
- * server-side from the JWT principal — clients must NOT send
- * {@code employeeId}.
+ * <p>All endpoints require authentication. The employee identity is resolved
+ * server-side from the JWT principal — clients must NOT send {@code employeeId}.
  */
 @RestController
 @RequestMapping("/api/v1/attendance")
@@ -38,16 +36,15 @@ import java.time.LocalDate;
 @SecurityRequirement(name = "bearerAuth")
 public class AttendanceController {
 
-    private final AttendanceService attendanceService;
-    private final DataScopeService dataScopeService;
+    private final AttendanceService  attendanceService;
+    private final DataScopeService   dataScopeService;
 
     // ─── Check-in ─────────────────────────────────────────────────────────────
 
     /**
      * POST /api/v1/attendance/check-in
      *
-     * <p>
-     * Requires: ATTENDANCE_CHECKIN permission.
+     * <p>Requires: ATTENDANCE_CHECKIN permission.
      * Validates geolocation (≤30 m from office) and camera photo server-side.
      */
     @PostMapping("/check-in")
@@ -63,7 +60,7 @@ public class AttendanceController {
         request.setDeviceInfo(httpRequest.getHeader("X-Device-Info")); // optional custom header
 
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-        AttendanceResponse response = attendanceService.checkIn(request, principal);
+        AttendanceResponse response   = attendanceService.checkIn(request, principal);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Check-in thành công.", response));
     }
@@ -73,8 +70,7 @@ public class AttendanceController {
     /**
      * POST /api/v1/attendance/check-out
      *
-     * <p>
-     * Requires: ATTENDANCE_CHECKIN permission.
+     * <p>Requires: ATTENDANCE_CHECKIN permission.
      */
     @PostMapping("/check-out")
     @PreAuthorize("hasAuthority('ATTENDANCE_CHECKIN')")
@@ -88,7 +84,7 @@ public class AttendanceController {
         request.setDeviceInfo(httpRequest.getHeader("X-Device-Info"));
 
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-        AttendanceResponse response = attendanceService.checkOut(request, principal);
+        AttendanceResponse response   = attendanceService.checkOut(request, principal);
         return ResponseEntity.ok(ApiResponse.success("Check-out thành công.", response));
     }
 
@@ -97,9 +93,7 @@ public class AttendanceController {
     /**
      * GET /api/v1/attendance
      *
-     * <p>
-     * Employees see only their own records; Managers/HR/Admin can filter by
-     * {@code employeeId}.
+     * <p>Employees see only their own records; Managers/HR/Admin can filter by {@code employeeId}.
      */
     @GetMapping
     @PreAuthorize("hasAuthority('ATTENDANCE_READ')")
@@ -115,7 +109,7 @@ public class AttendanceController {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
         PageResponse<AttendanceResponse> result =
                 attendanceService.getAttendance(page, size, employeeId, startDate, endDate, status, principal);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return ResponseEntity.ok(ApiResponse.success("success", result));
     }
 
     /**
@@ -132,7 +126,7 @@ public class AttendanceController {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
         AttendanceSummaryResponse summary =
                 attendanceService.getSummary(employeeId, startDate, endDate, principal);
-        return ResponseEntity.ok(ApiResponse.success(summary));
+        return ResponseEntity.ok(ApiResponse.success("success", summary));
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────
@@ -145,3 +139,4 @@ public class AttendanceController {
         return req.getRemoteAddr();
     }
 }
+

@@ -61,13 +61,15 @@ public class AssetServiceImpl implements AssetService {
     private final AssetMapper            mapper;
     private final AssetDataScopeService  dataScopeService;
     private final ObjectMapper           objectMapper;
+    private final MessageService         messages;
+
     @Override
     @Transactional(readOnly = true)
     public AssetDto.CodePreview previewNextCode() {
-        int year    = LocalDate.now().getYear();
+        int year      = LocalDate.now().getYear();
         String prefix = "ASSET-" + year + "-";
-        long count  = assetRepo.countByAssetCodeStartingWith(prefix);
-        int nextSeq = (int) count + 1;
+        long count    = assetRepo.countByAssetCodeStartingWith(prefix);
+        int nextSeq   = (int) count + 1;
         return AssetDto.CodePreview.builder()
                 .nextCode(String.format("ASSET-%d-%04d", year, nextSeq))
                 .build();
@@ -86,7 +88,7 @@ public class AssetServiceImpl implements AssetService {
                 .toList();
 
         return PageResponse.of(content, page, size,
-                assets.getTotalElements(), assets.getTotalPages(), "tài sản");
+                assets.getTotalElements(), assets.getTotalPages(), messages.get(MessageCode.PAGE_ENTITY_ASSET));
     }
 
     @Override
@@ -98,13 +100,14 @@ public class AssetServiceImpl implements AssetService {
                 .getContent();
         return mapper.toDetail(asset, recent);
     }
+
     @Override
     public AssetDto.Detail createAsset(AssetDto.CreateRequest req) {
         CustomUserPrincipal actor = currentPrincipal();
 
         AssetStatus status = req.getInitialStatus() != null ? req.getInitialStatus() : AssetStatus.AVAILABLE;
         if (status == AssetStatus.ASSIGNED) {
-            throw new AssetStateException("Không thể khởi tạo tài sản ở trạng thái Đang cấp phát.");
+            throw new AssetStateException(messages.get(MessageCode.ASSET_CANNOT_ASSIGN, AssetStatus.ASSIGNED.name()));
         }
 
         String code = codeGenerator.nextCode();
@@ -129,8 +132,7 @@ public class AssetServiceImpl implements AssetService {
                 .build();
 
         asset = assetRepo.save(asset);
-        appendHistory(asset, AssetActionType.CREATE_ASSET, actor,
-                "Nhập kho tài sản: " + code, null, snapshot(asset));
+        appendHistory(asset, AssetActionType.CREATE_ASSET, actor, messages.get(MessageCode.ASSET_HISTORY_CREATED, code));
 
         log.info("Asset created: code=[{}] by=[{}]", code, actor.getUsername());
         return getAssetById(asset.getId());
@@ -151,6 +153,7 @@ public class AssetServiceImpl implements AssetService {
         if (req.getCondition()     != null) asset.setCondition(req.getCondition());
         if (req.getNote()          != null) asset.setNotes(req.getNote());
         if (req.getImage()         != null) asset.setImageUrl(req.getImage());
+
         if (req.getWarrantyDate()  != null && !req.getWarrantyDate().isBlank())
             asset.setWarrantyUntil(LocalDate.parse(req.getWarrantyDate()));
         if (req.getSupplier()      != null) asset.setSupplierName(req.getSupplier());
@@ -178,15 +181,14 @@ public class AssetServiceImpl implements AssetService {
     public void deleteAsset(Long id) {
         Asset asset = loadActive(id);
         if (asset.getStatus() == AssetStatus.ASSIGNED) {
-            throw new AssetStateException("Thu hồi tài sản trước khi xóa.");
+            throw new AssetStateException(messages.get(MessageCode.ASSET_CANNOT_DELETE));
         }
         String oldValue = snapshot(asset);
         asset.setDeleted(true);
         assetRepo.save(asset);
 
         CustomUserPrincipal actor = currentPrincipal();
-        appendHistory(asset, AssetActionType.SOFT_DELETE, actor,
-                "Xóa tài sản", oldValue, snapshot(asset));
+        appendHistory(asset, AssetActionType.SOFT_DELETE, actor, messages.get(MessageCode.ASSET_HISTORY_DELETED));
         log.info("Asset deleted: id=[{}] by=[{}]", id, actor.getUsername());
     }
 
@@ -195,8 +197,7 @@ public class AssetServiceImpl implements AssetService {
         Asset asset = loadActive(assetId);
         if (asset.getStatus() != AssetStatus.AVAILABLE) {
             throw new AssetStateException(
-                    "Chỉ cấp phát được tài sản Sẵn dùng. Hiện tại: "
-                            + AssetMapper.CONDITION_LABELS.getOrDefault(asset.getCondition(), asset.getCondition().name()));
+                    messages.get(MessageCode.ASSET_CANNOT_ASSIGN, asset.getStatus().name()));
         }
 
         CustomUserPrincipal actor  = currentPrincipal();
@@ -213,10 +214,10 @@ public class AssetServiceImpl implements AssetService {
         assetRepo.save(asset);
 
         String dept   = target.getDepartment() != null ? " (" + target.getDepartment().getName() + ")" : "";
-        String detail = String.format("Cấp phát cho %s %s%s%s",
-                target.getFirstName(), target.getLastName(), dept,
-                req.getNotes() != null ? " | " + req.getNotes() : "");
-        appendHistory(asset, AssetActionType.ASSIGN_ASSET, actor, detail, oldValue, snapshot(asset));
+        String notes  = req.getNotes() != null ? " | " + req.getNotes() : "";
+        String detail = messages.get(MessageCode.ASSET_HISTORY_ASSIGNED,
+                target.getFirstName() + " " + target.getLastName(), dept, notes);
+        appendHistory(asset, AssetActionType.ASSIGN_ASSET, actor, detail);
 
         log.info("Asset assigned: id=[{}] to empId=[{}] by=[{}]", assetId, req.getEmployeeId(), actor.getUsername());
         return getAssetById(assetId);
@@ -226,7 +227,7 @@ public class AssetServiceImpl implements AssetService {
     public AssetDto.Detail returnAsset(Long assetId, AssetDto.ReturnRequest req) {
         Asset asset = loadActive(assetId);
         if (asset.getStatus() != AssetStatus.ASSIGNED) {
-            throw new AssetStateException("Chỉ thu hồi được tài sản đang Đang cấp phát.");
+            throw new AssetStateException(messages.get(MessageCode.ASSET_CANNOT_RETURN, asset.getStatus().name()));
         }
 
         CustomUserPrincipal actor    = currentPrincipal();
@@ -248,9 +249,9 @@ public class AssetServiceImpl implements AssetService {
         String fromName = prevEmp != null
                 ? prevEmp.getFirstName() + " " + prevEmp.getLastName() : "N/A";
         String condChange = prevCond != req.getConditionOnReturn()
-                ? String.format(" | Tình trạng: %s → %s",
-                AssetMapper.CONDITION_LABELS.getOrDefault(prevCond, prevCond.name()),
-                AssetMapper.CONDITION_LABELS.getOrDefault(req.getConditionOnReturn(), req.getConditionOnReturn().name()))
+                ? " | " + messages.get(MessageCode.ASSET_HISTORY_CONDITION,
+                mapper.conditionLabel(prevCond),
+                mapper.conditionLabel(req.getConditionOnReturn()))
                 : "";
         String detail = String.format("Thu hồi từ %s%s%s", fromName, condChange,
                 req.getNotes() != null ? " | " + req.getNotes() : "");
@@ -272,6 +273,7 @@ public class AssetServiceImpl implements AssetService {
         log.info("Asset returned: id=[{}] status=[{}] by=[{}]", assetId, asset.getStatus(), actor.getUsername());
         return getAssetById(assetId);
     }
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AssetDto.HistoryItem> getHistory(
@@ -279,6 +281,7 @@ public class AssetServiceImpl implements AssetService {
 
         dataScopeService.requireAccessibleAsset(assetId);
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
         List<AssetActionType> actionTypes = (historyType == null
                 || historyType.isBlank()
                 || historyType.equalsIgnoreCase("all"))
@@ -292,7 +295,7 @@ public class AssetServiceImpl implements AssetService {
                 .toList();
 
         return PageResponse.of(content, page, size,
-                histPage.getTotalElements(), histPage.getTotalPages(), "lịch sử");
+                histPage.getTotalElements(), histPage.getTotalPages(), messages.get(MessageCode.PAGE_ENTITY_HISTORY));
     }
 
     @Override
@@ -306,12 +309,11 @@ public class AssetServiceImpl implements AssetService {
 
         StringBuilder csv = new StringBuilder();
         csv.append('\uFEFF');
-        csv.append("Ngày thực hiện,Hành động,Người thực hiện,Nội dung chi tiết\n");
+        csv.append(messages.get(MessageCode.ASSET_CSV_HEADER)).append('\n');
 
         for (AssetHistory h : all) {
             csv.append(h.getCreatedAt().format(EXPORT_FMT)).append(',');
-            csv.append(csvEscape(AssetMapper.ACTION_LABELS.getOrDefault(
-                    h.getActionType(), h.getActionType().name()))).append(',');
+            csv.append(csvEscape(mapper.actionLabel(h.getActionType()))).append(',');
             csv.append(csvEscape(h.getActorUsername())).append(',');
             csv.append(csvEscape(h.getDetail())).append('\n');
         }
