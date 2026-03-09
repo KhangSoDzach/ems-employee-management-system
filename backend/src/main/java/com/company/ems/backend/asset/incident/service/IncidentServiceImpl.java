@@ -8,6 +8,9 @@ import com.company.ems.backend.asset.incident.entity.IncidentType;
 import com.company.ems.backend.asset.incident.entity.ReportStatus;
 import com.company.ems.backend.asset.incident.repository.AssetIncidentReportRepository;
 import com.company.ems.backend.asset.repository.AssetRepository;
+import com.company.ems.backend.asset.repository.AssetHistoryRepository;
+import com.company.ems.backend.asset.entity.AssetHistory;
+import com.company.ems.backend.asset.enums.AssetActionType;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
@@ -46,6 +49,7 @@ public class IncidentServiceImpl implements IncidentService {
 
     private final AssetIncidentReportRepository incidentRepo;
     private final AssetRepository assetRepo;
+    private final AssetHistoryRepository historyRepo;
     private final EmployeeRepository employeeRepo;
     private final UserRepository userRepo;
     private final AuditLogService auditLogService;
@@ -181,6 +185,19 @@ public class IncidentServiceImpl implements IncidentService {
         AssetCondition oldCondition = asset.getCondition();
         AssetCondition newCondition = resolveConditionOnApprove(report.getIncidentType());
         asset.setCondition(newCondition);
+        // persist asset condition change
+        assetRepo.save(asset);
+        // append asset history record for audit / traceability
+        historyRepo.save(AssetHistory.builder()
+            .asset(asset)
+            .actionType(AssetActionType.CHANGE_CONDITION)
+            .actorId(processor.getId())
+            .actorUsername(processor.getUsername())
+            .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
+            .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")
+            .newValue("{\"condition\":\"" + newCondition.name() + "\"}")
+            .build());
+
         incidentRepo.save(report);
 
         auditLogService.logEvent(

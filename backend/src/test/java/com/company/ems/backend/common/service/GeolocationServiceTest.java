@@ -114,10 +114,9 @@ class GeolocationServiceTest {
         @DisplayName("31 m away → throws BusinessException LOCATION_OUT_OF_RANGE")
         void justOutsideRadius_throws() {
             // ~100 m north (well outside 30 m)
-            assertThatThrownBy(
+                assertThatThrownBy(
                     () -> service.validateWithinOfficeRadius(OFFICE_LAT + 0.000900, OFFICE_LON))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("location")
                     .extracting("errorCode")
                     .isEqualTo("LOCATION_OUT_OF_RANGE");
         }

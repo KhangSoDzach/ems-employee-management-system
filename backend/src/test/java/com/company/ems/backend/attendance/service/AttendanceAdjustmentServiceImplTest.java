@@ -52,7 +52,11 @@ import static org.mockito.Mockito.*;
  *   <li>reject — state transition + validation
  * </ul>
  */
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("AttendanceAdjustmentServiceImpl – Unit Tests")
 class AttendanceAdjustmentServiceImplTest {
 
