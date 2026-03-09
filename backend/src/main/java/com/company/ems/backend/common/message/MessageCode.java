@@ -69,6 +69,7 @@ public enum MessageCode {
     COMMON_SUCCESS              ("common.success"),
 
     // ── Error: auth ───────────────────────────────────────────────────────────
+    ERROR_UNAUTHENTICATED       ("error.unauthenticated"),
     ERROR_FORBIDDEN             ("error.forbidden"),
     ERROR_ACCOUNT_LOCKED        ("error.account_locked"),
     ERROR_ACCOUNT_DISABLED      ("error.account_disabled"),

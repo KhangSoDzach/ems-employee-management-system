@@ -88,6 +88,28 @@ SELECT 'Le', 'Employee2', 'employee2@ems.company.com', '0933333333',
        NOW(), NOW(), FALSE, 0
 FROM users u WHERE u.username = 'employee2';
 
+-- hr.user → HR Manager
+INSERT IGNORE INTO users (username, email, password, enabled,
+    account_non_expired, account_non_locked, credentials_non_expired,
+    failed_login_attempts, created_at, updated_at, is_deleted, version)
+VALUES
+('hr.user', 'hr@example.com',
+ '$2a$10$CMma736Zxup0lwfPCPvsQOxzrZR6xqm30KDgn1fdMwIbBskcsjYum',
+ TRUE, TRUE, TRUE, TRUE, 0, NOW(), NOW(), FALSE, 0);
+
+INSERT IGNORE INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u CROSS JOIN roles r
+WHERE u.username = 'hr.user' AND r.name = 'ROLE_HR';
+
+INSERT IGNORE INTO employees (
+    first_name, last_name, email, phone, hire_date, status,
+    department_id, position_id, user_id,
+    created_at, updated_at, is_deleted, version)
+SELECT 'Nguyen', 'HR', 'hr@example.com', '0944444444',
+       '2020-06-01', 'ACTIVE', 1, 1, u.id,
+       NOW(), NOW(), FALSE, 0
+FROM users u WHERE u.username = 'hr.user';
+
 -- Đảm bảo reporting_manager_id đúng ngay cả khi row đã tồn tại trước đó (INSERT IGNORE bỏ qua update)
 UPDATE employees e
     JOIN users u       ON e.user_id   = u.id

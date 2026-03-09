@@ -11,6 +11,8 @@ import com.company.ems.backend.common.service.PhotoStorageService;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.common.message.MessageCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,120 +33,132 @@ import static org.mockito.Mockito.*;
 /**
  * Unit tests for {@link AttendanceServiceImpl}.
  *
- * <p>All external collaborators are mocked; no Spring context is required.
+ * <p>
+ * All external collaborators are mocked; no Spring context is required.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AttendanceServiceImpl – Unit Tests")
 class AttendanceServiceImplTest {
 
-    /* ── Mocks ──────────────────────────────────────────────────────────── */
-    @Mock AttendanceRepository  attendanceRepository;
-    @Mock EmployeeRepository    employeeRepository;
-    @Mock GeolocationService    geolocationService;
-    @Mock PhotoStorageService   photoStorageService;
-    @Mock DataScopeService      dataScopeService;
+        /* ── Mocks ──────────────────────────────────────────────────────────── */
+        @Mock
+        AttendanceRepository attendanceRepository;
+        @Mock
+        EmployeeRepository employeeRepository;
+        @Mock
+        GeolocationService geolocationService;
+        @Mock
+        PhotoStorageService photoStorageService;
+        @Mock
+        DataScopeService dataScopeService;
+        @Mock
+        MessageService messages;
 
-    @InjectMocks
-    AttendanceServiceImpl service;
+        @InjectMocks
+        AttendanceServiceImpl service;
 
-    /* ── Shared fixtures ─────────────────────────────────────────────────── */
-    private CustomUserPrincipal principal;
-    private Employee            employee;
+        /* ── Shared fixtures ─────────────────────────────────────────────────── */
+        private CustomUserPrincipal principal;
+        private Employee employee;
 
-    @BeforeEach
-    void setUp() {
-        principal = mock(CustomUserPrincipal.class);
-        when(principal.getUserId()).thenReturn(1L);
+        @BeforeEach
+        void setUp() {
+                principal = mock(CustomUserPrincipal.class);
+                when(principal.getUserId()).thenReturn(1L);
 
-        employee = Employee.builder()
-                .employeeCode("EMP001")
-                .build();
-        employee.setId(10L);
+                employee = Employee.builder()
+                                .employeeCode("EMP001")
+                                .build();
+                employee.setId(10L);
 
-        when(employeeRepository.findByUserId(1L)).thenReturn(Optional.of(employee));
-    }
+                when(employeeRepository.findByUserId(1L)).thenReturn(Optional.of(employee));
 
-    /* ── checkIn ─────────────────────────────────────────────────────────── */
-    @Nested
-    @DisplayName("checkIn()")
-    class CheckIn {
-
-        private CheckInRequest buildRequest(double lat, double lon) {
-            return CheckInRequest.builder()
-                    .latitude(lat)
-                    .longitude(lon)
-                    .photoBase64("data:image/jpeg;base64,/9j/fake=")
-                    .locationLabel("Office")
-                    .build();
+                // Mock messages
+                lenient().when(messages.get(any(MessageCode.class), any())).thenReturn("Mocked Message");
+                lenient().when(messages.get(any(MessageCode.class))).thenReturn("Mocked Message");
         }
 
-        @Test
-        @DisplayName("Happy path → Attendance saved with correct employee and status")
-        void success_savesAttendance() {
-            when(attendanceRepository.existsByEmployeeIdAndDate(10L, LocalDate.now()))
-                    .thenReturn(false);
-            doNothing().when(geolocationService)
-                    .validateWithinOfficeRadius(anyDouble(), anyDouble());
-            when(photoStorageService.savePhoto(anyString(), anyString()))
-                    .thenReturn("uploads/attendance-photos/EMP001/checkin_123.jpg");
+        /* ── checkIn ─────────────────────────────────────────────────────────── */
+        @Nested
+        @DisplayName("checkIn()")
+        class CheckIn {
 
-            ArgumentCaptor<Attendance> captor = ArgumentCaptor.forClass(Attendance.class);
-            when(attendanceRepository.save(captor.capture()))
-                    .thenAnswer(inv -> inv.getArgument(0));
+                private CheckInRequest buildRequest(double lat, double lon) {
+                        return CheckInRequest.builder()
+                                        .latitude(lat)
+                                        .longitude(lon)
+                                        .photoBase64("data:image/jpeg;base64,/9j/fake=")
+                                        .locationLabel("Office")
+                                        .build();
+                }
 
-            service.checkIn(buildRequest(10.7626, 106.6601), principal);
+                @Test
+                @DisplayName("Happy path → Attendance saved with correct employee and status")
+                void success_savesAttendance() {
+                        when(attendanceRepository.existsByEmployeeIdAndDate(10L, LocalDate.now()))
+                                        .thenReturn(false);
+                        doNothing().when(geolocationService)
+                                        .validateWithinOfficeRadius(anyDouble(), anyDouble());
+                        when(photoStorageService.savePhoto(anyString(), anyString()))
+                                        .thenReturn("uploads/attendance-photos/EMP001/checkin_123.jpg");
 
-            Attendance saved = captor.getValue();
-            assertThat(saved.getEmployee()).isSameAs(employee);
-            assertThat(saved.getDate()).isEqualTo(LocalDate.now());
-            assertThat(saved.getCheckInTime()).isNotNull();
-            assertThat(saved.getCheckInPhotoUrl())
-                    .isEqualTo("uploads/attendance-photos/EMP001/checkin_123.jpg");
-            assertThat(saved.getStatus())
-                    .isIn(AttendanceStatus.PRESENT, AttendanceStatus.LATE);
+                        ArgumentCaptor<Attendance> captor = ArgumentCaptor.forClass(Attendance.class);
+                        when(attendanceRepository.save(captor.capture()))
+                                        .thenAnswer(inv -> inv.getArgument(0));
+
+                        service.checkIn(buildRequest(10.7626, 106.6601), principal);
+
+                        Attendance saved = captor.getValue();
+                        assertThat(saved.getEmployee()).isSameAs(employee);
+                        assertThat(saved.getDate()).isEqualTo(LocalDate.now());
+                        assertThat(saved.getCheckInTime()).isNotNull();
+                        assertThat(saved.getCheckInPhotoUrl())
+                                        .isEqualTo("uploads/attendance-photos/EMP001/checkin_123.jpg");
+                        assertThat(saved.getStatus())
+                                        .isIn(AttendanceStatus.PRESENT, AttendanceStatus.LATE);
+                }
+
+                @Test
+                @DisplayName("Duplicate check-in → throws ALREADY_CHECKED_IN")
+                void duplicate_throws() {
+                        when(attendanceRepository.existsByEmployeeIdAndDate(10L, LocalDate.now()))
+                                        .thenReturn(true);
+
+                        assertThatThrownBy(() -> service.checkIn(buildRequest(10.7626, 106.6601), principal))
+                                        .isInstanceOf(BusinessException.class)
+                                        .extracting("errorCode")
+                                        .isEqualTo("ALREADY_CHECKED_IN");
+
+                        verify(photoStorageService, never()).savePhoto(any(), any());
+                        verify(attendanceRepository, never()).save(any());
+                }
+
+                @Test
+                @DisplayName("Location outside 30 m → throws LOCATION_OUT_OF_RANGE")
+                void outsideRadius_throws() {
+                        when(attendanceRepository.existsByEmployeeIdAndDate(10L, LocalDate.now()))
+                                        .thenReturn(false);
+                        doThrow(new BusinessException("LOCATION_OUT_OF_RANGE",
+                                        "You are too far from the office."))
+                                        .when(geolocationService)
+                                        .validateWithinOfficeRadius(anyDouble(), anyDouble());
+
+                        assertThatThrownBy(() -> service.checkIn(buildRequest(0.0, 0.0), principal))
+                                        .isInstanceOf(BusinessException.class)
+                                        .extracting("errorCode")
+                                        .isEqualTo("LOCATION_OUT_OF_RANGE");
+
+                        verify(photoStorageService, never()).savePhoto(any(), any());
+                        verify(attendanceRepository, never()).save(any());
+                }
+
+                @Test
+                @DisplayName("Employee not found → throws ResourceNotFoundException")
+                void employeeNotFound_throws() {
+                        when(employeeRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+                        assertThatThrownBy(() -> service.checkIn(buildRequest(10.7, 106.6), principal))
+                                        .isInstanceOf(RuntimeException.class);
+                }
         }
-
-        @Test
-        @DisplayName("Duplicate check-in → throws ALREADY_CHECKED_IN")
-        void duplicate_throws() {
-            when(attendanceRepository.existsByEmployeeIdAndDate(10L, LocalDate.now()))
-                    .thenReturn(true);
-
-            assertThatThrownBy(() -> service.checkIn(buildRequest(10.7626, 106.6601), principal))
-                    .isInstanceOf(BusinessException.class)
-                    .extracting("errorCode")
-                    .isEqualTo("ALREADY_CHECKED_IN");
-
-            verify(photoStorageService, never()).savePhoto(any(), any());
-            verify(attendanceRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("Location outside 30 m → throws LOCATION_OUT_OF_RANGE")
-        void outsideRadius_throws() {
-            when(attendanceRepository.existsByEmployeeIdAndDate(10L, LocalDate.now()))
-                    .thenReturn(false);
-            doThrow(new BusinessException("LOCATION_OUT_OF_RANGE",
-                    "You are too far from the office."))
-                    .when(geolocationService)
-                    .validateWithinOfficeRadius(anyDouble(), anyDouble());
-
-            assertThatThrownBy(() -> service.checkIn(buildRequest(0.0, 0.0), principal))
-                    .isInstanceOf(BusinessException.class)
-                    .extracting("errorCode")
-                    .isEqualTo("LOCATION_OUT_OF_RANGE");
-
-            verify(photoStorageService, never()).savePhoto(any(), any());
-            verify(attendanceRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("Employee not found → throws ResourceNotFoundException")
-        void employeeNotFound_throws() {
-            when(employeeRepository.findByUserId(1L)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> service.checkIn(buildRequest(10.7, 106.6), principal))
-                    .isInstanceOf(RuntimeException.class);
-        }
-    }
 }

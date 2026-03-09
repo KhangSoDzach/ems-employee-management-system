@@ -53,6 +53,11 @@ spring:
     clean-disabled: true  # Safety: prevent accidental data loss
     out-of-order: false
     validate-migration-naming: true
+  messages:
+    basename: messages
+    encoding: UTF-8
+    use-code-as-default-message: true   # fallback: return code if key missing (prevents NoSuchMessageException)
+
   servlet:
     multipart:
       enabled: true

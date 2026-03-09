@@ -1,5 +1,6 @@
 package com.company.ems.backend.auth.controller;
 
+        import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +19,8 @@ import com.company.ems.backend.auth.dto.ResetPasswordRequest;
 import com.company.ems.backend.auth.service.AuthenticationService;
 import com.company.ems.backend.auth.service.PasswordResetService;
 import com.company.ems.backend.common.dto.ApiResponse;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.user.entity.User;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +42,7 @@ public class AuthController {
 
         private final AuthenticationService authenticationService;
         private final PasswordResetService passwordResetService;
+        private final MessageService messages;
 
         /**
          * User login endpoint
@@ -58,7 +62,7 @@ public class AuthController {
                 AuthResponse authResponse = authenticationService.login(request, ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success(authResponse));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), authResponse));
         }
 
         /**
@@ -79,7 +83,7 @@ public class AuthController {
                                 request.getRefreshToken(), ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success(authResponse));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), authResponse));
         }
 
         /**
@@ -101,7 +105,7 @@ public class AuthController {
                 authenticationService.logout(request.getRefreshToken(), actor, ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success(null));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
         }
 
         /**
@@ -118,13 +122,17 @@ public class AuthController {
                         @AuthenticationPrincipal UserDetails userDetails,
                         HttpServletRequest httpRequest) {
 
-                // Get user from repository to get the actual ID
+                if (userDetails == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(ApiResponse.error(messages.get(MessageCode.ERROR_UNAUTHENTICATED)));
+                }
+
                 User user = authenticationService.getUserByUsername(userDetails.getUsername());
                 RequestContext ctx = buildRequestContext(httpRequest);
                 authenticationService.logoutAllDevices(user.getId(), userDetails.getUsername(), ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success( null));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
         }
 
         /**
@@ -144,7 +152,7 @@ public class AuthController {
                 passwordResetService.initiatePasswordReset(request.getEmail());
 
                 return ResponseEntity.ok(
-                                ApiResponse.success( null));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
         }
 
         /**
@@ -164,7 +172,7 @@ public class AuthController {
                                 request.getNewPassword());
 
                 return ResponseEntity.ok(
-                                ApiResponse.success(null));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
         }
 
         /**
@@ -219,6 +227,11 @@ public class AuthController {
         public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> getCurrentUser(
                         @AuthenticationPrincipal UserDetails userDetails) {
 
+                if (userDetails == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(ApiResponse.error(messages.get(MessageCode.ERROR_UNAUTHENTICATED)));
+                }
+
                 User user = authenticationService.getUserByUsername(userDetails.getUsername());
 
                 AuthResponse.UserInfo userInfo = AuthResponse.UserInfo.builder()
@@ -234,6 +247,6 @@ public class AuthController {
                                                 .toList())
                                 .build();
 
-                return ResponseEntity.ok(ApiResponse.success(userInfo));
+                return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), userInfo));
         }
 }
