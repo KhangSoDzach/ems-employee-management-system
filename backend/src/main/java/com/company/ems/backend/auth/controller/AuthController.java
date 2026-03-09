@@ -58,7 +58,7 @@ public class AuthController {
                 AuthResponse authResponse = authenticationService.login(request, ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Login successful", authResponse));
+                                ApiResponse.success(authResponse));
         }
 
         /**
@@ -79,7 +79,7 @@ public class AuthController {
                                 request.getRefreshToken(), ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Token refreshed successfully", authResponse));
+                                ApiResponse.success(authResponse));
         }
 
         /**
@@ -101,7 +101,7 @@ public class AuthController {
                 authenticationService.logout(request.getRefreshToken(), actor, ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Logout successful", null));
+                                ApiResponse.success(null));
         }
 
         /**
@@ -124,7 +124,7 @@ public class AuthController {
                 authenticationService.logoutAllDevices(user.getId(), userDetails.getUsername(), ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Logged out from all devices", null));
+                                ApiResponse.success( null));
         }
 
         /**
@@ -144,7 +144,7 @@ public class AuthController {
                 passwordResetService.initiatePasswordReset(request.getEmail());
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.", null));
+                                ApiResponse.success( null));
         }
 
         /**
@@ -164,7 +164,7 @@ public class AuthController {
                                 request.getNewPassword());
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Mật khẩu đã được đặt lại thành công.", null));
+                                ApiResponse.success(null));
         }
 
         /**
@@ -234,6 +234,6 @@ public class AuthController {
                                                 .toList())
                                 .build();
 
-                return ResponseEntity.ok(ApiResponse.success("Current user info", userInfo));
+                return ResponseEntity.ok(ApiResponse.success(userInfo));
         }
 }

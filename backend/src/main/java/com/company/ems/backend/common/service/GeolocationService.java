@@ -68,12 +68,15 @@ public class GeolocationService {
                 officeProps.getLatitude(), officeProps.getLongitude(),
                 String.format("%.2f", distance), officeProps.getRadiusMeters());
 
-        if (distance > officeProps.getRadiusMeters()) {
+        // Allow a small tolerance (in metres) to avoid false positives
+        // from floating point/haversine boundary rounding.
+        double epsilon = 0.1; // 0.1m tolerance (10 cm)
+        if (distance - officeProps.getRadiusMeters() > epsilon) {
             throw new BusinessException(
-                    "LOCATION_OUT_OF_RANGE",
-                    String.format(
-                            "Vị trí không hợp lệ. Bạn đang cách văn phòng %.1f mét (giới hạn cho phép: %.0f mét).",
-                            distance, officeProps.getRadiusMeters()));
+                "LOCATION_OUT_OF_RANGE",
+                String.format(
+                    "Vị trí không hợp lệ. Bạn đang cách văn phòng %.1f mét (giới hạn cho phép: %.0f mét).",
+                    distance, officeProps.getRadiusMeters()));
         }
     }
 

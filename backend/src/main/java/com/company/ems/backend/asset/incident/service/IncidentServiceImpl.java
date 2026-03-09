@@ -2,17 +2,23 @@ package com.company.ems.backend.asset.incident.service;
 
 import com.company.ems.backend.asset.entity.Asset;
 import com.company.ems.backend.asset.enums.AssetCondition;
-import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.asset.incident.dto.IncidentDto;
 import com.company.ems.backend.asset.incident.entity.AssetIncidentReport;
 import com.company.ems.backend.asset.incident.entity.IncidentType;
 import com.company.ems.backend.asset.incident.entity.ReportStatus;
 import com.company.ems.backend.asset.incident.repository.AssetIncidentReportRepository;
 import com.company.ems.backend.asset.repository.AssetRepository;
+import com.company.ems.backend.asset.repository.AssetHistoryRepository;
+import com.company.ems.backend.asset.entity.AssetHistory;
+import com.company.ems.backend.asset.enums.AssetActionType;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.user.entity.User;
@@ -44,13 +50,15 @@ import java.util.UUID;
 public class IncidentServiceImpl implements IncidentService {
 
     private final AssetIncidentReportRepository incidentRepo;
-    private final AssetRepository               assetRepo;
-    private final EmployeeRepository            employeeRepo;
-    private final UserRepository                userRepo;
-    private final IncidentCodeGenerator         codeGenerator;
-    private final IncidentMapper                mapper;
-    private static final String UPLOAD_DIR     = "uploads/incidents/";
-    private static final long   MAX_FILE_BYTES = 5 * 1024 * 1024;
+    private final AssetRepository assetRepo;
+    private final AssetHistoryRepository historyRepo;
+    private final EmployeeRepository employeeRepo;
+    private final UserRepository userRepo;
+    private final AuditLogService auditLogService;
+    private final IncidentCodeGenerator codeGenerator;
+    private final IncidentMapper mapper;
+    private static final String UPLOAD_DIR = "uploads/incidents/";
+    private static final long MAX_FILE_BYTES = 5 * 1024 * 1024;
     private static final List<String> ALLOWED_TYPES = List.of(
             "image/jpeg", "image/png", "application/pdf");
 
@@ -58,12 +66,8 @@ public class IncidentServiceImpl implements IncidentService {
     @Transactional(readOnly = true)
     public PageResponse<IncidentDto.MyAsset> getMyAssets(CustomUserPrincipal principal) {
         Employee emp = resolveEmployee(principal);
-        Page<Asset> page = assetRepo.findFiltered(
-                AssetStatus.ASSIGNED, null, null,
-                PageRequest.of(0, 50, Sort.by("assetName")));
-        List<IncidentDto.MyAsset> content = page.getContent().stream()
-                .filter(a -> a.getAssignedTo() != null
-                        && a.getAssignedTo().getId().equals(emp.getId()))
+        List<Asset> assets = assetRepo.findByAssignedToId(emp.getId());
+        List<IncidentDto.MyAsset> content = assets.stream()
                 .map(a -> IncidentDto.MyAsset.builder()
                         .id(a.getId())
                         .name(a.getAssetName())
@@ -72,7 +76,8 @@ public class IncidentServiceImpl implements IncidentService {
                         .imageUrl(a.getImageUrl())
                         .build())
                 .toList();
-        return PageResponse.of(content, 0, content.size(), content.size(), 1, "tài sản");
+
+        return PageResponse.of(content, 0, content.size(), content.size(), 1, messages.get(MessageCode.PAGE_ENTITY_ASSET));
     }
 
     @Override
@@ -82,19 +87,20 @@ public class IncidentServiceImpl implements IncidentService {
             IncidentDto.SubmitRequest request,
             MultipartFile attachment,
             CustomUserPrincipal principal) {
+
         Employee emp = resolveEmployee(principal);
         Asset asset = assetRepo.findActiveById(assetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Asset", "id", assetId));
         if (asset.getAssignedTo() == null
                 || !asset.getAssignedTo().getId().equals(emp.getId())) {
-            throw new AccessDeniedException(
-                    "Bạn không có quyền báo cáo tài sản này. " +
-                            "Chỉ được báo cáo tài sản đang được cấp phát cho bạn.");
+            throw new AccessDeniedException(messages.get(MessageCode.INCIDENT_ASSET_NOT_ASSIGNED));
         }
+
         String attachmentUrl = null;
         if (attachment != null && !attachment.isEmpty()) {
             attachmentUrl = saveAttachment(attachment);
         }
+
         AssetIncidentReport report = AssetIncidentReport.builder()
                 .reportCode(codeGenerator.nextCode())
                 .asset(asset)
@@ -105,19 +111,34 @@ public class IncidentServiceImpl implements IncidentService {
                 .reportedBy(emp)
                 .reportedAt(LocalDateTime.now())
                 .build();
+
         incidentRepo.save(report);
+
+        auditLogService.logEvent(
+                "ASSET_INCIDENT",
+                AuthActionType.ASSET_REPORT_SUBMITTED,
+                emp.getUser().getUsername(),
+                report.getReportCode(),
+                null,
+                null,
+                "{\"asset\":\"" + asset.getAssetCode() + "\", \"type\":\"" + report.getIncidentType() + "\"}",
+                null);
+
         log.info("Incident report created: {} by employee: {}", report.getReportCode(), emp.getId());
-        return ApiResponse.success("Báo cáo sự cố đã được gửi thành công", mapper.toDetail(report));
+
+        return ApiResponse.success(messages.get(MessageCode.INCIDENT_SUBMITTED), mapper.toDetail(report));
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<IncidentDto.ReportRow> getMyReports(
             int page, int size, CustomUserPrincipal principal) {
+
         Employee emp = resolveEmployee(principal);
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "reportedAt"));
         Page<AssetIncidentReport> result = incidentRepo.findByEmployee(emp.getId(), pageable);
-        return PageResponse.of(result.map(mapper::toRow), "báo cáo");
+
+        return PageResponse.of(result.map(mapper::toRow), messages.get(MessageCode.PAGE_ENTITY_REPORT));
     }
 
     @Override
@@ -125,8 +146,9 @@ public class IncidentServiceImpl implements IncidentService {
     public IncidentDto.ReportDetail getMyReportDetail(Long id, CustomUserPrincipal principal) {
         Employee emp = resolveEmployee(principal);
         AssetIncidentReport report = findReportById(id);
+
         if (!report.getReportedBy().getId().equals(emp.getId())) {
-            throw new AccessDeniedException("Bạn không có quyền xem báo cáo này.");
+            throw new AccessDeniedException(messages.get(MessageCode.INCIDENT_ACCESS_DENIED));
         }
         return mapper.toDetail(report);
     }
@@ -139,14 +161,15 @@ public class IncidentServiceImpl implements IncidentService {
             int page, int size) {
 
         LocalDateTime from = parseDate(fromDate, true);
-        LocalDateTime to   = parseDate(toDate, false);
+        LocalDateTime to = parseDate(toDate, false);
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "reportedAt"));
         Page<AssetIncidentReport> result = incidentRepo.findAllFiltered(
                 status, employeeId, from, to,
                 StringUtils.hasText(keyword) ? keyword : null,
                 pageable);
-        return PageResponse.of(result.map(mapper::toAdminItem), "báo cáo");
+
+        return PageResponse.of(result.map(mapper::toAdminItem), messages.get(MessageCode.PAGE_ENTITY_REPORT));
     }
 
     @Override
@@ -161,21 +184,55 @@ public class IncidentServiceImpl implements IncidentService {
             Long id,
             IncidentDto.ProcessRequest request,
             CustomUserPrincipal principal) {
+
         AssetIncidentReport report = findReportById(id);
         validateNotAlreadyProcessed(report);
+
         User processor = resolveUser(principal);
         report.setStatus(ReportStatus.APPROVED);
         report.setProcessedBy(processor);
         report.setProcessedAt(LocalDateTime.now());
         report.setProcessNote(request != null ? request.getNote() : null);
         Asset asset = report.getAsset();
+        AssetCondition oldCondition = asset.getCondition();
         AssetCondition newCondition = resolveConditionOnApprove(report.getIncidentType());
         asset.setCondition(newCondition);
+        // persist asset condition change
+        assetRepo.save(asset);
+        // append asset history record for audit / traceability
+        historyRepo.save(AssetHistory.builder()
+            .asset(asset)
+            .actionType(AssetActionType.CHANGE_CONDITION)
+            .actorId(processor.getId())
+            .actorUsername(processor.getUsername())
+            .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
+            .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")
+            .newValue("{\"condition\":\"" + newCondition.name() + "\"}")
+            .build());
+
         incidentRepo.save(report);
+
+        auditLogService.logEvent(
+                "ASSET_INCIDENT",
+                AuthActionType.ASSET_REPORT_APPROVED,
+                processor.getUsername(),
+                report.getReportCode(),
+                null,
+                oldCondition.name(),
+                newCondition.name(),
+                null);
+
+        // TODO: Create payroll record if LOST
+        if (newCondition == AssetCondition.LOST) {
+            log.info("Asset reported LOST. Should initiate payroll compensation process for asset: {}",
+                    asset.getAssetCode());
+        }
+
         log.info("Report {} approved by {} — asset {} condition → {}",
                 report.getReportCode(), processor.getUsername(),
                 asset.getAssetCode(), newCondition);
-        return ApiResponse.success("Đã phê duyệt báo cáo thành công", mapper.toDetail(report));
+
+        return ApiResponse.success(messages.get(MessageCode.INCIDENT_APPROVED), mapper.toDetail(report));
     }
 
     @Override
@@ -184,16 +241,32 @@ public class IncidentServiceImpl implements IncidentService {
             Long id,
             IncidentDto.ProcessRequest request,
             CustomUserPrincipal principal) {
+
         AssetIncidentReport report = findReportById(id);
         validateNotAlreadyProcessed(report);
+
         User processor = resolveUser(principal);
+
         report.setStatus(ReportStatus.REJECTED);
         report.setProcessedBy(processor);
         report.setProcessedAt(LocalDateTime.now());
         report.setProcessNote(request != null ? request.getNote() : null);
+
         incidentRepo.save(report);
+
+        auditLogService.logEvent(
+                "ASSET_INCIDENT",
+                AuthActionType.ASSET_REPORT_REJECTED,
+                processor.getUsername(),
+                report.getReportCode(),
+                null,
+                null,
+                "REJECTED: " + report.getProcessNote(),
+                null);
+
         log.info("Report {} rejected by {}", report.getReportCode(), processor.getUsername());
-        return ApiResponse.success("Đã từ chối báo cáo", mapper.toDetail(report));
+
+        return ApiResponse.success(messages.get(MessageCode.INCIDENT_REJECTED), mapper.toDetail(report));
     }
 
     private AssetIncidentReport findReportById(Long id) {
@@ -213,45 +286,46 @@ public class IncidentServiceImpl implements IncidentService {
 
     private void validateNotAlreadyProcessed(AssetIncidentReport report) {
         if (report.getStatus() != ReportStatus.PENDING) {
-            throw new IllegalStateException(
-                    "Báo cáo đã được xử lý với trạng thái: " + report.getStatus().name() +
-                            ". Không thể thay đổi.");
+            throw new IllegalStateException(messages.get(MessageCode.INCIDENT_ALREADY_PROCESSED, report.getStatus().name()));
         }
     }
 
     private AssetCondition resolveConditionOnApprove(IncidentType type) {
         return switch (type) {
-            case HARDWARE_MALFUNCTION, SCREEN_FLICKERING,
-                 BATTERY_ISSUE, PERIPHERAL_NOT_WORKING,
-                 SOFTWARE_OS_ISSUE, OTHER -> AssetCondition.DAMAGED;
+            case DAMAGED -> AssetCondition.DAMAGED;
+            case LOST -> AssetCondition.LOST;
         };
     }
 
     private String saveAttachment(MultipartFile file) {
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
-            throw new IllegalArgumentException("Chỉ chấp nhận file JPG, PNG, PDF");
+            throw new IllegalArgumentException(messages.get(MessageCode.INCIDENT_FILE_INVALID_TYPE));
         }
+
         if (file.getSize() > MAX_FILE_BYTES) {
-            throw new IllegalArgumentException("File không được vượt quá 5MB");
+            throw new IllegalArgumentException(messages.get(MessageCode.INCIDENT_FILE_TOO_LARGE));
         }
+
         try {
             Path uploadPath = Paths.get(UPLOAD_DIR);
             Files.createDirectories(uploadPath);
 
-            String ext      = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
             String filename = UUID.randomUUID() + (ext != null ? "." + ext : "");
-            Path   target   = uploadPath.resolve(filename);
+            Path target = uploadPath.resolve(filename);
             Files.copy(file.getInputStream(), target);
+
             return "/" + UPLOAD_DIR + filename;
         } catch (Exception e) {
             log.error("Failed to save attachment", e);
-            throw new RuntimeException("Không thể lưu file đính kèm: " + e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
     }
 
     private LocalDateTime parseDate(String dateStr, boolean startOfDay) {
-        if (!StringUtils.hasText(dateStr)) return null;
+        if (!StringUtils.hasText(dateStr))
+            return null;
         try {
             LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ISO_DATE);
             return startOfDay ? date.atStartOfDay() : date.atTime(LocalTime.MAX);

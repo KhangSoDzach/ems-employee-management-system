@@ -15,10 +15,11 @@ import AssetManagementPage from "./features/admin/Asset-Management";
 import AssetIncidentManagementPage from "./features/admin/AssetIncidentManagementPage";
 import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentRequest";
 import MyAssetsPage from "./features/employee/MyAssetsPage";
-import AssetGroupManagement from "./features/manager/AssetGroupManagement";
 import ManagerProfilePage from "./features/manager/ManagerProfilePage";
 import HRProfilePage from "./features/hr/HRProfilePage";
 import AdminProfilePage from "./features/admin/AdminProfilePage";
+import AssetReportManagement from "./features/admin/AssetReportManagement";
+import AssetGroupManagement from "./features/manager/AssetGroupManagement";
 
 function App() {
   return (
@@ -33,8 +34,18 @@ function App() {
           {/* Admin only */}
           <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN"]} />}>
             <Route path="/admin" element={<Dashboard />} />
-            <Route path="/asset" element={<AssetManagementPage />} />
+            <Route path="/asset" element={<AssetManagementPage sidebarRole="admin" />} />
+            <Route path="/asset-reports" element={<AssetReportManagement />} />
             <Route path="/admin-profile" element={<AdminProfilePage />} />
+            <Route path="/admin-my-assets" element={<MyAssetsPage sidebarRole="admin" />} />
+          </Route>
+
+          {/* HR only */}
+          <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
+            <Route path="/hr-profile" element={<HRProfilePage />} />
+            <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
+            <Route path="/hr-assets" element={<AssetManagementPage sidebarRole="hr" />} />
+            <Route path="/asset-reports" element={<AssetReportManagement />} />
           </Route>
 
           {/* Shared cross-roles */}
@@ -44,29 +55,6 @@ function App() {
 
 
           {/* Employee only */}
-          <Route path="/employee" element={<EmployeeDashboard />} />
-          <Route path="/request" element={<LeaveRequestPage />} />
-          <Route path="/checkin" element={<CheckinPage />} />
-          <Route path="/attendance" element={<AttendanceHistoryPage />} />
-          <Route
-            path="/adjustment-requests"
-            element={<AdjustmentRequestPage />}
-          />
-          <Route path="/approve" element={<ApproveLeaveRequest />} />
-          <Route path="/view-group-asset" element={<AssetGroupManagement />} />
-          <Route
-            path="/approve-adjustments"
-            element={<ApproveAdjustmentRequest />}
-          />
-          <Route path="/my-assets" element={<MyAssetsPage />} />
-          <Route
-            path="/manager-my-assets"
-            element={<MyAssetsPage sidebarRole="manager" />}
-          />
-          <Route
-            path="/hr-my-assets"
-            element={<MyAssetsPage sidebarRole="hr" />}
-          />
           <Route element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE"]} />}>
             <Route path="/employee" element={<EmployeeDashboard />} />
             <Route path="/request" element={<LeaveRequestPage />} />
@@ -81,6 +69,7 @@ function App() {
             <Route path="/manager-profile" element={<ManagerProfilePage />} />
             <Route path="/approve" element={<ApproveLeaveRequest />} />
             <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
+            <Route path="/view-group-asset" element={<AssetGroupManagement />} />
             <Route path="/manager-my-assets" element={<MyAssetsPage sidebarRole="manager" />} />
           </Route>
 

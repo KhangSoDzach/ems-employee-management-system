@@ -1,11 +1,15 @@
 package com.company.ems.backend.asset.mapper;
+
 import com.company.ems.backend.asset.dto.AssetDto;
 import com.company.ems.backend.asset.entity.Asset;
 import com.company.ems.backend.asset.entity.AssetHistory;
 import com.company.ems.backend.asset.enums.AssetActionType;
 import com.company.ems.backend.asset.enums.AssetCondition;
 import com.company.ems.backend.asset.enums.AssetStatus;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.entity.Employee;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -13,61 +17,67 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class AssetMapper {
+
+    private final MessageService messages;
 
     private static final DateTimeFormatter DATE_FMT      = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATETIME_FMT  = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter DETAIL_DT_FMT = DateTimeFormatter.ofPattern("HH:mm, dd/MM/yyyy");
 
-    private static final Map<AssetStatus, String> STATUS_LABELS = Map.of(
-            AssetStatus.AVAILABLE, "Sẵn dùng",
-            AssetStatus.ASSIGNED,  "Đang cấp phát",
-            AssetStatus.RETIRED,   "Đã thu hồi"
-    );
+    private String statusLabel(AssetStatus s) {
+        return switch (s) {
+            case AVAILABLE -> messages.get(MessageCode.ASSET_STATUS_AVAILABLE);
+            case ASSIGNED  -> messages.get(MessageCode.ASSET_STATUS_ASSIGNED);
+            case RETIRED   -> messages.get(MessageCode.ASSET_STATUS_RETIRED);
+        };
+    }
 
-    private static final Map<AssetStatus, String> STATUS_LABELS_UPPER = Map.of(
-            AssetStatus.AVAILABLE, "ĐANG SẴN SÀNG",
-            AssetStatus.ASSIGNED,  "ĐANG CẤP PHÁT",
-            AssetStatus.RETIRED,   "ĐÃ THU HỒI"
-    );
+    private String statusLabelUpper(AssetStatus s) {
+        return switch (s) {
+            case AVAILABLE -> messages.get(MessageCode.ASSET_STATUS_AVAILABLE_UPPER);
+            case ASSIGNED  -> messages.get(MessageCode.ASSET_STATUS_ASSIGNED_UPPER);
+            case RETIRED   -> messages.get(MessageCode.ASSET_STATUS_RETIRED_UPPER);
+        };
+    }
 
-    private static final Map<AssetStatus, String> STATUS_COLORS = Map.of(
+    private static final java.util.Map<AssetStatus, String> STATUS_COLORS = java.util.Map.of(
             AssetStatus.AVAILABLE, "bg-green-100 text-green-700",
             AssetStatus.ASSIGNED,  "bg-blue-100 text-blue-700",
             AssetStatus.RETIRED,   "bg-yellow-100 text-yellow-700"
     );
 
-    public static final Map<AssetCondition, String> CONDITION_LABELS = Map.of(
-            AssetCondition.NEW,      "Mới",
-            AssetCondition.GOOD,     "Tốt",
-            AssetCondition.DAMAGED,  "Hỏng",
-            AssetCondition.LOST,     "Thất lạc",
-            AssetCondition.DISPOSED, "Thanh lý"
-    );
+    public String conditionLabel(AssetCondition c) {
+        return switch (c) {
+            case NEW      -> messages.get(MessageCode.ASSET_CONDITION_NEW);
+            case GOOD     -> messages.get(MessageCode.ASSET_CONDITION_GOOD);
+            case DAMAGED  -> messages.get(MessageCode.ASSET_CONDITION_DAMAGED);
+            case LOST     -> messages.get(MessageCode.ASSET_CONDITION_LOST);
+            case DISPOSED -> messages.get(MessageCode.ASSET_CONDITION_DISPOSED);
+        };
+    }
 
-    private static final Map<AssetActionType, String> HISTORY_TYPE = Map.of(
-            AssetActionType.ASSIGN_ASSET,     "assign",
-            AssetActionType.RETURN_ASSET,     "return",
-            AssetActionType.RETIRE_ASSET,     "return",
-            AssetActionType.CREATE_ASSET,     "update",
-            AssetActionType.UPDATE_ASSET,     "update",
-            AssetActionType.CHANGE_CONDITION, "update",
-            AssetActionType.SOFT_DELETE,      "update"
-    );
+    public String actionLabel(AssetActionType t) {
+        return switch (t) {
+            case ASSIGN_ASSET                        -> messages.get(MessageCode.ASSET_ACTION_ASSIGN);
+            case RETURN_ASSET, RETIRE_ASSET          -> messages.get(MessageCode.ASSET_ACTION_RETURN);
+            case CREATE_ASSET, UPDATE_ASSET,
+                 CHANGE_CONDITION, SOFT_DELETE       -> messages.get(MessageCode.ASSET_ACTION_UPDATE);
+        };
+    }
 
-    public static final Map<AssetActionType, String> ACTION_LABELS = Map.of(
-            AssetActionType.ASSIGN_ASSET,     "Cấp phát",
-            AssetActionType.RETURN_ASSET,     "Thu hồi",
-            AssetActionType.RETIRE_ASSET,     "Thu hồi",
-            AssetActionType.CREATE_ASSET,     "Cập nhật",
-            AssetActionType.UPDATE_ASSET,     "Cập nhật",
-            AssetActionType.CHANGE_CONDITION, "Cập nhật",
-            AssetActionType.SOFT_DELETE,      "Cập nhật"
-    );
+    private static String historyType(AssetActionType t) {
+        return switch (t) {
+            case ASSIGN_ASSET                        -> "assign";
+            case RETURN_ASSET, RETIRE_ASSET          -> "return";
+            case CREATE_ASSET, UPDATE_ASSET,
+                 CHANGE_CONDITION, SOFT_DELETE       -> "update";
+        };
+    }
 
     public AssetDto.Summary toSummary(Asset a) {
         return AssetDto.Summary.builder()
@@ -75,7 +85,7 @@ public class AssetMapper {
                 .name(a.getAssetName())
                 .desc(a.getDescription())
                 .type(a.getAssetType())
-                .status(STATUS_LABELS.getOrDefault(a.getStatus(), a.getStatus().name()))
+                .status(statusLabel(a.getStatus()))
                 .statusColor(STATUS_COLORS.getOrDefault(a.getStatus(), "bg-gray-100 text-gray-600"))
                 .user(resolveUser(a))
                 .build();
@@ -88,10 +98,8 @@ public class AssetMapper {
                 .type(a.getAssetType())
                 .value(formatVND(a.getAssetValue()))
                 .purchaseDate(formatDate(a.getPurchaseDate()))
-                .status(STATUS_LABELS_UPPER.getOrDefault(
-                        a.getStatus(), a.getStatus().name()))
-                .condition(CONDITION_LABELS.getOrDefault(
-                        a.getCondition(), a.getCondition().name()))
+                .status(statusLabelUpper(a.getStatus()))
+                .condition(conditionLabel(a.getCondition()))
                 .warranty(formatDate(a.getWarrantyUntil()))
                 .supplier(a.getSupplierName())
                 .contract(a.getContractNumber())
@@ -115,8 +123,8 @@ public class AssetMapper {
     private AssetDto.HistoryItem buildHistoryItem(AssetHistory h, DateTimeFormatter fmt) {
         return AssetDto.HistoryItem.builder()
                 .id(h.getId())
-                .type(HISTORY_TYPE.getOrDefault(h.getActionType(), "update"))
-                .action(ACTION_LABELS.getOrDefault(h.getActionType(), "Cập nhật"))
+                .type(historyType(h.getActionType()))
+                .action(actionLabel(h.getActionType()))
                 .user(h.getActorUsername())
                 .description(h.getDetail())
                 .date(h.getCreatedAt() != null ? h.getCreatedAt().format(fmt) : null)
@@ -135,9 +143,7 @@ public class AssetMapper {
 
     private String formatVND(BigDecimal value) {
         if (value == null) return null;
-        long longVal = value.longValue();
-        String formatted = String.format("%,d", longVal).replace(",", ",");
-        return formatted + " VNĐ";
+        return String.format("%,d VND", value.longValue());
     }
 
     private String formatDate(LocalDate date) {
