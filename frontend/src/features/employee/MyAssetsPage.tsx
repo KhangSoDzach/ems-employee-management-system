@@ -71,7 +71,7 @@ function AssetCard({ asset, onReportIssue }: { asset: MyAsset; onReportIssue: (a
             <div className="p-4 flex flex-col gap-3 flex-1">
                 <div>
                     <p className="font-semibold text-foreground text-sm leading-tight">{asset.name}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">Asset Tag: {asset.tag}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_ASSET_TAG}{SYSTEM_MESSAGES.SYMBOLS.COLON}{asset.tag}</p>
                 </div>
 
                 <Button
@@ -139,7 +139,7 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0]
             if (file.size > 5 * 1024 * 1024) {
-                toast.error("File quá lớn. Vui lòng chọn file dưới 5MB.")
+                toast.error(SYSTEM_MESSAGES.MY_ASSETS.MAX_FILE_SIZE_ERROR)
                 return
             }
             setAttachment(file)
@@ -149,11 +149,11 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
     const handleSubmit = async () => {
         if (!selectedAsset) return
         if (!incidentType) {
-            toast.warning("Vui lòng chọn loại sự cố")
+            toast.warning(SYSTEM_MESSAGES.MY_ASSETS.TOAST_SELECT_TYPE)
             return
         }
         if (!description || description.length < 10) {
-            toast.warning("Vui lòng nhập mô tả chi tiết (tối thiểu 10 ký tự)")
+            toast.warning(SYSTEM_MESSAGES.MY_ASSETS.TOAST_DESC_MIN)
             return
         }
 
@@ -164,15 +164,15 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                 description
             }, attachment || undefined)
 
-            toast.success("Báo cáo thành công", {
-                description: "Báo cáo của bạn đã được gửi tới HR để xử lý."
+            toast.success(SYSTEM_MESSAGES.MY_ASSETS.TOAST_SUCCESS, {
+                description: SYSTEM_MESSAGES.MY_ASSETS.TOAST_SUCCESS_DESC
             })
             setDialogOpen(false)
             fetchContent()
         } catch (error: unknown) {
             const err = error as { response?: { data?: { message?: string } } };
-            toast.error("Gửi báo cáo thất bại", {
-                description: err.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại sau."
+            toast.error(SYSTEM_MESSAGES.MY_ASSETS.TOAST_FAILED, {
+                description: err.response?.data?.message || SYSTEM_MESSAGES.MY_ASSETS.TOAST_ERROR_DEFAULT
             })
         } finally {
             setSubmitting(false)
@@ -190,13 +190,13 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                     {/* ── Page Header ── */}
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="text-muted-foreground text-sm">Tài sản</span>
-                            <span className="text-muted-foreground text-sm">/</span>
+                            <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.MY_ASSETS.BREADCRUMB}</span>
+                            <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.SYMBOLS.SLASH}</span>
                             <span className="text-sm font-semibold text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</span>
                         </div>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</h1>
                         <p className="text-muted-foreground mt-1 text-sm">
-                            Vui lòng quản lý và báo cáo sự cố với thiết bị được cấp phát của bạn.
+                            {SYSTEM_MESSAGES.MY_ASSETS.DESCRIPTION}
                         </p>
                     </div>
 
@@ -234,11 +234,11 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Mã báo cáo</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tài sản</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Loại lỗi</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ngày báo</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Trạng thái</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.MY_ASSETS.TABLE_ID}</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.ASSET.TABLE_NAME}</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.MY_ASSETS.TABLE_INCIDENT}</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.MY_ASSETS.TABLE_DATE}</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.LABEL_STATUS}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -251,7 +251,7 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                                     ) : displayedReports.length > 0 ? (
                                         displayedReports.map((report) => (
                                             <TableRow key={report.id} className="hover:bg-muted/20 transition-colors border-border">
-                                                <TableCell className="px-5 py-3 text-sm font-medium text-blue-600 cursor-pointer hover:underline">#{report.reportId}</TableCell>
+                                                <TableCell className="px-5 py-3 text-sm font-medium text-blue-600 cursor-pointer hover:underline">{SYSTEM_MESSAGES.SYMBOLS.HASH}{report.reportId}</TableCell>
                                                 <TableCell className="px-5 py-3">
                                                     <div className="flex flex-col">
                                                         <span className="text-sm text-foreground font-medium">{report.asset}</span>
@@ -289,7 +289,9 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                                         className="text-blue-600 font-medium hover:underline"
                                         onClick={() => setShowAll((v) => !v)}
                                     >
-                                        {showAll ? "Thu gọn" : `Xem tất cả (${reports.length})`}
+                                        {showAll
+                                            ? SYSTEM_MESSAGES.BTN_CLOSE
+                                            : `${SYSTEM_MESSAGES.BTN_ADD}${SYSTEM_MESSAGES.SYMBOLS.SPACE}${SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}${reports.length}${SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}`}
                                     </button>
                                 </div>
                             )}
@@ -304,10 +306,10 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                     <div className="px-6 pt-6 pb-4 border-b border-border">
                         <DialogHeader>
                             <DialogTitle className="text-lg font-bold text-foreground">
-                                {SYSTEM_MESSAGES.MY_ASSETS.REPORT_TITLE}{selectedAsset ? ` — ${selectedAsset.name}` : ""}
+                                {SYSTEM_MESSAGES.MY_ASSETS.REPORT_TITLE}{selectedAsset ? `${SYSTEM_MESSAGES.SYMBOLS.DASH}${selectedAsset.name}` : ""}
                             </DialogTitle>
                             <DialogDescription className="text-sm text-muted-foreground mt-0.5">
-                                Vui lòng cung cấp chi tiết về sự cố tài sản để giúp chúng tôi xử lý nhanh chóng.
+                                {SYSTEM_MESSAGES.MY_ASSETS.REPORT_DESC}
                             </DialogDescription>
                         </DialogHeader>
                     </div>
@@ -315,7 +317,7 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                     <div className="px-6 py-5 space-y-5">
                         {/* Incident Type */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground">Loại sự cố</label>
+                            <label className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_INCIDENT}</label>
                             <Select value={incidentType} onValueChange={setIncidentType}>
                                 <SelectTrigger className="w-full h-9 text-sm">
                                     <SelectValue placeholder={SYSTEM_MESSAGES.MY_ASSETS.PLACEHOLDER_INCIDENT} />
@@ -331,8 +333,8 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                         {/* Description */}
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-foreground">Mô tả chi tiết</label>
-                                <span className="text-xs text-muted-foreground">Bắt buộc</span>
+                                <label className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_DESC}</label>
+                                <span className="text-xs text-muted-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_REQUIRED}</span>
                             </div>
                             <Textarea
                                 placeholder={SYSTEM_MESSAGES.MY_ASSETS.PLACEHOLDER_DESC}
@@ -344,19 +346,19 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
 
                         {/* Upload Evidence */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground">Đính kèm bằng chứng</label>
+                            <label className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_ATTACHMENT}</label>
                             <div className="flex items-center gap-3 border border-border rounded-lg px-4 py-3 bg-muted/10">
                                 <FileText className="w-8 h-8 text-muted-foreground/50 shrink-0" />
                                 <div className="flex flex-col flex-1 min-w-0">
                                     {attachment ? (
                                         <>
                                             <span className="text-sm font-medium text-foreground truncate">{attachment.name}</span>
-                                            <span className="text-[11px] text-muted-foreground">{(attachment.size / 1024 / 1024).toFixed(2)} MB</span>
+                                            <span className="text-[11px] text-muted-foreground">{(attachment.size / 1024 / 1024).toFixed(2)}{SYSTEM_MESSAGES.SYMBOLS.SPACE}{SYSTEM_MESSAGES.MY_ASSETS.UNIT_MB}</span>
                                         </>
                                     ) : (
                                         <>
-                                            <span className="text-sm font-medium text-foreground">Chưa có tệp nào</span>
-                                            <span className="text-[11px] text-muted-foreground">Tối đa 5MB (JPG, PNG, PDF)</span>
+                                            <span className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.NO_FILE}</span>
+                                            <span className="text-[11px] text-muted-foreground">{SYSTEM_MESSAGES.MY_ASSETS.FILE_LIMIT}</span>
                                         </>
                                     )}
                                 </div>
@@ -367,7 +369,7 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                                         </Button>
                                     )}
                                     <Button variant="outline" size="sm" className="shrink-0 h-8 text-xs font-medium" onClick={() => fileInputRef.current?.click()}>
-                                        Chọn tệp
+                                        {SYSTEM_MESSAGES.MY_ASSETS.BTN_CHOOSE_FILE}
                                     </Button>
                                 </div>
                                 <input

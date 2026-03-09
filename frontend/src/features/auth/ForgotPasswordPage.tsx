@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { User, Mail, ArrowLeft, KeyRound, Timer, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RequiredLabel } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import {
     Card,
@@ -19,7 +20,13 @@ import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
-const TEXT = SYSTEM_MESSAGES.FORGOT_PASSWORD;
+const TEXT = {
+    ...SYSTEM_MESSAGES.FORGOT_PASSWORD,
+    TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại các thông tin nhập liệu",
+    LOADING_SEND_OTP: "Đang gửi mã OTP...",
+    LOADING_RESET: "Đang cập nhật mật khẩu...",
+    SUCCESS_RESET: "Đổi mật khẩu thành công!",
+};
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -97,52 +104,70 @@ export const ForgotPasswordPage = () => {
     // ── Handlers ──
 
     const onSendCode = async (data: EmailFormValues) => {
-        try {
-            await forgotPassword(data.email);
+        toast.dismiss();
+
+        const promise = forgotPassword(data.email).then(() => {
             setSavedEmail(data.email);
             setStep(2);
             setTimeLeft(300);
             setIsTimerRunning(true);
-            toast.success(TEXT.TOAST_OTP_SENT);
-        } catch (err: unknown) {
-            // Anti-enumeration: backend always returns 200, so errors here are network issues
-            const message =
-                (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-                ?? TEXT.TOAST_SEND_ERROR;
-            toast.error(message);
-        }
+        });
+
+        toast.promise(promise, {
+            loading: TEXT.LOADING_SEND_OTP,
+            success: TEXT.TOAST_OTP_SENT,
+            error: (err: unknown) => {
+                return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? TEXT.TOAST_SEND_ERROR;
+            },
+        });
     };
 
     const onSubmitReset = async (data: OtpPasswordFormValues) => {
-        try {
-            await resetPassword(savedEmail, data.otp, data.newPassword);
-            setStep(3);
-            toast.success(TEXT.TOAST_SUCCESS);
-        } catch (err: unknown) {
-            const message =
-                (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-                ?? TEXT.TOAST_OTP_INVALID;
+        toast.dismiss();
 
-            if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
-                setFormError("otp", { message: TEXT.TOAST_OTP_INVALID });
-            } else {
-                setFormError("otp", { message });
-            }
-        }
+        const promise = resetPassword(savedEmail, data.otp, data.newPassword).then(() => {
+            setStep(3);
+        });
+
+        toast.promise(promise, {
+            loading: TEXT.LOADING_RESET,
+            success: TEXT.SUCCESS_RESET,
+            error: (err: unknown) => {
+                const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? TEXT.TOAST_OTP_INVALID;
+
+                if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
+                    setFormError("otp", { message: TEXT.TOAST_OTP_INVALID });
+                } else {
+                    setFormError("otp", { message });
+                }
+                return message;
+            },
+        });
     };
 
     const handleResend = async () => {
         if (timeLeft > 0 || isResending) return;
+        toast.dismiss();
         setIsResending(true);
-        try {
-            await forgotPassword(savedEmail);
+
+        const promise = forgotPassword(savedEmail).then(() => {
             setTimeLeft(300);
             setIsTimerRunning(true);
-            toast.success(TEXT.TOAST_OTP_RESENT);
-        } catch {
-            toast.error(TEXT.TOAST_RESEND_ERROR);
-        } finally {
+        }).finally(() => {
             setIsResending(false);
+        });
+
+        toast.promise(promise, {
+            loading: TEXT.LOADING_SEND_OTP,
+            success: TEXT.TOAST_OTP_RESENT,
+            error: TEXT.TOAST_RESEND_ERROR,
+        });
+    };
+
+    const onError = (errors: FieldErrors<EmailFormValues | OtpPasswordFormValues>) => {
+        toast.dismiss();
+        if (Object.keys(errors).length > 0) {
+            toast.error(TEXT.TOAST_VALIDATION_ERROR);
         }
     };
 
@@ -195,9 +220,14 @@ export const ForgotPasswordPage = () => {
 
                     {/* ── Step 1: Email ── */}
                     {step === 1 && (
-                        <form onSubmit={handleSubmitEmail(onSendCode)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <form onSubmit={handleSubmitEmail(onSendCode, onError)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="space-y-2">
-                                <Label htmlFor="email">{TEXT.LABEL_EMAIL}</Label>
+                                <RequiredLabel
+                                    htmlFor="email"
+                                    className={emailErrors.email ? "text-destructive" : ""}
+                                >
+                                    {TEXT.LABEL_EMAIL}
+                                </RequiredLabel>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                                     <Input
@@ -221,11 +251,16 @@ export const ForgotPasswordPage = () => {
 
                     {/* ── Step 2: OTP + New Password ── */}
                     {step === 2 && (
-                        <form onSubmit={handleSubmitForm(onSubmitReset)} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <form onSubmit={handleSubmitForm(onSubmitReset, onError)} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
 
                             {/* OTP input */}
                             <div className="space-y-2">
-                                <Label htmlFor="otp" className="sr-only">{TEXT.LABEL_OTP}</Label>
+                                <RequiredLabel
+                                    htmlFor="otp"
+                                    className={cn("justify-center", formErrors.otp ? "text-destructive" : "")}
+                                >
+                                    {TEXT.LABEL_OTP}
+                                </RequiredLabel>
                                 <Input
                                     id="otp"
                                     type="text"
@@ -264,7 +299,12 @@ export const ForgotPasswordPage = () => {
 
                             {/* New Password */}
                             <div className="space-y-2">
-                                <Label htmlFor="newPassword">{TEXT.LABEL_PASSWORD}</Label>
+                                <RequiredLabel
+                                    htmlFor="newPassword"
+                                    className={formErrors.newPassword ? "text-destructive" : ""}
+                                >
+                                    {TEXT.LABEL_PASSWORD}
+                                </RequiredLabel>
                                 <div className="relative">
                                     <Input
                                         id="newPassword"
@@ -290,7 +330,12 @@ export const ForgotPasswordPage = () => {
 
                             {/* Confirm Password */}
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">{TEXT.LABEL_CONFIRM}</Label>
+                                <RequiredLabel
+                                    htmlFor="confirmPassword"
+                                    className={formErrors.confirmPassword ? "text-destructive" : ""}
+                                >
+                                    {TEXT.LABEL_CONFIRM}
+                                </RequiredLabel>
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"

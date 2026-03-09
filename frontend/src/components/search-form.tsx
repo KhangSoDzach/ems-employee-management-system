@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-literals */
 import { Search } from "lucide-react"
 
 import { Label } from "@/components/ui/label"

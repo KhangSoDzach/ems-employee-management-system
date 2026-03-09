@@ -417,6 +417,30 @@
     @apply text-xs font-bold text-slate-500 uppercase;
   }
 
+  .form-label-required::after {
+    content: " *";
+    @apply text-destructive font-bold;
+  }
+
+  .form-label-required-inline {
+    @apply text-xs font-bold text-slate-500 uppercase;
+  }
+
+  .form-label-required-inline::after {
+    content: " *";
+    @apply text-destructive font-bold;
+  }
+
+  /* Label with conditional required indicator - only shows * when field has error */
+  .form-label-required-conditional {
+    @apply text-xs font-bold text-slate-500 uppercase;
+  }
+
+  .form-label-required-conditional.error::after {
+    content: " *";
+    @apply text-destructive font-bold;
+  }
+
   .form-label-secondary {
     @apply text-xs font-bold text-slate-500;
   }

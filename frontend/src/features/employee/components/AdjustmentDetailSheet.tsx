@@ -99,7 +99,7 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
                                 {CURRENT_USER.name}
                             </SheetTitle>
                             <SheetDescription className="text-xs mt-0">
-                                {ADJUSTMENT_TYPE_CONFIG[request.type].label} • {request.id}
+                                {ADJUSTMENT_TYPE_CONFIG[request.type].label}{SYSTEM_MESSAGES.SYMBOLS.BULLET}{request.id}
                             </SheetDescription>
                         </div>
                     </div>
@@ -117,7 +117,7 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
                     {/* So sánh thời gian */}
                     <section>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                            {SHEET_LABELS.timeSection} — {format(request.adjustmentDate, DATE_FORMAT)}
+                            {SHEET_LABELS.timeSection}{SYSTEM_MESSAGES.SYMBOLS.EM_DASH}{format(request.adjustmentDate, DATE_FORMAT)}
                         </h4>
                         <div className="space-y-3">
                             {hasIn && (
@@ -128,7 +128,7 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
                                             {request.originalTimeIn ?? SHEET_LABELS.empty}
                                         </p>
                                     </div>
-                                    <div className="text-muted-foreground/40 text-lg font-light">→</div>
+                                    <div className="text-muted-foreground/40 text-lg font-light">{SYSTEM_MESSAGES.SYMBOLS.ARROW_RIGHT}</div>
                                     <div className="text-right">
                                         <p className="text-xs text-muted-foreground mb-0.5">{SHEET_LABELS.proposed}</p>
                                         <p className="text-sm font-bold text-green-700">{request.proposedTimeIn}</p>
@@ -143,7 +143,7 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
                                             {request.originalTimeOut ?? SHEET_LABELS.empty}
                                         </p>
                                     </div>
-                                    <div className="text-muted-foreground/40 text-lg font-light">→</div>
+                                    <div className="text-muted-foreground/40 text-lg font-light">{SYSTEM_MESSAGES.SYMBOLS.ARROW_RIGHT}</div>
                                     <div className="text-right">
                                         <p className="text-xs text-muted-foreground mb-0.5">{SHEET_LABELS.proposed}</p>
                                         <p className="text-sm font-bold text-green-700">{request.proposedTimeOut}</p>
@@ -159,7 +159,7 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
                             {SHEET_LABELS.reason}
                         </h4>
                         <blockquote className="pl-4 border-l-4 border-primary/30 bg-primary/5 py-3 pr-3 rounded-r-xl text-sm text-muted-foreground italic">
-                            "{request.reason}"
+                            {SYSTEM_MESSAGES.SYMBOLS.QUOTE}{request.reason}{SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                         </blockquote>
                     </section>
 

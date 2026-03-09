@@ -8,6 +8,7 @@ import {
   AssetCondition,
   ASSET_CONDITION_LABELS,
 } from "@/services/assetService";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 interface Props {
   open: boolean;
@@ -76,7 +77,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
   };
 
   const handleSubmit = async () => {
-    if (!form.name?.trim()) { toast.error("Tên tài sản là bắt buộc"); return; }
+    if (!form.name?.trim()) { toast.error(SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME); return; }
     setSaving(true);
     try {
       const payload: AssetUpdatePayload = {
@@ -87,10 +88,10 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
         value: form.value || undefined,
       };
       const updated = await assetService.updateAsset(assetId, payload);
-      toast.success("Cập nhật tài sản thành công");
+      toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
       onSave(updated);
     } catch {
-      toast.error("Không thể cập nhật tài sản");
+      toast.error(SYSTEM_MESSAGES.ERROR);
     } finally {
       setSaving(false);
     }
@@ -101,7 +102,9 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
       <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* HEADER */}
         <div className="flex items-center justify-between px-8 py-5 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Chỉnh sửa tài sản (Mã: {asset.code})</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_EDIT}{SYSTEM_MESSAGES.ASSET_CREATE.TXT_CODE_BRACKET_START}{asset.code}{SYSTEM_MESSAGES.ASSET_CREATE.TXT_CODE_BRACKET_END}
+          </h2>
           <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
         </div>
 
@@ -109,37 +112,37 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
           {/* LEFT COLUMN */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-gray-50 rounded-xl border p-4">
-              <label className="text-sm font-semibold text-gray-700 block mb-3">Hình ảnh tài sản</label>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_IMAGE}</label>
               <div className="w-full aspect-video bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative text-gray-400">
                 {imagePreview ? (
                   <img src={imagePreview} alt="preview" className="object-cover w-full h-full" />
                 ) : (
                   <div className="text-center">
                     <UploadCloud className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-xs">Tải hình ảnh lên</p>
+                    <p className="text-xs">{SYSTEM_MESSAGES.ASSET_CREATE.UPLOAD_IMAGE}</p>
                   </div>
                 )}
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
               </div>
-              <input placeholder="Hoặc nhập URL hình ảnh..." value={form.image ?? ""}
+              <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_IMAGE_URL} value={form.image ?? ""}
                 onChange={(e) => set("image", e.target.value)}
                 className="mt-2 w-full border border-gray-200 rounded-md px-3 py-2 text-xs" />
             </div>
 
             <div className="bg-gray-50 rounded-xl border p-4 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-800">Thông tin bổ sung</h3>
+              <h3 className="text-sm font-semibold text-gray-800">{SYSTEM_MESSAGES.ASSET_CREATE.SECTION_ADDITIONAL}</h3>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Bảo hành đến</label>
+                <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_WARRANTY}</label>
                 <input type="date" value={form.warrantyDate ?? ""} onChange={(e) => set("warrantyDate", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Nhà cung cấp</label>
+                <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_SUPPLIER}</label>
                 <input value={form.supplier ?? ""} onChange={(e) => set("supplier", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Hợp đồng đến</label>
+                <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_UNTIL}</label>
                 <input type="date" value={form.contractDate ?? ""} onChange={(e) => set("contractDate", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
@@ -150,34 +153,36 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Tên tài sản <span className="text-red-500">*</span></label>
+                <label className="text-sm font-medium text-gray-700">
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NAME} <span className="text-red-500">{SYSTEM_MESSAGES.ASSET_CREATE.TXT_REQUIRED_MARK}</span>
+                </label>
                 <input value={form.name ?? ""} onChange={(e) => set("name", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Loại tài sản</label>
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE}</label>
                 <input value={form.type ?? ""} onChange={(e) => set("type", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Giá trị (VNĐ)</label>
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_VALUE}</label>
                 <input type="number" value={form.value ?? ""} onChange={(e) => set("value", e.target.value ? Number(e.target.value) : undefined)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Ngày mua</label>
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_PURCHASE_DATE}</label>
                 <input type="date" value={form.purchaseDate ?? ""} onChange={(e) => set("purchaseDate", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1 group relative">
-                <label className="text-sm font-medium text-gray-700">Vị trí lưu trữ</label>
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_LOCATION_ONLY}</label>
                 <input value={form.locationOrUser ?? ""} onChange={(e) => set("locationOrUser", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700">Tình trạng tài sản</label>
+              <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONDITION_ONLY}</label>
               <div className="grid grid-cols-5 gap-3">
                 {CONDITION_OPTIONS.map((item) => (
                   <label key={item.value} className="cursor-pointer">
@@ -192,7 +197,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Ghi chú / Mô tả</label>
+              <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NOTES}</label>
               <textarea rows={3} value={form.description ?? ""} onChange={(e) => set("description", e.target.value)}
                 className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm resize-none" />
             </div>
@@ -200,10 +205,10 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
         </div>
 
         <div className="flex justify-end gap-3 px-8 py-5 border-t bg-gray-50">
-          <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-white">Hủy</button>
+          <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-white">{SYSTEM_MESSAGES.BTN_CANCEL}</button>
           <button onClick={handleSubmit} disabled={saving}
             className="px-5 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 shadow flex items-center gap-2 disabled:opacity-60">
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />} Lưu thay đổi
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />} {SYSTEM_MESSAGES.BTN_SAVE}
           </button>
         </div>
       </div>

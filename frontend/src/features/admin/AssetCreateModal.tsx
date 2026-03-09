@@ -9,6 +9,7 @@ import {
   ASSET_STATUS_LABELS,
   ASSET_CONDITION_LABELS,
 } from "@/services/assetService";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 interface Props {
   open: boolean;
@@ -74,7 +75,7 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (!form.assetName.trim()) { toast.error("Tên tài sản là bắt buộc"); return; }
+    if (!form.assetName.trim()) { toast.error(SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME); return; }
     setSaving(true);
     try {
       const payload: AssetCreatePayload = {
@@ -85,10 +86,10 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
         assetValue: form.assetValue || undefined,
       };
       await assetService.createAsset(payload);
-      toast.success("Tạo tài sản thành công");
+      toast.success(SYSTEM_MESSAGES.ASSET_CREATE.MSG_CREATE_SUCCESS);
       onCreated();
     } catch {
-      toast.error("Không thể tạo tài sản");
+      toast.error(SYSTEM_MESSAGES.ASSET_CREATE.MSG_CREATE_ERROR);
     } finally {
       setSaving(false);
     }
@@ -99,7 +100,7 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
       <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* HEADER */}
         <div className="flex items-center justify-between px-8 py-5 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Thêm tài sản mới</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{SYSTEM_MESSAGES.ASSET_CREATE.TITLE_ADD}</h2>
           <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
         </div>
 
@@ -108,47 +109,47 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
           <div className="lg:col-span-1 space-y-6">
             {/* IMAGE UPLOAD */}
             <div className="bg-gray-50 rounded-xl border p-4">
-              <label className="text-sm font-semibold text-gray-700 block mb-3">Hình ảnh tài sản</label>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_IMAGE}</label>
               <div className="w-full aspect-video bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative">
                 {imagePreview ? (
                   <img src={imagePreview} alt="preview" className="object-cover w-full h-full" />
                 ) : (
                   <div className="text-center text-gray-400">
                     <UploadCloud className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-xs">Tải hình ảnh lên</p>
+                    <p className="text-xs">{SYSTEM_MESSAGES.ASSET_CREATE.UPLOAD_IMAGE}</p>
                   </div>
                 )}
                 <input type="file" accept="image/*" onChange={handleImageUpload}
                   className="absolute inset-0 opacity-0 cursor-pointer" />
               </div>
-              <input placeholder="Hoặc nhập URL hình ảnh..." value={form.imageUrl ?? ""}
+              <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_IMAGE_URL} value={form.imageUrl ?? ""}
                 onChange={(e) => set("imageUrl", e.target.value)}
                 className="mt-2 w-full border border-gray-200 rounded-md px-3 py-2 text-xs" />
             </div>
 
             {/* THÔNG TIN PHỤ */}
             <div className="bg-gray-50 rounded-xl border p-4 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-800">Thông tin bổ sung</h3>
+              <h3 className="text-sm font-semibold text-gray-800">{SYSTEM_MESSAGES.ASSET_CREATE.SECTION_ADDITIONAL}</h3>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Bảo hành đến</label>
+                <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_WARRANTY}</label>
                 <input type="date" value={form.warrantyUntil ?? ""}
                   onChange={(e) => set("warrantyUntil", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Nhà cung cấp</label>
-                <input placeholder="Nhập tên nhà cung cấp..." value={form.supplierName ?? ""}
+                <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_SUPPLIER}</label>
+                <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_SUPPLIER} value={form.supplierName ?? ""}
                   onChange={(e) => set("supplierName", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Số hợp đồng</label>
-                <input placeholder="HD-2026-XXX" value={form.contractNumber ?? ""}
+                <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_NUM}</label>
+                <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_CONTRACT_NUM} value={form.contractNumber ?? ""}
                   onChange={(e) => set("contractNumber", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Hợp đồng đến</label>
+                <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_UNTIL}</label>
                 <input type="date" value={form.contractUntil ?? ""}
                   onChange={(e) => set("contractUntil", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
@@ -161,25 +162,26 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Mã tài sản */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Mã tài sản</label>
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CODE}</label>
                 <input disabled value={nextCode}
                   className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-500" />
-                <p className="text-xs text-gray-400 italic">* Tự động tạo khi lưu</p>
+                <p className="text-xs text-gray-400 italic">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_AUTO_CODE}</p>
               </div>
 
               {/* Tên tài sản */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
-                  Tên tài sản <span className="text-red-500">*</span>
+                  {/* eslint-disable-next-line react/jsx-no-literals */}
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NAME} <span className="text-red-500">*</span>
                 </label>
-                <input placeholder="Nhập tên tài sản..." value={form.assetName}
+                <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_NAME} value={form.assetName}
                   onChange={(e) => set("assetName", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
               </div>
 
               {/* Loại */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Loại tài sản</label>
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE}</label>
                 <input placeholder="VD: Laptop, Màn hình, Thẻ xe..." value={form.assetType ?? ""}
                   onChange={(e) => set("assetType", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
@@ -187,8 +189,8 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
               {/* Giá trị */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Giá trị (VNĐ)</label>
-                <input type="number" min={0} placeholder="0"
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_VALUE}</label>
+                <input type="number" min={0} placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_VALUE}
                   value={form.assetValue ?? ""}
                   onChange={(e) => set("assetValue", e.target.value ? Number(e.target.value) : undefined)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
@@ -196,7 +198,7 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
               {/* Ngày mua */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Ngày mua</label>
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_PURCHASE_DATE}</label>
                 <input type="date" value={form.purchaseDate ?? ""}
                   onChange={(e) => set("purchaseDate", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
@@ -204,7 +206,7 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
               {/* Trạng thái */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Trạng thái khởi tạo</label>
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_INITIAL_STATUS}</label>
                 <select value={form.initialStatus ?? "AVAILABLE"}
                   onChange={(e) => set("initialStatus", e.target.value as AssetStatus)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
@@ -216,8 +218,8 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
               {/* Vị trí */}
               <div className="space-y-1 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Vị trí lưu trữ</label>
-                <input placeholder="VD: Kho HN, Khu A-12..." value={form.location ?? ""}
+                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_LOCATION_ONLY}</label>
+                <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_LOCATION} value={form.location ?? ""}
                   onChange={(e) => set("location", e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
               </div>
@@ -225,7 +227,7 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
             {/* Tình trạng */}
             <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700">Tình trạng tài sản</label>
+              <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONDITION_ONLY}</label>
               <div className="grid grid-cols-5 gap-3">
                 {CONDITION_OPTIONS.map((item) => (
                   <label key={item.value} className="cursor-pointer">
@@ -243,8 +245,8 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
             {/* Ghi chú */}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Ghi chú / Mô tả</label>
-              <textarea rows={3} placeholder="Mô tả thêm về cấu hình, tình trạng..."
+              <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NOTES}</label>
+              <textarea rows={3} placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_DESC}
                 value={form.notes ?? ""}
                 onChange={(e) => set("notes", e.target.value)}
                 className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-primary" />
@@ -256,12 +258,12 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
         <div className="flex justify-end gap-3 px-8 py-5 border-t bg-gray-50">
           <button onClick={onClose}
             className="px-5 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-white">
-            Hủy
+            {SYSTEM_MESSAGES.BTN_CANCEL}
           </button>
           <button onClick={handleSubmit} disabled={saving}
             className="px-5 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 shadow flex items-center gap-2 disabled:opacity-60">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            Lưu tài sản
+            {SYSTEM_MESSAGES.BTN_SAVE}
           </button>
         </div>
       </div>

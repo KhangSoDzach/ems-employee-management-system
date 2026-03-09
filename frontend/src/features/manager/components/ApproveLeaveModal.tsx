@@ -56,7 +56,7 @@ export default function ApproveLeaveDialog({
   }
 
   const handleApprove = () => doAction("APPROVE")
-  const handleReject  = () => doAction("REJECT")
+  const handleReject = () => doAction("REJECT")
   const handleSendBack = () => doAction("SEND_BACK")
 
   const getStatusLabel = () => {
@@ -84,10 +84,10 @@ export default function ApproveLeaveDialog({
         <div className="px-6 py-5 border-b bg-muted/10 space-y-3">
           <div>
             <h2 className="text-xl font-bold">
-              Chi tiết đơn nghỉ
+              {SYSTEM_MESSAGES.LEAVE.SHEET_TITLE}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Tạo lúc 08:30, 01/03/2026
+              {SYSTEM_MESSAGES.ADJUSTMENT.SHEET_CREATED_AT} {SYSTEM_MESSAGES.APPROVE.PLACEHOLDER_TIME}
             </p>
           </div>
           <div className="flex items-center justify-between">
@@ -106,14 +106,14 @@ export default function ApproveLeaveDialog({
           {/* ===== THÔNG TIN CHUNG ===== */}
           <section className="space-y-4">
             <h4 className="section-title-muted">
-              THÔNG TIN CHUNG
+              {SYSTEM_MESSAGES.APPROVE.SECTION_GENERAL}
             </h4>
 
             <div className="bg-muted/20 p-4 rounded-xl border space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">
-                    Nhân viên
+                    {SYSTEM_MESSAGES.LABEL_EMPLOYEE}
                   </p>
                   <p className="font-semibold text-sm">
                     {request.name}
@@ -122,17 +122,17 @@ export default function ApproveLeaveDialog({
 
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">
-                    Mã NV
+                    {SYSTEM_MESSAGES.APPROVE.LABEL_EMP_CODE_SHORT}
                   </p>
                   <p className="font-semibold text-sm">
-                    EMP-001
+                    {SYSTEM_MESSAGES.APPROVE.PLACEHOLDER_ID}
                   </p>
                 </div>
               </div>
 
               <div className="pt-3 border-t">
                 <p className="text-xs text-muted-foreground mb-1">
-                  Phòng ban
+                  {SYSTEM_MESSAGES.LABEL_DEPARTMENT}
                 </p>
                 <p className="font-semibold text-sm">
                   {request.dept}
@@ -144,22 +144,22 @@ export default function ApproveLeaveDialog({
           {/* ===== CHI TIẾT NGHỈ PHÉP ===== */}
           <section className="space-y-4">
             <h4 className="section-title-muted">
-              CHI TIẾT NGHỈ PHÉP
+              {SYSTEM_MESSAGES.APPROVE.SECTION_LEAVE_DETAIL}
             </h4>
 
             <div className="rounded-xl border shadow-sm overflow-hidden">
               <div className="grid grid-cols-2 divide-x border-b bg-muted/20">
                 <div className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Ngày bắt đầu</p>
+                  <p className="text-xs text-muted-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START}</p>
                   <p className="font-semibold text-sm">{fmt(request.startDate)}</p>
                 </div>
                 <div className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Ngày kết thúc</p>
+                  <p className="text-xs text-muted-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.SHEET_END_DATE}</p>
                   <p className="font-semibold text-sm">{fmt(request.endDate)}</p>
                 </div>
               </div>
               <div className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">Tổng thời gian</p>
+                <p className="text-xs text-muted-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.SHEET_TOTAL_TIME}</p>
                 <p className="font-bold text-red-500">
                   {request.duration != null ? `${request.duration} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                 </p>
@@ -170,7 +170,7 @@ export default function ApproveLeaveDialog({
           {/* ===== LÝ DO CHI TIẾT ===== */}
           <section className="space-y-3">
             <h4 className="section-title-muted">
-              LÝ DO CHI TIẾT
+              {SYSTEM_MESSAGES.APPROVE.SECTION_REASON_DETAIL}
             </h4>
 
             <div className="p-4 bg-muted/30 border rounded-xl shadow-sm">
@@ -183,11 +183,11 @@ export default function ApproveLeaveDialog({
           {/* ===== COMMENT (GIỮ NGUYÊN) ===== */}
           <div className="space-y-2">
             <label className="text-sm font-semibold">
-              Ý kiến phản hồi
+              {SYSTEM_MESSAGES.APPROVE.LABEL_FEEDBACK}
             </label>
 
             <Textarea
-              placeholder="Nhập nội dung phản hồi cho nhân viên..."
+              placeholder={SYSTEM_MESSAGES.APPROVE.FEEDBACK_PLACEHOLDER}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               className="min-h-[110px] rounded-xl"
@@ -204,7 +204,7 @@ export default function ApproveLeaveDialog({
             className="flex-1 rounded-xl text-red-500 bg-muted hover:bg-muted/70 flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <XCircle size={18} />}
-            Từ chối
+            {SYSTEM_MESSAGES.APPROVE.STATUS_REJECTED}
           </Button>
 
           <Button
@@ -214,7 +214,7 @@ export default function ApproveLeaveDialog({
             className="flex-1 rounded-xl text-orange-500 border-orange-200 hover:bg-orange-50 flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <RotateCcw size={18} />}
-            Trả về
+            {SYSTEM_MESSAGES.STATUS.RETURNED}
           </Button>
 
           <Button
@@ -223,7 +223,7 @@ export default function ApproveLeaveDialog({
             className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-            Phê duyệt
+            {SYSTEM_MESSAGES.APPROVE.BTN_APPROVE}
           </Button>
         </div>
       </SheetContent>

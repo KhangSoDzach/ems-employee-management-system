@@ -11,7 +11,7 @@ const labelVariants = cva(
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
-    VariantProps<typeof labelVariants>
+  VariantProps<typeof labelVariants>
 >(({ className, ...props }, ref) => (
   <LabelPrimitive.Root
     ref={ref}
@@ -21,4 +21,22 @@ const Label = React.forwardRef<
 ))
 Label.displayName = LabelPrimitive.Root.displayName
 
-export { Label }
+const ASTERISK = "*"
+
+const RequiredLabel = React.forwardRef<
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+  VariantProps<typeof labelVariants>
+>(({ className, children, ...props }, ref) => (
+  <Label
+    ref={ref}
+    className={cn("flex items-center gap-1", className)}
+    {...props}
+  >
+    {children}
+    <span className="text-destructive font-bold">{ASTERISK}</span>
+  </Label>
+))
+RequiredLabel.displayName = "RequiredLabel"
+
+export { Label, RequiredLabel }

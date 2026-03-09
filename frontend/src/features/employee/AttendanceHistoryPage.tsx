@@ -167,13 +167,13 @@ export default function AttendanceHistoryPage() {
                                     onClick={() => navigate("/checkin")}
                                     className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm font-medium transition-colors"
                                 >
-                                    <ChevronLeft className="w-4 h-4" /> Chấm công
+                                    <ChevronLeft className="w-4 h-4" /> {SYSTEM_MESSAGES.ATTENDANCE_HIST.BREADCRUMB}
                                 </button>
-                                <span className="text-muted-foreground text-sm">/</span>
-                                <span className="text-sm font-semibold text-foreground">Lịch sử điểm danh</span>
+                                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.SYMBOLS.SLASH}</span>
+                                <span className="text-sm font-semibold text-foreground">{SYSTEM_MESSAGES.ATTENDANCE_HIST.TITLE}</span>
                             </div>
-                            <h2 className="page-heading">{SYSTEM_MESSAGES.ATTENDANCE.TITLE}</h2>
-                            <p className="text-muted-foreground mt-1">Xem toàn bộ lịch sử chấm công của bạn</p>
+                            <h2 className="page-heading">{SYSTEM_MESSAGES.ATTENDANCE_HIST.TITLE}</h2>
+                            <p className="text-muted-foreground mt-1">{SYSTEM_MESSAGES.ATTENDANCE_HIST.DESC}</p>
                         </div>
                     </div>
 
@@ -182,28 +182,28 @@ export default function AttendanceHistoryPage() {
                         <SummaryCard
                             label={SYSTEM_MESSAGES.ATTENDANCE.STATS_PRESENT}
                             value={summary ? `${summary.presentDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                            sub={`Tháng ${monthLabel}`}
+                            sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
                             color="text-emerald-600"
                             loading={summaryLoading}
                         />
                         <SummaryCard
                             label={SYSTEM_MESSAGES.ATTENDANCE.STATS_LATE}
                             value={summary ? `${summary.lateDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                            sub={`Tháng ${monthLabel}`}
+                            sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
                             color="text-amber-600"
                             loading={summaryLoading}
                         />
                         <SummaryCard
                             label={SYSTEM_MESSAGES.ATTENDANCE.STATS_ABSENT}
                             value={summary ? `${summary.absentDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                            sub={`Tháng ${monthLabel}`}
+                            sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
                             color="text-red-600"
                             loading={summaryLoading}
                         />
                         <SummaryCard
                             label={SYSTEM_MESSAGES.ATTENDANCE.STATS_WORK_HOURS}
                             value={summary ? `${summary.totalWorkHours.toFixed(1)}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                            sub={`Tháng ${monthLabel}`}
+                            sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
                             color="text-foreground"
                             loading={summaryLoading}
                         />
@@ -215,7 +215,7 @@ export default function AttendanceHistoryPage() {
                             <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
                                 <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                                     <Calendar className="w-5 h-5 text-primary" />
-                                    Chi tiết chấm công
+                                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.TABLE_TITLE}
                                 </CardTitle>
 
                                 <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
@@ -230,15 +230,15 @@ export default function AttendanceHistoryPage() {
                                     </div>
                                     <Select value={filterStatus} onValueChange={setFilterStatus}>
                                         <SelectTrigger className="h-9 w-full sm:w-44 text-sm">
-                                            <SelectValue placeholder="Lọc trạng thái" />
+                                            <SelectValue placeholder={SYSTEM_MESSAGES.ATTENDANCE_HIST.FILTER_STATUS_PLACEHOLDER} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="all">Tất cả</SelectItem>
-                                            <SelectItem value="PRESENT">Đúng giờ</SelectItem>
-                                            <SelectItem value="LATE">Đi muộn</SelectItem>
-                                            <SelectItem value="ABSENT">Vắng mặt</SelectItem>
-                                            <SelectItem value="HALF_DAY">Nửa ngày</SelectItem>
-                                            <SelectItem value="ON_LEAVE">Nghỉ phép</SelectItem>
+                                            <SelectItem value="all">{SYSTEM_MESSAGES.LABEL_ALL}</SelectItem>
+                                            <SelectItem value="PRESENT">{SYSTEM_MESSAGES.STATUS.PRESENT}</SelectItem>
+                                            <SelectItem value="LATE">{SYSTEM_MESSAGES.STATUS.LATE}</SelectItem>
+                                            <SelectItem value="ABSENT">{SYSTEM_MESSAGES.STATUS.ABSENT}</SelectItem>
+                                            <SelectItem value="HALF_DAY">{SYSTEM_MESSAGES.STATUS.HALF_DAY}</SelectItem>
+                                            <SelectItem value="ON_LEAVE">{SYSTEM_MESSAGES.STATUS.ON_LEAVE}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -259,12 +259,12 @@ export default function AttendanceHistoryPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Ngày</TableHead>
-                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Giờ vào</TableHead>
-                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Giờ ra</TableHead>
-                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Tổng giờ</TableHead>
-                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Phương thức</TableHead>
-                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Trạng thái</TableHead>
+                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">{SYSTEM_MESSAGES.ATTENDANCE.TABLE_DATE}</TableHead>
+                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">{SYSTEM_MESSAGES.ATTENDANCE.TABLE_CHECKIN}</TableHead>
+                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">{SYSTEM_MESSAGES.ATTENDANCE.TABLE_CHECKOUT}</TableHead>
+                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">{SYSTEM_MESSAGES.ATTENDANCE.TABLE_WORK_HOURS}</TableHead>
+                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">{SYSTEM_MESSAGES.ATTENDANCE.TABLE_METHOD}</TableHead>
+                                            <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">{SYSTEM_MESSAGES.ATTENDANCE.TABLE_STATUS}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -295,7 +295,7 @@ export default function AttendanceHistoryPage() {
                             <div className="px-6 py-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                     <Clock className="w-3.5 h-3.5" />
-                                    Tổng {totalElements} bản ghi
+                                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.TOTAL_PREFIX} {totalElements} {SYSTEM_MESSAGES.ATTENDANCE_HIST.UNIT_RECORDS}
                                 </span>
                                 {totalPages > 1 && (
                                     <div className="flex items-center gap-2">
@@ -308,7 +308,7 @@ export default function AttendanceHistoryPage() {
                                         >
                                             <ChevronLeft className="w-4 h-4" />
                                         </Button>
-                                        <span>{page + 1} / {totalPages}</span>
+                                        <span>{page + 1}{SYSTEM_MESSAGES.SYMBOLS.SLASH}{totalPages}</span>
                                         <Button
                                             size="icon"
                                             variant="outline"

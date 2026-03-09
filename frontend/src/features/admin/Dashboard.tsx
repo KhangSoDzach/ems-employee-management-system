@@ -86,13 +86,13 @@ function EmployeeCard({
 
                     <div>
                         <h3 className="font-bold text-gray-900 dark:text-white">{name}</h3>
-                        <p className="text-xs text-primary font-medium">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}: {code}</p>
+                        <p className="text-xs text-primary font-medium">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}{SYSTEM_MESSAGES.SYMBOLS.COLON}{code}</p>
 
                         <button
                             onClick={onEdit}
                             className="mt-2 text-xs text-blue-600 hover:underline font-medium"
                         >
-                            ✏ {SYSTEM_MESSAGES.BTN_EDIT}
+                            {SYSTEM_MESSAGES.SYMBOLS.PENCIL} {SYSTEM_MESSAGES.BTN_EDIT}
                         </button>
                     </div>
                 </div>
@@ -105,9 +105,9 @@ function EmployeeCard({
             </div>
 
             <div className="item-card-body">
-                <div>{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}: {id}</div>
-                <div className="truncate">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMAIL}: {email}</div>
-                <div>{SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}: {phone}</div>
+                <div>{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}{SYSTEM_MESSAGES.SYMBOLS.COLON}{id}</div>
+                <div className="truncate">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMAIL}{SYSTEM_MESSAGES.SYMBOLS.COLON}{email}</div>
+                <div>{SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}{SYSTEM_MESSAGES.SYMBOLS.COLON}{phone}</div>
             </div>
         </div>
     );
@@ -139,7 +139,7 @@ export default function Page() {
         } else {
             form.reset();
         }
-    }, [selectedEmployee]);
+    }, [selectedEmployee, form]);
 
     function onSubmit(data: EmployeeFormValues) {
         if (selectedEmployee) {
@@ -178,7 +178,7 @@ export default function Page() {
 
                     <div className="space-y-4">
                         <EmployeeCard
-                            name="Nguyễn Văn An"
+                            name="{SYSTEM_MESSAGES.EMPLOYEE.MGR_A}n"
                             code="NV001"
                             status={SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE}
                             statusColor={EMPLOYEE_STATUS_MAP['Hoạt động'].className}
@@ -187,7 +187,7 @@ export default function Page() {
                             phone="0912345678"
                             onEdit={() => {
                                 setSelectedEmployee({
-                                    name: "Nguyễn Văn An",
+                                    name: "{SYSTEM_MESSAGES.EMPLOYEE.MGR_A}n",
                                     code: "NV001",
                                     status: SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE,
                                     statusColor: EMPLOYEE_STATUS_MAP['Hoạt động'].className,
@@ -218,7 +218,7 @@ export default function Page() {
                                         }}
                                         className="text-slate-400 hover:text-slate-600 transition-colors"
                                     >
-                                        <span className="material-symbols-outlined">close</span>
+                                        <span className="material-symbols-outlined">{SYSTEM_MESSAGES.SYMBOLS.CLOSE}</span>
                                     </button>
                                 </div>
 
@@ -230,7 +230,7 @@ export default function Page() {
                                             <div className="space-y-6">
                                                 <div className="section-header">
                                                     <span className="material-symbols-outlined">
-                                                        person
+                                                        {SYSTEM_MESSAGES.SYMBOLS.PERSON}
                                                     </span>
                                                     <h3 className="section-header-title">
                                                         {SYSTEM_MESSAGES.EMPLOYEE.SECTION_PERSONAL}
@@ -252,7 +252,7 @@ export default function Page() {
                                                             className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full border-2 border-white shadow-sm"
                                                         >
                                                             <span className="material-symbols-outlined text-xs">
-                                                                photo_camera
+                                                                {SYSTEM_MESSAGES.SYMBOLS.CAMERA}
                                                             </span>
                                                         </button>
                                                     </div>
@@ -359,7 +359,7 @@ export default function Page() {
                                             <div className="space-y-6">
                                                 <div className="section-header">
                                                     <span className="material-symbols-outlined">
-                                                        badge
+                                                        {SYSTEM_MESSAGES.SYMBOLS.BADGE}
                                                     </span>
                                                     <h3 className="section-header-title">
                                                         {SYSTEM_MESSAGES.EMPLOYEE.SECTION_JOB}
@@ -375,10 +375,10 @@ export default function Page() {
                                                             {...form.register("department")}
                                                             className="form-select"
                                                         >
-                                                            <option>Phòng Phần mềm</option>
-                                                            <option>Phòng Nhân sự</option>
-                                                            <option>Phòng Kinh doanh</option>
-                                                            <option>Ban Giám đốc</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.DEPT_SOFTWARE}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.DEPT_HR}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.DEPT_SALES}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.DEPT_BOD}</option>
                                                         </select>
                                                     </div>
 
@@ -401,9 +401,9 @@ export default function Page() {
                                                             {...form.register("manager")}
                                                             className="form-select"
                                                         >
-                                                            <option>Nguyễn Văn A</option>
-                                                            <option>Trần Thị B</option>
-                                                            <option>Lê Văn C</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.MGR_A}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.MGR_B}</option>
+                                                            <option>{SYSTEM_MESSAGES.EMPLOYEE.MGR_C}</option>
                                                         </select>
                                                     </div>
 
@@ -449,7 +449,7 @@ export default function Page() {
                                                     <div className="info-box">
                                                         <div className="info-box-content">
                                                             <span className="material-symbols-outlined info-box-icon">
-                                                                info
+                                                                {SYSTEM_MESSAGES.SYMBOLS.INFO}
                                                             </span>
                                                             <p className="info-box-text">
                                                                 {SYSTEM_MESSAGES.EMPLOYEE.INFO_NOTE}

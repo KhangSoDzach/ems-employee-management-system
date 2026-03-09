@@ -39,6 +39,7 @@ import {
   ASSET_STATUS_LABELS,
   ASSET_STATUS_COLORS,
 } from "@/services/assetService";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 const PAGE_SIZE = 15;
 
@@ -77,7 +78,7 @@ export default function AssetGroupManagement() {
       setAssets(res.content);
       setTotal(res.totalElements);
       setTotalPages(res.totalPages);
-    } catch { toast.error("Không thể tải tài sản nhóm"); }
+    } catch { toast.error(SYSTEM_MESSAGES.ASSET_GROUP.FETCH_ERROR); }
     finally { setLoading(false); }
   }, [page, statusFilter, searchDebounced]);
 
@@ -94,14 +95,14 @@ export default function AssetGroupManagement() {
           {/* HEADER */}
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold">Tài sản nhóm quản lý</h1>
+              <h1 className="text-3xl font-bold">{SYSTEM_MESSAGES.ASSET_GROUP.TITLE}</h1>
               <p className="text-muted-foreground mt-1">
-                Theo dõi thiết bị đang được cấp phát trong nhóm của bạn
+                {SYSTEM_MESSAGES.ASSET_GROUP.TITLE_DESC}
               </p>
             </div>
             <div className="text-right text-sm text-muted-foreground">
               <p className="font-semibold text-2xl">{total}</p>
-              <p>tài sản trong nhóm</p>
+              <p>{SYSTEM_MESSAGES.ASSET_GROUP.STATS_UNIT}</p>
             </div>
           </div>
 
@@ -109,7 +110,7 @@ export default function AssetGroupManagement() {
           <div className="flex gap-3 items-center flex-wrap">
             <div className="relative w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Tìm kiếm tài sản..." value={search}
+              <Input placeholder={SYSTEM_MESSAGES.ASSET.SEARCH_PLACEHOLDER} value={search}
                 onChange={(e) => setSearch(e.target.value)} className="pl-9" />
               {search && (
                 <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -122,11 +123,11 @@ export default function AssetGroupManagement() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <SlidersHorizontal className="w-4 h-4" />
-                  {statusFilter ? ASSET_STATUS_LABELS[statusFilter] : "Tất cả trạng thái"}
+                  {statusFilter ? ASSET_STATUS_LABELS[statusFilter] : SYSTEM_MESSAGES.ASSET_GROUP.FILTER_STATUS_ALL}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setStatusFilter("")}>Tất cả</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("")}>{SYSTEM_MESSAGES.ASSET_GROUP.FILTER_ALL}</DropdownMenuItem>
                 {(Object.keys(ASSET_STATUS_LABELS) as AssetStatus[]).map(s => (
                   <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)}>
                     {ASSET_STATUS_LABELS[s]}
@@ -141,11 +142,11 @@ export default function AssetGroupManagement() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead>Mã tài sản</TableHead>
-                  <TableHead>Tên tài sản</TableHead>
-                  <TableHead>Loại</TableHead>
-                  <TableHead>Đang gán cho</TableHead>
-                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.ASSET.TABLE_ID}</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.ASSET.TABLE_NAME}</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.ASSET.TABLE_TYPE}</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.ASSET_GROUP.TABLE_ASSIGNED_TO}</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.ASSET.TABLE_STATUS}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -154,13 +155,13 @@ export default function AssetGroupManagement() {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /> Đang tải...
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /> {SYSTEM_MESSAGES.LOADING}
                     </TableCell>
                   </TableRow>
                 ) : assets.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
-                      Không có tài sản nào phù hợp.
+                      {SYSTEM_MESSAGES.ADJUSTMENT.EMPTY_FILTER_TITLE}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -180,7 +181,7 @@ export default function AssetGroupManagement() {
                             </Avatar>
                             {asset.user}
                           </div>
-                        ) : <span className="text-muted-foreground">—</span>}
+                        ) : <span className="text-muted-foreground">{SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</span>}
                       </TableCell>
                       <TableCell><StatusBadge status={asset.status} /></TableCell>
                       <TableCell align="right">
@@ -191,7 +192,7 @@ export default function AssetGroupManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem disabled>Xem chi tiết</DropdownMenuItem>
+                            <DropdownMenuItem disabled>{SYSTEM_MESSAGES.MGMT_ADJ.BTN_DETAIL}</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -204,7 +205,7 @@ export default function AssetGroupManagement() {
             {/* Pagination */}
             <div className="flex items-center justify-between px-5 py-3 border-t bg-muted/20">
               <p className="text-xs text-muted-foreground">
-                {total === 0 ? "Không có dữ liệu" : `${total} tài sản trong nhóm`}
+                {total === 0 ? SYSTEM_MESSAGES.NO_DATA : `${total} ${SYSTEM_MESSAGES.ASSET_GROUP.STATS_UNIT}`}
               </p>
               {totalPages > 1 && (
                 <div className="flex items-center gap-2">
@@ -212,7 +213,7 @@ export default function AssetGroupManagement() {
                     className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40">
                     <ChevronLeft size={14} />
                   </button>
-                  <span className="text-xs text-muted-foreground">Trang {page + 1} / {totalPages}</span>
+                  <span className="text-xs text-muted-foreground">{SYSTEM_MESSAGES.ASSET_GROUP.PAGE_PREFIX}{page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH} {totalPages}</span>
                   <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}
                     className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40">
                     <ChevronRight size={14} />

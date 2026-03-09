@@ -249,7 +249,7 @@ export default function CheckinPage() {
                                             className="btn-checkin opacity-50 cursor-not-allowed"
                                         >
                                             <Square className="fill-current w-5 h-5 text-muted-foreground mr-2" />
-                                            Đã hoàn thành Check-out
+                                            {SYSTEM_MESSAGES.CHECKIN.DONE_CHECKOUT}
                                         </Button>
                                     )}
 
@@ -312,14 +312,16 @@ export default function CheckinPage() {
                         <Card className="card-border">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
-                                    <div className="icon-box bg-destructive/10 text-destructive text-xl font-bold">!</div>
+                                    <div className="icon-box bg-destructive/10 text-destructive text-xl font-bold">
+                                        {SYSTEM_MESSAGES.SYMBOLS.EXCLAMATION}
+                                    </div>
                                     <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">{SYSTEM_MESSAGES.CHECKIN.THIS_MONTH}</Badge>
                                 </div>
                                 <p className="text-sm font-medium text-muted-foreground mb-1">{SYSTEM_MESSAGES.CHECKIN.LATE_DAYS}</p>
                                 {loading ? (
                                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                                 ) : (
-                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.lateDays} ngày` : SYSTEM_MESSAGES.CHECKIN.NO_DATA_SHORT}</div>
+                                    <div className="text-3xl font-bold text-foreground">{summary ? `${summary.lateDays} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}` : SYSTEM_MESSAGES.CHECKIN.NO_DATA_SHORT}</div>
                                 )}
                                 <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
                                     <div className="h-full bg-destructive rounded-full transition-all" style={{ width: `${latePct}%` }} />
@@ -332,7 +334,7 @@ export default function CheckinPage() {
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="icon-box bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm font-bold">
-                                        %
+                                        {SYSTEM_MESSAGES.SYMBOLS.PERCENT}
                                     </div>
                                 </div>
                                 <p className="text-sm font-medium text-muted-foreground mb-1">{SYSTEM_MESSAGES.CHECKIN.ATTENDANCE_RATE}</p>
@@ -354,7 +356,7 @@ export default function CheckinPage() {
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-lg text-foreground">{SYSTEM_MESSAGES.CHECKIN.HISTORY_TITLE}</h3>
                                 <Button variant="ghost" onClick={() => navigate("/attendance")} className="text-muted-foreground text-sm hover:text-foreground group">
-                                    {SYSTEM_MESSAGES.CHECKIN.VIEW_ALL} <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+                                    {SYSTEM_MESSAGES.CHECKIN.VIEW_ALL} <span className="ml-1 transition-transform group-hover:translate-x-1">{SYSTEM_MESSAGES.SYMBOLS.ARROW_RIGHT}</span>
                                 </Button>
                             </div>
 

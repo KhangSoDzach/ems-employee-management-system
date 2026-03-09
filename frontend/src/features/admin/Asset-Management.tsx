@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -12,13 +12,15 @@ import {
   AssetSummary,
   AssetStatus,
   ASSET_STATUS_LABELS,
+  AssetDetail,
 } from "@/services/assetService";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
-  { label: "Tất cả", value: "" },
-  { label: "Sẵn dùng", value: "AVAILABLE" },
-  { label: "Đang cấp phát", value: "ASSIGNED" },
-  { label: "Đã thu hồi", value: "RETIRED" },
+  { label: SYSTEM_MESSAGES.ASSET.FILTER_ALL, value: "" },
+  { label: SYSTEM_MESSAGES.ASSET.FILTER_AVAILABLE, value: "AVAILABLE" },
+  { label: SYSTEM_MESSAGES.ASSET.FILTER_ASSIGNED, value: "ASSIGNED" },
+  { label: SYSTEM_MESSAGES.ASSET.FILTER_RETURNED, value: "RETIRED" },
 ];
 
 const PAGE_SIZE = 10;
@@ -44,7 +46,7 @@ export default function AssetManagementPage({
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const [selectedAsset, setSelectedAsset] = useState<AssetDetail | null>(null);
 
   const handleOpenDetail = useCallback(async (summary: AssetSummary) => {
     setSelectedId(summary.id);
@@ -59,7 +61,7 @@ export default function AssetManagementPage({
       setSelectedAsset(full);
       setOpenEdit(true);
     } catch {
-      toast.error("Không tải được chi tiết để chỉnh sửa");
+      toast.error(SYSTEM_MESSAGES.ERROR);
     } finally {
       setLoading(false);
     }
@@ -87,7 +89,7 @@ export default function AssetManagementPage({
       setTotal(res.totalElements);
       setTotalPages(res.totalPages);
     } catch {
-      toast.error("Không thể tải danh sách tài sản");
+      toast.error(SYSTEM_MESSAGES.API_ERROR);
     } finally {
       setLoading(false);
     }
@@ -96,13 +98,13 @@ export default function AssetManagementPage({
   useEffect(() => { fetchList(); }, [fetchList]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Xác nhận xóa tài sản này?")) return;
+    if (!confirm(SYSTEM_MESSAGES.BTN_DELETE + "?")) return;
     try {
       await assetService.deleteAsset(id);
-      toast.success("Xóa tài sản thành công");
+      toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
       fetchList();
     } catch {
-      toast.error("Không thể xóa tài sản");
+      toast.error(SYSTEM_MESSAGES.ERROR);
     }
   };
 
@@ -119,11 +121,11 @@ export default function AssetManagementPage({
         <main className="flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950">
           {/* ===== HEADER ===== */}
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold">Quản lý tài sản</h1>
+            <h1 className="text-2xl font-semibold">{SYSTEM_MESSAGES.ASSET.TITLE}</h1>
 
             <div className="flex items-center gap-4">
               <input
-                placeholder="Tìm kiếm tài sản..."
+                placeholder={SYSTEM_MESSAGES.ASSET.SEARCH_PLACEHOLDER}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="px-4 py-2 w-64 rounded-full bg-gray-100 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -132,7 +134,7 @@ export default function AssetManagementPage({
                 onClick={() => setOpenCreate(true)}
                 className="px-5 py-2 bg-primary text-white rounded-full font-semibold hover:bg-primary/90"
               >
-                + Thêm tài sản
+                {SYSTEM_MESSAGES.ASSET.BTN_ADD}
               </button>
             </div>
           </div>
@@ -158,12 +160,12 @@ export default function AssetManagementPage({
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase text-xs">
                 <tr>
-                  <th className="px-6 py-4 text-left">Mã tài sản</th>
-                  <th className="px-6 py-4 text-left">Tên tài sản</th>
-                  <th className="px-6 py-4 text-left">Loại</th>
-                  <th className="px-6 py-4 text-left">Trạng thái</th>
-                  <th className="px-6 py-4 text-left">Người sử dụng / Vị trí</th>
-                  <th className="px-6 py-4 text-right">Thao tác</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_ID}</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_NAME}</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_TYPE}</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_STATUS}</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_USER}</th>
+                  <th className="px-6 py-4 text-right">{SYSTEM_MESSAGES.ASSET.TABLE_ACTIONS}</th>
                 </tr>
               </thead>
 
@@ -172,13 +174,13 @@ export default function AssetManagementPage({
                   <tr>
                     <td colSpan={6} className="py-16 text-center text-gray-400">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                      Đang tải...
+                      {SYSTEM_MESSAGES.LOADING}
                     </td>
                   </tr>
                 ) : assets.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-16 text-center text-gray-400">
-                      Không có tài sản nào
+                      {SYSTEM_MESSAGES.NO_DATA}
                     </td>
                   </tr>
                 ) : (
@@ -194,7 +196,7 @@ export default function AssetManagementPage({
                         {asset.desc && <div className="text-xs text-gray-500">{asset.desc}</div>}
                       </td>
 
-                      <td className="px-6 py-4">{asset.type ?? "—"}</td>
+                      <td className="px-6 py-4">{asset.type ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</td>
 
                       <td className="px-6 py-4">
                         <span className={`text-xs font-bold px-3 py-1 rounded-full ${asset.statusColor}`}>
@@ -202,7 +204,7 @@ export default function AssetManagementPage({
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600">{asset.user ?? "—"}</td>
+                      <td className="px-6 py-4 text-gray-600">{asset.user ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</td>
 
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-3 text-gray-500">
@@ -233,8 +235,8 @@ export default function AssetManagementPage({
             <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 text-sm">
               <div className="text-gray-500">
                 {totalElements === 0
-                  ? "Không có dữ liệu"
-                  : `Hiển thị ${from}–${to} trên ${totalElements} tài sản`}
+                  ? SYSTEM_MESSAGES.NO_DATA
+                  : `${SYSTEM_MESSAGES.ASSET.PAGINATION_SHOW} ${from}–${to} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ON} ${totalElements} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ITEMS}`}
               </div>
               <div className="flex items-center gap-2">
                 <button

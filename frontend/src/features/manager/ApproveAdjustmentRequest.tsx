@@ -33,6 +33,7 @@ import {
 } from "../employee/adjustment-request.constants"
 import { StatusBadge, TypeBadge, ActiveFilterBadge } from "../employee/components/AdjustmentBadges"
 import { cn } from "@/lib/utils"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 import {
     attendanceService,
@@ -91,7 +92,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
             setTotalElements(res.totalElements)
             setTotalPages(res.totalPages)
         } catch {
-            toast.error("Không thể tải danh sách yêu cầu.")
+            toast.error(SYSTEM_MESSAGES.MGMT_ADJ.MSG_FETCH_ERROR)
         } finally {
             setLoading(false)
         }
@@ -128,19 +129,19 @@ const ApproveAdjustmentRequest: React.FC = () => {
     // ── Approval actions ──────────────────────────────────────────────────────
     const handleApprove = async (id: string, reason: string) => {
         await attendanceService.approveAdjustment(Number(id), { reason })
-        toast.success("Đã duyệt yêu cầu thành công!")
+        toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_APPROVE_SUCCESS)
         await fetchData()
     }
 
     const handleReject = async (id: string, reason: string) => {
         await attendanceService.rejectAdjustment(Number(id), { reason })
-        toast.success("Đã từ chối yêu cầu.")
+        toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_REJECT_SUCCESS)
         await fetchData()
     }
 
     const handleReturn = async (id: string, reason: string) => {
         await attendanceService.returnAdjustment(Number(id), { reason })
-        toast.success("Đã trả yêu cầu về nhân viên.")
+        toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_RETURN_SUCCESS)
         await fetchData()
     }
 
@@ -155,19 +156,19 @@ const ApproveAdjustmentRequest: React.FC = () => {
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="text-muted-foreground text-sm">Phê duyệt</span>
-                                <span className="text-muted-foreground text-sm">/</span>
-                                <span className="text-sm font-semibold text-foreground">Điều chỉnh chấm công</span>
+                                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.MGMT_ADJ.BREADCRUMB_PARENT}</span>
+                                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.SYMBOLS.SLASH}</span>
+                                <span className="text-sm font-semibold text-foreground">{SYSTEM_MESSAGES.MGMT_ADJ.BREADCRUMB_CURRENT}</span>
                             </div>
                             <h1 className="page-heading">
-                                Danh sách chờ duyệt
+                                {SYSTEM_MESSAGES.MGMT_ADJ.TITLE}
                             </h1>
                             <p className="text-muted-foreground mt-1">
-                                Quản lý các yêu cầu điều chỉnh chấm công từ nhân viên.
+                                {SYSTEM_MESSAGES.MGMT_ADJ.DESC}
                             </p>
                         </div>
                         <div className="flex flex-col items-end">
-                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1 pl-1">Yêu cầu chờ duyệt</span>
+                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1 pl-1">{SYSTEM_MESSAGES.MGMT_ADJ.PENDING_STATS_LABEL}</span>
                             <div className="flex items-baseline gap-3">
                                 <span className="text-4xl font-black text-foreground">{pendingCount}</span>
                                 {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
@@ -181,7 +182,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                             <div className="relative flex-1 min-w-[180px] w-full sm:w-auto sm:max-w-xs">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Tìm nhân viên hoặc mã..."
+                                    placeholder={SYSTEM_MESSAGES.MGMT_ADJ.SEARCH_PLACEHOLDER}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="pl-9 h-9 w-full text-sm"
@@ -192,7 +193,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
                                         <SlidersHorizontal className="w-3.5 h-3.5" />
-                                        Trạng thái
+                                        {SYSTEM_MESSAGES.MGMT_ADJ.FILTER_STATUS}
                                         {statusFilter !== "ALL" && (
                                             <ActiveFilterBadge
                                                 value={ADJUSTMENT_STATUS_CONFIG[statusFilter as keyof typeof ADJUSTMENT_STATUS_CONFIG]?.label}
@@ -207,7 +208,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                         onClick={() => setStatusFilter("ALL")}
                                         className={cn("cursor-pointer text-sm", statusFilter === "ALL" && "font-bold text-primary")}
                                     >
-                                        Tất cả
+                                        {SYSTEM_MESSAGES.LABEL_ALL}
                                     </DropdownMenuItem>
                                     {ADJUSTMENT_STATUS_OPTIONS.map(([value, cfg]) => (
                                         <DropdownMenuItem
@@ -232,7 +233,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
 
                             {(statusFilter !== "ALL" || searchQuery !== "") && (
                                 <Button variant="ghost" size="sm" className="h-9 text-sm text-muted-foreground" onClick={clearAllFilters}>
-                                    Xóa bộ lọc
+                                    {SYSTEM_MESSAGES.MGMT_ADJ.BTN_CLEAR_FILTER}
                                 </Button>
                             )}
                         </div>
@@ -240,11 +241,11 @@ const ApproveAdjustmentRequest: React.FC = () => {
                         <div className="flex items-center gap-3">
                             <Button variant="outline" size="sm" className="h-9 font-medium">
                                 <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                                Tùy chỉnh ngày
+                                {SYSTEM_MESSAGES.MGMT_ADJ.BTN_CUSTOM_DATE}
                             </Button>
                             <Button size="sm" className="h-9 font-medium shadow-sm">
                                 <Download className="mr-2 h-4 w-4" />
-                                Xuất báo cáo
+                                {SYSTEM_MESSAGES.MGMT_ADJ.BTN_EXPORT}
                             </Button>
                         </div>
                     </div>
@@ -255,11 +256,11 @@ const ApproveAdjustmentRequest: React.FC = () => {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                        <TableHead className="py-4 font-semibold text-foreground px-6">Nhân viên</TableHead>
-                                        <TableHead className="py-4 font-semibold text-foreground px-6">Ngày điều chỉnh</TableHead>
-                                        <TableHead className="py-4 font-semibold text-foreground px-6">Loại chấm công</TableHead>
-                                        <TableHead className="py-4 font-semibold text-foreground px-6">Trạng thái</TableHead>
-                                        <TableHead className="py-4 font-semibold text-foreground px-6 text-right">Thao tác</TableHead>
+                                        <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.MGMT_ADJ.TABLE_EMP}</TableHead>
+                                        <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.MGMT_ADJ.TABLE_ADJ_DATE}</TableHead>
+                                        <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.MGMT_ADJ.TABLE_TYPE}</TableHead>
+                                        <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.MGMT_ADJ.TABLE_STATUS}</TableHead>
+                                        <TableHead className="py-4 font-semibold text-foreground px-6 text-right">{SYSTEM_MESSAGES.MGMT_ADJ.TABLE_ACTIONS}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -272,7 +273,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                     ) : filtered.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
-                                                Không có dữ liệu
+                                                {SYSTEM_MESSAGES.MGMT_ADJ.EMPTY_DATA}
                                             </TableCell>
                                         </TableRow>
                                     ) : filtered.map((row) => (
@@ -284,14 +285,14 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                             <TableCell className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <Avatar className="h-9 w-9 border border-border">
-                                                        <AvatarImage src="" />
+                                                        <AvatarImage src={undefined} />
                                                         <AvatarFallback className="bg-muted text-muted-foreground font-semibold text-sm">
                                                             {row.auditTrail[0]?.actor?.charAt(0) || "U"}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex flex-col">
-                                                        <span className="font-semibold text-sm text-foreground">{row.auditTrail[0]?.actor || "Unknown"}</span>
-                                                        <span className="text-[11px] font-medium text-muted-foreground">#{row.id}</span>
+                                                        <span className="font-semibold text-sm text-foreground">{row.auditTrail[0]?.actor || SYSTEM_MESSAGES.STATUS.UNKNOWN}</span>
+                                                        <span className="text-[11px] font-medium text-muted-foreground">{SYSTEM_MESSAGES.SYMBOLS.HASH}{row.id}</span>
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -313,7 +314,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                                                 className="h-8 shadow-sm tracking-wide text-xs"
                                                                 onClick={() => handleRowClick(row)}
                                                             >
-                                                                Duyệt
+                                                                {SYSTEM_MESSAGES.MGMT_ADJ.BTN_APPROVE}
                                                             </Button>
                                                             <Button
                                                                 variant="outline"
@@ -321,7 +322,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                                                 className="h-8 shadow-sm font-medium tracking-wide text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
                                                                 onClick={() => handleRowClick(row)}
                                                             >
-                                                                Từ chối
+                                                                {SYSTEM_MESSAGES.MGMT_ADJ.BTN_REJECT}
                                                             </Button>
                                                         </>
                                                     )}
@@ -332,7 +333,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                                                             className="h-8 font-medium text-muted-foreground"
                                                             onClick={() => handleRowClick(row)}
                                                         >
-                                                            Xem chi tiết
+                                                            {SYSTEM_MESSAGES.MGMT_ADJ.BTN_DETAIL}
                                                         </Button>
                                                     )}
                                                 </div>
@@ -345,13 +346,13 @@ const ApproveAdjustmentRequest: React.FC = () => {
 
                         {/* Footer */}
                         <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Tổng {totalElements} yêu cầu</span>
+                            <span>{SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_TOTAL} {totalElements} {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_UNIT}</span>
                             {totalPages > 1 && (
                                 <div className="flex items-center gap-2">
                                     <Button size="icon" variant="outline" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
                                         <ChevronLeft className="w-4 h-4" />
                                     </Button>
-                                    <span>{page + 1} / {totalPages}</span>
+                                    <span>{page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH} {totalPages}</span>
                                     <Button size="icon" variant="outline" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
                                         <ChevronRight className="w-4 h-4" />
                                     </Button>
