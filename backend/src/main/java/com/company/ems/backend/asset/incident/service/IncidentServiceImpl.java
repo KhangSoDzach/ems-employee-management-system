@@ -57,6 +57,7 @@ public class IncidentServiceImpl implements IncidentService {
     private final AuditLogService auditLogService;
     private final IncidentCodeGenerator codeGenerator;
     private final IncidentMapper mapper;
+    private final MessageService messages;
     private static final String UPLOAD_DIR = "uploads/incidents/";
     private static final long MAX_FILE_BYTES = 5 * 1024 * 1024;
     private static final List<String> ALLOWED_TYPES = List.of(
@@ -77,7 +78,8 @@ public class IncidentServiceImpl implements IncidentService {
                         .build())
                 .toList();
 
-        return PageResponse.of(content, 0, content.size(), content.size(), 1, messages.get(MessageCode.PAGE_ENTITY_ASSET));
+        return PageResponse.of(content, 0, content.size(), content.size(), 1,
+                messages.get(MessageCode.PAGE_ENTITY_ASSET));
     }
 
     @Override
@@ -201,14 +203,14 @@ public class IncidentServiceImpl implements IncidentService {
         assetRepo.save(asset);
         // append asset history record for audit / traceability
         historyRepo.save(AssetHistory.builder()
-            .asset(asset)
-            .actionType(AssetActionType.CHANGE_CONDITION)
-            .actorId(processor.getId())
-            .actorUsername(processor.getUsername())
-            .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
-            .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")
-            .newValue("{\"condition\":\"" + newCondition.name() + "\"}")
-            .build());
+                .asset(asset)
+                .actionType(AssetActionType.CHANGE_CONDITION)
+                .actorId(processor.getId())
+                .actorUsername(processor.getUsername())
+                .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
+                .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")
+                .newValue("{\"condition\":\"" + newCondition.name() + "\"}")
+                .build());
 
         incidentRepo.save(report);
 
@@ -286,7 +288,8 @@ public class IncidentServiceImpl implements IncidentService {
 
     private void validateNotAlreadyProcessed(AssetIncidentReport report) {
         if (report.getStatus() != ReportStatus.PENDING) {
-            throw new IllegalStateException(messages.get(MessageCode.INCIDENT_ALREADY_PROCESSED, report.getStatus().name()));
+            throw new IllegalStateException(
+                    messages.get(MessageCode.INCIDENT_ALREADY_PROCESSED, report.getStatus().name()));
         }
     }
 

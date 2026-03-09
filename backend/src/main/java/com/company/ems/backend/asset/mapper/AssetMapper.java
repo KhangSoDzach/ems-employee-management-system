@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,57 +24,58 @@ public class AssetMapper {
 
     private final MessageService messages;
 
-    private static final DateTimeFormatter DATE_FMT      = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DateTimeFormatter DATETIME_FMT  = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter DETAIL_DT_FMT = DateTimeFormatter.ofPattern("HH:mm, dd/MM/yyyy");
 
     private String statusLabel(AssetStatus s) {
         return switch (s) {
             case AVAILABLE -> messages.get(MessageCode.ASSET_STATUS_AVAILABLE);
-            case ASSIGNED  -> messages.get(MessageCode.ASSET_STATUS_ASSIGNED);
-            case RETIRED   -> messages.get(MessageCode.ASSET_STATUS_RETIRED);
+            case ASSIGNED -> messages.get(MessageCode.ASSET_STATUS_ASSIGNED);
+            case RETIRED -> messages.get(MessageCode.ASSET_STATUS_RETIRED);
         };
     }
 
     private String statusLabelUpper(AssetStatus s) {
         return switch (s) {
             case AVAILABLE -> messages.get(MessageCode.ASSET_STATUS_AVAILABLE_UPPER);
-            case ASSIGNED  -> messages.get(MessageCode.ASSET_STATUS_ASSIGNED_UPPER);
-            case RETIRED   -> messages.get(MessageCode.ASSET_STATUS_RETIRED_UPPER);
+            case ASSIGNED -> messages.get(MessageCode.ASSET_STATUS_ASSIGNED_UPPER);
+            case RETIRED -> messages.get(MessageCode.ASSET_STATUS_RETIRED_UPPER);
         };
     }
 
     private static final java.util.Map<AssetStatus, String> STATUS_COLORS = java.util.Map.of(
             AssetStatus.AVAILABLE, "bg-green-100 text-green-700",
-            AssetStatus.ASSIGNED,  "bg-blue-100 text-blue-700",
-            AssetStatus.RETIRED,   "bg-yellow-100 text-yellow-700"
-    );
+            AssetStatus.ASSIGNED, "bg-blue-100 text-blue-700",
+            AssetStatus.RETIRED, "bg-yellow-100 text-yellow-700");
 
     public String conditionLabel(AssetCondition c) {
         return switch (c) {
-            case NEW      -> messages.get(MessageCode.ASSET_CONDITION_NEW);
-            case GOOD     -> messages.get(MessageCode.ASSET_CONDITION_GOOD);
-            case DAMAGED  -> messages.get(MessageCode.ASSET_CONDITION_DAMAGED);
-            case LOST     -> messages.get(MessageCode.ASSET_CONDITION_LOST);
+            case NEW -> messages.get(MessageCode.ASSET_CONDITION_NEW);
+            case GOOD -> messages.get(MessageCode.ASSET_CONDITION_GOOD);
+            case DAMAGED -> messages.get(MessageCode.ASSET_CONDITION_DAMAGED);
+            case LOST -> messages.get(MessageCode.ASSET_CONDITION_LOST);
             case DISPOSED -> messages.get(MessageCode.ASSET_CONDITION_DISPOSED);
         };
     }
 
     public String actionLabel(AssetActionType t) {
         return switch (t) {
-            case ASSIGN_ASSET                        -> messages.get(MessageCode.ASSET_ACTION_ASSIGN);
-            case RETURN_ASSET, RETIRE_ASSET          -> messages.get(MessageCode.ASSET_ACTION_RETURN);
+            case ASSIGN_ASSET -> messages.get(MessageCode.ASSET_ACTION_ASSIGN);
+            case RETURN_ASSET, RETIRE_ASSET -> messages.get(MessageCode.ASSET_ACTION_RETURN);
             case CREATE_ASSET, UPDATE_ASSET,
-                 CHANGE_CONDITION, SOFT_DELETE       -> messages.get(MessageCode.ASSET_ACTION_UPDATE);
+                    CHANGE_CONDITION, SOFT_DELETE ->
+                messages.get(MessageCode.ASSET_ACTION_UPDATE);
         };
     }
 
     private static String historyType(AssetActionType t) {
         return switch (t) {
-            case ASSIGN_ASSET                        -> "assign";
-            case RETURN_ASSET, RETIRE_ASSET          -> "return";
+            case ASSIGN_ASSET -> "assign";
+            case RETURN_ASSET, RETIRE_ASSET -> "return";
             case CREATE_ASSET, UPDATE_ASSET,
-                 CHANGE_CONDITION, SOFT_DELETE       -> "update";
+                    CHANGE_CONDITION, SOFT_DELETE ->
+                "update";
         };
     }
 
@@ -142,7 +142,8 @@ public class AssetMapper {
     }
 
     private String formatVND(BigDecimal value) {
-        if (value == null) return null;
+        if (value == null)
+            return null;
         return String.format("%,d VND", value.longValue());
     }
 
@@ -150,7 +151,4 @@ public class AssetMapper {
         return date != null ? date.format(DATE_FMT) : null;
     }
 
-    private String formatDateTime(LocalDateTime dt) {
-        return dt != null ? dt.format(DATETIME_FMT) : null;
-    }
 }

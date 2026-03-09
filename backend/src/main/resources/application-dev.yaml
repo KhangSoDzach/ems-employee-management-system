@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────
+# Profile: dev  (local development with XAMPP / local MySQL)
+# Activate: SPRING_PROFILES_ACTIVE=dev
+# ─────────────────────────────────────────────────────────────
+spring:
+  datasource:
+    # XAMPP default: root user, no password (or set your own password below)
+    url: jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${DEV_DB_USERNAME:root}
+    password: ${DEV_DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Flyway — dev profile: allow repair in case of local migration errors
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: false
+
+# Logging: more verbose for development
+logging:
+  level:
+    root: INFO
+    com.company.ems.backend: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

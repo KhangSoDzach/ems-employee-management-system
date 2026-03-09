@@ -218,7 +218,7 @@ export default function CheckinPage() {
                                 </p>
 
                                 <div className="flex gap-4 mt-2">
-                                    {(status === "unchecked" || status === "checked_out") && (
+                                    {status === "unchecked" && (
                                         <Button
                                             onClick={() => openCameraFor("checkIn")}
                                             disabled={loading || actionLoading}
@@ -242,6 +242,17 @@ export default function CheckinPage() {
                                         </Button>
                                     )}
 
+                                    {status === "checked_out" && (
+                                        <Button
+                                            disabled
+                                            size="lg"
+                                            className="btn-checkin opacity-50 cursor-not-allowed"
+                                        >
+                                            <Square className="fill-current w-5 h-5 text-muted-foreground mr-2" />
+                                            Đã hoàn thành Check-out
+                                        </Button>
+                                    )}
+
                                     <Button
                                         size="lg"
                                         variant="outline"
@@ -258,7 +269,7 @@ export default function CheckinPage() {
                             <div className="asset-image-placeholder hidden md:block">
                                 {todayRecord?.checkInPhotoUrl ? (
                                     <img
-                                        src={`http://localhost:8080${todayRecord.checkInPhotoUrl}`}
+                                        src={todayRecord.checkInPhotoUrl}
                                         alt="Check-in photo"
                                         className="w-full h-full object-cover"
                                     />

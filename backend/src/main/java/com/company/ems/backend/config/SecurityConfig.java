@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.company.ems.backend.auth.security.JwtAuthenticationEntryPoint;
 import com.company.ems.backend.auth.security.JwtAuthenticationFilter;
 import com.company.ems.backend.rbac.evaluator.CustomPermissionEvaluator;
+
 /**
  * Security configuration for the application
  * Configures JWT authentication and authorization rules
@@ -31,7 +32,9 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomPermissionEvaluator customPermissionEvaluator;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint, CustomPermissionEvaluator customPermissionEvaluator) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            CustomPermissionEvaluator customPermissionEvaluator) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.customPermissionEvaluator = customPermissionEvaluator;
@@ -40,7 +43,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())  // Dùng CorsConfigurationSource từ WebConfig
+                .cors(Customizer.withDefaults()) // Dùng CorsConfigurationSource từ WebConfig
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -51,25 +54,25 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/api/v1/asset/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+                                "/swagger-ui.html",
+                                "/uploads/**")
+                        .permitAll()
                         .requestMatchers(
                                 "/actuator/health",
-                                "/actuator/info"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                                "/actuator/info")
+                        .permitAll()
+                        // Allow Spring's internal error dispatch to pass through without auth
+                        .requestMatchers("/error").permitAll()
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
     @Bean
     public MethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        DefaultMethodSecurityExpressionHandler handler =
-                new DefaultMethodSecurityExpressionHandler();
+        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
         handler.setPermissionEvaluator(customPermissionEvaluator);
         return handler;
     }

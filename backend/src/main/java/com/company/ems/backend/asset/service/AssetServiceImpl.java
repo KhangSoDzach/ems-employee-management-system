@@ -14,6 +14,8 @@ import com.company.ems.backend.asset.security.AssetDataScopeService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.user.entity.User;
@@ -30,7 +32,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -50,26 +51,25 @@ public class AssetServiceImpl implements AssetService {
             "assign", List.of(AssetActionType.ASSIGN_ASSET),
             "return", List.of(AssetActionType.RETURN_ASSET, AssetActionType.RETIRE_ASSET),
             "update", List.of(AssetActionType.UPDATE_ASSET, AssetActionType.CREATE_ASSET,
-                    AssetActionType.CHANGE_CONDITION)
-    );
+                    AssetActionType.CHANGE_CONDITION));
 
-    private final AssetRepository        assetRepo;
+    private final AssetRepository assetRepo;
     private final AssetHistoryRepository historyRepo;
-    private final EmployeeRepository     employeeRepo;
-    private final UserRepository         userRepo;
-    private final AssetCodeGenerator     codeGenerator;
-    private final AssetMapper            mapper;
-    private final AssetDataScopeService  dataScopeService;
-    private final ObjectMapper           objectMapper;
-    private final MessageService         messages;
+    private final EmployeeRepository employeeRepo;
+    private final UserRepository userRepo;
+    private final AssetCodeGenerator codeGenerator;
+    private final AssetMapper mapper;
+    private final AssetDataScopeService dataScopeService;
+    private final ObjectMapper objectMapper;
+    private final MessageService messages;
 
     @Override
     @Transactional(readOnly = true)
     public AssetDto.CodePreview previewNextCode() {
-        int year      = LocalDate.now().getYear();
+        int year = LocalDate.now().getYear();
         String prefix = "ASSET-" + year + "-";
-        long count    = assetRepo.countByAssetCodeStartingWith(prefix);
-        int nextSeq   = (int) count + 1;
+        long count = assetRepo.countByAssetCodeStartingWith(prefix);
+        int nextSeq = (int) count + 1;
         return AssetDto.CodePreview.builder()
                 .nextCode(String.format("ASSET-%d-%04d", year, nextSeq))
                 .build();
@@ -81,7 +81,7 @@ public class AssetServiceImpl implements AssetService {
             int page, int size, AssetStatus status, String type, String keyword) {
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Asset> assets   = dataScopeService.listAssets(status, type, keyword, pageable);
+        Page<Asset> assets = dataScopeService.listAssets(status, type, keyword, pageable);
 
         List<AssetDto.Summary> content = assets.getContent().stream()
                 .map(mapper::toSummary)
@@ -132,7 +132,8 @@ public class AssetServiceImpl implements AssetService {
                 .build();
 
         asset = assetRepo.save(asset);
-        appendHistory(asset, AssetActionType.CREATE_ASSET, actor, messages.get(MessageCode.ASSET_HISTORY_CREATED, code));
+        appendHistory(asset, AssetActionType.CREATE_ASSET, actor,
+                messages.get(MessageCode.ASSET_HISTORY_CREATED, code));
 
         log.info("Asset created: code=[{}] by=[{}]", code, actor.getUsername());
         return getAssetById(asset.getId());
@@ -144,22 +145,33 @@ public class AssetServiceImpl implements AssetService {
         CustomUserPrincipal actor = currentPrincipal();
         AssetCondition prevCond = asset.getCondition();
         String oldValue = snapshot(asset);
-        if (req.getName()          != null) asset.setAssetName(req.getName());
-        if (req.getType()          != null) asset.setAssetType(req.getType());
-        if (req.getDescription()   != null) asset.setDescription(req.getDescription());
-        if (req.getValue()         != null) asset.setAssetValue(req.getValue());
-        if (req.getPurchaseDate()  != null) asset.setPurchaseDate(req.getPurchaseDate());
-        if (req.getLocationOrUser()!= null) asset.setLocation(req.getLocationOrUser());
-        if (req.getCondition()     != null) asset.setCondition(req.getCondition());
-        if (req.getNote()          != null) asset.setNotes(req.getNote());
-        if (req.getImage()         != null) asset.setImageUrl(req.getImage());
+        if (req.getName() != null)
+            asset.setAssetName(req.getName());
+        if (req.getType() != null)
+            asset.setAssetType(req.getType());
+        if (req.getDescription() != null)
+            asset.setDescription(req.getDescription());
+        if (req.getValue() != null)
+            asset.setAssetValue(req.getValue());
+        if (req.getPurchaseDate() != null)
+            asset.setPurchaseDate(req.getPurchaseDate());
+        if (req.getLocationOrUser() != null)
+            asset.setLocation(req.getLocationOrUser());
+        if (req.getCondition() != null)
+            asset.setCondition(req.getCondition());
+        if (req.getNote() != null)
+            asset.setNotes(req.getNote());
+        if (req.getImage() != null)
+            asset.setImageUrl(req.getImage());
 
-        if (req.getWarrantyDate()  != null && !req.getWarrantyDate().isBlank())
+        if (req.getWarrantyDate() != null && !req.getWarrantyDate().isBlank())
             asset.setWarrantyUntil(LocalDate.parse(req.getWarrantyDate()));
-        if (req.getSupplier()      != null) asset.setSupplierName(req.getSupplier());
-        if (req.getContractDate()  != null && !req.getContractDate().isBlank())
+        if (req.getSupplier() != null)
+            asset.setSupplierName(req.getSupplier());
+        if (req.getContractDate() != null && !req.getContractDate().isBlank())
             asset.setContractUntil(LocalDate.parse(req.getContractDate()));
-        if (req.getContractNumber()!= null) asset.setContractNumber(req.getContractNumber());
+        if (req.getContractNumber() != null)
+            asset.setContractNumber(req.getContractNumber());
 
         assetRepo.save(asset);
         String newValue = snapshot(asset);
@@ -168,8 +180,8 @@ public class AssetServiceImpl implements AssetService {
 
         if (req.getCondition() != null && prevCond != req.getCondition()) {
             String detail = String.format("Tình trạng: %s → %s",
-                    AssetMapper.CONDITION_LABELS.getOrDefault(prevCond, prevCond.name()),
-                    AssetMapper.CONDITION_LABELS.getOrDefault(req.getCondition(), req.getCondition().name()));
+                    mapper.conditionLabel(prevCond),
+                    mapper.conditionLabel(req.getCondition()));
             appendHistory(asset, AssetActionType.CHANGE_CONDITION, actor, detail, oldValue, newValue);
         }
 
@@ -188,7 +200,8 @@ public class AssetServiceImpl implements AssetService {
         assetRepo.save(asset);
 
         CustomUserPrincipal actor = currentPrincipal();
-        appendHistory(asset, AssetActionType.SOFT_DELETE, actor, messages.get(MessageCode.ASSET_HISTORY_DELETED));
+        appendHistory(asset, AssetActionType.SOFT_DELETE, actor,
+                messages.get(MessageCode.ASSET_HISTORY_DELETED), oldValue, null);
         log.info("Asset deleted: id=[{}] by=[{}]", id, actor.getUsername());
     }
 
@@ -200,9 +213,9 @@ public class AssetServiceImpl implements AssetService {
                     messages.get(MessageCode.ASSET_CANNOT_ASSIGN, asset.getStatus().name()));
         }
 
-        CustomUserPrincipal actor  = currentPrincipal();
-        User                actorUser = userRepo.findById(actor.getUserId()).orElse(null);
-        Employee            target = employeeRepo.findById(req.getEmployeeId())
+        CustomUserPrincipal actor = currentPrincipal();
+        User actorUser = userRepo.findById(actor.getUserId()).orElse(null);
+        Employee target = employeeRepo.findById(req.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", req.getEmployeeId()));
 
         String oldValue = snapshot(asset);
@@ -213,11 +226,11 @@ public class AssetServiceImpl implements AssetService {
         asset.setLocation(target.getFirstName() + " " + target.getLastName());
         assetRepo.save(asset);
 
-        String dept   = target.getDepartment() != null ? " (" + target.getDepartment().getName() + ")" : "";
-        String notes  = req.getNotes() != null ? " | " + req.getNotes() : "";
+        String dept = target.getDepartment() != null ? " (" + target.getDepartment().getName() + ")" : "";
+        String notes = req.getNotes() != null ? " | " + req.getNotes() : "";
         String detail = messages.get(MessageCode.ASSET_HISTORY_ASSIGNED,
                 target.getFirstName() + " " + target.getLastName(), dept, notes);
-        appendHistory(asset, AssetActionType.ASSIGN_ASSET, actor, detail);
+        appendHistory(asset, AssetActionType.ASSIGN_ASSET, actor, detail, oldValue, snapshot(asset));
 
         log.info("Asset assigned: id=[{}] to empId=[{}] by=[{}]", assetId, req.getEmployeeId(), actor.getUsername());
         return getAssetById(assetId);
@@ -230,15 +243,16 @@ public class AssetServiceImpl implements AssetService {
             throw new AssetStateException(messages.get(MessageCode.ASSET_CANNOT_RETURN, asset.getStatus().name()));
         }
 
-        CustomUserPrincipal actor    = currentPrincipal();
-        Employee            prevEmp  = asset.getAssignedTo();
-        AssetCondition      prevCond = asset.getCondition();
-        String              oldValue = snapshot(asset);
+        CustomUserPrincipal actor = currentPrincipal();
+        Employee prevEmp = asset.getAssignedTo();
+        AssetCondition prevCond = asset.getCondition();
+        String oldValue = snapshot(asset);
 
         asset.setCondition(req.getConditionOnReturn());
         asset.setReturnDate(LocalDateTime.now());
         AssetStatus newStatus = Boolean.TRUE.equals(req.getReadyToReuse())
-                ? AssetStatus.AVAILABLE : AssetStatus.RETIRED;
+                ? AssetStatus.AVAILABLE
+                : AssetStatus.RETIRED;
         asset.setStatus(newStatus);
         asset.setAssignedTo(null);
         asset.setAssignedBy(null);
@@ -247,11 +261,12 @@ public class AssetServiceImpl implements AssetService {
         assetRepo.save(asset);
 
         String fromName = prevEmp != null
-                ? prevEmp.getFirstName() + " " + prevEmp.getLastName() : "N/A";
+                ? prevEmp.getFirstName() + " " + prevEmp.getLastName()
+                : "N/A";
         String condChange = prevCond != req.getConditionOnReturn()
                 ? " | " + messages.get(MessageCode.ASSET_HISTORY_CONDITION,
-                mapper.conditionLabel(prevCond),
-                mapper.conditionLabel(req.getConditionOnReturn()))
+                        mapper.conditionLabel(prevCond),
+                        mapper.conditionLabel(req.getConditionOnReturn()))
                 : "";
         String detail = String.format("Thu hồi từ %s%s%s", fromName, condChange,
                 req.getNotes() != null ? " | " + req.getNotes() : "");
@@ -260,8 +275,8 @@ public class AssetServiceImpl implements AssetService {
 
         if (prevCond != req.getConditionOnReturn()) {
             String condDetail = String.format("Tình trạng: %s → %s",
-                    AssetMapper.CONDITION_LABELS.getOrDefault(prevCond, prevCond.name()),
-                    AssetMapper.CONDITION_LABELS.getOrDefault(req.getConditionOnReturn(), req.getConditionOnReturn().name()));
+                    mapper.conditionLabel(prevCond),
+                    mapper.conditionLabel(req.getConditionOnReturn()));
             appendHistory(asset, AssetActionType.CHANGE_CONDITION, actor, condDetail, oldValue, newValue);
         }
 
@@ -285,8 +300,8 @@ public class AssetServiceImpl implements AssetService {
         List<AssetActionType> actionTypes = (historyType == null
                 || historyType.isBlank()
                 || historyType.equalsIgnoreCase("all"))
-                ? null
-                : HISTORY_FILTER.get(historyType.toLowerCase());
+                        ? null
+                        : HISTORY_FILTER.get(historyType.toLowerCase());
 
         Page<AssetHistory> histPage = historyRepo.findFiltered(assetId, actionTypes, pageable);
 
@@ -334,6 +349,14 @@ public class AssetServiceImpl implements AssetService {
             Asset asset,
             AssetActionType action,
             CustomUserPrincipal actor,
+            String detail) {
+        appendHistory(asset, action, actor, detail, null, null);
+    }
+
+    private void appendHistory(
+            Asset asset,
+            AssetActionType action,
+            CustomUserPrincipal actor,
             String detail,
             String oldValue,
             String newValue) {
@@ -364,7 +387,8 @@ public class AssetServiceImpl implements AssetService {
         snap.put("purchaseDate", asset.getPurchaseDate() != null ? asset.getPurchaseDate().toString() : null);
         snap.put("location", asset.getLocation());
         snap.put("assignedToId", assignedTo != null ? assignedTo.getId() : null);
-        snap.put("assignedToName", assignedTo != null ? (assignedTo.getFirstName() + " " + assignedTo.getLastName()) : null);
+        snap.put("assignedToName",
+                assignedTo != null ? (assignedTo.getFirstName() + " " + assignedTo.getLastName()) : null);
         snap.put("assignedById", assignedBy != null ? assignedBy.getId() : null);
         snap.put("assignedDate", asset.getAssignedDate() != null ? asset.getAssignedDate().toString() : null);
         snap.put("returnDate", asset.getReturnDate() != null ? asset.getReturnDate().toString() : null);
@@ -380,7 +404,8 @@ public class AssetServiceImpl implements AssetService {
     }
 
     private String csvEscape(String val) {
-        if (val == null) return "";
+        if (val == null)
+            return "";
         return "\"" + val.replace("\"", "\"\"") + "\"";
     }
 }

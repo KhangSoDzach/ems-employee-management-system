@@ -16,6 +16,7 @@ import com.company.ems.backend.user.repository.UserRepository;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.common.message.MessageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -51,6 +52,8 @@ class IncidentServiceImplTest {
     private IncidentCodeGenerator codeGenerator;
     @Mock
     private IncidentMapper mapper;
+    @Mock
+    private MessageService messages;
 
     @InjectMocks
     private IncidentServiceImpl incidentService;
@@ -114,7 +117,8 @@ class IncidentServiceImplTest {
     @Test
     void submitReport_whenAssetNotAssignedToEmployee_shouldThrowAccessDenied() {
         // Arrange
-        Employee emp = new Employee(); emp.setId(50L);
+        Employee emp = new Employee();
+        emp.setId(50L);
         Asset asset = Asset.builder().id(200L).assignedTo(null).build();
         when(assetRepo.findActiveById(200L)).thenReturn(Optional.of(asset));
 
@@ -124,8 +128,6 @@ class IncidentServiceImplTest {
         when(employeeRepo.findByUserId(50L)).thenReturn(Optional.of(emp));
 
         // Act / Assert
-        assertThrows(AccessDeniedException.class, () ->
-                incidentService.submitReport(200L, null, null, principal)
-        );
+        assertThrows(AccessDeniedException.class, () -> incidentService.submitReport(200L, null, null, principal));
     }
 }

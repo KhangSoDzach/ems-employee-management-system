@@ -28,6 +28,38 @@ public class EmployeeResponse {
     private String state;
     private String zipCode;
     private String country;
+
+    private String emergencyContactName;
+    private String emergencyContactPhone;
+    private String emergencyContactRelation;
+
+    private String taxId;
+    private String socialSecurityNumber;
+    private String nationalId;
+
+    private String bankAccountNumber;
+    private String bankName;
+    private String bankBranch;
+
+    private Long reportingManagerId;
+    private String reportingManagerName;
+
+    private String contractType;
+    private LocalDate probationEndDate;
+    private LocalDate contractEndDate;
+    private String workLocation;
+
+    private String nationality;
+    private String bloodGroup;
+    private String gender;
+
+    private Integer annualLeaveBalance;
+    private Integer sickLeaveBalance;
+
+    private String avatarUrl;
+    private String employeeCode;
+    private LocalDate terminationDate;
+    private String notes;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
