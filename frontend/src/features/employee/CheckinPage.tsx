@@ -16,7 +16,7 @@ import { attendanceService, AttendanceRecord, AttendanceSummary } from "@/servic
 import { CameraModal } from "./components/CameraModal"
 
 import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { CHECKIN_STATUS } from "@/constants/theme"
+import { CHECKIN_STATUS } from "@/constants/options"
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function fmtTime(iso: string | null) {
@@ -158,7 +158,7 @@ export default function CheckinPage() {
     const getStatusBadge = () => {
         const checkInTime = fmtTime(todayRecord?.checkInTime ?? null)
         const checkOutTime = fmtTime(todayRecord?.checkOutTime ?? null)
-        
+
         if (status === "unchecked") {
             return (
                 <Badge variant="outline" className="text-destructive border-destructive/20 bg-destructive/10 font-medium px-3 py-1">

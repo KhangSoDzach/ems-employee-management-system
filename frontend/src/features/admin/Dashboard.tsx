@@ -9,7 +9,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { EMPLOYEE_STATUS_MAP } from "@/constants/theme";
+import { EMPLOYEE_STATUS_MAP } from "@/constants/options";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 /* ====================== */

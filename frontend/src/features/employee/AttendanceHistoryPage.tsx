@@ -29,7 +29,7 @@ import {
 import { attendanceService, AttendanceRecord, AttendanceSummary } from "@/services/attendanceService"
 
 import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { ATTENDANCE_STATUS } from "@/constants/theme"
+import { ATTENDANCE_STATUS } from "@/constants/options"
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 function fmtTime(iso: string | null) {

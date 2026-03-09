@@ -38,7 +38,14 @@ import { cn } from "@/lib/utils"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 import { DEPARTMENT_OPTIONS, ROLE_OPTIONS, CONTRACT_OPTIONS, WORK_STATUS_OPTIONS } from "@/constants/options"
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
-import { THEME_CLASSES } from "@/constants/theme"
+
+const CONTRACT_CLASSES: Record<string, string> = {
+    FULL_TIME: 'bg-green-100 text-green-700',
+    PART_TIME: 'bg-blue-100 text-blue-700',
+    CONTRACT: 'bg-yellow-100 text-yellow-700',
+    INTERN: 'bg-purple-100 text-purple-700',
+    DEFAULT: 'bg-gray-100 text-gray-700'
+};
 
 const profileSchema = z.object({
     employeeCode: z.string(),
@@ -203,7 +210,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                             <div className="text-center md:text-left pt-2">
                                 <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
                                     <h2 className="text-2xl font-bold">{form.watch("fullName")}</h2>
-                                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full uppercase", THEME_CLASSES.CONTRACT[form.watch("contractType") as keyof typeof THEME_CLASSES.CONTRACT] || THEME_CLASSES.CONTRACT.DEFAULT)}>
+                                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full uppercase", CONTRACT_CLASSES[form.watch("contractType")] || CONTRACT_CLASSES.DEFAULT)}>
                                         {form.watch("contractType").replace("_", " ")}
                                     </span>
                                 </div>

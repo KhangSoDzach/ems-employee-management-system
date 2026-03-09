@@ -519,11 +519,11 @@ export const SYSTEM_MESSAGES = {
 
     // My Assets (Employee)
     MY_ASSETS: {
-        TITLE: "My Assets",
-        SECTION_EQUIPMENT: "Assigned Equipment",
-        SECTION_REPORTS: "Recent Reports",
-        PLACEHOLDER_INCIDENT: "Select incident type...",
-        PLACEHOLDER_DESC: "Please describe the issue in detail...",
+        TITLE: "Tài sản của tôi",
+        SECTION_EQUIPMENT: "Thiết bị được cấp phát",
+        SECTION_REPORTS: "Báo cáo gần đây",
+        PLACEHOLDER_INCIDENT: "Chọn loại sự cố...",
+        PLACEHOLDER_DESC: "Vui lòng mô tả chi tiết vấn đề...",
         BTN_REPORT: "Báo cáo sự cố",
         REPORT_TITLE: "Báo cáo sự cố tài sản",
     },
@@ -531,11 +531,11 @@ export const SYSTEM_MESSAGES = {
     // Review Adjustment Sheet
     REVIEW: {
         DETAIL_TITLE: "Chi tiết yêu cầu",
-        ADJUSTMENT_DETAIL: "Adjustment Detail",
-        REASON_REQUEST: "Reason for Request",
-        INTERNAL_NOTES: "Internal Notes",
-        PLACEHOLDER_NOTE: "Add a note for the HR record...",
-        ACTIVITY_HISTORY: "Activity History",
+        ADJUSTMENT_DETAIL: "Chi tiết điều chỉnh",
+        REASON_REQUEST: "Lý do yêu cầu",
+        INTERNAL_NOTES: "Ghi chú nội bộ",
+        PLACEHOLDER_NOTE: "Thêm ghi chú cho phòng nhân sự...",
+        ACTIVITY_HISTORY: "Lịch sử hoạt động",
         BTN_APPROVE: "Phê duyệt",
         BTN_REJECT: "Từ chối",
         SHEET_TITLE: "Phê duyệt yêu cầu",
@@ -603,12 +603,12 @@ export const SYSTEM_MESSAGES = {
         TOAST_SUCCESS: "Đặt lại mật khẩu thành công!",
     },
 
-    // Common English Labels
+    // Common Translations
     COMMON_EN: {
-        SELECT_TYPE: "Select incident type...",
-        SELECT_STATUS: "Select status...",
-        UNKNOWN: "Unknown",
-        NO_DATA: "No data available",
+        SELECT_TYPE: "Chọn loại...",
+        SELECT_STATUS: "Chọn trạng thái...",
+        UNKNOWN: "Không xác định",
+        NO_DATA: "Không có dữ liệu",
     },
 
     // Common Constants
