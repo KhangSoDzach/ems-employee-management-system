@@ -32,3 +32,10 @@ export type DepartmentOption = keyof typeof DEPARTMENT_OPTIONS;
 export type RoleOption = keyof typeof ROLE_OPTIONS;
 export type ContractOption = keyof typeof CONTRACT_OPTIONS;
 export type WorkStatusOption = keyof typeof WORK_STATUS_OPTIONS;
+
+export const INCIDENT_STATUS_OPTIONS = [
+    { value: "All", label: "Tất cả" },
+    { value: "Pending", label: "Chờ duyệt" },
+    { value: "Approved", label: "Đã duyệt" },
+    { value: "Rejected", label: "Từ chối" }
+];

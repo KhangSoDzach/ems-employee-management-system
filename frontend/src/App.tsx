@@ -12,6 +12,7 @@ import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
 import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
 import AssetManagementPage from "./features/admin/Asset-Management";
+import AssetIncidentManagementPage from "./features/admin/AssetIncidentManagementPage";
 import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentRequest";
 import MyAssetsPage from "./features/employee/MyAssetsPage";
 import AssetGroupManagement from "./features/manager/AssetGroupManagement";
@@ -35,6 +36,12 @@ function App() {
             <Route path="/asset" element={<AssetManagementPage />} />
             <Route path="/admin-profile" element={<AdminProfilePage />} />
           </Route>
+
+          {/* Shared cross-roles */}
+          <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_HR", "ROLE_MANAGER"]} />}>
+            <Route path="/asset-incidents" element={<AssetIncidentManagementPage />} />
+          </Route>
+
 
           {/* Employee only */}
           <Route path="/employee" element={<EmployeeDashboard />} />
@@ -81,6 +88,7 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
             <Route path="/hr-profile" element={<HRProfilePage />} />
             <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
+            <Route path="/hr-assets" element={<AssetManagementPage />} />
           </Route>
 
         </Routes>

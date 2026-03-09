@@ -480,6 +480,43 @@ export const SYSTEM_MESSAGES = {
         FILTER_ALL: "Tất cả",
     },
 
+    // Asset Incident Management
+    ASSET_INCIDENT: {
+        TITLE: "Quản lý sự cố tài sản",
+        SUBTITLE: "Xem xét và quản lý các báo cáo mất mát và hư hỏng tài sản của nhân viên.",
+        SEARCH_PLACEHOLDER: "Tìm kiếm theo tên nhân viên hoặc tài sản...",
+        LABEL_STATUS: "Trạng thái:",
+        TABLE_EMPLOYEE: "NHÂN VIÊN",
+        TABLE_ASSET: "TÀI SẢN",
+        TABLE_INCIDENT: "LOẠI SỰ CỐ",
+        TABLE_DATE: "NGÀY BÁO CÁO",
+        TABLE_STATUS: "TRẠNG THÁI",
+        TABLE_ACTION: "THAO TÁC",
+        LABEL_ID: "Mã:",
+        PAGINATION_SHOW: "Đang hiển thị",
+        PAGINATION_TO: "đến",
+        PAGINATION_OF: "của",
+        PAGINATION_RESULTS: "kết quả",
+        BTN_PREV: "Trước",
+        BTN_NEXT: "Tiếp",
+    },
+
+    ASSET_INCIDENT_MODAL: {
+        TITLE: "Xem xét báo cáo sự cố",
+        LABEL_ASSET_NAME: "Tên tài sản",
+        LABEL_ASSET_ID: "Mã tài sản",
+        LABEL_INCIDENT_TYPE: "Loại sự cố",
+        LABEL_DATE: "Ngày báo cáo",
+        LABEL_DESC: "Mô tả sự cố",
+        LABEL_UPDATE_COND: "Cập nhật tình trạng tài sản (Bắt buộc khi Duyệt)",
+        PLACEHOLDER_COND: "Chọn tình trạng mới...",
+        COND_GOOD: "Tốt (Good)",
+        COND_FAIR: "Trung bình (Fair)",
+        COND_NEEDS_REPAIR: "Cần sửa chữa (Needs Repair)",
+        BTN_APPROVE: "Duyệt",
+        BTN_REJECT: "Từ chối",
+    },
+
     // My Assets (Employee)
     MY_ASSETS: {
         TITLE: "My Assets",
