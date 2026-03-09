@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/asset-reports")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('HR','ADMIN')")
+@PreAuthorize("hasAuthority('ASSET_MANAGE')")
 @Tag(name = "Asset Incident Reports (Admin/HR)", description = "Quản lý báo cáo sự cố tài sản")
 public class AdminIncidentController {
 

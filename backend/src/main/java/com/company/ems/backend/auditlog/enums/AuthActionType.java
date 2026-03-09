@@ -9,7 +9,10 @@ public enum AuthActionType {
     /** User authenticated with valid credentials (SSO or JWT). */
     LOGIN_SUCCESS,
 
-    /** Authentication attempt was rejected (bad credentials, locked account, disabled). */
+    /**
+     * Authentication attempt was rejected (bad credentials, locked account,
+     * disabled).
+     */
     LOGIN_FAILED,
 
     /** A valid Refresh Token was exchanged for a new Access Token. */
@@ -21,6 +24,18 @@ public enum AuthActionType {
     /** User explicitly logged out (single device – refresh token revoked). */
     LOGOUT,
 
-    /** One or all refresh tokens for a user were revoked (admin action or logout-all). */
-    TOKEN_REVOKED
+    /**
+     * One or all refresh tokens for a user were revoked (admin action or
+     * logout-all).
+     */
+    TOKEN_REVOKED,
+
+    /** Asset Incident Report was submitted by an employee. */
+    ASSET_REPORT_SUBMITTED,
+
+    /** Asset Incident Report was approved by HR/Admin. */
+    ASSET_REPORT_APPROVED,
+
+    /** Asset Incident Report was rejected by HR/Admin. */
+    ASSET_REPORT_REJECTED
 }

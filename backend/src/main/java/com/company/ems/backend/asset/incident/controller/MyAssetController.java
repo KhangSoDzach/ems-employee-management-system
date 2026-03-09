@@ -24,7 +24,7 @@ public class MyAssetController {
 
     private final IncidentService incidentService;
     @GetMapping("/my/assets")
-    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER','HR','ADMIN')")
+    @PreAuthorize("hasAuthority('ASSET_VIEW')")
     @Operation(summary = "Danh sách tài sản được cấp phát cho tôi")
     public ResponseEntity<ApiResponse<PageResponse<IncidentDto.MyAsset>>> getMyAssets(
             @AuthenticationPrincipal CustomUserPrincipal principal) {
@@ -35,7 +35,7 @@ public class MyAssetController {
 
     @PostMapping(value = "/assets/{assetId}/report",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER','HR','ADMIN')")
+    @PreAuthorize("hasAuthority('ASSET_VIEW')")
     @Operation(summary = "Gửi báo cáo sự cố tài sản")
     public ResponseEntity<ApiResponse<IncidentDto.ReportDetail>> submitReport(
             @PathVariable Long assetId,
@@ -48,7 +48,7 @@ public class MyAssetController {
     }
 
     @GetMapping("/my/reports")
-    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER','HR','ADMIN')")
+    @PreAuthorize("hasAuthority('ASSET_VIEW')")
     @Operation(summary = "Lịch sử báo cáo sự cố của tôi")
     public ResponseEntity<ApiResponse<PageResponse<IncidentDto.ReportRow>>> getMyReports(
             @RequestParam(defaultValue = "0")  int page,
@@ -60,7 +60,7 @@ public class MyAssetController {
     }
 
     @GetMapping("/my/reports/{id}")
-    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER','HR','ADMIN')")
+    @PreAuthorize("hasAuthority('ASSET_VIEW')")
     @Operation(summary = "Chi tiết báo cáo sự cố của tôi")
     public ResponseEntity<ApiResponse<IncidentDto.ReportDetail>> getMyReportDetail(
             @PathVariable Long id,
