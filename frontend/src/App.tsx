@@ -43,7 +43,7 @@ function App() {
 
           {/* HR only */}
           <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
-            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/hr/employees" element={<Dashboard />} />
             <Route path="/hr-profile" element={<HRProfilePage />} />
             <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
             <Route path="/hr-assets" element={<AssetManagementPage sidebarRole="hr" />} />

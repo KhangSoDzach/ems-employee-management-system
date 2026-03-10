@@ -51,9 +51,9 @@ export default function MemberList() {
       <AppSidebar role="manager" variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        
+
         <main className="flex-1 flex flex-col overflow-hidden bg-slate-50 min-h-screen">
-          
+
 
           {/* Content Area */}
           <div className="flex-1 overflow-y-auto p-8">
@@ -63,14 +63,14 @@ export default function MemberList() {
                   <h1 className="text-2xl font-bold text-slate-900">{t.TITLE}</h1>
                   <p className="text-slate-500 mt-1">{t.DESC}</p>
                 </div>
-               <div className="relative w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input 
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" 
-                placeholder={t.SEARCH_PLACEHOLDER} 
-                type="text"
-              />
-            </div>
+                <div className="relative w-96">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    placeholder={t.SEARCH_PLACEHOLDER}
+                    type="text"
+                  />
+                </div>
               </div>
 
               {/* Table Card */}
@@ -90,9 +90,9 @@ export default function MemberList() {
                         <tr key={member.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-4">
-                              <img 
-                                src={member.avatar} 
-                                alt={member.name} 
+                              <img
+                                src={member.avatar}
+                                alt={member.name}
                                 className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 object-cover"
                               />
                               <div>

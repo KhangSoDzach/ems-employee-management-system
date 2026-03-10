@@ -17,6 +17,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 // This is sample data.
 const data = {
@@ -44,19 +45,19 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
     role === "admin"
       ? [
         {
-          title: "Quản lý hệ thống",
+          title: SYSTEM_MESSAGES.SIDEBAR.ADMIN_SECTION,
           url: "#",
           items: [
             {
-              title: "Hồ sơ của tôi",
+              title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
               url: "/admin-profile",
             },
             {
-              title: "Quản lý tài sản",
+              title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
               url: "/asset",
             },
             {
-              title: "Quản lý sự cố tài sản",
+              title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
               url: "/asset-incidents",
             },
           ],
@@ -65,40 +66,40 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
       : role === "manager"
         ? [
           {
-            title: "Quản lý đội nhóm",
+            title: SYSTEM_MESSAGES.SIDEBAR.MANAGER_SECTION,
             url: "#",
             items: [
               {
-                title: "Hồ sơ của tôi",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
                 url: "/manager-profile",
               },
               {
-                title: "Thành viên nhóm",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS || "Thành viên nhóm",
                 url: "/members",
               },
               {
-                title: "Thiết lập KPI/OKR",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_KPI || "Thiết lập KPI/OKR",
                 url: "/kpi-okr",
               },
               {
-                title: "Duyệt đơn nghỉ phép",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_LEAVE,
                 url: "/approve",
               },
               {
-                title: "Duyệt điều chỉnh chấm công",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ADJ,
                 url: "/approve-adjustments",
               },
               {
-                title: "Tài sản nhóm",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_GROUP_ASSET,
                 url: "/view-group-asset",
               },
               {
-                title: "Tài sản của tôi",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                 url: "/manager-my-assets",
               },
 
               {
-                title: "Quản lý sự cố tài sản",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
                 url: "/asset-incidents",
               },
             ],
@@ -107,27 +108,27 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
         : role === "hr"
           ? [
             {
-              title: "Quản lý nhân sự",
+              title: SYSTEM_MESSAGES.SIDEBAR.HR_SECTION,
               url: "#",
               items: [
                 {
-                  title: "Hồ sơ của tôi",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
                   url: "/hr-profile",
                 },
                 {
-                  title: "Quản lý nhân viên",
-                  url: "/admin",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
+                  url: "/hr/employees",
                 },
                 {
-                  title: "Tài sản của tôi",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                   url: "/hr-my-assets",
                 },
                 {
-                  title: "Quản lý tài sản",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
                   url: "/hr-assets",
                 },
                 {
-                  title: "Quản lý sự cố tài sản",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
                   url: "/asset-incidents",
                 },
               ],
@@ -135,27 +136,27 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
           ]
           : [
             {
-              title: "Thông tin cá nhân",
+              title: SYSTEM_MESSAGES.SIDEBAR.EMPLOYEE_SECTION,
               url: "#",
               items: [
                 {
-                  title: "Hồ sơ của tôi",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
                   url: "/employee",
                 },
                 {
-                  title: "Chấm công",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
                   url: "/checkin",
                 },
                 {
-                  title: "Tạo đơn nghỉ phép",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_LEAVE,
                   url: "/request",
                 },
                 {
-                  title: "Điều chỉnh chấm công",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_ADJ,
                   url: "/adjustment-requests",
                 },
                 {
-                  title: "Tài sản của tôi",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                   url: "/my-assets",
                 },
               ],
@@ -164,12 +165,11 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="h-12 border-b px-2 justify-center">
         <VersionSwitcher
           versions={data.versions}
           defaultVersion={data.versions[0] as string}
         />
-
       </SidebarHeader>
       <SidebarContent>
         {/* We create a SidebarGroup for each parent. */}
