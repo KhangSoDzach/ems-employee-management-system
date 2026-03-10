@@ -54,6 +54,7 @@ public final class AppConstant {
     public static final String HEADER_STRING = "Authorization";
     public static final String TOKEN_TYPE = "JWT";
 
+    public static final String JWT_ERROR_CODE_ATTR = "jwtErrorCode";
     // File upload
     public static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     public static final String[] ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif"};

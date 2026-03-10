@@ -1,0 +1,7 @@
+-- =====================================
+-- V12 placeholder – content moved to V14__leave_multi_level_approval.sql
+-- This file intentionally contains no SQL statements.
+-- It exists only to prevent Flyway from reporting a missing version 12 entry
+-- if this version was already recorded in flyway_schema_history before the
+-- rename took place.
+-- =====================================

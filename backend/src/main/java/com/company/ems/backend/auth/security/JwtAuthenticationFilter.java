@@ -2,6 +2,13 @@ package com.company.ems.backend.auth.security;
 
 import java.io.IOException;
 
+import com.company.ems.backend.common.constant.AppConstant;
+import com.company.ems.backend.common.message.MessageCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.SignatureException;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,11 +27,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * JWT Authentication Filter
- * Intercepts requests, extracts JWT token, validates it, and sets
- * authentication
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -39,58 +41,58 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
+        String jwt = extractJwtFromRequest(request);
+        if (!StringUtils.hasText(jwt)) {
+            request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_MISSING);
+            filterChain.doFilter(request, response);
+            return;
+        }
         try {
-            // Extract JWT from Authorization header
-            String jwt = extractJwtFromRequest(request);
+            String username = jwtTokenUtil.extractUsername(jwt);
 
-            if (StringUtils.hasText(jwt)) {
-                // Extract username from token
-                String username = jwtTokenUtil.extractUsername(jwt);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                // If username is valid and no authentication is set in context
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // Load user details
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (jwtTokenUtil.validateAccessToken(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    // Validate token
-                    if (jwtTokenUtil.validateAccessToken(jwt, userDetails)) {
-                        // Create authentication token
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities());
-
-                        authentication.setDetails(
-                                new WebAuthenticationDetailsSource().buildDetails(request));
-
-                        // Set authentication in security context
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                        log.debug("User '{}' authenticated successfully", username);
-                    }
+                    log.debug("User '{}' authenticated successfully", username);
+                } else {
+                    log.warn("Token validation failed for user: {}", username);
+                    request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_INVALID);
                 }
             }
-        } catch (Exception e) {
-            log.error("Cannot set user authentication: {}", e.getMessage());
+
+        } catch (ExpiredJwtException ex) {
+            log.warn("JWT token expired: {}", ex.getMessage());
+            request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_EXPIRED);
+
+        } catch (SignatureException | MalformedJwtException | UnsupportedJwtException ex) {
+            log.warn("JWT token invalid [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
+            request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_INVALID);
+
+        } catch (JwtException ex) {
+            log.warn("JWT exception: {}", ex.getMessage());
+            request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_INVALID);
+
+        } catch (Exception ex) {
+            log.error("Unexpected error during JWT processing: {}", ex.getMessage());
+            request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_UNAUTHORIZED);
         }
 
-        // Continue filter chain
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Extract JWT token from Authorization header
-     *
-     * @param request HTTP request
-     * @return JWT token string or null
-     */
     private String extractJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-
         return null;
     }
 }

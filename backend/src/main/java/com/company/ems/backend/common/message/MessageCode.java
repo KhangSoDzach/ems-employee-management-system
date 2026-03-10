@@ -76,6 +76,10 @@ public enum MessageCode {
     ERROR_BAD_CREDENTIALS       ("error.bad_credentials"),
     ERROR_ACCOUNT_LOCKED_DETAIL ("error.account_locked_detail"),
     ERROR_REFRESH_TOKEN_INVALID ("error.refresh_token_invalid"),
+    ERROR_TOKEN_EXPIRED         ("error.token_expired"),
+    ERROR_TOKEN_INVALID         ("error.token_invalid"),
+    ERROR_TOKEN_MISSING         ("error.token_missing"),
+    ERROR_UNAUTHORIZED          ("error.unauthorized"),
 
     // ── Error: request ────────────────────────────────────────────────────────
     ERROR_VALIDATION_FAILED     ("error.validation_failed"),
@@ -104,6 +108,10 @@ public enum MessageCode {
     LEAVE_INVALID_STATUS        ("leave.invalid_status"),
     LEAVE_NOT_PENDING           ("leave.not_pending"),
     LEAVE_CANNOT_CANCEL         ("leave.cannot_cancel"),
+    LEAVE_SELF_APPROVE_FORBIDDEN ("leave.self_approve_forbidden"),
+    LEAVE_CANCEL_FORBIDDEN ("leave.cancel_forbidden"),
+
+    INVALID_STATUS ("invalid.status"),
 
     // ── Attendance ────────────────────────────────────────────────────────────
     ATTENDANCE_CHECKIN_SUCCESS  ("attendance.checkin_success"),
