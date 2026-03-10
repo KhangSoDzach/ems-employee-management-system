@@ -1,9 +1,4 @@
--- ============================================================
--- Migration V99: Comprehensive Seed Data for EMS
--- Description: Seed data for all modules: RBAC, Core, Assets, Attendance, Leave, System Config
--- Author: Antigravity AI
--- Date: 2026-03-10
--- ============================================================
+
 
 -- 1. SYSTEM CONFIGURATION
 -- Store basic office location and radius for check-in

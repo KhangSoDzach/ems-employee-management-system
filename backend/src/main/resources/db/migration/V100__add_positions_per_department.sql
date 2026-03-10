@@ -1,10 +1,4 @@
--- ============================================================
--- Migration V100: Add missing positions per department
--- Description: Ensure each department has at least one position
---              so the "Add Employee" form position dropdown works.
--- Author: Antigravity AI
--- Date: 2026-03-10
--- ============================================================
+
 
 -- Bổ sung vị trí cho phòng Finance (department_id = 3) - hiện đang trống
 INSERT IGNORE INTO positions (id, code, title, description, level, is_active, department_id, created_at, updated_at, is_deleted, version)

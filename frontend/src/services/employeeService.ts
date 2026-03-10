@@ -29,7 +29,9 @@ export interface EmployeeResponse {
   dateOfBirth: string;
   hireDate: string;
   position: string | null;
+  positionId: number | null;
   department: string | null;
+  departmentId: number | null;
   salary: number;
   address: string | null;
   city: string | null;

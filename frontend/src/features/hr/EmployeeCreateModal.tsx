@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Save, User, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { employeeService, EmployeeRequest } from "@/services/employeeService";
-import { lookupService, DepartmentOption, PositionOption } from "@/services/lookupService";
+import { lookupService, DepartmentOption, PositionOption, ManagerOption, MANAGER_LEVEL } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 interface Props {
@@ -16,6 +16,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
     const [departments, setDepartments] = useState<DepartmentOption[]>([]);
     const [positions, setPositions] = useState<PositionOption[]>([]);
     const [positionsLoading, setPositionsLoading] = useState(false);
+    const [managers, setManagers] = useState<ManagerOption[]>([]);
 
     const [formData, setFormData] = useState<EmployeeRequest>({
         firstName: "",
@@ -48,9 +49,14 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
         notes: "",
     });
 
+    // ✅ AFTER formData is declared — safe to access formData.positionId
+    const selectedPosition = positions.find(p => p.id === formData.positionId);
+    const isManagerPosition = selectedPosition ? selectedPosition.level >= MANAGER_LEVEL : false;
+
     useEffect(() => {
         if (open) {
             lookupService.getDepartments().then(setDepartments);
+            lookupService.getManagers().then(setManagers).catch(() => setManagers([]));
         }
     }, [open]);
 
@@ -122,13 +128,16 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
         setFormData(prev => {
             const updated = {
                 ...prev,
-                [name]: name === "departmentId" || name === "positionId" || name === "salary" || name === "reportingManagerId"
+                [name]: name === "departmentId" || name === "positionId" || name === "salary"
                     ? Number(value)
-                    : value
+                    : name === "reportingManagerId"
+                        ? (value === "" ? undefined : Number(value))
+                        : value
             };
             // Reset positionId when department changes
             if (name === "departmentId") {
                 updated.positionId = 0;
+                updated.reportingManagerId = undefined;
             }
             return updated;
         });
@@ -281,6 +290,41 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                         <label className="text-xs font-bold text-gray-500 uppercase">Ngày vào làm</label>
                                         <input required type="date" name="hireDate" value={formData.hireDate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-medium" />
                                     </div>
+
+                                    {/* Reporting Manager — chỉ hiện khi vị trí KHÔNG phải manager */}
+                                    {!isManagerPosition && (
+                                        <div className="col-span-2 space-y-1">
+                                            <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1.5">
+                                                Người quản lý trực tiếp
+                                                {!formData.positionId && (
+                                                    <span className="text-[10px] font-normal text-gray-400 italic normal-case">(chọn vị trí trước)</span>
+                                                )}
+                                            </label>
+                                            <select
+                                                name="reportingManagerId"
+                                                value={formData.reportingManagerId ?? ""}
+                                                onChange={handleChange}
+                                                disabled={!formData.positionId}
+                                                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-medium bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <option value="">— Không chỉ định —</option>
+                                                {managers.map(m => (
+                                                    <option key={m.id} value={m.id}>
+                                                        {m.name} {m.position ? `(${m.position})` : ""}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {managers.length === 0 && formData.positionId > 0 && (
+                                                <p className="text-[10px] text-amber-500 italic">Chưa có trưởng phòng nào trong hệ thống</p>
+                                            )}
+                                        </div>
+                                    )}
+                                    {isManagerPosition && (
+                                        <div className="col-span-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                                            <Info size={14} className="text-blue-500 flex-shrink-0" />
+                                            <p className="text-xs text-blue-600 dark:text-blue-400">Vị trí này là <strong>Trưởng phòng</strong> — không cần chỉ định người quản lý trực tiếp.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

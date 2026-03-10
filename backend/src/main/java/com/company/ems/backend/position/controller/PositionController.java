@@ -40,6 +40,7 @@ public class PositionController {
                                                         .title(p.getTitle())
                                                         .code(p.getCode())
                                                         .departmentId(p.getDepartment().getId())
+                                                        .level(p.getLevel())
                                                         .build())
                                         .collect(Collectors.toList());
                 } else {
@@ -50,6 +51,7 @@ public class PositionController {
                                                         .title(p.getTitle())
                                                         .code(p.getCode())
                                                         .departmentId(p.getDepartment().getId())
+                                                        .level(p.getLevel())
                                                         .build())
                                         .collect(Collectors.toList());
                 }

@@ -11,6 +11,13 @@ export interface PositionOption {
     title: string;
     code: string;
     departmentId: number;
+    level: number; // 1=junior, 2=senior, 3=manager, 4=admin
+}
+
+export interface ManagerOption {
+    id: number;      // employee id
+    name: string;    // full name
+    position: string | null;
 }
 
 interface ApiResponse<T> {
@@ -18,6 +25,8 @@ interface ApiResponse<T> {
     message: string;
     data: T;
 }
+
+export const MANAGER_LEVEL = 3; // positions with level >= 3 are considered manager roles
 
 export const lookupService = {
     getDepartments: (): Promise<DepartmentOption[]> =>
@@ -28,5 +37,9 @@ export const lookupService = {
         (api.get<unknown, ApiResponse<PositionOption[]>>('/positions', {
             params: { departmentId }
         }) as Promise<ApiResponse<PositionOption[]>>)
+            .then((res) => res.data),
+
+    getManagers: (): Promise<ManagerOption[]> =>
+        (api.get<unknown, ApiResponse<ManagerOption[]>>('/employees/managers') as Promise<ApiResponse<ManagerOption[]>>)
             .then((res) => res.data),
 };

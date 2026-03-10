@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Save, Briefcase, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { employeeService, EmployeeRequest, EmployeeResponse } from "@/services/employeeService";
-import { lookupService, DepartmentOption, PositionOption } from "@/services/lookupService";
+import { lookupService, DepartmentOption, PositionOption, ManagerOption, MANAGER_LEVEL } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 interface Props {
@@ -17,6 +17,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
     const [loading, setLoading] = useState(false);
     const [departments, setDepartments] = useState<DepartmentOption[]>([]);
     const [positions, setPositions] = useState<PositionOption[]>([]);
+    const [managers, setManagers] = useState<ManagerOption[]>([]);
 
     const [formData, setFormData] = useState<EmployeeRequest>({
         firstName: "",
@@ -33,8 +34,13 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
     useEffect(() => {
         if (open) {
             lookupService.getDepartments().then(setDepartments);
+            lookupService.getManagers().then(setManagers).catch(() => setManagers([]));
         }
     }, [open]);
+
+    // Derived state determining if selected position is manager
+    const selectedPosition = positions.find(p => p.id === formData.positionId);
+    const isManagerPosition = selectedPosition ? selectedPosition.level >= MANAGER_LEVEL : false;
 
     useEffect(() => {
         if (open && employee) {
@@ -52,8 +58,8 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                 // Tuy nhiên, tôi đã cập nhật backend/frontend DTO để hỗ trợ. 
                 // Nếu EmployeeResponse không có departmentId, tôi sẽ phải tìm trong list Departments.
                 // Giả sử backend trả về departmentId (tôi nên cập nhật EmployeeResponse DTO)
-                departmentId: 0, // Sẽ được set sau khi load list
-                positionId: 0,
+                departmentId: employee.departmentId || 0,
+                positionId: employee.positionId || 0,
                 salary: employee.salary || 0,
                 address: employee.address || "",
                 city: employee.city || "",
@@ -127,12 +133,22 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: name === "departmentId" || name === "positionId" || name === "salary" || name === "reportingManagerId"
-                ? Number(value)
-                : value
-        }));
+        setFormData(prev => {
+            const updated = {
+                ...prev,
+                [name]: name === "departmentId" || name === "positionId" || name === "salary"
+                    ? Number(value)
+                    : name === "reportingManagerId"
+                        ? (value === "" ? undefined : Number(value))
+                        : value
+            };
+            // Reset positionId & manager when department changes
+            if (name === "departmentId") {
+                updated.positionId = 0;
+                updated.reportingManagerId = undefined;
+            }
+            return updated;
+        });
     };
 
     return (
@@ -223,6 +239,33 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                             {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                                         </select>
                                     </div>
+
+                                    {!isManagerPosition ? (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Trưởng phòng / Quản lý</label>
+                                            <select
+                                                name="reportingManagerId"
+                                                value={formData.reportingManagerId ?? ""}
+                                                onChange={handleChange}
+                                                disabled={!formData.positionId}
+                                                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold bg-white disabled:opacity-50"
+                                            >
+                                                <option value="">— Không chỉ định —</option>
+                                                {managers.map(m => (
+                                                    <option key={m.id} value={m.id}>
+                                                        {m.name} {m.position ? `(${m.position})` : ""}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                                            <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                                                Cấp bậc Trưởng phòng / Quản lý.
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Loại hợp đồng</label>
                                         <select name="contractType" value={formData.contractType} onChange={handleChange} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold bg-white">

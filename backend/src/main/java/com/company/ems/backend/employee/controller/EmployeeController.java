@@ -71,6 +71,13 @@ public class EmployeeController {
                 .ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getMyProfile()));
     }
 
+    @GetMapping("/managers")
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
+    @Operation(summary = "Get managers list", description = "Returns employees with manager-level positions (level >= 3) for use in reporting manager dropdown")
+    public ResponseEntity<ApiResponse<java.util.List<java.util.Map<String, Object>>>> getManagers() {
+        return ResponseEntity.ok(ApiResponse.success("Success", employeeService.getManagers()));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
     @Operation(summary = "Get employee by ID", description = "Retrieves complete employee details by ID")
