@@ -72,14 +72,12 @@ public class AssetDataScopeService {
     }
     private Long resolveEmployeeId(CustomUserPrincipal principal) {
         return employeeRepository.findEmployeeIdByUserId(principal.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Employee profile không tìm thấy cho user: " + principal.getUsername()));
+                .orElseThrow(() -> new ResourceNotFoundException(principal.getUsername()));
     }
 
     private Long resolveManagerDepartmentId(CustomUserPrincipal principal) {
         return employeeRepository.findDepartmentIdByUserId(principal.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Department không tìm thấy cho manager: " + principal.getUsername()));
+                .orElseThrow(() -> new ResourceNotFoundException(principal.getUsername()));
     }
 
     private void assertAssetBelongsToEmployee(Asset asset, CustomUserPrincipal principal) {

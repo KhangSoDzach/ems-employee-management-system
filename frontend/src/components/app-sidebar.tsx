@@ -144,7 +144,11 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                   url: "/employee",
                 },
                 {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
+                  title: "Lịch sử lương",
+                  url: "/salary-history",
+                },
+                {
+                  title: "Chấm công",
                   url: "/checkin",
                 },
                 {

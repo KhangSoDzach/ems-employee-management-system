@@ -73,6 +73,7 @@ public enum MessageCode {
     ERROR_FORBIDDEN             ("error.forbidden"),
     ERROR_ACCOUNT_LOCKED        ("error.account_locked"),
     ERROR_ACCOUNT_DISABLED      ("error.account_disabled"),
+    ERROR_ACCOUNT_SUSPENDED     ("error.account_suspended"),
     ERROR_BAD_CREDENTIALS       ("error.bad_credentials"),
     ERROR_ACCOUNT_LOCKED_DETAIL ("error.account_locked_detail"),
     ERROR_REFRESH_TOKEN_INVALID ("error.refresh_token_invalid"),
