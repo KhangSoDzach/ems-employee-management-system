@@ -2,11 +2,6 @@ spring:
   application:
     name: ems-backend
 
-  # Active profile: dev (XAMPP), docker (Docker Compose)
-  # Override at runtime: SPRING_PROFILES_ACTIVE=docker
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
-
   # Mail / SMTP Configuration (for Forgot Password OTP)
   mail:
     host: ${MAIL_HOST:smtp.mailtrap.io}
@@ -21,11 +16,21 @@ spring:
       mail.smtp.timeout: 3000
       mail.smtp.writetimeout: 5000
   # Database Configuration
-  # Datasource settings are defined per-profile:
-  #   application-dev.yaml    → XAMPP / local MySQL (localhost:3306)
-  #   application-docker.yaml → Docker Compose MySQL service (mysql:3306)
-  # Do NOT set datasource defaults here; use profile files instead.
-
+  # Hybrid dev: DB chạy trong Docker (port 3306 publish ra host), BE/FE chạy trên host.
+  # Default credentials khớp với docker-compose.yml (MYSQL_ROOT_PASSWORD=root123).
+  # Override bằng env vars khi deploy.
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
   # JPA/Hibernate Configuration
   jpa:
     hibernate:
@@ -53,11 +58,6 @@ spring:
     clean-disabled: true  # Safety: prevent accidental data loss
     out-of-order: false
     validate-migration-naming: true
-  messages:
-    basename: messages
-    encoding: UTF-8
-    use-code-as-default-message: true   # fallback: return code if key missing (prevents NoSuchMessageException)
-
   servlet:
     multipart:
       enabled: true
@@ -102,8 +102,6 @@ app:
   # Filesystem storage root for check-in/check-out photos
   storage:
     photo-dir: ${APP_STORAGE_PHOTO_DIR:./uploads/attendance-photos}
-    # Public base URL under which photos are served (static resource handler)
-    base-url: ${APP_STORAGE_BASE_URL:http://localhost:8080/uploads/attendance-photos}
 
   # Leave workflow configuration
   # Externalized to support per-environment overrides without code changes.
