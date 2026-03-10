@@ -238,9 +238,6 @@ export const ForgotPasswordPage = () => {
                                         {...registerEmail("email")}
                                     />
                                 </div>
-                                {emailErrors.email && (
-                                    <p className="text-sm text-destructive font-medium">{emailErrors.email.message}</p>
-                                )}
                             </div>
 
                             <Button type="submit" className="w-full font-bold" size="lg" disabled={isEmailSubmitting}>
@@ -276,9 +273,6 @@ export const ForgotPasswordPage = () => {
                                         e.target.value = value;
                                     }}
                                 />
-                                {formErrors.otp && (
-                                    <p className="text-sm text-destructive font-medium text-center">{formErrors.otp.message}</p>
-                                )}
                             </div>
 
                             {/* Timer + Resend */}
@@ -323,9 +317,6 @@ export const ForgotPasswordPage = () => {
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
-                                {formErrors.newPassword && (
-                                    <p className="text-sm text-destructive font-medium">{formErrors.newPassword.message}</p>
-                                )}
                             </div>
 
                             {/* Confirm Password */}
@@ -354,9 +345,6 @@ export const ForgotPasswordPage = () => {
                                         {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
-                                {formErrors.confirmPassword && (
-                                    <p className="text-sm text-destructive font-medium">{formErrors.confirmPassword.message}</p>
-                                )}
                             </div>
 
                             <Button className="w-full font-bold" size="lg" disabled={isFormSubmitting}>

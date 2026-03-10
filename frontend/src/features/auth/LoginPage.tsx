@@ -50,7 +50,6 @@ export const LoginPage = () => {
     const {
         register,
         handleSubmit,
-        setError,
         setValue,
         formState: { errors, isSubmitting },
     } = useForm<LoginFormValues>({
@@ -95,9 +94,7 @@ export const LoginPage = () => {
             success: TEXT.SUCCESS,
             error: (err: unknown) => {
                 const apiErr = err as { response?: { data?: { message?: string } } };
-                const errorMessage = apiErr.response?.data?.message || SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID;
-                setError("root", { message: errorMessage });
-                return errorMessage;
+                return apiErr.response?.data?.message || SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID;
             },
         });
     };
@@ -166,9 +163,6 @@ export const LoginPage = () => {
                                     {...register("email")}
                                 />
                             </div>
-                            {errors.email && (
-                                <p className="text-sm text-destructive font-medium">{errors.email.message}</p>
-                            )}
                         </div>
 
                         <div className="space-y-2">
@@ -201,9 +195,6 @@ export const LoginPage = () => {
                                     )}
                                 </button>
                             </div>
-                            {errors.password && (
-                                <p className="text-sm text-destructive font-medium">{errors.password.message}</p>
-                            )}
                         </div>
 
                         <div className="flex items-center justify-between">
@@ -228,12 +219,6 @@ export const LoginPage = () => {
                                 {TEXT.LINK_FORGOT}
                             </button>
                         </div>
-
-                        {errors.root && (
-                            <div className="p-3 rounded-md bg-destructive/15 text-destructive text-sm font-medium text-center">
-                                {errors.root.message}
-                            </div>
-                        )}
 
                         <Button className="w-full font-bold" size="lg" disabled={isSubmitting}>
                             {isSubmitting ? (

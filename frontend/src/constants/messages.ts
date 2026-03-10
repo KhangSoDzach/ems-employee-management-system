@@ -589,6 +589,80 @@ export const SYSTEM_MESSAGES = {
         FETCH_ERROR: "Không thể tải tài sản nhóm",
     },
 
+    // Asset Report (Admin)
+    ASSET_REPORT: {
+        MSG_FETCH_LIST_ERROR: "Không thể tải danh sách báo cáo.",
+        MSG_FETCH_DETAIL_ERROR: "Không thể tải chi tiết báo cáo.",
+        MSG_APPROVE_SUCCESS: "Đã phê duyệt báo cáo thành công!",
+        MSG_APPROVE_DESC: "Hệ thống đã cập nhật trạng thái tài sản theo báo cáo.",
+        MSG_REJECT_SUCCESS: "Đã từ chối báo cáo thành công!",
+        MSG_PROCESS_ERROR: "Lỗi xử lý báo cáo.",
+        MSG_TRY_AGAIN: "Vui lòng thử lại sau.",
+
+        SUBTITLE: "Báo cáo sự cố",
+        TITLE: "Quản lý Báo cáo Tài sản",
+        DESC: "Xem và xử lý các báo cáo sự cố, hư hỏng hoặc mất mát tài sản từ nhân viên.",
+        SEARCH_PLACEHOLDER: "Tìm kiếm mã báo cáo, mã tài sản...",
+
+        STATS: {
+            TOTAL: "Tổng số",
+            PENDING: "Chờ duyệt",
+            APPROVED: "Đã duyệt",
+            REJECTED: "Đã từ chối",
+        },
+
+        INCOMING_REPORTS: "Danh sách báo cáo lưu chuyển",
+
+        TABLE_COLS: {
+            CODE: "Mã",
+            EMPLOYEE: "Nhân viên",
+            ASSET: "Tài sản",
+            ISSUE_TYPE: "Loại sự cố",
+            REPORT_DATE: "Ngày báo cáo",
+            STATUS: "Trạng thái",
+            ACTIONS: "Thao tác",
+        },
+
+        TXT_HASH: "#",
+        TXT_QUOTE: "\"",
+        TXT_DAMAGED: "Hư hỏng",
+        TXT_LOST: "Mất mát",
+        TXT_NO_ATTACHMENT: "Không có tệp đính kèm",
+        TXT_NO_NOTE: "Không có ghi chú",
+
+        BTN_VIEW_DETAIL: "Xem chi tiết",
+        BTN_REJECT: "Từ chối",
+        BTN_APPROVE: "Phê duyệt",
+        BTN_CLOSE_DETAIL: "Đóng",
+
+        EMPTY_TITLE: "Chưa có báo cáo nào",
+        EMPTY_DESC: "Không tìm thấy báo cáo sự cố tài sản nào trong hệ thống.",
+
+        DETAIL_TITLE: "Chi tiết Báo cáo Sự cố",
+
+        SECTION_ASSET_INFO: "Thông tin tài sản",
+        LABEL_ASSET_NAME: "Tên tài sản",
+        LABEL_ASSET_STATUS: "Trạng thái",
+        LABEL_ASSET_CODE: "Mã tài sản",
+        LABEL_CURRENT_CONDITION: "Tình trạng hiện tại",
+        LABEL_TARGET_UPDATE: "Sẽ cập nhật thành",
+        LABEL_UPDATED_TO: "Đã cập nhật thành",
+
+        SECTION_REPORT_CONTENT: "Nội dung báo cáo",
+        LABEL_ISSUE_TYPE: "Loại sự cố",
+        LABEL_DETAIL_DESC: "Mô tả chi tiết",
+
+        SECTION_EVIDENCE: "Bằng chứng đính kèm",
+
+        SECTION_PROCESS_INFO: "Thông tin xử lý",
+        LABEL_PROCESSOR: "Người xử lý",
+        LABEL_PROCESS_TIME: "Thời gian",
+        LABEL_PROCESS_NOTE: "Ghi chú xử lý",
+
+        LABEL_FEEDBACK_NOTE: "Ghi chú phản hồi",
+        PLACEHOLDER_FEEDBACK: "Nhập phản hồi hoặc lý do xử lý cho nhân viên...",
+    },
+
     // Asset Incident Management
     ASSET_INCIDENT: {
         TITLE: "Quản lý sự cố tài sản",
