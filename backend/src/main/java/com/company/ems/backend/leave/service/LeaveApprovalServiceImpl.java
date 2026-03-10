@@ -78,7 +78,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         // 2. Guard: approver must not be the requestor
         if (leave.getEmployee().getUser() != null
                 && leave.getEmployee().getUser().getId().equals(approverId)) {
-            throw new ForbiddenException("Bạn không thể tự phê duyệt yêu cầu nghỉ phép của chính mình.");
+            throw new ForbiddenException();
         }
 
         // 3. Verify approver is entitled to act at the current level
@@ -204,8 +204,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
                             .anyMatch(r -> r.getName().equals(longLeaveExtraLevelRole)))
                     .orElse(false);
             if (!hasRole) {
-                throw new ForbiddenException(
-                        "Cấp duyệt " + currentLevel + " yêu cầu vai trò " + longLeaveExtraLevelRole + ".");
+                throw new ForbiddenException(currentLevel + longLeaveExtraLevelRole);
             }
             return;
         }
@@ -222,8 +221,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
 
         List<Long> authorisedIds = workflowEngineService.resolveApproverUserIds(levelOpt.get());
         if (!authorisedIds.isEmpty() && !authorisedIds.contains(approverId)) {
-            throw new ForbiddenException(
-                    "Bạn không có quyền phê duyệt ở cấp " + currentLevel + ".");
+            throw new ForbiddenException(currentLevel + ".");
         }
     }
 

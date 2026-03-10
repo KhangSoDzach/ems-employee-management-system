@@ -36,8 +36,15 @@ public class GlobalExceptionHandler {
         public ResponseEntity<ApiResponse<Void>> handleForbidden(
                 ForbiddenException ex, WebRequest req) {
                 log.warn("403 Forbidden: {}", req.getDescription(false));
+                String msg;
+                if (ex.getMessageCode() != null) {
+                        msg = messages.get(ex.getMessageCode(), ex.getMessageArgs());
+                } else {
+                        msg = ex.getMessage();
+                }
+
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(ApiResponse.error(messages.get(MessageCode.ERROR_FORBIDDEN)));
+                        .body(ApiResponse.error(msg));
         }
 
         @ExceptionHandler(AccessDeniedException.class)

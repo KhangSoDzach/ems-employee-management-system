@@ -167,7 +167,7 @@
 					<exclude>**/application*.yaml</exclude>
 					<exclude>**/application*.properties</exclude>
 					<!-- Placeholder only – real content lives in V14__leave_multi_level_approval.sql -->
-					<exclude>db/migration/V12__leave_multi_level_approval.sql</exclude>
+					<exclude>db/migration/V13__leave_multi_level_approval.sql</exclude>
 				</excludes>
 			</resource>
 		</resources>
