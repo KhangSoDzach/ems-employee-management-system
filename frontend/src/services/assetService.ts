@@ -272,6 +272,10 @@ export const assetService = {
         api.get(`/assets/${id}/history/export`, { responseType: 'blob' })
             .then(res => res.data),
 
+    exportAssets: (params: { status?: AssetStatus; type?: string; keyword?: string; }): Promise<Blob> =>
+        api.get('/assets/export', { params, responseType: 'blob' })
+            .then(res => res.data),
+
     // Search employees for assign dropdown
     searchEmployees: (keyword: string, page = 0, size = 20): Promise<PageResponse<EmployeeOption>> =>
         api.get<ApiResponse<PageResponse<EmployeeOption>>>('/employees', {

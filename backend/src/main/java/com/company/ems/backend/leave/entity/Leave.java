@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import com.company.ems.backend.common.entity.BaseEntity;
+import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.leave.enums.LeaveStatus;
 import com.company.ems.backend.leave.enums.LeaveType;
@@ -275,9 +276,9 @@ public class Leave extends BaseEntity {
     private void beforeSave() {
         calculateTotalDays();
 
-        // Validate date range
+        // Validate date range - throw BusinessException so controller returns a clear business error
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End date cannot be before start date");
+            throw new BusinessException("INVALID_DATE_RANGE", "End date cannot be before start date");
         }
     }
 }

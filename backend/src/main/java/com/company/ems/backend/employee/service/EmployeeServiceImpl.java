@@ -146,12 +146,22 @@ public class EmployeeServiceImpl implements EmployeeService {
                         }
                 }
 
+                // Convert String status -> EmployeeStatus enum (null if blank or invalid)
+                EmployeeStatus statusFilter = null;
+                if (status != null && !status.isBlank()) {
+                        try {
+                                statusFilter = EmployeeStatus.valueOf(status.toUpperCase());
+                        } catch (IllegalArgumentException ignored) {
+                                log.warn("Invalid status filter value: '{}'", status);
+                        }
+                }
+
                 Page<Employee> employees;
 
                 if (principal.hasDataScope(DataScope.ALL)) {
                         // HR Admin: xem tất cả với filter
                         employees = employeeRepository.searchEmployees(search, departmentIdFilter, positionIdFilter,
-                                        status, pageable);
+                                        statusFilter, pageable);
 
                 } else if (principal.hasDataScope(DataScope.TEAM)) {
                         // Manager: chỉ xem team của mình
@@ -161,7 +171,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                                                                         + principal.getUserId()));
 
                         employees = employeeRepository.searchEmployeesByManager(managerEmployee.getId(), search,
-                                        departmentIdFilter, positionIdFilter, status, pageable);
+                                        departmentIdFilter, positionIdFilter, statusFilter, pageable);
 
                 } else {
                         // Employee (SELF): chỉ thấy chính mình

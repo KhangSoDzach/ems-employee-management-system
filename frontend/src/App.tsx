@@ -22,6 +22,7 @@ import KpiOkrManagement from "./features/manager/KpiOkrManagement";
 import MemberList from "./features/manager/MemberList";
 import AssetReportManagement from "./features/admin/AssetReportManagement";
 import AssetGroupManagement from "./features/manager/AssetGroupManagement";
+import EmployeeManagement from "./features/hr/EmployeeManagement";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
             <Route path="/hr-profile" element={<HRProfilePage />} />
             <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
             <Route path="/hr-assets" element={<AssetManagementPage sidebarRole="hr" />} />
+            <Route path="/hr-employees" element={<EmployeeManagement />} />
             <Route path="/asset-reports" element={<AssetReportManagement />} />
           </Route>
 
