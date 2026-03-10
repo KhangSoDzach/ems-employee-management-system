@@ -13,6 +13,7 @@ import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.company.ems.backend.common.audit.SecurityAuditService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,8 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper   objectMapper;
-    private final MessageService messages;
+    private final ObjectMapper        objectMapper;
+    private final MessageService      messages;
+    private final SecurityAuditService auditService;
 
     @Override
     public void commence(
@@ -36,6 +38,13 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         MessageCode errorCode = resolveErrorCode(request);
         log.warn("401 Unauthorized [{}]: path={}", errorCode.name(), request.getRequestURI());
+
+        switch (errorCode) {
+            case ERROR_TOKEN_EXPIRED -> auditService.logTokenExpired(request);
+            case ERROR_TOKEN_INVALID -> auditService.logTokenInvalid(request);
+            case ERROR_UNAUTHORIZED -> auditService.logAuthFailure(request);
+            default -> auditService.logAuthFailure(request);
+        }
 
         String message = messages.get(errorCode);
 

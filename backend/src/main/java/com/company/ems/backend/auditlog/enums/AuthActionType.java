@@ -30,6 +30,15 @@ public enum AuthActionType {
      */
     TOKEN_REVOKED,
 
+    /** JWT access token was presented but was expired. */
+    TOKEN_EXPIRED,
+
+    /** JWT access token was invalid (bad signature/malformed). */
+    TOKEN_INVALID,
+
+    /** User attempted an operation they are not authorised to perform. */
+    ACCESS_DENIED,
+
     /** Asset Incident Report was submitted by an employee. */
     ASSET_REPORT_SUBMITTED,
 
