@@ -40,7 +40,8 @@ public class EmployeeControllerTest {
     void getEmployeeById_returns_ok_and_payload() throws Exception {
         EmployeeResponse resp = EmployeeResponse.builder().id(1L).firstName("T").lastName("U").email("t@u.com").build();
         when(employeeService.getEmployeeById(1L)).thenReturn(resp);
-        when(messages.get(org.mockito.ArgumentMatchers.any())).thenReturn("OK");
+        when(messages.get(org.mockito.ArgumentMatchers.<com.company.ems.backend.common.message.MessageCode>any()))
+                .thenReturn("OK");
 
         mockMvc.perform(get("/api/v1/employees/1"))
                 .andExpect(status().isOk())
