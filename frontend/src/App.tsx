@@ -23,6 +23,7 @@ import MemberList from "./features/manager/MemberList";
 import AssetReportManagement from "./features/admin/AssetReportManagement";
 import AssetGroupManagement from "./features/manager/AssetGroupManagement";
 import EmployeeManagement from "./features/hr/EmployeeManagement";
+import SalaryHistoryPage from "./features/employee/SalaryHistoryPage";
 
 function App() {
   return (
@@ -44,7 +45,7 @@ function App() {
 
           {/* HR only */}
           <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
-            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/hr/employees" element={<Dashboard />} />
             <Route path="/hr-profile" element={<HRProfilePage />} />
             <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
             <Route path="/hr-assets" element={<AssetManagementPage sidebarRole="hr" />} />
@@ -61,6 +62,7 @@ function App() {
           {/* Employee only */}
           <Route element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE"]} />}>
             <Route path="/employee" element={<EmployeeDashboard />} />
+            <Route path="/salary-history" element={<SalaryHistoryPage />} />
             <Route path="/request" element={<LeaveRequestPage />} />
             <Route path="/checkin" element={<CheckinPage />} />
             <Route path="/attendance" element={<AttendanceHistoryPage />} />
