@@ -1,7 +1,8 @@
 import { format } from "date-fns"
-import { CalendarIcon, Loader2 } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { CalendarIcon } from "lucide-react"
+import { useForm, FieldErrors } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,6 +42,36 @@ import {
 } from "../leave-request.constants"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 
+/* ══════════════ CONSTANTS ══════════════ */
+
+const TEXT = {
+    TITLE: SYSTEM_MESSAGES.LEAVE.CREATE_TITLE,
+    DESC: SYSTEM_MESSAGES.LEAVE.CREATE_DESC,
+    LABEL_TYPE: SYSTEM_MESSAGES.LEAVE.CREATE_TYPE,
+    PLACEHOLDER_TYPE: SYSTEM_MESSAGES.LEAVE.CREATE_TYPE_PLACEHOLDER,
+    LABEL_DATE_START: SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START,
+    LABEL_DATE_END: SYSTEM_MESSAGES.LEAVE.CREATE_DATE_END,
+    PLACEHOLDER_DATE: SYSTEM_MESSAGES.LEAVE.CREATE_DATE_PLACEHOLDER,
+    LABEL_REASON: SYSTEM_MESSAGES.LEAVE.CREATE_REASON,
+    PLACEHOLDER_REASON: SYSTEM_MESSAGES.LEAVE.CREATE_REASON_PLACEHOLDER,
+    WARNING: SYSTEM_MESSAGES.LEAVE.CREATE_WARNING,
+    BTN_CANCEL: SYSTEM_MESSAGES.LEAVE.CREATE_BTN_CANCEL,
+    BTN_SUBMIT: SYSTEM_MESSAGES.LEAVE.CREATE_BTN_SUBMIT,
+    TOAST_LOADING: "Đang gửi yêu cầu nghỉ phép...",
+    TOAST_SUCCESS: "Gửi yêu cầu thành công!",
+    TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại thông tin nghỉ phép.",
+    ASTERISK: "*",
+} as const;
+
+/* ══════════════ COMPONENTS ══════════════ */
+
+const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
+    <FormLabel className="flex items-center gap-1">
+        {children}
+        <span className="text-destructive font-bold text-lg leading-none">{TEXT.ASTERISK}</span>
+    </FormLabel>
+);
+
 /* ══════════════ CREATE LEAVE MODAL ══════════════ */
 
 interface CreateLeaveModalProps {
@@ -58,7 +89,6 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
         mode: "onChange",
     })
 
-    const isSubmitting = form.formState.isSubmitting
     const watchType = form.watch("leaveType")
 
     const handleClose = () => {
@@ -67,9 +97,28 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
     }
 
     const handleSubmit = async (data: LeaveFormValues) => {
-        await onSubmit(data)
-        form.reset()
-        onClose()
+        toast.dismiss();
+
+        toast.promise(onSubmit(data), {
+            loading: TEXT.TOAST_LOADING,
+            success: () => {
+                form.reset();
+                // onClose() is called inside LeaveRequestPage's handleCreate normally, 
+                // but standard practice is to handle it where the promise originates if possible.
+                // However, the existing handleCreate does its own setRequests and then onClose.
+                // To keep it clean, we just return the success message.
+                return TEXT.TOAST_SUCCESS;
+            },
+            error: (err: unknown) => {
+                return err instanceof Error ? err.message : SYSTEM_MESSAGES.API_ERROR;
+            },
+        });
+    }
+
+    const onError = (errors: FieldErrors<LeaveFormValues>) => {
+        console.log("Leave Form Errors:", errors);
+        toast.dismiss();
+        toast.error(TEXT.TOAST_VALIDATION_ERROR);
     }
 
     return (
@@ -82,17 +131,17 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                             <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                                 <CalendarIcon className="w-4 h-4 text-primary" />
                             </span>
-                            {SYSTEM_MESSAGES.LEAVE.CREATE_TITLE}
+                            {TEXT.TITLE}
                         </DialogTitle>
                         <DialogDescription className="text-sm text-muted-foreground mt-1">
-                            {SYSTEM_MESSAGES.LEAVE.CREATE_DESC}
+                            {TEXT.DESC}
                         </DialogDescription>
                     </DialogHeader>
                 </div>
 
                 {/* ── Form ── */}
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="px-6 py-5 space-y-5">
+                    <form onSubmit={form.handleSubmit(handleSubmit, onError)} className="px-6 py-5 space-y-5">
 
                         {/* Loại phép */}
                         <FormField
@@ -100,11 +149,11 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                             name="leaveType"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.LEAVE.CREATE_TYPE}</FormLabel>
+                                    <RequiredLabel>{TEXT.LABEL_TYPE}</RequiredLabel>
                                     <Select onValueChange={field.onChange} value={field.value ?? ""}>
                                         <FormControl>
                                             <SelectTrigger className="h-10">
-                                                <SelectValue placeholder={SYSTEM_MESSAGES.LEAVE.CREATE_TYPE_PLACEHOLDER} />
+                                                <SelectValue placeholder={TEXT.PLACEHOLDER_TYPE} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -115,7 +164,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs font-medium" />
                                     {watchType && (
                                         <Badge
                                             variant="outline"
@@ -138,7 +187,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                 name="startDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START}</FormLabel>
+                                        <RequiredLabel>{TEXT.LABEL_DATE_START}</RequiredLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -150,7 +199,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                                         )}
                                                     >
                                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {field.value ? format(field.value, DATE_FORMAT) : SYSTEM_MESSAGES.LEAVE.CREATE_DATE_PLACEHOLDER}
+                                                        {field.value ? format(field.value, DATE_FORMAT) : TEXT.PLACEHOLDER_DATE}
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
@@ -163,7 +212,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                                 />
                                             </PopoverContent>
                                         </Popover>
-                                        <FormMessage />
+                                        <FormMessage className="text-xs font-medium" />
                                     </FormItem>
                                 )}
                             />
@@ -173,7 +222,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                 name="endDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.LEAVE.CREATE_DATE_END}</FormLabel>
+                                        <RequiredLabel>{TEXT.LABEL_DATE_END}</RequiredLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -185,7 +234,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                                         )}
                                                     >
                                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {field.value ? format(field.value, DATE_FORMAT) : SYSTEM_MESSAGES.LEAVE.CREATE_DATE_PLACEHOLDER}
+                                                        {field.value ? format(field.value, DATE_FORMAT) : TEXT.PLACEHOLDER_DATE}
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
@@ -198,7 +247,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                                 />
                                             </PopoverContent>
                                         </Popover>
-                                        <FormMessage />
+                                        <FormMessage className="text-xs font-medium" />
                                     </FormItem>
                                 )}
                             />
@@ -210,23 +259,23 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                             name="reason"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.LEAVE.CREATE_REASON}</FormLabel>
+                                    <RequiredLabel>{TEXT.LABEL_REASON}</RequiredLabel>
                                     <FormControl>
                                         <Textarea
                                             rows={3}
-                                            placeholder={SYSTEM_MESSAGES.LEAVE.CREATE_REASON_PLACEHOLDER}
-                                            className="resize-none"
+                                            placeholder={TEXT.PLACEHOLDER_REASON}
+                                            className="resize-none focus-visible:ring-primary"
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs font-medium" />
                                 </FormItem>
                             )}
                         />
 
                         {/* Summary Info Box */}
                         <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-                            {SYSTEM_MESSAGES.LEAVE.CREATE_WARNING}
+                            {TEXT.WARNING}
                         </div>
 
                         {/* ── Actions ── */}
@@ -235,18 +284,15 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
                                 type="button"
                                 variant="outline"
                                 onClick={handleClose}
-                                disabled={isSubmitting}
                                 className="h-9 px-5"
                             >
-                                {SYSTEM_MESSAGES.LEAVE.CREATE_BTN_CANCEL}
+                                {TEXT.BTN_CANCEL}
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className="h-9 px-5 gap-2"
+                                className="h-9 px-5 gap-2 font-bold shadow-sm"
                             >
-                                {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                {isSubmitting ? SYSTEM_MESSAGES.LEAVE.CREATE_BTN_SUBMITTING : SYSTEM_MESSAGES.LEAVE.CREATE_BTN_SUBMIT}
+                                {TEXT.BTN_SUBMIT}
                             </Button>
                         </div>
                     </form>

@@ -191,16 +191,12 @@ export default function AdjustmentRequestPage() {
         const payload = buildPayload(data)
         await attendanceService.submitAdjustment(payload)
         await fetchRequests()
-        toast.success(SYSTEM_MESSAGES.ADJUSTMENT.MSG_SUBMIT_SUCCESS, {
-            description: SYSTEM_MESSAGES.ADJUSTMENT.MSG_SUBMIT_DESC,
-        })
     }
 
     const handleEdit = async (id: string, data: AdjustmentFormValues) => {
         const payload = buildPayload(data)
         await attendanceService.resubmitAdjustment(Number(id), payload)
         await fetchRequests()
-        toast.success(SYSTEM_MESSAGES.ADJUSTMENT.MSG_RESUBMIT_SUCCESS)
     }
 
     const clearAllFilters = () => {
@@ -379,7 +375,7 @@ export default function AdjustmentRequestPage() {
                                                 className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
                                                 onClick={() => setDetailRequest(req)}
                                             >
-                                                <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">#{req.id}</TableCell>
+                                                <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">{SYSTEM_MESSAGES.SYMBOLS.HASH}{req.id}</TableCell>
                                                 <TableCell className="px-6 py-4 font-medium text-foreground">{format(req.dateCreated, DATE_FORMAT)}</TableCell>
                                                 <TableCell className="px-6 py-4 font-medium text-foreground">{format(req.adjustmentDate, DATE_FORMAT)}</TableCell>
                                                 <TableCell className="px-6 py-4"><TypeBadge type={req.type} /></TableCell>
@@ -444,7 +440,7 @@ export default function AdjustmentRequestPage() {
                                     <Button size="icon" variant="outline" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
                                         <ChevronLeft className="w-4 h-4" />
                                     </Button>
-                                    <span>{page + 1} / {totalPages}</span>
+                                    <span>{page + 1}{SYSTEM_MESSAGES.SYMBOLS.SLASH}{totalPages}</span>
                                     <Button size="icon" variant="outline" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
                                         <ChevronRight className="w-4 h-4" />
                                     </Button>

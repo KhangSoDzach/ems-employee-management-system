@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.company.ems.backend.auditlog.dto.AuditLogFilterRequest;
 import com.company.ems.backend.auditlog.dto.AuditLogResponse;
 import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
@@ -39,23 +41,8 @@ import lombok.RequiredArgsConstructor;
 public class AuditLogController {
 
     private final AuditLogService auditLogService;
+    private final MessageService  messages;
 
-    /**
-     * GET /api/v1/audit-logs
-     * <p>
-     * Returns a paginated, filtered list of audit log records (newest first).
-     * All query parameters are optional.
-     *
-     * @param entityType          filter on entity type (default: AUTHENTICATION)
-     * @param actionType          filter on specific action (LOGIN_SUCCESS, etc.)
-     * @param actor               partial match on actor (user id)
-     * @param identifierAttempted partial match on attempted username/email
-     * @param ipAddress           exact IP address filter
-     * @param from                start of date-time range (ISO 8601)
-     * @param to                  end of date-time range (ISO 8601)
-     * @param page                page number (0-based, default 0)
-     * @param size                page size (default 20)
-     */
     @GetMapping
     @PreAuthorize("hasPermission(null, 'AUDIT_LOG_VIEW')")
     @Operation(summary = "List audit logs", description = "Returns paginated audit logs. Requires AUDIT_LOG_VIEW permission.")
@@ -84,19 +71,14 @@ public class AuditLogController {
 
         PageResponse<AuditLogResponse> result = auditLogService.getAuditLogs(filter);
 
-        return ResponseEntity.ok(ApiResponse.success("Audit logs retrieved successfully", result));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.AUDIT_LOG_LIST), result));
     }
 
-    /**
-     * GET /api/v1/audit-logs/{id}
-     * <p>
-     * Returns a single audit log record by ID (read-only).
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasPermission(null, 'AUDIT_LOG_VIEW')")
     @Operation(summary = "Get audit log by ID", description = "Returns a single audit log record. Requires AUDIT_LOG_VIEW permission.")
     public ResponseEntity<ApiResponse<AuditLogResponse>> getById(@PathVariable Long id) {
         AuditLogResponse response = auditLogService.getById(id);
-        return ResponseEntity.ok(ApiResponse.success("Audit log detail", response));
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.AUDIT_LOG_DETAIL), response));
     }
 }

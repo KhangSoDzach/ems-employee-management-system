@@ -1,5 +1,7 @@
 package com.company.ems.backend.security.service;
 
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.exception.InvalidPasswordException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
 import com.company.ems.backend.common.exception.UnauthorizedException;
@@ -18,48 +20,34 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PasswordServiceImpl implements PasswordService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserRepository  userRepository;
+    private final PasswordEncoder  passwordEncoder;
+    private final PasswordValidator passwordValidator;
+    private final MessageService   messages;
 
     @Override
     @Transactional
     public void changePassword(String username, ChangePasswordRequest request) {
         log.info("Processing password change request for user: {}", username);
-
-        // 1. Find user
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        // 2. Verify current password
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             log.warn("Failed password change attempt for user: {} - incorrect current password", username);
-            throw new UnauthorizedException("Current password is incorrect");
+            throw new UnauthorizedException(messages.get(MessageCode.PASSWORD_INCORRECT));
         }
-
-        // 3. Validate password and confirm password match
-        PasswordValidator.validatePasswordMatch(
+        passwordValidator.validatePasswordMatch(
                 request.getNewPassword(),
                 request.getConfirmPassword()
         );
-
-        // 4. Validate new password strength
-        PasswordValidator.validatePassword(request.getNewPassword());
-
-        // 5. Ensure new password is different from current
-        PasswordValidator.validatePasswordDifferent(
+        passwordValidator.validatePassword(request.getNewPassword());
+        passwordValidator.validatePasswordDifferent(
                 request.getCurrentPassword(),
                 request.getNewPassword()
         );
-
-        // 6. Hash and save new password
         String hashedPassword = passwordEncoder.encode(request.getNewPassword());
         user.setPassword(hashedPassword);
-
-        // 7. Reset failed login attempts on successful password change
         user.resetFailedAttempts();
-
         userRepository.save(user);
-
         log.info("Password changed successfully for user: {}", username);
     }
 }

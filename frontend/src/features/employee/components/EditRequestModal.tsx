@@ -1,8 +1,10 @@
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, FieldErrors } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
-import { CalendarIcon, Loader2, Pencil } from "lucide-react"
+import { CalendarIcon, Pencil } from "lucide-react"
+import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,9 +40,40 @@ import {
     adjustmentSchema,
     DATE_FORMAT,
 } from "../adjustment-request.constants"
-import type { AdjustmentFormValues } from "../adjustment-request.constants"
-import type { AdjustmentRequest } from "../adjustment-request.constants"
+import type { AdjustmentFormValues, AdjustmentRequest } from "../adjustment-request.constants"
 import { StatusBadge } from "./AdjustmentBadges"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
+
+/* ══════════════ CONSTANTS ══════════════ */
+
+const TEXT = {
+    TITLE: "Chỉnh sửa Yêu cầu",
+    LABEL_DATE: "Ngày cần điều chỉnh",
+    PLACEHOLDER_DATE: "Chọn ngày",
+    LABEL_TYPE: "Loại điều chỉnh",
+    PLACEHOLDER_TYPE: "Chọn loại...",
+    LABEL_TIME_IN: "Giờ Check-in đúng",
+    LABEL_TIME_OUT: "Giờ Check-out đúng",
+    LABEL_TIME_ONLY: "Thời gian đúng",
+    LABEL_REASON: "Lý do chi tiết",
+    PLACEHOLDER_REASON: "Mô tả rõ lý do cần điều chỉnh...",
+    BTN_CANCEL: "Hủy",
+    BTN_SAVE: "Lưu thay đổi",
+    TOAST_SAVING: "Đang lưu thay đổi...",
+    TOAST_SAVE_SUCCESS: "Đã lưu thay đổi thành công!",
+    TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại thông tin chỉnh sửa.",
+    RETURNED_WARNING: "Yêu cầu này đã bị trả về. Vui lòng bổ sung thông tin theo yêu cầu của quản lý và gửi lại.",
+    ASTERISK: "*",
+} as const;
+
+/* ══════════════ COMPONENTS ══════════════ */
+
+const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
+    <FormLabel className="flex items-center gap-1">
+        {children}
+        <span className="text-destructive font-bold text-lg leading-none">{TEXT.ASTERISK}</span>
+    </FormLabel>
+);
 
 /* ══════════════ EDIT REQUEST MODAL ══════════════ */
 
@@ -57,8 +90,8 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
         defaultValues: {
             adjustmentDate: new Date(),
             reason: "",
-            timeIn: "09:00",
-            timeOut: "18:00",
+            timeIn: "",
+            timeOut: "",
         },
         mode: "onChange",
     })
@@ -79,15 +112,30 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
     const watchType = form.watch("type")
     const showTimeIn = watchType === "CHECK_IN" || watchType === "BOTH"
     const showTimeOut = watchType === "CHECK_OUT" || watchType === "BOTH"
-    const isSubmitting = form.formState.isSubmitting
 
     const handleClose = () => { form.reset(); onClose() }
 
     const handleSubmit = async (data: AdjustmentFormValues) => {
         if (!request) return
-        await onSubmit(request.id, data)
-        form.reset()
-        onClose()
+
+        toast.dismiss();
+
+        toast.promise(onSubmit(request.id, data), {
+            loading: TEXT.TOAST_SAVING,
+            success: () => {
+                form.reset();
+                return TEXT.TOAST_SAVE_SUCCESS;
+            },
+            error: (err: unknown) => {
+                return err instanceof Error ? err.message : SYSTEM_MESSAGES.API_ERROR;
+            },
+        });
+    }
+
+    const onError = (errors: FieldErrors<AdjustmentFormValues>) => {
+        console.log("Edit Adjustment Errors:", errors);
+        toast.dismiss();
+        toast.error(TEXT.TOAST_VALIDATION_ERROR);
     }
 
     if (!request) return null
@@ -103,7 +151,7 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                             <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                                 <Pencil className="w-4 h-4 text-primary" />
                             </span>
-                            Chỉnh sửa Yêu cầu
+                            {TEXT.TITLE}
                         </DialogTitle>
                         <DialogDescription asChild>
                             <div className="flex items-center gap-2 mt-1">
@@ -118,7 +166,7 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
 
                 {/* ── Form ── */}
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="px-6 py-5 space-y-5">
+                    <form onSubmit={form.handleSubmit(handleSubmit, onError)} className="px-6 py-5 space-y-5">
 
                         {/* Ngày điều chỉnh */}
                         <FormField
@@ -126,19 +174,19 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                             name="adjustmentDate"
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
-                                    <FormLabel className="font-semibold text-sm">Ngày cần điều chỉnh</FormLabel>
+                                    <RequiredLabel>{TEXT.LABEL_DATE}</RequiredLabel>
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <FormControl>
                                                 <Button
                                                     variant="outline"
                                                     className={cn(
-                                                        "w-full justify-start text-left font-normal h-10",
+                                                        "w-full justify-start text-left font-normal h-10 px-3",
                                                         !field.value && "text-muted-foreground",
                                                     )}
                                                 >
                                                     <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                    {field.value ? format(field.value, DATE_FORMAT) : "Chọn ngày"}
+                                                    {field.value ? format(field.value, DATE_FORMAT) : TEXT.PLACEHOLDER_DATE}
                                                 </Button>
                                             </FormControl>
                                         </PopoverTrigger>
@@ -152,7 +200,7 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                                             />
                                         </PopoverContent>
                                     </Popover>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs font-medium" />
                                 </FormItem>
                             )}
                         />
@@ -163,11 +211,11 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                             name="type"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-sm">Loại điều chỉnh</FormLabel>
+                                    <RequiredLabel>{TEXT.LABEL_TYPE}</RequiredLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger className="h-10">
-                                                <SelectValue placeholder="Chọn loại..." />
+                                                <SelectValue placeholder={TEXT.PLACEHOLDER_TYPE} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -188,7 +236,7 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs font-medium" />
                                     {watchType && (
                                         <Badge
                                             variant="outline"
@@ -210,13 +258,13 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                                         name="timeIn"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="font-semibold text-sm">
-                                                    {showTimeOut ? "Giờ Check-in đúng" : "Thời gian đúng"}
-                                                </FormLabel>
+                                                <RequiredLabel>
+                                                    {showTimeOut ? TEXT.LABEL_TIME_IN : TEXT.LABEL_TIME_ONLY}
+                                                </RequiredLabel>
                                                 <FormControl>
-                                                    <Input type="time" className="h-10" {...field} />
+                                                    <Input type="time" className="h-10 focus-visible:ring-primary" {...field} />
                                                 </FormControl>
-                                                <FormMessage />
+                                                <FormMessage className="text-xs font-medium" />
                                             </FormItem>
                                         )}
                                     />
@@ -227,13 +275,13 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                                         name="timeOut"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="font-semibold text-sm">
-                                                    {showTimeIn ? "Giờ Check-out đúng" : "Thời gian đúng"}
-                                                </FormLabel>
+                                                <RequiredLabel>
+                                                    {showTimeIn ? TEXT.LABEL_TIME_OUT : TEXT.LABEL_TIME_ONLY}
+                                                </RequiredLabel>
                                                 <FormControl>
-                                                    <Input type="time" className="h-10" {...field} />
+                                                    <Input type="time" className="h-10 focus-visible:ring-primary" {...field} />
                                                 </FormControl>
-                                                <FormMessage />
+                                                <FormMessage className="text-xs font-medium" />
                                             </FormItem>
                                         )}
                                     />
@@ -247,27 +295,25 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                             name="reason"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-sm">Lý do chi tiết</FormLabel>
+                                    <RequiredLabel>{TEXT.LABEL_REASON}</RequiredLabel>
                                     <FormControl>
                                         <Textarea
                                             rows={3}
-                                            placeholder="Mô tả rõ lý do cần điều chỉnh..."
-                                            className="resize-none"
+                                            placeholder={TEXT.PLACEHOLDER_REASON}
+                                            className="resize-none focus-visible:ring-primary"
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs font-medium" />
                                 </FormItem>
                             )}
                         />
 
                         {/* ── Info note khi status = RETURNED ── */}
                         {request.status === "RETURNED" && (
-                            <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700 flex gap-2 items-start">
-                                <span className="text-base leading-none mt-0.5">⚠️</span>
-                                <span>
-                                    Yêu cầu này đã bị trả về. Vui lòng bổ sung thông tin theo yêu cầu của quản lý và gửi lại.
-                                </span>
+                            <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700 flex gap-2 items-start shadow-sm">
+                                <span className="text-base leading-none mt-0.5">{SYSTEM_MESSAGES.SYMBOLS.WARNING}</span>
+                                <span>{TEXT.RETURNED_WARNING}</span>
                             </div>
                         )}
 
@@ -277,18 +323,15 @@ export const EditRequestModal = ({ request, open, onClose, onSubmit }: EditReque
                                 type="button"
                                 variant="outline"
                                 onClick={handleClose}
-                                disabled={isSubmitting}
                                 className="h-9 px-5"
                             >
-                                Hủy
+                                {TEXT.BTN_CANCEL}
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className="h-9 px-5 gap-2"
+                                className="h-9 px-5 gap-2 font-bold shadow-sm"
                             >
-                                {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
+                                {TEXT.BTN_SAVE}
                             </Button>
                         </div>
                     </form>

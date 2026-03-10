@@ -38,7 +38,14 @@ import { cn } from "@/lib/utils"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 import { DEPARTMENT_OPTIONS, ROLE_OPTIONS, CONTRACT_OPTIONS, WORK_STATUS_OPTIONS } from "@/constants/options"
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
-import { THEME_CLASSES } from "@/constants/theme"
+
+const CONTRACT_CLASSES: Record<string, string> = {
+    FULL_TIME: 'bg-green-100 text-green-700',
+    PART_TIME: 'bg-blue-100 text-blue-700',
+    CONTRACT: 'bg-yellow-100 text-yellow-700',
+    INTERN: 'bg-purple-100 text-purple-700',
+    DEFAULT: 'bg-gray-100 text-gray-700'
+};
 
 const profileSchema = z.object({
     employeeCode: z.string(),
@@ -203,11 +210,12 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                             <div className="text-center md:text-left pt-2">
                                 <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
                                     <h2 className="text-2xl font-bold">{form.watch("fullName")}</h2>
-                                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full uppercase", THEME_CLASSES.CONTRACT[form.watch("contractType") as keyof typeof THEME_CLASSES.CONTRACT] || THEME_CLASSES.CONTRACT.DEFAULT)}>
+                                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full uppercase", CONTRACT_CLASSES[form.watch("contractType")] || CONTRACT_CLASSES.DEFAULT)}>
                                         {form.watch("contractType").replace("_", " ")}
                                     </span>
                                 </div>
                                 <p className="text-muted-foreground font-medium">
+                                    {/* eslint-disable-next-line react/jsx-no-literals */}
                                     {form.watch("jobRole")} &bull; {SYSTEM_MESSAGES.PROFILE.DEPARTMENT_PREFIX}{form.watch("department")}
                                 </p>
                                 <div className="flex items-center justify-center md:justify-start gap-4 mt-3 text-sm text-muted-foreground">
@@ -255,7 +263,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                 <FormItem>
                                                     <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.FULL_NAME}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="Nhập họ và tên" {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
+                                                        <Input readOnly={!canEdit} placeholder={SYSTEM_MESSAGES.PROFILE.NAME_PLACEHOLDER} {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -269,7 +277,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                 <FormItem>
                                                     <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.EMAIL}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="email@company.com" {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
+                                                        <Input readOnly={!canEdit} placeholder={SYSTEM_MESSAGES.PROFILE.EMAIL_PLACEHOLDER} {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -283,7 +291,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                 <FormItem>
                                                     <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.NATIONAL_ID}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="012345678912" {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
+                                                        <Input readOnly={!canEdit} placeholder={SYSTEM_MESSAGES.PROFILE.ID_PLACEHOLDER} {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -297,7 +305,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                 <FormItem>
                                                     <FormLabel className="form-label-bold">{SYSTEM_MESSAGES.PROFILE.PHONE}</FormLabel>
                                                     <FormControl>
-                                                        <Input readOnly={!canEdit} placeholder="0912345678" {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
+                                                        <Input readOnly={!canEdit} placeholder={SYSTEM_MESSAGES.PROFILE.PHONE_PLACEHOLDER} {...field} className={cn("input-readonly", canEdit && "bg-background focus-visible:ring-2")} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -477,11 +485,13 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                                     <SelectValue placeholder={SYSTEM_MESSAGES.SELECT_PLACEHOLDER} />
                                                                 </SelectTrigger>
                                                             </FormControl>
+                                                            {/* eslint-disable react/jsx-no-literals */}
                                                             <SelectContent>
                                                                 <SelectItem value="Michael Scott">Trần Anh Tuấn</SelectItem>
                                                                 <SelectItem value="Dwight Schrute">Lê Hoàng Long</SelectItem>
                                                                 <SelectItem value="Jim Halpert">Nguyễn Nhật Minh</SelectItem>
                                                             </SelectContent>
+                                                            {/* eslint-enable react/jsx-no-literals */}
                                                         </Select>
                                                         <FormMessage />
                                                     </FormItem>
@@ -589,7 +599,8 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                                     )}
                                                     <div className="truncate">
                                                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{doc.name}</p>
-                                                        <p className="text-xs text-muted-foreground">{doc.status}{" • "}{doc.date}</p>
+                                                        {/* eslint-disable-next-line react/jsx-no-literals */}
+                                                        <p className="text-xs text-muted-foreground">{doc.status} • {doc.date}</p>
                                                     </div>
                                                 </div>
                                                 <button
@@ -608,11 +619,11 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                     <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">{SYSTEM_MESSAGES.PROFILE.STATS_TITLE}</h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="border bg-purple-50/50 dark:bg-purple-900/10 rounded-xl p-4 text-center">
-                                            <p className="text-3xl font-black text-purple-600 mb-1">0</p>
+                                            <p className="text-3xl font-black text-purple-600 mb-1">{0}</p>
                                             <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{SYSTEM_MESSAGES.PROFILE.STATS_LEAVE}</p>
                                         </div>
                                         <div className="border bg-teal-50/50 dark:bg-teal-900/10 rounded-xl p-4 text-center">
-                                            <p className="text-3xl font-black text-teal-600 mb-1">0<span className="text-xl">{SYSTEM_MESSAGES.PROFILE.PERCENT_SIGN}</span></p>
+                                            <p className="text-3xl font-black text-teal-600 mb-1">{0}<span className="text-xl">{SYSTEM_MESSAGES.PROFILE.PERCENT_SIGN}</span></p>
                                             <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">{SYSTEM_MESSAGES.PROFILE.STATS_ATTENDANCE}</p>
                                         </div>
                                     </div>

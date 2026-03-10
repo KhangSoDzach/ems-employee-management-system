@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────
+# Profile: docker  (Docker Compose — integration, testing, prod review)
+# Activate: SPRING_PROFILES_ACTIVE=docker  (set via Docker Compose env)
+# ─────────────────────────────────────────────────────────────
+spring:
+  datasource:
+    # "mysql" is the Docker Compose service name — resolves inside Docker network
+    url: jdbc:mysql://mysql:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:emsuser}
+    password: ${MYSQL_PASSWORD:emspass123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  # Flyway — stricter in docker/prod-review
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: false
+
+# Logging: less verbose in docker/staging
+logging:
+  level:
+    root: INFO
+    com.company.ems.backend: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN

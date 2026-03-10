@@ -13,6 +13,7 @@ import { ArrowRight, Check, Loader2, Reply, X } from "lucide-react"
 import { format } from "date-fns"
 import type { AdjustmentRequest } from "../../employee/adjustment-request.constants"
 import { DATETIME_FORMAT, DATE_FORMAT, AUDIT_ACTION_CONFIG } from "../../employee/adjustment-request.constants"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 interface ReviewAdjustmentSheetProps {
     open: boolean;
@@ -52,7 +53,7 @@ export function ReviewAdjustmentSheet({
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-slate-50 p-6 flex flex-col">
                 <SheetHeader className="mb-6 flex flex-row items-center justify-between pb-2 border-b">
-                    <SheetTitle className="text-xl font-bold text-slate-800">Review Request</SheetTitle>
+                    <SheetTitle className="text-xl font-bold text-slate-800">{SYSTEM_MESSAGES.REVIEW.SHEET_TITLE}</SheetTitle>
                 </SheetHeader>
 
                 {request ? (
@@ -68,62 +69,62 @@ export function ReviewAdjustmentSheet({
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col">
-                                        <h3 className="font-bold text-base text-slate-900">{request.auditTrail[0]?.actor || "Unknown"}</h3>
-                                        <p className="text-slate-500 font-medium">Employee • {request.id}</p>
+                                        <h3 className="font-bold text-base text-slate-900">{request.auditTrail[0]?.actor || SYSTEM_MESSAGES.STATUS.UNKNOWN}</h3>
+                                        <p className="text-slate-500 font-medium">{SYSTEM_MESSAGES.LABEL_EMPLOYEE}{SYSTEM_MESSAGES.SYMBOLS.BULLET}{request.id}</p>
                                     </div>
                                 </div>
                                 {request.status === "PENDING" && (
                                     <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-200 px-3 py-1 font-semibold rounded-md text-xs tracking-wide">
-                                        URGENT
+                                        {SYSTEM_MESSAGES.REVIEW.URGENT}
                                     </Badge>
                                 )}
                             </div>
 
                             {/* Adjustment Detail */}
                             <div className="space-y-3">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Adjustment Detail</h4>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">{SYSTEM_MESSAGES.REVIEW.ADJUSTMENT_DETAIL}</h4>
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center justify-between bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                         <div className="absolute top-0 left-0 w-1 h-full bg-slate-300"></div>
                                         <div className="flex flex-col z-10">
-                                            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Original</span>
+                                            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">{SYSTEM_MESSAGES.REVIEW.ORIGINAL}</span>
                                             <span className="font-black text-xl text-slate-800 tracking-tight">
                                                 {request.originalTimeIn && request.originalTimeOut
                                                     ? `${request.originalTimeIn} - ${request.originalTimeOut}`
-                                                    : request.originalTimeIn || request.originalTimeOut || "--:--"}
+                                                    : request.originalTimeIn || request.originalTimeOut || SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                                             </span>
                                         </div>
                                         <ArrowRight className="text-slate-300 h-8 w-8 z-10 shrink-0 mx-2" />
                                         <div className="flex flex-col text-right z-10">
-                                            <span className="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Proposed</span>
+                                            <span className="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">{SYSTEM_MESSAGES.REVIEW.PROPOSED}</span>
                                             <span className="font-black text-xl text-slate-900 tracking-tight">
                                                 {request.proposedTimeIn && request.proposedTimeOut
                                                     ? `${request.proposedTimeIn} - ${request.proposedTimeOut}`
-                                                    : request.proposedTimeIn || request.proposedTimeOut || "--:--"}
+                                                    : request.proposedTimeIn || request.proposedTimeOut || SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                                             </span>
                                         </div>
                                     </div>
                                     <p className="text-[11px] font-medium text-slate-400 italic px-2">
-                                        Date of adjustment: {format(request.adjustmentDate, DATE_FORMAT)}
+                                        {SYSTEM_MESSAGES.REVIEW.LABEL_DATE_ADJ}{format(request.adjustmentDate, DATE_FORMAT)}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Reason */}
                             <div className="space-y-3">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Reason for Request</h4>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">{SYSTEM_MESSAGES.REVIEW.REASON_REQUEST}</h4>
                                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                                     <p className="italic text-slate-600 font-medium leading-relaxed">
-                                        "{request.reason}"
+                                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}{request.reason}{SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Internal Notes */}
                             <div className="space-y-3">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Internal Notes</h4>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">{SYSTEM_MESSAGES.REVIEW.INTERNAL_NOTES}</h4>
                                 <Textarea
-                                    placeholder="Add a note for the HR record..."
+                                    placeholder={SYSTEM_MESSAGES.REVIEW.PLACEHOLDER_NOTE}
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
                                     className="resize-none h-28 bg-white rounded-xl border-slate-200 shadow-sm placeholder:text-slate-400 p-4"
@@ -132,7 +133,7 @@ export function ReviewAdjustmentSheet({
 
                             {/* Activity History */}
                             <div className="space-y-4 pt-2">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Activity History</h4>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">{SYSTEM_MESSAGES.REVIEW.ACTIVITY_HISTORY}</h4>
                                 <div className="space-y-6 pt-2 pl-4 border-l-2 ml-3 border-slate-200 relative">
 
                                     {request.auditTrail.slice().reverse().map((audit) => {
@@ -163,7 +164,7 @@ export function ReviewAdjustmentSheet({
                                                     </div>
                                                     <span className="text-slate-500 text-xs font-medium">{audit.actor}</span>
                                                     {audit.note && (
-                                                        <span className="text-xs italic text-slate-400 mt-1">"{audit.note}"</span>
+                                                        <span className="text-xs italic text-slate-400 mt-1">{SYSTEM_MESSAGES.SYMBOLS.QUOTE}{audit.note}{SYSTEM_MESSAGES.SYMBOLS.QUOTE}</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -183,7 +184,7 @@ export function ReviewAdjustmentSheet({
                                     onClick={() => handleAction("return")}
                                 >
                                     {submitting === "return" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Reply className="mr-2 h-4 w-4" />}
-                                    Gửi lại
+                                    {SYSTEM_MESSAGES.REVIEW.BTN_RETURN}
                                 </Button>
                                 <Button
                                     variant="destructive"
@@ -192,7 +193,7 @@ export function ReviewAdjustmentSheet({
                                     onClick={() => handleAction("reject")}
                                 >
                                     {submitting === "reject" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
-                                    Từ chối
+                                    {SYSTEM_MESSAGES.REVIEW.BTN_REJECT}
                                 </Button>
                                 <Button
                                     className="flex-[1.4] bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm font-semibold border-none"
@@ -200,14 +201,14 @@ export function ReviewAdjustmentSheet({
                                     onClick={() => handleAction("approve")}
                                 >
                                     {submitting === "approve" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                                    Duyệt yêu cầu
+                                    {SYSTEM_MESSAGES.REVIEW.BTN_APPROVE}
                                 </Button>
                             </div>
                         )}
                     </>
                 ) : (
                     <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                        Không có dữ liệu
+                        {SYSTEM_MESSAGES.NO_DATA}
                     </div>
                 )}
             </SheetContent>

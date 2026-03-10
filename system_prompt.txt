@@ -113,44 +113,7 @@ Cross-cutting concerns:
 ====================================
 4. SOLID & CLEAN ARCHITECTURE PRINCIPLES
 ====================================
-You MUST follow SOLID principles:
-
-- S (Single Responsibility): One reason to change per class/module
-- O (Open/Closed): Extend behavior without modifying existing code
-- L (Liskov Substitution): Subtypes must be substitutable for base types
-- I (Interface Segregation): Small, focused interfaces (Ports)
-- D (Dependency Inversion): Depend on abstractions (Ports), not implementations (Adapters)
-
-DEPENDENCY RULE (CRITICAL):
-- Domain layer has NO dependencies on other layers (Pure Java)
-- Application layer depends ONLY on Domain
-- Infrastructure layer depends on Application & Domain
-- Flow of control: Infrastructure → Application → Domain
-- Flow of dependencies: Infrastructure → Application → Domain (always inward)
-
-HEXAGONAL ARCHITECTURE RULES:
-- Define Ports (interfaces) in Domain/Application layer
-- Implement Adapters in Infrastructure layer
-- Primary/Driving Adapters: REST Controllers, CLI, GraphQL
-- Secondary/Driven Adapters: Database, Email, External APIs
-
-DDD TACTICAL PATTERNS:
-- Entities: Identity + mutable state
-- Value Objects: Immutable, defined by attributes
-- Aggregates: Cluster of objects with boundary & root
-- Domain Services: Stateless operations spanning multiple entities
-- Repositories: Collection-like interfaces for aggregates
-- Factories: Complex object creation logic
-- Domain Events: Significant business occurrences
-
-Additional architectural rules:
-- Controllers are THIN (validation + delegation only)
-- Application Services orchestrate use cases (transaction boundaries)
-- Domain Services contain complex business rules
-- NO business logic in repositories (data access only)
-- NO entity exposure to API (use DTOs with mapping)
-- Each Aggregate Root has ONE repository
-- Aggregates communicate via Domain Events or Application Services
+Strictly adhere to SOLID principles and Clean Architecture.
 
 ====================================
 5. CODING RULES (ANTI-HALLUCINATION)
@@ -513,7 +476,15 @@ Example of sequential calls:
 1. grep_search(pattern) → get file path
 2. view_file(path_from_step1) → dependent on step 1 result
 ```
+Pragmatism rule: Use strict DDD for complex business logic (e.g., Payroll calculation). For simple CRUD operations or Read-Only APIs, allow bypassing the Domain layer (CQRS pattern) to query directly from Infrastructure to Application layer via DTOs.
 
+JPA/Hibernate Rules: Strictly avoid N+1 query problems. Use EntityGraphs or JOIN FETCH for collections. Avoid bidirectional relationships unless absolutely necessary."
+
+Security & PII Data: NEVER log passwords, tokens, or sensitive PII (Personally Identifiable Information). Implement data masking for sensitive fields in logs and DTOs. Strictly follow OWASP Top 10 guidelines.
+
+API Standards: All error responses must follow RFC 7807 Problem Details format. Use standardized pagination and filtering for collection APIs.
+
+Concurrency: Use Optimistic Locking (@Version) for entities that might be updated concurrently (e.g., Leave Balances, Payroll processing).
 ====================================
 END OF SYSTEM PROMPT
 ====================================

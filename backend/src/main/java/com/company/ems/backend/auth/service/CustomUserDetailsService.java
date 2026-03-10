@@ -1,9 +1,6 @@
 package com.company.ems.backend.auth.service;
 
-import java.util.stream.Collectors;
-
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -42,7 +39,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 }
 
                 // Convert User entity to Spring Security UserDetails
-//
+                //
                 return CustomUserPrincipal.of(user);
         }
 

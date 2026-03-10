@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/asset-reports")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('HR','ADMIN')")
+@PreAuthorize("hasAuthority('ASSET_MANAGE')")
 @Tag(name = "Asset Incident Reports (Admin/HR)", description = "Quản lý báo cáo sự cố tài sản")
 public class AdminIncidentController {
 
@@ -59,7 +59,6 @@ public class AdminIncidentController {
             @PathVariable Long id,
             @RequestBody(required = false) IncidentDto.ProcessRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
-
         return ResponseEntity.ok(
                 incidentService.approveReport(id, request, principal));
     }
@@ -70,7 +69,6 @@ public class AdminIncidentController {
             @PathVariable Long id,
             @RequestBody(required = false) IncidentDto.ProcessRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
-
         return ResponseEntity.ok(
                 incidentService.rejectReport(id, request, principal));
     }

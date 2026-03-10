@@ -1,7 +1,9 @@
-import { useForm } from "react-hook-form"
+import { useForm, FieldErrors } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
-import { CalendarIcon, Clock, Loader2 } from "lucide-react"
+import { CalendarIcon, Clock } from "lucide-react"
+import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,6 +43,38 @@ import {
 import type { AdjustmentFormValues } from "../adjustment-request.constants"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 
+/* ══════════════ CONSTANTS ══════════════ */
+
+const TEXT = {
+    TITLE: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TITLE,
+    DESC: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_DESC,
+    LABEL_DATE: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_DATE_LABEL,
+    PLACEHOLDER_DATE: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_DATE_PLACEHOLDER,
+    DATE_WARNING: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_DATE_WARNING,
+    LABEL_TYPE: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TYPE_LABEL,
+    PLACEHOLDER_TYPE: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TYPE_PLACEHOLDER,
+    LABEL_TIME_IN: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TIME_IN_TRUE,
+    LABEL_TIME_OUT: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TIME_OUT_TRUE,
+    LABEL_TIME_ONLY: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TIME_ONLY,
+    LABEL_REASON: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_REASON_LABEL,
+    PLACEHOLDER_REASON: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_REASON_PLACEHOLDER,
+    BTN_CANCEL: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_BTN_CANCEL,
+    BTN_SUBMIT: SYSTEM_MESSAGES.ADJUSTMENT.CREATE_BTN_SUBMIT,
+    TOAST_LOADING: "Đang gửi yêu cầu điều chỉnh...",
+    TOAST_SUCCESS: SYSTEM_MESSAGES.ADJUSTMENT.MSG_SUBMIT_SUCCESS,
+    TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại thông tin điều chỉnh.",
+    ASTERISK: "*",
+} as const;
+
+/* ══════════════ COMPONENTS ══════════════ */
+
+const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
+    <FormLabel className="flex items-center gap-1">
+        {children}
+        <span className="text-destructive font-bold text-lg leading-none">{TEXT.ASTERISK}</span>
+    </FormLabel>
+);
+
 /* ══════════════ CREATE REQUEST MODAL ══════════════ */
 
 interface CreateRequestModalProps {
@@ -64,19 +98,32 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
     const watchType = form.watch("type")
     const showTimeIn = watchType === "CHECK_IN" || watchType === "BOTH"
     const showTimeOut = watchType === "CHECK_OUT" || watchType === "BOTH"
-    const isSubmitting = form.formState.isSubmitting
 
     const handleClose = () => { form.reset(); onClose() }
 
     const handleSubmit = async (data: AdjustmentFormValues) => {
-        await onSubmit(data)
-        form.reset()
-        onClose()
+        toast.dismiss();
+
+        toast.promise(onSubmit(data), {
+            loading: TEXT.TOAST_LOADING,
+            success: () => {
+                form.reset();
+                return TEXT.TOAST_SUCCESS;
+            },
+            error: (err: unknown) => {
+                return err instanceof Error ? err.message : SYSTEM_MESSAGES.API_ERROR;
+            },
+        });
+    }
+
+    const onError = (errors: FieldErrors<AdjustmentFormValues>) => {
+        console.log("Adjustment Form Errors:", errors);
+        toast.dismiss();
+        toast.error(TEXT.TOAST_VALIDATION_ERROR);
     }
 
     return (
         <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose() }}>
-            {/* DialogContent đã có sẵn nút X ở góc phải trên, không cần thêm */}
             <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden">
 
                 {/* ── Header ── */}
@@ -86,17 +133,17 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                             <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                                 <Clock className="w-4 h-4 text-primary" />
                             </span>
-                            {SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TITLE}
+                            {TEXT.TITLE}
                         </DialogTitle>
                         <DialogDescription className="text-sm text-muted-foreground mt-1">
-                            {SYSTEM_MESSAGES.ADJUSTMENT.CREATE_DESC}
+                            {TEXT.DESC}
                         </DialogDescription>
                     </DialogHeader>
                 </div>
 
                 {/* ── Form ── */}
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="px-6 py-5 space-y-5">
+                    <form onSubmit={form.handleSubmit(handleSubmit, onError)} className="px-6 py-5 space-y-5">
 
                         {/* Ngày điều chỉnh */}
                         <FormField
@@ -104,7 +151,7 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                             name="adjustmentDate"
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
-                                    <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.ADJUSTMENT.CREATE_DATE_LABEL}</FormLabel>
+                                    <RequiredLabel>{TEXT.LABEL_DATE}</RequiredLabel>
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <FormControl>
@@ -116,7 +163,7 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                                                     )}
                                                 >
                                                     <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                    {field.value ? format(field.value, DATE_FORMAT) : SYSTEM_MESSAGES.ADJUSTMENT.CREATE_DATE_PLACEHOLDER}
+                                                    {field.value ? format(field.value, DATE_FORMAT) : TEXT.PLACEHOLDER_DATE}
                                                 </Button>
                                             </FormControl>
                                         </PopoverTrigger>
@@ -131,24 +178,24 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                                         </PopoverContent>
                                     </Popover>
                                     <p className="text-[11px] text-muted-foreground -mt-1">
-                                        {SYSTEM_MESSAGES.ADJUSTMENT.CREATE_DATE_WARNING}
+                                        {TEXT.DATE_WARNING}
                                     </p>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs font-medium" />
                                 </FormItem>
                             )}
                         />
 
-                        {/* Loại điều chỉnh — full width */}
+                        {/* Loại điều chỉnh */}
                         <FormField
                             control={form.control}
                             name="type"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TYPE_LABEL}</FormLabel>
+                                    <RequiredLabel>{TEXT.LABEL_TYPE}</RequiredLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger className="h-10">
-                                                <SelectValue placeholder={SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TYPE_PLACEHOLDER} />
+                                                <SelectValue placeholder={TEXT.PLACEHOLDER_TYPE} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -169,8 +216,7 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <FormMessage />
-                                    {/* Preview badge khi đã chọn */}
+                                    <FormMessage className="text-xs font-medium" />
                                     {watchType && (
                                         <Badge
                                             variant="outline"
@@ -186,7 +232,7 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                             )}
                         />
 
-                        {/* Thời gian — chỉ hiện khi đã chọn loại */}
+                        {/* Thời gian */}
                         {(showTimeIn || showTimeOut) && (
                             <div className={cn("grid gap-4", showTimeIn && showTimeOut ? "grid-cols-2" : "grid-cols-1")}>
                                 {showTimeIn && (
@@ -195,13 +241,13 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                                         name="timeIn"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="font-semibold text-sm">
-                                                    {showTimeOut ? SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TIME_IN_TRUE : SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TIME_ONLY}
-                                                </FormLabel>
+                                                <RequiredLabel>
+                                                    {showTimeOut ? TEXT.LABEL_TIME_IN : TEXT.LABEL_TIME_ONLY}
+                                                </RequiredLabel>
                                                 <FormControl>
-                                                    <Input type="time" className="h-10" {...field} />
+                                                    <Input type="time" className="h-10 focus-visible:ring-primary" {...field} />
                                                 </FormControl>
-                                                <FormMessage />
+                                                <FormMessage className="text-xs font-medium" />
                                             </FormItem>
                                         )}
                                     />
@@ -212,13 +258,13 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                                         name="timeOut"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="font-semibold text-sm">
-                                                    {showTimeIn ? SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TIME_OUT_TRUE : SYSTEM_MESSAGES.ADJUSTMENT.CREATE_TIME_ONLY}
-                                                </FormLabel>
+                                                <RequiredLabel>
+                                                    {showTimeIn ? TEXT.LABEL_TIME_OUT : TEXT.LABEL_TIME_ONLY}
+                                                </RequiredLabel>
                                                 <FormControl>
-                                                    <Input type="time" className="h-10" {...field} />
+                                                    <Input type="time" className="h-10 focus-visible:ring-primary" {...field} />
                                                 </FormControl>
-                                                <FormMessage />
+                                                <FormMessage className="text-xs font-medium" />
                                             </FormItem>
                                         )}
                                     />
@@ -232,16 +278,16 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                             name="reason"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-sm">{SYSTEM_MESSAGES.ADJUSTMENT.CREATE_REASON_LABEL}</FormLabel>
+                                    <RequiredLabel>{TEXT.LABEL_REASON}</RequiredLabel>
                                     <FormControl>
                                         <Textarea
                                             rows={3}
-                                            placeholder={SYSTEM_MESSAGES.ADJUSTMENT.CREATE_REASON_PLACEHOLDER}
-                                            className="resize-none"
+                                            placeholder={TEXT.PLACEHOLDER_REASON}
+                                            className="resize-none focus-visible:ring-primary"
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs font-medium" />
                                 </FormItem>
                             )}
                         />
@@ -252,18 +298,15 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
                                 type="button"
                                 variant="outline"
                                 onClick={handleClose}
-                                disabled={isSubmitting}
                                 className="h-9 px-5"
                             >
-                                {SYSTEM_MESSAGES.ADJUSTMENT.CREATE_BTN_CANCEL}
+                                {TEXT.BTN_CANCEL}
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className="h-9 px-5 gap-2"
+                                className="h-9 px-5 gap-2 font-bold shadow-sm"
                             >
-                                {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                {isSubmitting ? SYSTEM_MESSAGES.ADJUSTMENT.CREATE_BTN_SUBMITTING : SYSTEM_MESSAGES.ADJUSTMENT.CREATE_BTN_SUBMIT}
+                                {TEXT.BTN_SUBMIT}
                             </Button>
                         </div>
                     </form>

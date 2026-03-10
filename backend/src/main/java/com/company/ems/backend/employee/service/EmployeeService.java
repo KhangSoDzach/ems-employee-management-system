@@ -10,17 +10,18 @@ public interface EmployeeService {
 
     /** Trả hồ sơ (read-only, public fields) của chính user đang đăng nhập */
     PublicEmployeeResponse getMyProfile();
+
     PageResponse<EmployeeResponse> getAllEmployees(
             int page,
             int size,
             String department,
             String position,
             String status,
-            String search
-    );
-    EmployeeResponse getEmployeeById(Long id);
-    EmployeeResponse updateEmployee(Long id, EmployeeRequest request);
-    void deleteEmployee(Long id);
+            String search);
 
-    PageResponse<EmployeeResponse> getAllEmplyees(int page, int size, String department, String position, String status, String search);
+    EmployeeResponse getEmployeeById(Long id);
+
+    EmployeeResponse updateEmployee(Long id, EmployeeRequest request);
+
+    void deleteEmployee(Long id);
 }

@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { AlertTriangle, FileText, Laptop, Monitor, Mouse, XCircle } from "lucide-react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { AlertTriangle, FileText, Laptop, Monitor, Mouse, XCircle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -31,93 +31,57 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { assetService, MyAsset, IncidentReportRow } from "@/services/assetService"
 
-/* ─────────────── MOCK DATA ─────────────── */
+/* ─────────────── CONSTANTS ─────────────── */
 
-type AssetStatus = "PENDING" | "APPROVED" | "REJECTED"
-
-interface Asset {
-    id: string
-    name: string
-    tag: string
-    icon: React.ElementType
-}
-
-interface Report {
-    id: string
-    asset: string
-    issueType: string
-    dateReported: string
-    status: AssetStatus
-}
-
-const assignedAssets: Asset[] = [
-    { id: "1", name: "MacBook Pro 16\"", tag: "AST-10042", icon: Laptop },
-    { id: "2", name: "Dell UltraSharp 27\"", tag: "AST-10087", icon: Monitor },
-    { id: "3", name: "Logitech MX Master 3", tag: "AST-10112", icon: Mouse },
-]
-
-const recentReports: Report[] = [
-    { id: "REP-2025-089", asset: "Dell UltraSharp 27\"", issueType: "Screen Flickering", dateReported: "Oct 26, 2025", status: "PENDING" },
-    { id: "REP-2025-042", asset: "MacBook Pro 16\"", issueType: "Battery not holding charge", dateReported: "Sep 12, 2025", status: "APPROVED" },
-    { id: "REP-2025-015", asset: "Logitech MX Master 3", issueType: "Scroll wheel sticky", dateReported: "Jul 05, 2025", status: "REJECTED" },
-    { id: "REP-2025-008", asset: "MacBook Pro 16\"", issueType: "Keyboard key stuck", dateReported: "May 18, 2025", status: "APPROVED" },
-    { id: "REP-2024-231", asset: "Dell UltraSharp 27\"", issueType: "Dead pixel on display", dateReported: "Dec 02, 2024", status: "APPROVED" },
-    { id: "REP-2024-198", asset: "Logitech MX Master 3", issueType: "Bluetooth disconnecting", dateReported: "Oct 15, 2024", status: "REJECTED" },
-]
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 const INCIDENT_TYPES = [
-    "Hardware Malfunction",
-    "Screen Flickering",
-    "Battery Issue",
-    "Peripheral Not Working",
-    "Software / OS Issue",
-    "Other",
+    { value: "Hardware Malfunction", label: "Lỗi phần cứng (Hardware Malfunction)" },
+    { value: "Screen Flickering", label: "Màn hình nhấp nháy (Screen Flickering)" },
+    { value: "Battery Issue", label: "Lỗi pin (Battery Issue)" },
+    { value: "Peripheral Not Working", label: "Thiết bị ngoại vi hỏng (Peripheral Not Working)" },
+    { value: "Software / OS Issue", label: "Lỗi phần mềm / HĐH (Software / OS Issue)" },
+    { value: "Other", label: "Khác (Other)" },
 ]
-
-/* ─────────────── STATUS BADGE ─────────────── */
-
-const STATUS_CONFIG: Record<AssetStatus, { label: string; className: string }> = {
-    PENDING: {
-        label: "Pending",
-        className: "bg-amber-50 text-amber-600 border border-amber-300 hover:bg-amber-50",
-    },
-    APPROVED: {
-        label: "Approved",
-        className: "bg-emerald-50 text-emerald-600 border border-emerald-300 hover:bg-emerald-50",
-    },
-    REJECTED: {
-        label: "Rejected",
-        className: "bg-red-50 text-red-600 border border-red-300 hover:bg-red-50",
-    },
-}
 
 /* ─────────────── ASSET CARD ─────────────── */
 
-function AssetCard({ asset, onReportIssue }: { asset: Asset; onReportIssue: (asset: Asset) => void }) {
-    const Icon = asset.icon
+function AssetCard({ asset, onReportIssue }: { asset: MyAsset; onReportIssue: (asset: MyAsset) => void }) {
+    const isLaptop = asset.assetType?.toLowerCase().includes("laptop")
+    const isMonitor = asset.assetType?.toLowerCase().includes("monitor")
+    const Icon = isLaptop ? Laptop : (isMonitor ? Monitor : Mouse)
+
     return (
         <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden flex flex-col">
             {/* Icon area */}
-            <div className="h-36 bg-muted/40 flex items-center justify-center">
+            <div className="h-36 bg-muted/40 flex items-center justify-center relative">
                 <Icon className="w-14 h-14 text-muted-foreground/50 stroke-[1.3]" />
+                {asset.imageUrl && (
+                    <img
+                        src={asset.imageUrl}
+                        alt={asset.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                )}
             </div>
 
             {/* Info area */}
             <div className="p-4 flex flex-col gap-3 flex-1">
                 <div>
                     <p className="font-semibold text-foreground text-sm leading-tight">{asset.name}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">Asset Tag: {asset.tag}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_ASSET_TAG}{SYSTEM_MESSAGES.SYMBOLS.COLON}{asset.tag}</p>
                 </div>
 
                 <Button
                     variant="outline"
                     size="sm"
-                    className="w-full h-8 gap-1.5 text-xs font-semibold text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600"
+                    className="w-full h-8 gap-1.5 text-xs font-semibold text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600 mt-auto"
                     onClick={() => onReportIssue(asset)}
                 >
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    Report Issue
+                    {SYSTEM_MESSAGES.MY_ASSETS.BTN_REPORT}
                 </Button>
             </div>
         </div>
@@ -126,38 +90,98 @@ function AssetCard({ asset, onReportIssue }: { asset: Asset; onReportIssue: (ass
 
 /* ─────────────── MAIN PAGE ─────────────── */
 
-export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole?: "employee" | "manager" | "hr" }) {
-    const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole?: "employee" | "manager" | "hr" | "admin" }) {
+    const [assets, setAssets] = useState<MyAsset[]>([])
+    const [reports, setReports] = useState<IncidentReportRow[]>([])
+    const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
+
+    const [selectedAsset, setSelectedAsset] = useState<MyAsset | null>(null)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [incidentType, setIncidentType] = useState("")
     const [description, setDescription] = useState("")
+    const [attachment, setAttachment] = useState<File | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
     const [showAll, setShowAll] = useState(false)
-
     const PREVIEW_COUNT = 3
-    const displayedReports = showAll ? recentReports : recentReports.slice(0, PREVIEW_COUNT)
+    const displayedReports = showAll ? reports : reports.slice(0, PREVIEW_COUNT)
 
-    const handleReportIssue = (asset: Asset) => {
+    const fetchContent = useCallback(async () => {
+        try {
+            const [assetList, reportList] = await Promise.all([
+                assetService.getMyAssets(),
+                assetService.getMyReports(0, 50)
+            ])
+            setAssets(assetList)
+            setReports(reportList.content)
+        } catch (error) {
+            toast.error(SYSTEM_MESSAGES.API_ERROR)
+            console.error(error)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchContent()
+    }, [fetchContent])
+
+    const handleReportIssue = (asset: MyAsset) => {
         setSelectedAsset(asset)
         setIncidentType("")
         setDescription("")
+        setAttachment(null)
         setDialogOpen(true)
     }
 
-    const handleSubmit = () => {
-        setDialogOpen(false)
-        // Simulate forbidden 403 toast
-        setTimeout(() => {
-            toast.error("Forbidden", {
-                description: "You do not have permission to perform this action.",
-                icon: <XCircle className="w-5 h-5 text-red-500" />,
-                style: { borderColor: "#fca5a5" },
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error(SYSTEM_MESSAGES.MY_ASSETS.MAX_FILE_SIZE_ERROR)
+                return
+            }
+            setAttachment(file)
+        }
+    }
+
+    const handleSubmit = async () => {
+        if (!selectedAsset) return
+        if (!incidentType) {
+            toast.warning(SYSTEM_MESSAGES.MY_ASSETS.TOAST_SELECT_TYPE)
+            return
+        }
+        if (!description || description.length < 10) {
+            toast.warning(SYSTEM_MESSAGES.MY_ASSETS.TOAST_DESC_MIN)
+            return
+        }
+
+        setSubmitting(true)
+        try {
+            await assetService.submitReport(selectedAsset.id, {
+                incidentType,
+                description
+            }, attachment || undefined)
+
+            toast.success(SYSTEM_MESSAGES.MY_ASSETS.TOAST_SUCCESS, {
+                description: SYSTEM_MESSAGES.MY_ASSETS.TOAST_SUCCESS_DESC
             })
-        }, 200)
+            setDialogOpen(false)
+            fetchContent()
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            toast.error(SYSTEM_MESSAGES.MY_ASSETS.TOAST_FAILED, {
+                description: err.response?.data?.message || SYSTEM_MESSAGES.MY_ASSETS.TOAST_ERROR_DEFAULT
+            })
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     return (
         <SidebarProvider>
-            <AppSidebar role={sidebarRole} variant="inset" />
+            <AppSidebar role={sidebarRole === "admin" ? "admin" : (sidebarRole === "hr" ? "hr" : (sidebarRole === "manager" ? "manager" : "employee"))} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 
@@ -166,73 +190,108 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                     {/* ── Page Header ── */}
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="text-muted-foreground text-sm">Tài sản</span>
-                            <span className="text-muted-foreground text-sm">/</span>
-                            <span className="text-sm font-semibold text-foreground">Tài sản của tôi</span>
+                            <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.MY_ASSETS.BREADCRUMB}</span>
+                            <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.SYMBOLS.SLASH}</span>
+                            <span className="text-sm font-semibold text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</span>
                         </div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">My Assets</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</h1>
                         <p className="text-muted-foreground mt-1 text-sm">
-                            Manage your assigned equipment and report any issues.
+                            {SYSTEM_MESSAGES.MY_ASSETS.DESCRIPTION}
                         </p>
                     </div>
 
                     {/* ── Assigned Equipment ── */}
                     <section>
-                        <h2 className="text-base font-bold text-foreground mb-4">Assigned Equipment</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {assignedAssets.map((asset) => (
-                                <AssetCard key={asset.id} asset={asset} onReportIssue={handleReportIssue} />
-                            ))}
-                        </div>
+                        <h2 className="text-base font-bold text-foreground mb-4">{SYSTEM_MESSAGES.MY_ASSETS.SECTION_EQUIPMENT}</h2>
+
+                        {loading ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="h-64 rounded-xl border border-border animate-pulse bg-muted/20" />
+                                ))}
+                            </div>
+                        ) : assets.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {assets.map((asset) => (
+                                    <AssetCard key={asset.id} asset={asset} onReportIssue={handleReportIssue} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center p-8 bg-muted/10 rounded-xl border border-dashed border-border text-center">
+                                <Laptop className="w-10 h-10 text-muted-foreground/30 mb-3" />
+                                <p className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.COMMON_EN.NO_DATA}</p>
+                            </div>
+                        )}
                     </section>
 
                     {/* ── Recent Reports ── */}
                     <section>
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-base font-bold text-foreground">Recent Reports</h2>
+                            <h2 className="text-base font-bold text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.SECTION_REPORTS}</h2>
                         </div>
 
                         <div className="bg-background rounded-xl border border-border shadow-sm overflow-hidden">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Report ID</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Asset</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Issue Type</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date Reported</TableHead>
-                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.MY_ASSETS.TABLE_ID}</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.ASSET.TABLE_NAME}</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.MY_ASSETS.TABLE_INCIDENT}</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.MY_ASSETS.TABLE_DATE}</TableHead>
+                                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{SYSTEM_MESSAGES.LABEL_STATUS}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {displayedReports.map((report) => (
-                                        <TableRow key={report.id} className="hover:bg-muted/20 transition-colors border-border">
-                                            <TableCell className="px-5 py-3 text-sm font-medium text-blue-600">{report.id}</TableCell>
-                                            <TableCell className="px-5 py-3 text-sm text-foreground">{report.asset}</TableCell>
-                                            <TableCell className="px-5 py-3 text-sm text-muted-foreground">{report.issueType}</TableCell>
-                                            <TableCell className="px-5 py-3 text-sm text-muted-foreground">{report.dateReported}</TableCell>
-                                            <TableCell className="px-5 py-3">
-                                                <Badge className={STATUS_CONFIG[report.status].className}>
-                                                    {STATUS_CONFIG[report.status].label}
-                                                </Badge>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-24 text-center">
+                                                <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    ) : displayedReports.length > 0 ? (
+                                        displayedReports.map((report) => (
+                                            <TableRow key={report.id} className="hover:bg-muted/20 transition-colors border-border">
+                                                <TableCell className="px-5 py-3 text-sm font-medium text-blue-600 cursor-pointer hover:underline">{SYSTEM_MESSAGES.SYMBOLS.HASH}{report.reportId}</TableCell>
+                                                <TableCell className="px-5 py-3">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm text-foreground font-medium">{report.asset}</span>
+                                                        <span className="text-[11px] text-muted-foreground">{report.assetTag}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-5 py-3 text-sm text-muted-foreground">{report.issueType}</TableCell>
+                                                <TableCell className="px-5 py-3 text-sm text-muted-foreground">{report.dateReported}</TableCell>
+                                                <TableCell className="px-5 py-3">
+                                                    <Badge className={report.statusColor ? report.statusColor : "bg-gray-100 text-gray-700"}>
+                                                        {report.statusLabel || report.status}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-24 text-center text-sm text-muted-foreground">
+                                                {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
                                 </TableBody>
                             </Table>
 
                             {/* Footer toggle */}
-                            {recentReports.length > PREVIEW_COUNT && (
+                            {reports.length > PREVIEW_COUNT && (
                                 <div className="border-t border-border px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-muted/10">
                                     <span>
                                         {showAll
-                                            ? `Showing all ${recentReports.length} reports`
-                                            : `Showing ${PREVIEW_COUNT} of ${recentReports.length} reports`}
+                                            ? `Đang hiển thị toàn bộ ${reports.length} báo cáo`
+                                            : `Đang hiển thị ${PREVIEW_COUNT} trên tổng số ${reports.length} báo cáo`}
                                     </span>
                                     <button
                                         className="text-blue-600 font-medium hover:underline"
                                         onClick={() => setShowAll((v) => !v)}
                                     >
-                                        {showAll ? "Show Less" : `View All (${recentReports.length})`}
+                                        {showAll
+                                            ? SYSTEM_MESSAGES.BTN_CLOSE
+                                            : `${SYSTEM_MESSAGES.BTN_ADD}${SYSTEM_MESSAGES.SYMBOLS.SPACE}${SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}${reports.length}${SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}`}
                                     </button>
                                 </div>
                             )}
@@ -247,10 +306,10 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                     <div className="px-6 pt-6 pb-4 border-b border-border">
                         <DialogHeader>
                             <DialogTitle className="text-lg font-bold text-foreground">
-                                Report Asset Issue{selectedAsset ? ` — ${selectedAsset.name}` : ""}
+                                {SYSTEM_MESSAGES.MY_ASSETS.REPORT_TITLE}{selectedAsset ? `${SYSTEM_MESSAGES.SYMBOLS.DASH}${selectedAsset.name}` : ""}
                             </DialogTitle>
                             <DialogDescription className="text-sm text-muted-foreground mt-0.5">
-                                Please provide details about the asset issue to help us resolve it quickly.
+                                {SYSTEM_MESSAGES.MY_ASSETS.REPORT_DESC}
                             </DialogDescription>
                         </DialogHeader>
                     </div>
@@ -258,14 +317,14 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                     <div className="px-6 py-5 space-y-5">
                         {/* Incident Type */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground">Incident Type</label>
+                            <label className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_INCIDENT}</label>
                             <Select value={incidentType} onValueChange={setIncidentType}>
                                 <SelectTrigger className="w-full h-9 text-sm">
-                                    <SelectValue placeholder="Select incident type..." />
+                                    <SelectValue placeholder={SYSTEM_MESSAGES.MY_ASSETS.PLACEHOLDER_INCIDENT} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {INCIDENT_TYPES.map((t) => (
-                                        <SelectItem key={t} value={t} className="text-sm">{t}</SelectItem>
+                                        <SelectItem key={t.value} value={t.value} className="text-sm">{t.label}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -274,11 +333,11 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                         {/* Description */}
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-foreground">Description</label>
-                                <span className="text-xs text-muted-foreground">Required</span>
+                                <label className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_DESC}</label>
+                                <span className="text-xs text-muted-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_REQUIRED}</span>
                             </div>
                             <Textarea
-                                placeholder="Please describe the issue in detail..."
+                                placeholder={SYSTEM_MESSAGES.MY_ASSETS.PLACEHOLDER_DESC}
                                 className="resize-none h-28 text-sm"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
@@ -287,16 +346,39 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
 
                         {/* Upload Evidence */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground">Upload Evidence</label>
-                            <div className="flex items-center gap-3 border border-border rounded-lg px-4 py-3">
+                            <label className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_ATTACHMENT}</label>
+                            <div className="flex items-center gap-3 border border-border rounded-lg px-4 py-3 bg-muted/10">
                                 <FileText className="w-8 h-8 text-muted-foreground/50 shrink-0" />
                                 <div className="flex flex-col flex-1 min-w-0">
-                                    <span className="text-sm font-medium text-foreground">No file chosen</span>
-                                    <span className="text-[11px] text-muted-foreground">Max file size: 5MB (JPG, PNG, PDF)</span>
+                                    {attachment ? (
+                                        <>
+                                            <span className="text-sm font-medium text-foreground truncate">{attachment.name}</span>
+                                            <span className="text-[11px] text-muted-foreground">{(attachment.size / 1024 / 1024).toFixed(2)}{SYSTEM_MESSAGES.SYMBOLS.SPACE}{SYSTEM_MESSAGES.MY_ASSETS.UNIT_MB}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.NO_FILE}</span>
+                                            <span className="text-[11px] text-muted-foreground">{SYSTEM_MESSAGES.MY_ASSETS.FILE_LIMIT}</span>
+                                        </>
+                                    )}
                                 </div>
-                                <Button variant="outline" size="sm" className="shrink-0 h-8 text-xs font-medium">
-                                    Browse
-                                </Button>
+                                <div className="flex gap-2">
+                                    {attachment && (
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50" onClick={() => setAttachment(null)}>
+                                            <XCircle className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                    <Button variant="outline" size="sm" className="shrink-0 h-8 text-xs font-medium" onClick={() => fileInputRef.current?.click()}>
+                                        {SYSTEM_MESSAGES.MY_ASSETS.BTN_CHOOSE_FILE}
+                                    </Button>
+                                </div>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    accept=".jpg,.jpeg,.png,.pdf"
+                                />
                             </div>
                         </div>
                     </div>
@@ -306,14 +388,17 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                             variant="outline"
                             className="flex-1 h-9 font-medium"
                             onClick={() => setDialogOpen(false)}
+                            disabled={submitting}
                         >
-                            Cancel
+                            {SYSTEM_MESSAGES.BTN_CANCEL}
                         </Button>
                         <Button
                             className="flex-1 h-9 font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                             onClick={handleSubmit}
+                            disabled={submitting}
                         >
-                            Submit Report
+                            {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            {SYSTEM_MESSAGES.BTN_SUBMIT}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -321,3 +406,4 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
         </SidebarProvider>
     )
 }
+

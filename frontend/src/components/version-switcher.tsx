@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Check, ChevronsUpDown, GalleryVerticalEnd } from "lucide-react"
 
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,8 +38,8 @@ export function VersionSwitcher({
                 <GalleryVerticalEnd className="size-4" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold">Documentation</span>
-                <span className="">v{selectedVersion}</span>
+                <span className="font-semibold">{SYSTEM_MESSAGES.SIDEBAR.DOCUMENTATION}</span>
+                <span className="">{SYSTEM_MESSAGES.SIDEBAR.VERSION_PREFIX}{selectedVersion}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -52,7 +53,7 @@ export function VersionSwitcher({
                 key={version}
                 onSelect={() => setSelectedVersion(version)}
               >
-                v{version}{" "}
+                {SYSTEM_MESSAGES.SIDEBAR.VERSION_PREFIX}{version}{" "}
                 {version === selectedVersion && <Check className="ml-auto" />}
               </DropdownMenuItem>
             ))}

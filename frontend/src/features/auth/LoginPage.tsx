@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { User, Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, RequiredLabel } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import {
     Card,
@@ -16,7 +16,15 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+
+const TEXT = {
+    ...SYSTEM_MESSAGES.LOGIN,
+    TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại thông tin đăng nhập",
+    LOADING: "Đang xác thực...",
+    SUCCESS: "Đăng nhập thành công!",
+};
 
 const loginSchema = z.object({
     email: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.EMAIL_REQUIRED),
@@ -59,7 +67,6 @@ export const LoginPage = () => {
         if (isAuthenticated && !isSubmitting && user) {
             navigate(getRedirectByRole(user.roles), { replace: true });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, isSubmitting, navigate, user]);
 
     useEffect(() => {
@@ -71,22 +78,35 @@ export const LoginPage = () => {
     }, [setValue]);
 
     const onSubmit = async (data: LoginFormValues) => {
-        try {
-            const userInfo = await login(data.email, data.password);
+        toast.dismiss();
 
+        const loginPromise = login(data.email, data.password).then((userInfo) => {
             if (data.remember) {
                 localStorage.setItem("rememberedEmail", data.email);
             } else {
                 localStorage.removeItem("rememberedEmail");
             }
-
             navigate(getRedirectByRole(userInfo.roles), { replace: true });
-        } catch (error: unknown) {
-            const err = error as { response?: { data?: { message?: string } } };
-            console.error("Login error:", error);
-            setError("root", {
-                message: err.response?.data?.message || SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID,
-            });
+            return userInfo;
+        });
+
+        toast.promise(loginPromise, {
+            loading: TEXT.LOADING,
+            success: TEXT.SUCCESS,
+            error: (err: unknown) => {
+                const apiErr = err as { response?: { data?: { message?: string } } };
+                const errorMessage = apiErr.response?.data?.message || SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID;
+                setError("root", { message: errorMessage });
+                return errorMessage;
+            },
+        });
+    };
+
+    const onError = (errors: FieldErrors<LoginFormValues>) => {
+        toast.dismiss();
+        const firstErrorPath = Object.keys(errors)[0] as keyof FieldErrors<LoginFormValues>;
+        if (firstErrorPath) {
+            toast.error(TEXT.TOAST_VALIDATION_ERROR);
         }
     };
 
@@ -122,36 +142,49 @@ export const LoginPage = () => {
                     <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
                         <User className="text-primary w-8 h-8" />
                     </div>
-                    <CardTitle className="text-2xl font-bold">{SYSTEM_MESSAGES.LOGIN.TITLE}</CardTitle>
+                    <CardTitle className="text-2xl font-bold">{TEXT.TITLE}</CardTitle>
                     <CardDescription>
-                        {SYSTEM_MESSAGES.LOGIN.DESC}
+                        {TEXT.DESC}
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="email">{SYSTEM_MESSAGES.LOGIN.LABEL_EMAIL}</Label>
+                            <RequiredLabel
+                                htmlFor="email"
+                                className={errors.email ? "text-destructive" : ""}
+                            >
+                                {TEXT.LABEL_EMAIL}
+                            </RequiredLabel>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                                 <Input
                                     id="email"
-                                    placeholder={SYSTEM_MESSAGES.LOGIN.PLACEHOLDER_EMAIL}
+                                    placeholder={TEXT.PLACEHOLDER_EMAIL}
                                     className={`pl-9 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                     {...register("email")}
                                 />
                             </div>
+                            {errors.email && (
+                                <p className="text-sm text-destructive font-medium">{errors.email.message}</p>
+                            )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">{SYSTEM_MESSAGES.LOGIN.LABEL_PASSWORD}</Label>
+                            <RequiredLabel
+                                htmlFor="password"
+                                className={errors.password ? "text-destructive" : ""}
+                            >
+                                {TEXT.LABEL_PASSWORD}
+                            </RequiredLabel>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
 
                                 <Input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder={SYSTEM_MESSAGES.LOGIN.PLACEHOLDER_PASSWORD}
+                                    placeholder={TEXT.PLACEHOLDER_PASSWORD}
                                     className={`pl-9 pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                     {...register("password")}
                                 />
@@ -168,6 +201,9 @@ export const LoginPage = () => {
                                     )}
                                 </button>
                             </div>
+                            {errors.password && (
+                                <p className="text-sm text-destructive font-medium">{errors.password.message}</p>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-between">
@@ -181,7 +217,7 @@ export const LoginPage = () => {
                                     htmlFor="remember"
                                     className="text-sm font-medium leading-none cursor-pointer"
                                 >
-                                    {SYSTEM_MESSAGES.LOGIN.LABEL_REMEMBER}
+                                    {TEXT.LABEL_REMEMBER}
                                 </Label>
                             </div>
                             <button
@@ -189,7 +225,7 @@ export const LoginPage = () => {
                                 onClick={() => navigate("/forgot-password")}
                                 className="text-sm text-primary hover:underline font-medium"
                             >
-                                {SYSTEM_MESSAGES.LOGIN.LINK_FORGOT}
+                                {TEXT.LINK_FORGOT}
                             </button>
                         </div>
 
@@ -202,10 +238,10 @@ export const LoginPage = () => {
                         <Button className="w-full font-bold" size="lg" disabled={isSubmitting}>
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {SYSTEM_MESSAGES.LOGIN.BTN_PROCESSING}
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {TEXT.BTN_PROCESSING}
                                 </>
                             ) : (
-                                SYSTEM_MESSAGES.LOGIN.BTN_LOGIN
+                                TEXT.BTN_LOGIN
                             )}
                         </Button>
                     </form>

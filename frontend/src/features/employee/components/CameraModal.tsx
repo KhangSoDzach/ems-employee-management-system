@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Camera, Loader2, MapPin, RefreshCw, X } from 'lucide-react';
+import { SYSTEM_MESSAGES } from '@/constants/messages';
 
 interface CaptureResult {
   photoBase64: string;   // without the "data:image/jpeg;base64," prefix
@@ -29,8 +30,8 @@ type ModalStep = 'init' | 'streaming' | 'captured' | 'error';
 
 export function CameraModal({
   open,
-  title = 'Xác nhận danh tính',
-  description = 'Hãy chụp ảnh và cho phép truy cập vị trí để tiếp tục.',
+  title = SYSTEM_MESSAGES.CAMERA.TITLE,
+  description = SYSTEM_MESSAGES.CAMERA.DESC,
   onCapture,
   onClose,
 }: CameraModalProps) {
@@ -178,18 +179,16 @@ export function CameraModal({
               <X className="w-8 h-8" />
               <p className="text-sm">{errorMsg}</p>
               <Button size="sm" variant="outline" onClick={startCamera}>
-                <RefreshCw className="w-4 h-4 mr-1" /> Thử lại
+                <RefreshCw className="w-4 h-4 mr-1" /> {SYSTEM_MESSAGES.CAMERA.BTN_RETRY}
               </Button>
             </div>
           )}
 
           {/* Init loading */}
-          {step === 'init' && (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <p className="text-sm">Đang khởi động camera…</p>
-            </div>
-          )}
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <p className="text-sm">{SYSTEM_MESSAGES.CAMERA.LOADING}</p>
+          </div>
 
           {/* Canvas (off-screen) */}
           <canvas ref={canvasRef} className="hidden" />
@@ -200,24 +199,24 @@ export function CameraModal({
           <MapPin className="w-4 h-4 shrink-0" />
           {geoLoading ? (
             <span className="flex items-center gap-1">
-              <Loader2 className="w-3 h-3 animate-spin" /> Đang lấy vị trí…
+              <Loader2 className="w-3 h-3 animate-spin" /> {SYSTEM_MESSAGES.CAMERA.LOCATION_LOADING}
             </span>
           ) : coords ? (
             <span className="truncate text-green-600 dark:text-green-400">{coords.label}</span>
           ) : step === 'error' ? (
-            <span className="text-destructive">Không có vị trí</span>
+            <span className="text-destructive">{SYSTEM_MESSAGES.CAMERA.NO_LOCATION}</span>
           ) : null}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={handleClose}>
-            Hủy
+            {SYSTEM_MESSAGES.BTN_CANCEL}
           </Button>
 
           {step === 'streaming' && (
             <Button onClick={capturePhoto} disabled={geoLoading}>
               <Camera className="w-4 h-4 mr-2" />
-              Chụp ảnh
+              {SYSTEM_MESSAGES.CAMERA.BTN_CAPTURE}
             </Button>
           )}
 
@@ -225,11 +224,11 @@ export function CameraModal({
             <>
               <Button variant="outline" onClick={retake}>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Chụp lại
+                {SYSTEM_MESSAGES.CAMERA.BTN_RETAKE}
               </Button>
               <Button onClick={confirm} disabled={!canConfirm}>
                 {geoLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Xác nhận
+                {SYSTEM_MESSAGES.BTN_CONFIRM}
               </Button>
             </>
           )}

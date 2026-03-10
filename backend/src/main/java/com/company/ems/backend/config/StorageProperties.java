@@ -12,7 +12,8 @@ import lombok.Setter;
  * <pre>
  * app:
  *   storage:
- *     photo-dir: ./uploads/attendance-photos
+ *     photo-dir:  ./uploads/attendance-photos
+ *     base-url:   http://localhost:8080/uploads/attendance-photos
  * </pre>
  */
 @Component
@@ -21,6 +22,13 @@ import lombok.Setter;
 @Setter
 public class StorageProperties {
 
-    /** Root directory for attendance photo files. */
+    /** Root directory for attendance photo files (server filesystem path). */
     private String photoDir = "./uploads/attendance-photos";
+
+    /**
+     * Public base URL from which the photos are served over HTTP.
+     * Override in production via {@code APP_STORAGE_BASE_URL} env var.
+     * Must NOT end with a trailing slash.
+     */
+    private String baseUrl = "http://localhost:8080/uploads/attendance-photos";
 }

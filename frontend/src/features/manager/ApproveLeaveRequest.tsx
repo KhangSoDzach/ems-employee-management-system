@@ -68,10 +68,10 @@ function mapDto(dto: LeaveResponseDTO): LeaveRequest {
 /* ================= TYPE BADGE ================= */
 
 const LEAVE_TYPE_MAP: Record<string, { label: string; cls: string }> = {
-  ANNUAL:   { label: "Nghỉ phép năm",  cls: "bg-blue-100 text-blue-700 hover:bg-blue-100" },
-  SICK:     { label: "Nghỉ ốm",        cls: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" },
-  UNPAID:   { label: "Nghỉ không lương", cls: "bg-rose-100 text-rose-700 hover:bg-rose-100" },
-  PERSONAL: { label: "Việc riêng",     cls: "bg-violet-100 text-violet-700 hover:bg-violet-100" },
+  ANNUAL: { label: SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL, cls: "bg-blue-100 text-blue-700 hover:bg-blue-100" },
+  SICK: { label: SYSTEM_MESSAGES.LEAVE.TYPE_SICK, cls: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" },
+  UNPAID: { label: SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID, cls: "bg-rose-100 text-rose-700 hover:bg-rose-100" },
+  PERSONAL: { label: SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL, cls: "bg-violet-100 text-violet-700 hover:bg-violet-100" },
 };
 
 const renderLeaveType = (type: string) => {
@@ -87,7 +87,7 @@ const EmptyState = () => (
   <TableRow>
     <TableCell colSpan={6} className="h-64 text-center">
       <p className="text-muted-foreground">
-        Không có yêu cầu nghỉ phép nào đang chờ duyệt.
+        {SYSTEM_MESSAGES.LEAVE.EMPTY_PENDING}
       </p>
     </TableCell>
   </TableRow>
@@ -107,7 +107,7 @@ export default function ApproveLeaveRequest() {
   useEffect(() => {
     leaveService.getTeamLeaves()
       .then((page) => setData(page.content.map(mapDto)))
-      .catch(() => toast.error("Không thể tải danh sách nghỉ phép."))
+      .catch(() => toast.error(SYSTEM_MESSAGES.MGMT_ADJ.MSG_FETCH_ERROR))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -139,13 +139,13 @@ export default function ApproveLeaveRequest() {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="page-heading">
-                Danh sách nghỉ phép chờ duyệt
+                {SYSTEM_MESSAGES.APPROVE.LEAVE_LIST_TITLE}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Xử lý các yêu cầu nghỉ phép từ nhân viên.
+                {SYSTEM_MESSAGES.APPROVE.LEAVE_LIST_DESC}
               </p>
             </div>
-            <Button variant="outline">Xuất báo cáo</Button>
+            <Button variant="outline">{SYSTEM_MESSAGES.APPROVE.BTN_EXPORT}</Button>
           </div>
 
           {/* FILTER BAR */}
@@ -153,7 +153,7 @@ export default function ApproveLeaveRequest() {
             <div className="relative w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Tìm kiếm nhân viên..."
+                placeholder={SYSTEM_MESSAGES.APPROVE.SEARCH_EMP}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -169,15 +169,21 @@ export default function ApproveLeaveRequest() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <SlidersHorizontal className="w-4 h-4" />
-                  {{ all: "Tất cả", annual: "Nghỉ phép năm", sick: "Nghỉ ốm", unpaid: "Nghỉ không lương", personal: "Việc riêng" }[filterType] ?? "Tất cả"}
+                  {{
+                    all: SYSTEM_MESSAGES.APPROVE.FILTER_ALL,
+                    annual: SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL,
+                    sick: SYSTEM_MESSAGES.LEAVE.TYPE_SICK,
+                    unpaid: SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID,
+                    personal: SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL
+                  }[filterType] ?? SYSTEM_MESSAGES.APPROVE.FILTER_ALL}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setFilterType("all")}>Tất cả</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("annual")}>Nghỉ phép năm</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("sick")}>Nghỉ ốm</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("unpaid")}>Nghỉ không lương</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("personal")}>Việc riêng</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("all")}>{SYSTEM_MESSAGES.APPROVE.FILTER_ALL}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("annual")}>{SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("sick")}>{SYSTEM_MESSAGES.LEAVE.TYPE_SICK}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("unpaid")}>{SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterType("personal")}>{SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -187,11 +193,11 @@ export default function ApproveLeaveRequest() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead>Nhân viên</TableHead>
-                  <TableHead>Phòng ban</TableHead>
-                  <TableHead>Loại nghỉ</TableHead>
-                  <TableHead>Thời gian</TableHead>
-                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.APPROVE.TABLE_COL_EMP}</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.APPROVE.TABLE_COL_DEPT}</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.APPROVE.TABLE_COL_TYPE}</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.APPROVE.TABLE_COL_TIME}</TableHead>
+                  <TableHead>{SYSTEM_MESSAGES.APPROVE.TABLE_COL_STATUS}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -202,7 +208,7 @@ export default function ApproveLeaveRequest() {
                     <TableCell colSpan={6} className="h-64 text-center">
                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span className="text-sm">Đang tải dữ liệu...</span>
+                        <span className="text-sm">{SYSTEM_MESSAGES.APPROVE.LOADING_DATA}</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -227,13 +233,13 @@ export default function ApproveLeaveRequest() {
                       <TableCell>{renderLeaveType(row.leaveType)}</TableCell>
                       <TableCell className="text-sm">
                         {format(new Date(row.startDate + "T00:00:00"), "dd/MM")}
-                        {row.startDate !== row.endDate && ` – ${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
+                        {row.startDate !== row.endDate && `${SYSTEM_MESSAGES.SYMBOLS.DASH}${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
                         {row.duration != null && (
-                          <span className="ml-1 text-muted-foreground">({row.duration}n)</span>
+                          <span className="ml-1 text-muted-foreground">{SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}{row.duration}{SYSTEM_MESSAGES.APPROVE.UNIT_DAYS}{SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge className="bg-amber-100 text-amber-700 border border-amber-200">Chờ duyệt</Badge>
+                        <Badge className="bg-amber-100 text-amber-700 border border-amber-200">{SYSTEM_MESSAGES.STATUS.PENDING}</Badge>
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
@@ -243,7 +249,7 @@ export default function ApproveLeaveRequest() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setSelectedRequest(row)}>Xem chi tiết</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSelectedRequest(row)}>{SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -254,7 +260,7 @@ export default function ApproveLeaveRequest() {
             </Table>
 
             <div className="px-5 py-3 border-t bg-muted/20 text-xs text-muted-foreground">
-              Hiển thị {filtered.length} yêu cầu
+              {SYSTEM_MESSAGES.APPROVE.DISPLAY_PREFIX} {filtered.length} {SYSTEM_MESSAGES.APPROVE.DISPLAY_UNIT}
             </div>
           </div>
         </main>

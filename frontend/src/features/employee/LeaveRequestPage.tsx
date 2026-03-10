@@ -159,9 +159,6 @@ export default function LeaveRequestPage() {
       ],
     }
     setRequests((prev) => [newReq, ...prev])
-    toast.success(SYSTEM_MESSAGES.TOAST.LEAVE_SUBMITTED, {
-      description: SYSTEM_MESSAGES.TOAST.LEAVE_SUBMITTED_DESC(newReq.id),
-    })
   }
 
   const handleCancel = async (id: string) => {

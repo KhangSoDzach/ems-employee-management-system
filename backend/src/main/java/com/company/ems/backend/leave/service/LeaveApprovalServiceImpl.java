@@ -8,9 +8,7 @@ import com.company.ems.backend.leave.dto.LeaveApprovalRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
 import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.leave.entity.LeaveApprovalHistory;
-import com.company.ems.backend.leave.enums.LeaveApprovalAction;
 import com.company.ems.backend.leave.enums.LeaveStatus;
-import com.company.ems.backend.leave.entity.LeaveBalance;
 import com.company.ems.backend.leave.repository.LeaveApprovalHistoryRepository;
 import com.company.ems.backend.leave.repository.LeaveRepository;
 import com.company.ems.backend.user.entity.User;
@@ -24,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,7 +75,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         // 2. Guard: approver must not be the requestor
         if (leave.getEmployee().getUser() != null
                 && leave.getEmployee().getUser().getId().equals(approverId)) {
-            throw new ForbiddenException("Bạn không thể tự phê duyệt yêu cầu nghỉ phép của chính mình.");
+            throw new ForbiddenException();
         }
 
         // 3. Verify approver is entitled to act at the current level
@@ -204,8 +201,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
                             .anyMatch(r -> r.getName().equals(longLeaveExtraLevelRole)))
                     .orElse(false);
             if (!hasRole) {
-                throw new ForbiddenException(
-                        "Cấp duyệt " + currentLevel + " yêu cầu vai trò " + longLeaveExtraLevelRole + ".");
+                throw new ForbiddenException(currentLevel + longLeaveExtraLevelRole);
             }
             return;
         }
@@ -222,8 +218,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
 
         List<Long> authorisedIds = workflowEngineService.resolveApproverUserIds(levelOpt.get());
         if (!authorisedIds.isEmpty() && !authorisedIds.contains(approverId)) {
-            throw new ForbiddenException(
-                    "Bạn không có quyền phê duyệt ở cấp " + currentLevel + ".");
+            throw new ForbiddenException(currentLevel + ".");
         }
     }
 

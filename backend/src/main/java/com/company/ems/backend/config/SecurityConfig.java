@@ -16,42 +16,47 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.company.ems.backend.auth.security.CustomAccessDeniedHandler;
 import com.company.ems.backend.auth.security.JwtAuthenticationEntryPoint;
 import com.company.ems.backend.auth.security.JwtAuthenticationFilter;
 import com.company.ems.backend.rbac.evaluator.CustomPermissionEvaluator;
-/**
- * Security configuration for the application
- * Configures JWT authentication and authorization rules
- */
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final CustomPermissionEvaluator customPermissionEvaluator;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint, CustomPermissionEvaluator customPermissionEvaluator) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter    jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler   customAccessDeniedHandler;
+    private final CustomPermissionEvaluator   customPermissionEvaluator;
+
+    public SecurityConfig(
+            JwtAuthenticationFilter    jwtAuthenticationFilter,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            CustomAccessDeniedHandler   customAccessDeniedHandler,
+            CustomPermissionEvaluator   customPermissionEvaluator) {
+
+        this.jwtAuthenticationFilter    = jwtAuthenticationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
-        this.customPermissionEvaluator = customPermissionEvaluator;
+        this.customAccessDeniedHandler   = customAccessDeniedHandler;
+        this.customPermissionEvaluator   = customPermissionEvaluator;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())  // Dùng CorsConfigurationSource từ WebConfig
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(ex -> {
-                    ex.authenticationEntryPoint(jwtAuthenticationEntryPoint);
-                })
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/api/v1/asset/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
@@ -62,7 +67,9 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -80,7 +87,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }

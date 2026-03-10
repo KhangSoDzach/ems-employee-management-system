@@ -4,6 +4,7 @@ import { X, Calendar, SlidersHorizontal } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 export type Asset = {
   id: string
@@ -14,6 +15,9 @@ export type Asset = {
   assignedDate: string
   status: "new" | "normal" | "maintenance"
   image?: string
+  warrantyUntil?: string
+  supplier?: string
+  contractNum?: string
 }
 
 interface Props {
@@ -21,6 +25,12 @@ interface Props {
   open: boolean
   onClose: () => void
 }
+
+const PLACEHOLDERS = {
+  WARRANTY: "05/03/2026 14:30",
+  SUPPLIER: "FPT Retail",
+  CONTRACT: "HD-2023-084",
+} as const
 
 export function AssetDetailSheet({ asset, open, onClose }: Props) {
   if (!asset) return null
@@ -30,19 +40,19 @@ export function AssetDetailSheet({ asset, open, onClose }: Props) {
       case "new":
         return (
           <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-            Mới
+            {SYSTEM_MESSAGES.ASSET_DETAIL.STATUS_NEW}
           </Badge>
         )
       case "normal":
         return (
           <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-            Bình thường
+            {SYSTEM_MESSAGES.ASSET_DETAIL.STATUS_NORMAL}
           </Badge>
         )
       case "maintenance":
         return (
           <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100">
-            Cần bảo trì
+            {SYSTEM_MESSAGES.ASSET_DETAIL.STATUS_MAINTENANCE}
           </Badge>
         )
     }
@@ -53,21 +63,19 @@ export function AssetDetailSheet({ asset, open, onClose }: Props) {
       {/* Overlay */}
       <div
         onClick={onClose}
-        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
-          open ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"
+          }`}
       />
 
       {/* Drawer */}
       <div
         className={`absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl 
-        transition-transform duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
+        transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-lg font-semibold">Chi tiết tài sản</h2>
+          <h2 className="text-lg font-semibold">{SYSTEM_MESSAGES.ASSET_DETAIL.TITLE}</h2>
           <Button size="icon" variant="ghost" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
@@ -106,7 +114,7 @@ export function AssetDetailSheet({ asset, open, onClose }: Props) {
           <div className="grid grid-cols-2 gap-4 p-6">
             <div className="border rounded-xl p-4 space-y-3">
               <p className="text-xs text-muted-foreground uppercase">
-                Người sử dụng
+                {SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_USER}
               </p>
               <div className="flex items-center gap-3">
                 <Avatar>
@@ -120,7 +128,7 @@ export function AssetDetailSheet({ asset, open, onClose }: Props) {
 
             <div className="border rounded-xl p-4 space-y-3">
               <p className="text-xs text-muted-foreground uppercase">
-                Ngày cấp phát
+                {SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_ASSIGNED_DATE}
               </p>
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
@@ -133,33 +141,33 @@ export function AssetDetailSheet({ asset, open, onClose }: Props) {
           <div className="px-6 pb-10 space-y-6">
             <div className="flex items-center gap-2 font-semibold">
               <SlidersHorizontal className="w-4 h-4 text-red-500" />
-              Thông tin cơ bản
+              {SYSTEM_MESSAGES.ASSET_DETAIL.SECTION_BASIC}
             </div>
 
             <div className="space-y-4 text-sm">
               <div className="flex justify-between border-b pb-3">
-                <span className="text-muted-foreground">Loại</span>
-                <span>Thiết bị công nghệ</span>
+                <span className="text-muted-foreground">{SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_TYPE}</span>
+                <span>{SYSTEM_MESSAGES.ASSET_DETAIL.TYPE_TECH}</span>
               </div>
 
               <div className="flex justify-between border-b pb-3">
-                <span className="text-muted-foreground">Tình trạng</span>
-                <span>Tốt</span>
+                <span className="text-muted-foreground">{SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_CONDITION}</span>
+                <span>{SYSTEM_MESSAGES.STATUS.GOOD}</span>
               </div>
 
               <div className="flex justify-between border-b pb-3">
-                <span className="text-muted-foreground">Bảo hành</span>
-                <span>05/03/2026 14:30</span>
+                <span className="text-muted-foreground">{SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_WARRANTY}</span>
+                <span>{asset.warrantyUntil || PLACEHOLDERS.WARRANTY}</span>
               </div>
 
               <div className="flex justify-between border-b pb-3">
-                <span className="text-muted-foreground">Nhà cung cấp</span>
-                <span>FPT Retail</span>
+                <span className="text-muted-foreground">{SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_SUPPLIER}</span>
+                <span>{asset.supplier || PLACEHOLDERS.SUPPLIER}</span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Hợp đồng</span>
-                <span>HD-2023-084</span>
+                <span className="text-muted-foreground">{SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_CONTRACT}</span>
+                <span>{asset.contractNum || PLACEHOLDERS.CONTRACT}</span>
               </div>
             </div>
           </div>
