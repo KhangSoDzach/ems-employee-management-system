@@ -97,6 +97,6 @@ public class LeaveBalanceController {
             }
         }
 
-        throw new ForbiddenException("Bạn không có quyền xem dữ liệu của nhân viên này.");
+        throw new ForbiddenException();
     }
 }
