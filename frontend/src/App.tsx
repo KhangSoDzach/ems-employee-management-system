@@ -18,6 +18,8 @@ import AssetGroupManagement from "./features/manager/AssetGroupManagement";
 import ManagerProfilePage from "./features/manager/ManagerProfilePage";
 import HRProfilePage from "./features/hr/HRProfilePage";
 import AdminProfilePage from "./features/admin/AdminProfilePage";
+import KpiOkrManagement from "./features/manager/KpiOkrManagement";
+import MemberList from "./features/manager/MemberList";
 
 function App() {
   return (
@@ -72,9 +74,12 @@ function App() {
           {/* Manager only */}
           <Route element={<ProtectedRoute allowedRoles={["ROLE_MANAGER"]} />}>
             <Route path="/manager-profile" element={<ManagerProfilePage />} />
+            <Route path="/members" element={<MemberList />} />
+            <Route path="/kpi-okr" element={<KpiOkrManagement />} />
             <Route path="/approve" element={<ApproveLeaveRequest />} />
             <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
             <Route path="/manager-my-assets" element={<MyAssetsPage sidebarRole="manager" />} />
+            <Route path="/kpi-okr" element={<KpiOkrManagement />} />
           </Route>
 
           {/* HR only */}

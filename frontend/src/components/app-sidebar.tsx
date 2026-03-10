@@ -73,6 +73,14 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 url: "/manager-profile",
               },
               {
+                title: "Thành viên nhóm",
+                url: "/members",
+              },
+              {
+                title: "Thiết lập KPI/OKR",
+                url: "/kpi-okr",
+              },
+              {
                 title: "Duyệt đơn nghỉ phép",
                 url: "/approve",
               },
@@ -88,6 +96,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 title: "Tài sản của tôi",
                 url: "/manager-my-assets",
               },
+              
             ],
           },
         ]
