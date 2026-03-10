@@ -1,12 +1,8 @@
 package com.company.ems.backend.leave.service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
-import com.company.ems.backend.common.message.MessageCode;
-import com.company.ems.backend.common.message.MessageService;
-import com.company.ems.backend.leave.enums.LeaveType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -17,6 +13,8 @@ import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.exception.ForbiddenException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.leave.dto.ApproveLeaveRequest;
@@ -24,6 +22,7 @@ import com.company.ems.backend.leave.dto.LeaveRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
 import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.leave.enums.LeaveStatus;
+import com.company.ems.backend.leave.enums.LeaveType;
 import com.company.ems.backend.leave.repository.LeaveRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
 import com.company.ems.backend.user.enums.DataScope;
@@ -133,9 +132,9 @@ public class LeaveServiceImpl implements LeaveService {
         Leave leave = leaveRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave", "id", id));
 
-        if (leave.getStatus() != LeaveStatus.PENDING) {
+        if (!leave.isPending()) {
             throw new BusinessException(
-                    messages.get(MessageCode.LEAVE_INVALID_DATE_RANGE, leave.getStatus()));
+                    messages.get(MessageCode.LEAVE_NOT_PENDING, leave.getStatus()));
         }
 
         if (leave.getEmployee().getUser() != null

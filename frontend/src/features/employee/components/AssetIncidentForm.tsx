@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { assetService } from "@/services/assetService";
 import {
     Form,
     FormControl,
@@ -83,11 +84,8 @@ const TEXT = {
     TOAST_DRAFT_DESC: "Dữ liệu của bạn được lưu tạm thời trên trình duyệt.",
     TOAST_UNDO_LABEL: "Hoàn tác",
     TOAST_UNDO_SUCCESS: "Đã hoàn tác việc lưu nháp.",
-    OP_HARDWARE: "Lỗi phần cứng",
-    OP_SOFTWARE: "Lỗi phần mềm",
-    OP_NETWORK: "Lỗi kết nối mạng",
-    OP_ACCESS: "Lỗi quyền truy cập",
-    OP_OTHER: "Khác",
+    OP_DAMAGED: "Báo hỏng",
+    OP_LOST: "Báo mất",
     SEV_LOW: "Thấp - Vẫn làm việc được",
     SEV_MEDIUM: "Trung bình - Ảnh hưởng một phần",
     SEV_HIGH: "Cao - Không thể làm việc",
@@ -128,17 +126,17 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
         // Dọn dẹp toast cũ trước khi thực hiện hành động mới
         toast.dismiss();
 
-        // Mô phỏng gọi API bằng toast.promise
-        const promise = () => new Promise((resolve, reject) => {
-            setTimeout(() => {
-                console.log("Submitting values:", values);
-                // 90% thành công, 10% thất bại để test
-                if (Math.random() > 0.1) {
-                    resolve({ name: "Success" });
-                } else {
-                    reject(new Error("Server Error"));
-                }
-            }, 2000);
+        // Thực hiện API call thực tế
+        const promise = () => new Promise(async (resolve, reject) => {
+            try {
+                const res = await assetService.submitReport(Number(values.assetId.replace(/\D/g, '')), {
+                    description: values.description,
+                    incidentType: values.incidentType as 'DAMAGED' | 'LOST',
+                });
+                resolve(res);
+            } catch (err) {
+                reject(err);
+            }
         });
 
         toast.promise(promise(), {
@@ -230,11 +228,8 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="hardware">{TEXT.OP_HARDWARE}</SelectItem>
-                                                <SelectItem value="software">{TEXT.OP_SOFTWARE}</SelectItem>
-                                                <SelectItem value="network">{TEXT.OP_NETWORK}</SelectItem>
-                                                <SelectItem value="access">{TEXT.OP_ACCESS}</SelectItem>
-                                                <SelectItem value="other">{TEXT.OP_OTHER}</SelectItem>
+                                                <SelectItem value="DAMAGED">{TEXT.OP_DAMAGED}</SelectItem>
+                                                <SelectItem value="LOST">{TEXT.OP_LOST}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage className="text-xs font-medium" />

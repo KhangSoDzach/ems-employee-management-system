@@ -21,7 +21,9 @@ public class EmployeeResponse {
     private LocalDate dateOfBirth;
     private LocalDate hireDate;
     private String position;
+    private Long positionId;
     private String department;
+    private Long departmentId;
     private Double salary;
     private String address;
     private String city;

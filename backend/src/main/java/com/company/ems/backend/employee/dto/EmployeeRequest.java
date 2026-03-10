@@ -30,7 +30,7 @@ public class EmployeeRequest {
     @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "INVALID_FORMAT|Email format is invalid|e.g. user@company.com")
     private String email;
 
-    @Pattern(regexp = "^(\\+84[0-9]{9,10}|0[0-9]{9,10})$", message = "INVALID_FORMAT|Phone format is invalid (Vietnam format required)|e.g. +84912345678 or 0912345678")
+    @Pattern(regexp = "^$|^(\\+84[0-9]{9,10}|0[0-9]{9,10})$", message = "INVALID_FORMAT|Phone format is invalid (Vietnam format required)|e.g. +84912345678 or 0912345678")
     private String phone;
 
     @NotNull(message = "REQUIRED_FIELD|Date of birth is required|YYYY-MM-DD")
@@ -62,7 +62,7 @@ public class EmployeeRequest {
     private String taxId;
     private String socialSecurityNumber;
 
-    @Pattern(regexp = "^([0-9]{9}|[0-9]{12})$", message = "INVALID_FORMAT|National ID must be 9 or 12 digits|e.g. 001234567890")
+    @Pattern(regexp = "^$|^([0-9]{9}|[0-9]{12})$", message = "INVALID_FORMAT|National ID must be 9 or 12 digits|e.g. 001234567890")
     private String nationalId;
 
     private String bankAccountNumber;

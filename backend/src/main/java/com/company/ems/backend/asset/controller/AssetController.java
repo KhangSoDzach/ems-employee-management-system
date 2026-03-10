@@ -38,9 +38,9 @@ public class AssetController {
     public ResponseEntity<ApiResponse<PageResponse<AssetDto.Summary>>> listAssets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
-            @RequestParam(required = false)   AssetStatus status,
-            @RequestParam(required = false)   String type,
-            @RequestParam(required = false)   String keyword) {
+            @RequestParam(required = false) AssetStatus status,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String keyword) {
 
         return ResponseEntity.ok(ApiResponse.success(assetService.listAssets(page, size, status, type, keyword)));
     }
@@ -103,17 +103,35 @@ public class AssetController {
     public ResponseEntity<ApiResponse<PageResponse<AssetDto.HistoryItem>>> getHistory(
             @PathVariable Long id,
             @RequestParam(defaultValue = "all") String historyType,
-            @RequestParam(defaultValue = "0")   int page,
-            @RequestParam(defaultValue = "20")  int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
 
         return ResponseEntity.ok(ApiResponse.success(
                 assetService.getHistory(id, historyType, page, size)));
     }
 
+    @GetMapping("/export")
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
+    public ResponseEntity<byte[]> exportAssets(
+            @RequestParam(required = false) AssetStatus status,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String keyword) {
+
+        byte[] csv = assetService.exportAssetsCsv(status, type, keyword);
+        String filename = "danh-sach-tai-san-" + LocalDate.now() + ".csv";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename(filename).build());
+
+        return ResponseEntity.ok().headers(headers).body(csv);
+    }
+
     @GetMapping("/{id}/history/export")
     @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<byte[]> exportHistory(@PathVariable Long id) {
-        byte[] csv      = assetService.exportHistoryCsv(id);
+        byte[] csv = assetService.exportHistoryCsv(id);
         String filename = "lich-su-tai-san-" + id + "-" + LocalDate.now() + ".csv";
 
         HttpHeaders headers = new HttpHeaders();

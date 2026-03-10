@@ -181,7 +181,6 @@ public class Employee extends BaseEntity {
     @Column(length = 50)
     private String nationality;
 
-
     @Size(max = 10, message = "Blood group must not exceed 10 characters")
     @Column(length = 10)
     private String bloodGroup;
@@ -198,6 +197,11 @@ public class Employee extends BaseEntity {
     @Column
     @Builder.Default
     private Integer sickLeaveBalance = 0;
+
+    // Salary
+    @Column(name = "salary", columnDefinition = "DECIMAL(15,2) DEFAULT 0.00")
+    @Builder.Default
+    private Double salary = 0.0;
 
     @Size(max = 500, message = "Avatar URL must not exceed 500 characters")
     @Column(length = 500)
@@ -228,6 +232,7 @@ public class Employee extends BaseEntity {
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Leave> leaves = new ArrayList<>();
+
     /**
      * Get full name of employee
      */

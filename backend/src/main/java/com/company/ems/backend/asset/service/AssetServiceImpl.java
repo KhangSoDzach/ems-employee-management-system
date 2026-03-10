@@ -335,6 +335,42 @@ public class AssetServiceImpl implements AssetService {
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportAssetsCsv(AssetStatus status, String type, String keyword) {
+        PageRequest pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Asset> all = dataScopeService.listAssets(status, type, keyword, pageable).getContent();
+
+        StringBuilder csv = new StringBuilder();
+        csv.append('\uFEFF');
+        csv.append(messages.get(MessageCode.ASSETS_EXPORT_CSV_HEADER)).append('\n');
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        for (Asset a : all) {
+            csv.append(a.getId()).append(',');
+            csv.append(csvEscape(a.getAssetCode())).append(',');
+            csv.append(csvEscape(a.getAssetName())).append(',');
+            csv.append(csvEscape(a.getAssetType())).append(',');
+            csv.append(csvEscape(a.getCondition() != null ? a.getCondition().name() : "")).append(',');
+            csv.append(csvEscape(a.getStatus() != null ? a.getStatus().name() : "")).append(',');
+
+            String locUser = "";
+            if (a.getAssignedTo() != null) {
+                locUser = a.getAssignedTo().getFullName();
+            } else if (a.getLocation() != null) {
+                locUser = a.getLocation();
+            }
+            csv.append(csvEscape(locUser)).append(',');
+
+            csv.append(a.getPurchaseDate() != null ? a.getPurchaseDate().format(dtf) : "").append(',');
+            csv.append(a.getAssetValue() != null ? a.getAssetValue().toString() : "").append(',');
+            csv.append(csvEscape(a.getSupplierName())).append(',');
+            csv.append(a.getWarrantyUntil() != null ? a.getWarrantyUntil().format(dtf) : "").append('\n');
+        }
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
     private Asset loadActive(Long id) {
         return assetRepo.findActiveById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Asset", "id", id));

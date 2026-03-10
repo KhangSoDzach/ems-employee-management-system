@@ -1,0 +1,5 @@
+
+
+ALTER TABLE employees
+    ADD COLUMN IF NOT EXISTS salary DECIMAL(15, 2) NOT NULL DEFAULT 0.00
+    COMMENT 'Gross salary in VND';

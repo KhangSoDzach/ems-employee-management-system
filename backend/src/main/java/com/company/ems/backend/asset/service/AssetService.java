@@ -1,10 +1,12 @@
 package com.company.ems.backend.asset.service;
+
 import com.company.ems.backend.asset.dto.AssetDto;
 import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.common.dto.PageResponse;
 
 public interface AssetService {
     AssetDto.CodePreview previewNextCode();
+
     PageResponse<AssetDto.Summary> listAssets(int page, int size, AssetStatus status, String type, String keyword);
 
     AssetDto.Detail getAssetById(Long id);
@@ -20,5 +22,8 @@ public interface AssetService {
     AssetDto.Detail returnAsset(Long assetId, AssetDto.ReturnRequest request);
 
     PageResponse<AssetDto.HistoryItem> getHistory(Long assetId, String historyType, int page, int size);
+
     byte[] exportHistoryCsv(Long assetId);
+
+    byte[] exportAssetsCsv(AssetStatus status, String type, String keyword);
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import AssetDetailModal from "./AssetDetailModal";
 import AssetCreateModal from "./AssetCreateModal";
@@ -108,6 +108,29 @@ export default function AssetManagementPage({
     }
   };
 
+  const handleExportAssets = async () => {
+    try {
+      setLoading(true);
+      const blob = await assetService.exportAssets({
+        status: statusFilter || undefined,
+        keyword: searchDebounced || undefined,
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `danh-sach-tai-san-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
+    } catch {
+      toast.error(SYSTEM_MESSAGES.ERROR);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const from = totalElements === 0 ? 0 : page * PAGE_SIZE + 1;
   const to = Math.min((page + 1) * PAGE_SIZE, totalElements);
 
@@ -130,6 +153,14 @@ export default function AssetManagementPage({
                 onChange={(e) => setSearch(e.target.value)}
                 className="px-4 py-2 w-64 rounded-full bg-gray-100 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
+              <button
+                onClick={handleExportAssets}
+                disabled={loading}
+                className="px-5 py-2 flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition gap-2"
+                title="Tải về danh sách tài sản (CSV)"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              </button>
               <button
                 onClick={() => setOpenCreate(true)}
                 className="px-5 py-2 bg-primary text-white rounded-full font-semibold hover:bg-primary/90"

@@ -131,6 +131,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
                   url: "/asset-incidents",
                 },
+                {
+                  title: "Duyệt báo cáo sự cố",
+                  url: "/asset-reports",
+                },
               ],
             },
           ]

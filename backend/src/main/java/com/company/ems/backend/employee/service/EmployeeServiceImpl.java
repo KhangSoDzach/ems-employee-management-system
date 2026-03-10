@@ -1,6 +1,7 @@
 package com.company.ems.backend.employee.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -116,6 +117,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .gender(request.getGender())
                                 .avatarUrl(request.getAvatarUrl())
                                 .notes(request.getNotes())
+                                .salary(request.getSalary() != null ? request.getSalary() : 0.0)
                                 .status(EmployeeStatus.ACTIVE)
                                 .build();
 
@@ -146,12 +148,22 @@ public class EmployeeServiceImpl implements EmployeeService {
                         }
                 }
 
+                // Convert String status -> EmployeeStatus enum (null if blank or invalid)
+                EmployeeStatus statusFilter = null;
+                if (status != null && !status.isBlank()) {
+                        try {
+                                statusFilter = EmployeeStatus.valueOf(status.toUpperCase());
+                        } catch (IllegalArgumentException ignored) {
+                                log.warn("Invalid status filter value: '{}'", status);
+                        }
+                }
+
                 Page<Employee> employees;
 
                 if (principal.hasDataScope(DataScope.ALL)) {
                         // HR Admin: xem tất cả với filter
                         employees = employeeRepository.searchEmployees(search, departmentIdFilter, positionIdFilter,
-                                        status, pageable);
+                                        statusFilter, pageable);
 
                 } else if (principal.hasDataScope(DataScope.TEAM)) {
                         // Manager: chỉ xem team của mình
@@ -161,7 +173,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                                                                         + principal.getUserId()));
 
                         employees = employeeRepository.searchEmployeesByManager(managerEmployee.getId(), search,
-                                        departmentIdFilter, positionIdFilter, status, pageable);
+                                        departmentIdFilter, positionIdFilter, statusFilter, pageable);
 
                 } else {
                         // Employee (SELF): chỉ thấy chính mình
@@ -274,6 +286,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                 employee.setGender(request.getGender());
                 employee.setAvatarUrl(request.getAvatarUrl());
                 employee.setNotes(request.getNotes());
+                if (request.getSalary() != null) {
+                        employee.setSalary(request.getSalary());
+                }
 
                 Employee updated = employeeRepository.save(employee);
                 log.info("User [{}] updated employee [{}]", principal.getUsername(), id);
@@ -310,6 +325,23 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 principal.getUsername(), employee.getId());
 
                 return mapToPublicResponse(employee);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<Map<String, Object>> getManagers() {
+                // Trả danh sách nhân viên ACTIVE có vị trí là manager (level == 3) - Không lấy
+                // ADMIN
+                return employeeRepository.findAll().stream()
+                                .filter(e -> e.getStatus() == EmployeeStatus.ACTIVE
+                                                && e.getPosition() != null
+                                                && e.getPosition().getLevel() != null
+                                                && e.getPosition().getLevel() == 3)
+                                .map(e -> Map.<String, Object>of(
+                                                "id", e.getId(),
+                                                "name", e.getFullName(),
+                                                "position", e.getPosition().getTitle()))
+                                .collect(java.util.stream.Collectors.toList());
         }
 
         private PublicEmployeeResponse mapToPublicResponse(Employee employee) {
@@ -349,8 +381,12 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .dateOfBirth(employee.getDateOfBirth())
                                 .hireDate(employee.getHireDate())
                                 .position(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
+                                .positionId(employee.getPosition() != null ? employee.getPosition().getId() : null)
                                 .department(employee.getDepartment() != null ? employee.getDepartment().getName()
                                                 : null)
+                                .departmentId(employee.getDepartment() != null ? employee.getDepartment().getId()
+                                                : null)
+                                .salary(employee.getSalary())
 
                                 .address(employee.getAddress())
                                 .city(employee.getCity())
