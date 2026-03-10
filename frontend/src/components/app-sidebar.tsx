@@ -52,10 +52,6 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
               url: "/admin-profile",
             },
             {
-              title: "Quản lý nhân viên",
-              url: "/admin",
-            },
-            {
               title: "Quản lý tài sản",
               url: "/asset",
             },
@@ -100,7 +96,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 title: "Tài sản của tôi",
                 url: "/manager-my-assets",
               },
-              
+
               {
                 title: "Quản lý sự cố tài sản",
                 url: "/asset-incidents",
@@ -117,6 +113,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 {
                   title: "Hồ sơ của tôi",
                   url: "/hr-profile",
+                },
+                {
+                  title: "Quản lý nhân viên",
+                  url: "/admin",
                 },
                 {
                   title: "Tài sản của tôi",

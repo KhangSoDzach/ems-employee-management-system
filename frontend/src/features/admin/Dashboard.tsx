@@ -92,7 +92,7 @@ function EmployeeCard({
                             onClick={onEdit}
                             className="mt-2 text-xs text-blue-600 hover:underline font-medium"
                         >
-                            {SYSTEM_MESSAGES.SYMBOLS.PENCIL} {SYSTEM_MESSAGES.BTN_EDIT}
+                            {SYSTEM_MESSAGES.BTN_EDIT}
                         </button>
                     </div>
                 </div>
@@ -157,7 +157,7 @@ export default function Page() {
 
     return (
         <SidebarProvider>
-            <AppSidebar variant="inset" />
+            <AppSidebar role="hr" variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 
@@ -178,7 +178,7 @@ export default function Page() {
 
                     <div className="space-y-4">
                         <EmployeeCard
-                            name="{SYSTEM_MESSAGES.EMPLOYEE.MGR_A}n"
+                            name={SYSTEM_MESSAGES.EMPLOYEE.MGR_A}
                             code="NV001"
                             status={SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE}
                             statusColor={EMPLOYEE_STATUS_MAP['Hoạt động'].className}
@@ -187,7 +187,7 @@ export default function Page() {
                             phone="0912345678"
                             onEdit={() => {
                                 setSelectedEmployee({
-                                    name: "{SYSTEM_MESSAGES.EMPLOYEE.MGR_A}n",
+                                    name: SYSTEM_MESSAGES.EMPLOYEE.MGR_A,
                                     code: "NV001",
                                     status: SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE,
                                     statusColor: EMPLOYEE_STATUS_MAP['Hoạt động'].className,

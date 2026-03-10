@@ -35,7 +35,6 @@ function App() {
 
           {/* Admin only */}
           <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN"]} />}>
-            <Route path="/admin" element={<Dashboard />} />
             <Route path="/asset" element={<AssetManagementPage sidebarRole="admin" />} />
             <Route path="/asset-reports" element={<AssetReportManagement />} />
             <Route path="/admin-profile" element={<AdminProfilePage />} />
@@ -44,6 +43,7 @@ function App() {
 
           {/* HR only */}
           <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
+            <Route path="/admin" element={<Dashboard />} />
             <Route path="/hr-profile" element={<HRProfilePage />} />
             <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
             <Route path="/hr-assets" element={<AssetManagementPage sidebarRole="hr" />} />

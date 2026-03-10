@@ -8,7 +8,6 @@ import {
     MapPin, ShieldCheck, Briefcase, Download
 } from "lucide-react"
 import { employeeService } from "@/services/employeeService"
-import { useAuth } from "@/contexts/AuthContext"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -87,9 +86,7 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
-    const { user } = useAuth()
-    // Chỉ HR và Admin mới được cập nhật hồ sơ (US-07 AC-04)
-    const canEdit = user?.roles.some(r => r === 'ROLE_HR' || r === 'ROLE_ADMIN') ?? false
+    const canEdit = false // Toàn bộ người dùng không được phép tự ý chỉnh sửa thông tin cá nhân (US-07 AC-04)
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
