@@ -1,20 +1,30 @@
 package com.company.ems.backend.leave.controller;
 
+import java.time.LocalDate;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.leave.dto.ApproveLeaveRequest;
 import com.company.ems.backend.leave.dto.LeaveRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
 import com.company.ems.backend.leave.service.LeaveService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/leaves")
@@ -50,9 +60,8 @@ public class LeaveController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         PageResponse<LeaveResponse> response =
-                leaveService.getAllLeaves(page, size, employeeId, status, leaveType, startDate, endDate);
-        // TODO: Implement get leaves service
-        return ResponseEntity.ok(ApiResponse.success("success", null));
+            leaveService.getAllLeaves(page, size, employeeId, status, leaveType, startDate, endDate);
+        return ResponseEntity.ok(ApiResponse.success("success", response));
     }
 
     /**
@@ -61,10 +70,9 @@ public class LeaveController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasPermission(null, 'LEAVE_VIEW')")
-    public ResponseEntity<ApiResponse<String>> getLeaveById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<LeaveResponse>> getLeaveById(@PathVariable Long id) {
         LeaveResponse response = leaveService.getLeaveById(id);
-        // TODO: Implement get leave by id service
-        return ResponseEntity.ok(ApiResponse.success(null, "success"));
+        return ResponseEntity.ok(ApiResponse.success("success", response));
     }
 
     /**
@@ -77,8 +85,37 @@ public class LeaveController {
             @PathVariable Long id,
             @Valid @RequestBody ApproveLeaveRequest request) {
         LeaveResponse response = leaveService.approveLeave(id, request);
-        // TODO: Implement leave approval service
         return ResponseEntity.ok(ApiResponse.success("Leave request processed successfully",response));
+    }
+
+    /**
+     * New adapter endpoint for frontend action payloads.
+     * PUT /api/v1/leaves/{id}/action – maps frontend `action` -> service status
+     */
+    @PutMapping("/{id}/action")
+    @PreAuthorize("hasPermission(null, 'LEAVE_APPROVE')")
+    public ResponseEntity<ApiResponse<LeaveResponse>> processAction(
+            @PathVariable Long id,
+            @Valid @RequestBody com.company.ems.backend.leave.dto.LeaveActionRequest actionRequest) {
+        String action = actionRequest.getAction() != null ? actionRequest.getAction().trim().toUpperCase() : null;
+        String status;
+        if ("APPROVE".equals(action)) {
+            status = "APPROVED";
+        } else if ("REJECT".equals(action)) {
+            status = "REJECTED";
+        } else if ("SEND_BACK".equals(action)) {
+            status = "RETURNED_TO_EMPLOYEE";
+        } else {
+            throw new IllegalArgumentException("Unsupported action: " + action);
+        }
+
+        ApproveLeaveRequest req = ApproveLeaveRequest.builder()
+                .status(status)
+                .notes(actionRequest.getComments())
+                .build();
+
+        LeaveResponse response = leaveService.approveLeave(id, req);
+        return ResponseEntity.ok(ApiResponse.success("Leave request processed successfully", response));
     }
 
     /**

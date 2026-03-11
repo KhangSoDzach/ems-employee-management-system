@@ -379,10 +379,10 @@ export const SYSTEM_MESSAGES = {
         PAGINATION_ITEMS: "tài sản",
     },
 
-    // Employee Management (Admin Dashboard)
+    // Employee Management (Admin Dashboard + HR)
     EMPLOYEE: {
         TITLE: "Danh sách nhân viên",
-        BTN_ADD: "+ Thêm nhân viên",
+        BTN_ADD: "Thêm nhân viên",
         MODAL_CREATE_TITLE: "Thêm nhân viên mới",
         MODAL_UPDATE_TITLE: "Cập nhật hồ sơ nhân viên",
         SECTION_PERSONAL: "Thông tin cá nhân",
@@ -406,8 +406,8 @@ export const SYSTEM_MESSAGES = {
         GENDER_MALE: "Nam",
         GENDER_FEMALE: "Nữ",
         GENDER_OTHER: "Khác",
-        STATUS_ACTIVE: "Hoạt động",
-        STATUS_INACTIVE: "Không hoạt động",
+        STATUS_ACTIVE: "Đang làm việc",
+        STATUS_INACTIVE: "Nghỉ việc",
         STATUS_PENDING: "Chưa xác định",
         CONTRACT_INDEFINITE: "Hợp đồng không xác định thời hạn",
         CONTRACT_ONE_YEAR: "Hợp đồng 1 năm",
@@ -415,8 +415,11 @@ export const SYSTEM_MESSAGES = {
         BTN_CANCEL: "Hủy",
         BTN_UPDATE: "Cập nhật",
         BTN_CREATE: "Tạo mới",
-        MSG_UPDATE_SUCCESS: "Cập nhật nhân viên thành công!",
+        MSG_UPDATE_SUCCESS: "Cập nhật hồ sơ thành công!",
         MSG_CREATE_SUCCESS: "Tạo nhân viên thành công!",
+        MSG_DELETE_SUCCESS: "Đã xóa nhân viên.",
+        MSG_DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa nhân viên này?",
+        MSG_FETCH_ERROR: "Không thể tải danh sách nhân viên.",
         INFO_NOTE: "Các thay đổi về chức danh và phòng ban sẽ cần sự phê duyệt của trưởng bộ phận.",
         DEPT_SOFTWARE: "Phòng Phát triển phần mềm",
         DEPT_HR: "Phòng Nhân sự",
@@ -956,5 +959,6 @@ export const SYSTEM_MESSAGES = {
         PERCENT: "%",
         EXCLAMATION: "!",
         SPACE: " ",
-    }
+    },
+
 };

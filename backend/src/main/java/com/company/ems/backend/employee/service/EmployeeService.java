@@ -1,5 +1,8 @@
 package com.company.ems.backend.employee.service;
 
+import java.util.List;
+import java.util.Map;
+
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
@@ -24,4 +27,9 @@ public interface EmployeeService {
     EmployeeResponse updateEmployee(Long id, EmployeeRequest request);
 
     void deleteEmployee(Long id);
+
+    /**
+     * Trả danh sách nhân viên giữ vị trí manager (level >= 3) để chọn Người quản lý
+     */
+    List<Map<String, Object>> getManagers();
 }

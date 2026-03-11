@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import com.company.ems.backend.department.entity.Department;
 import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.employee.enums.EmployeeStatus;
 import com.company.ems.backend.position.entity.Position;
 
 /**
@@ -88,7 +89,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
                         @Param("search") String search,
                         @Param("departmentId") Long departmentId,
                         @Param("positionId") Long positionId,
-                        @Param("status") String status,
+                        @Param("status") EmployeeStatus status,
                         Pageable pageable);
 
         @Query("SELECT e FROM Employee e WHERE " +
@@ -104,7 +105,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
                         @Param("search") String search,
                         @Param("departmentId") Long departmentId,
                         @Param("positionId") Long positionId,
-                        @Param("status") String status,
+                        @Param("status") EmployeeStatus status,
                         Pageable pageable);
 
         /**

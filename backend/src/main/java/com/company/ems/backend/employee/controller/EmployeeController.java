@@ -71,8 +71,15 @@ public class EmployeeController {
                 .ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getMyProfile()));
     }
 
+    @GetMapping("/managers")
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
+    @Operation(summary = "Get managers list", description = "Returns employees with manager-level positions (level >= 3) for use in reporting manager dropdown")
+    public ResponseEntity<ApiResponse<java.util.List<java.util.Map<String, Object>>>> getManagers() {
+        return ResponseEntity.ok(ApiResponse.success("Success", employeeService.getManagers()));
+    }
+
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW') and @empSec.canAccessEmployee(authentication, #id)")
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
     @Operation(summary = "Get employee by ID", description = "Retrieves complete employee details by ID")
     public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployeeById(@PathVariable Long id) {
         return ResponseEntity
@@ -80,7 +87,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE') and @empSec.canAccessEmployee(authentication, #id)")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     @Operation(summary = "Update employee", description = "Updates an existing employee's details")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
             @PathVariable Long id,
@@ -98,7 +105,7 @@ public class EmployeeController {
     }
 
     @PostMapping(value = "/{id}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE') and @empSec.canAccessEmployee(authentication, #id)")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<String>> uploadEmployeeFiles(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
