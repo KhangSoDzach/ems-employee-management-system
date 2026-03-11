@@ -45,9 +45,10 @@ function App() {
                     </Route>
 
 
-                    {/* Shared cross-roles */}
+                    {/* Shared cross-roles: Admin + HR + Manager */}
                     <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_HR", "ROLE_MANAGER"]} />}>
                         <Route path="/asset-incidents" element={<AssetIncidentManagementPage />} />
+                        <Route path="/asset-reports" element={<AssetReportManagement />} />
                     </Route>
 
                     {/* Check-in / Attendance shared across Employee, HR, Manager */}
@@ -74,7 +75,6 @@ function App() {
                         <Route path="/approve-adjustments" element={<ApproveAdjustmentRequest />} />
                         <Route path="/view-group-asset" element={<AssetGroupManagement />} />
                         <Route path="/manager-my-assets" element={<MyAssetsPage sidebarRole="manager" />} />
-                        <Route path="/kpi-okr" element={<KpiOkrManagement />} />
                     </Route>
 
                     {/* HR only */}
@@ -85,7 +85,6 @@ function App() {
                         <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
                         <Route path="/hr-assets" element={<AssetManagementPage sidebarRole="hr" />} />
                         <Route path="/hr-employees" element={<EmployeeManagement />} />
-                        <Route path="/asset-reports" element={<AssetReportManagement />} />
                     </Route>
 
                 </Routes>

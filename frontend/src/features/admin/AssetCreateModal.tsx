@@ -34,6 +34,7 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   const [saving, setSaving] = useState(false);
   const [nextCode, setNextCode] = useState("—");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState<AssetCreatePayload>({
     assetName: "",
@@ -62,12 +63,17 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
       contractUntil: "", contractNumber: "", notes: "", description: "", imageUrl: "",
     });
     setImagePreview(null);
+    setErrors({});
   }, [open]);
 
   if (!open) return null;
 
-  const set = (field: keyof AssetCreatePayload, value: unknown) =>
+  const set = (field: keyof AssetCreatePayload, value: unknown) => {
     setForm((f) => ({ ...f, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,7 +81,17 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (!form.assetName.trim()) { toast.error(SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME); return; }
+    const newErrors: Record<string, string> = {};
+    if (!form.assetName.trim()) newErrors.assetName = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
+    if (!form.assetType?.trim()) newErrors.assetType = "Vui lòng nhập loại tài sản";
+    if (!form.location?.trim()) newErrors.location = "Vui lòng nhập vị trí";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+
     setSaving(true);
     try {
       const payload: AssetCreatePayload = {
@@ -176,15 +192,20 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
                 </label>
                 <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_NAME} value={form.assetName}
                   onChange={(e) => set("assetName", e.target.value)}
-                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
+                  className={`w-full border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary ${errors.assetName ? "border-red-500" : "border-gray-200"}`} />
+                {errors.assetName && <p className="text-red-500 text-xs mt-1">{errors.assetName}</p>}
               </div>
 
               {/* Loại */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE}</label>
+                <label className="text-sm font-medium text-gray-700">
+                  {/* eslint-disable-next-line react/jsx-no-literals */}
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE} <span className="text-red-500">*</span>
+                </label>
                 <input placeholder="VD: Laptop, Màn hình, Thẻ xe..." value={form.assetType ?? ""}
                   onChange={(e) => set("assetType", e.target.value)}
-                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
+                  className={`w-full border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary ${errors.assetType ? "border-red-500" : "border-gray-200"}`} />
+                {errors.assetType && <p className="text-red-500 text-xs mt-1">{errors.assetType}</p>}
               </div>
 
               {/* Giá trị */}
@@ -218,10 +239,14 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
               {/* Vị trí */}
               <div className="space-y-1 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_LOCATION_ONLY}</label>
+                <label className="text-sm font-medium text-gray-700">
+                  {/* eslint-disable-next-line react/jsx-no-literals */}
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_LOCATION_ONLY} <span className="text-red-500">*</span>
+                </label>
                 <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_LOCATION} value={form.location ?? ""}
                   onChange={(e) => set("location", e.target.value)}
-                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
+                  className={`w-full border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary ${errors.location ? "border-red-500" : "border-gray-200"}`} />
+                {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
               </div>
             </div>
 

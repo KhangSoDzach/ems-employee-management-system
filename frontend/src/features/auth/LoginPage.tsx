@@ -163,6 +163,7 @@ export const LoginPage = () => {
                                     {...register("email")}
                                 />
                             </div>
+                            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -195,6 +196,7 @@ export const LoginPage = () => {
                                     )}
                                 </button>
                             </div>
+                            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
                         </div>
 
                         <div className="flex items-center justify-between">

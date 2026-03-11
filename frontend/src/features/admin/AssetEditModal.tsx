@@ -29,6 +29,7 @@ const CONDITION_OPTIONS: { value: AssetCondition; label: string }[] = [
 export default function AssetEditModal({ open, asset, assetId, onClose, onSave }: Props) {
   const [saving, setSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState<AssetUpdatePayload>({
     name: "",
@@ -64,12 +65,17 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
       image: asset.imageUrl ?? "",
     });
     setImagePreview(asset.imageUrl ?? null);
+    setErrors({});
   }, [open, asset]);
 
   if (!open || !asset || !assetId) return null;
 
-  const set = (field: keyof AssetUpdatePayload, value: unknown) =>
+  const set = (field: keyof AssetUpdatePayload, value: unknown) => {
     setForm((f) => ({ ...f, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,7 +83,17 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
   };
 
   const handleSubmit = async () => {
-    if (!form.name?.trim()) { toast.error(SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME); return; }
+    const newErrors: Record<string, string> = {};
+    if (!form.name?.trim()) newErrors.name = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
+    if (!form.type?.trim()) newErrors.type = "Vui lòng nhập loại tài sản";
+    if (!form.locationOrUser?.trim()) newErrors.locationOrUser = "Vui lòng nhập vị trí";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+
     setSaving(true);
     try {
       const payload: AssetUpdatePayload = {
@@ -154,15 +170,19 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
-                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NAME} <span className="text-red-500">{SYSTEM_MESSAGES.ASSET_CREATE.TXT_REQUIRED_MARK}</span>
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NAME} <span className="text-red-500">{"*"}</span>
                 </label>
                 <input value={form.name ?? ""} onChange={(e) => set("name", e.target.value)}
-                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
+                  className={`w-full border rounded-md px-3 py-2 text-sm ${errors.name ? "border-red-500" : "border-gray-200"}`} />
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE}</label>
+                <label className="text-sm font-medium text-gray-700">
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE} <span className="text-red-500">{"*"}</span>
+                </label>
                 <input value={form.type ?? ""} onChange={(e) => set("type", e.target.value)}
-                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
+                  className={`w-full border rounded-md px-3 py-2 text-sm ${errors.type ? "border-red-500" : "border-gray-200"}`} />
+                {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_VALUE}</label>
@@ -175,9 +195,12 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="space-y-1 group relative">
-                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_LOCATION_ONLY}</label>
+                <label className="text-sm font-medium text-gray-700">
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_LOCATION_ONLY} <span className="text-red-500">{"*"}</span>
+                </label>
                 <input value={form.locationOrUser ?? ""} onChange={(e) => set("locationOrUser", e.target.value)}
-                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
+                  className={`w-full border rounded-md px-3 py-2 text-sm ${errors.locationOrUser ? "border-red-500" : "border-gray-200"}`} />
+                {errors.locationOrUser && <p className="text-red-500 text-xs mt-1">{errors.locationOrUser}</p>}
               </div>
             </div>
 

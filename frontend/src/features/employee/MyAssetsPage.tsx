@@ -101,6 +101,7 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
     const [incidentType, setIncidentType] = useState("")
     const [description, setDescription] = useState("")
     const [attachment, setAttachment] = useState<File | null>(null)
+    const [errors, setErrors] = useState<{ incidentType?: string, description?: string }>({})
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [showAll, setShowAll] = useState(false)
@@ -132,6 +133,7 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
         setIncidentType("")
         setDescription("")
         setAttachment(null)
+        setErrors({})
         setDialogOpen(true)
     }
 
@@ -148,15 +150,18 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
 
     const handleSubmit = async () => {
         if (!selectedAsset) return
-        if (!incidentType) {
-            toast.warning(SYSTEM_MESSAGES.MY_ASSETS.TOAST_SELECT_TYPE)
-            return
-        }
-        if (!description || description.length < 10) {
-            toast.warning(SYSTEM_MESSAGES.MY_ASSETS.TOAST_DESC_MIN)
+
+        const newErrors: { incidentType?: string, description?: string } = {}
+        if (!incidentType) newErrors.incidentType = SYSTEM_MESSAGES.MY_ASSETS.TOAST_SELECT_TYPE
+        if (!description || description.trim().length < 10) newErrors.description = SYSTEM_MESSAGES.MY_ASSETS.TOAST_DESC_MIN
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors)
+            toast.error("Vui lòng điền đầy đủ thông tin bắt buộc")
             return
         }
 
+        setErrors({})
         setSubmitting(true)
         try {
             await assetService.submitReport(selectedAsset.id, {
@@ -317,9 +322,11 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                     <div className="px-6 py-5 space-y-5">
                         {/* Incident Type */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_INCIDENT}</label>
-                            <Select value={incidentType} onValueChange={setIncidentType}>
-                                <SelectTrigger className="w-full h-9 text-sm">
+                            <label className="text-sm font-medium text-foreground">
+                                {SYSTEM_MESSAGES.MY_ASSETS.LABEL_INCIDENT} <span className="text-red-500">*</span>
+                            </label>
+                            <Select value={incidentType} onValueChange={(val) => { setIncidentType(val); setErrors(prev => ({ ...prev, incidentType: undefined })) }}>
+                                <SelectTrigger className={`w-full h-9 text-sm ${errors.incidentType ? "border-red-500 focus:ring-red-500" : ""}`}>
                                     <SelectValue placeholder={SYSTEM_MESSAGES.MY_ASSETS.PLACEHOLDER_INCIDENT} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -328,20 +335,24 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {errors.incidentType && <p className="text-red-500 text-xs mt-1">{errors.incidentType}</p>}
                         </div>
 
                         {/* Description */}
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_DESC}</label>
-                                <span className="text-xs text-muted-foreground">{SYSTEM_MESSAGES.MY_ASSETS.LABEL_REQUIRED}</span>
+                                <label className="text-sm font-medium text-foreground">
+                                    {SYSTEM_MESSAGES.MY_ASSETS.LABEL_DESC} <span className="text-red-500">*</span>
+                                </label>
+                                <span className={errors.description ? "text-xs text-red-500" : "text-xs text-muted-foreground"}>{SYSTEM_MESSAGES.MY_ASSETS.LABEL_REQUIRED}</span>
                             </div>
                             <Textarea
                                 placeholder={SYSTEM_MESSAGES.MY_ASSETS.PLACEHOLDER_DESC}
-                                className="resize-none h-28 text-sm"
+                                className={`resize-none h-28 text-sm ${errors.description ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                                 value={description}
-                                onChange={(e) => setDescription(e.target.value)}
+                                onChange={(e) => { setDescription(e.target.value); setErrors(prev => ({ ...prev, description: undefined })) }}
                             />
+                            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                         </div>
 
                         {/* Upload Evidence */}

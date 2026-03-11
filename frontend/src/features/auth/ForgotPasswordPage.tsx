@@ -238,6 +238,7 @@ export const ForgotPasswordPage = () => {
                                         {...registerEmail("email")}
                                     />
                                 </div>
+                                {emailErrors.email && <p className="text-red-500 text-xs mt-1">{emailErrors.email.message}</p>}
                             </div>
 
                             <Button type="submit" className="w-full font-bold" size="lg" disabled={isEmailSubmitting}>
@@ -273,6 +274,7 @@ export const ForgotPasswordPage = () => {
                                         e.target.value = value;
                                     }}
                                 />
+                                {formErrors.otp && <p className="text-red-500 text-xs mt-1 text-center">{formErrors.otp.message}</p>}
                             </div>
 
                             {/* Timer + Resend */}
@@ -317,6 +319,7 @@ export const ForgotPasswordPage = () => {
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
+                                {formErrors.newPassword && <p className="text-red-500 text-xs mt-1">{formErrors.newPassword.message}</p>}
                             </div>
 
                             {/* Confirm Password */}
@@ -345,6 +348,7 @@ export const ForgotPasswordPage = () => {
                                         {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
+                                {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword.message}</p>}
                             </div>
 
                             <Button className="w-full font-bold" size="lg" disabled={isFormSubmitting}>
