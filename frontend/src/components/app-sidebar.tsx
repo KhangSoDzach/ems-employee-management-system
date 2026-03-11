@@ -50,15 +50,19 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
           items: [
             {
               title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
-              url: "/admin-profile",
+              url: "/profile",
             },
             {
               title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
-              url: "/asset",
+              url: "/assets",
             },
             {
               title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
               url: "/asset-incidents",
+            },
+            {
+              title: "Duyệt báo cáo sự cố",
+              url: "/asset-reports",
             },
           ],
         },
@@ -71,7 +75,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
             items: [
               {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
-                url: "/manager-profile",
+                url: "/profile",
               },
               {
                 title: "Chấm công",
@@ -81,10 +85,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS,
                 url: "/members",
               },
-              {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
-                url: "/payroll",
-              },
+
               {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_KPI,
                 url: "/kpi-okr",
@@ -98,15 +99,19 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 url: "/approve-adjustments",
               },
               {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_ADJ || "Điều chỉnh chấm công",
+                url: "/adjustment-requests",
+              },
+              {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_GROUP_ASSET,
                 url: "/view-group-asset",
               },
               {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
-                url: "/manager-my-assets",
+                url: "/my-assets",
               },
               {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
                 url: "/asset-incidents",
               },
               {
@@ -124,7 +129,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
               items: [
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
-                  url: "/hr-profile",
+                  url: "/profile",
                 },
                 {
                   title: "Chấm công",
@@ -140,11 +145,15 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 },
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
-                  url: "/hr-my-assets",
+                  url: "/my-assets",
                 },
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
-                  url: "/hr-assets",
+                  url: "/assets",
+                },
+                {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_ADJ || "Điều chỉnh chấm công",
+                  url: "/adjustment-requests",
                 },
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
@@ -164,7 +173,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
               items: [
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
-                  url: "/employee",
+                  url: "/profile",
                 },
                 {
                   title: "Lịch sử lương",

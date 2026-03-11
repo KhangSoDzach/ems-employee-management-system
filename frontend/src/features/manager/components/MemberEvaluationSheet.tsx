@@ -172,7 +172,7 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
                   <span className="font-bold text-primary">{member.role}</span>
                 </p>
               </div>
-              <Button variant="ghost" size="sm" className="text-primary" onClick={() => {}}>
+              <Button variant="ghost" size="sm" className="text-primary" onClick={() => { }}>
                 {t.SHEET_ROLE_CHANGE}
               </Button>
             </div>

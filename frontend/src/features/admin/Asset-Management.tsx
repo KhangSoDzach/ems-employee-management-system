@@ -15,6 +15,7 @@ import {
   AssetDetail,
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 
 const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
   { label: SYSTEM_MESSAGES.ASSET.FILTER_ALL, value: "" },
@@ -27,11 +28,8 @@ const PAGE_SIZE = 10;
 
 /* ================= PAGE ================= */
 
-export default function AssetManagementPage({
-  sidebarRole = "admin",
-}: {
-  sidebarRole?: "admin" | "hr";
-}) {
+export default function AssetManagementPage() {
+  const effectiveRole = useEffectiveRole();
   const [assets, setAssets] = useState<AssetSummary[]>([]);
   const [totalElements, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -136,7 +134,7 @@ export default function AssetManagementPage({
 
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" role={sidebarRole} />
+      <AppSidebar variant="inset" role={effectiveRole} />
 
       <SidebarInset>
         <SiteHeader />

@@ -8,6 +8,7 @@ import {
     MapPin, ShieldCheck, Briefcase, Download
 } from "lucide-react"
 import { employeeService } from "@/services/employeeService"
+import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -81,11 +82,8 @@ const defaultValues: Partial<ProfileFormValues> = {
     workStatus: "ACTIVE",
 }
 
-interface ProfilePageProps {
-    sidebarRole: "admin" | "employee" | "manager" | "hr"
-}
-
-export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
+export default function ProfilePage() {
+    const effectiveRole = useEffectiveRole()
     const canEdit = false // Toàn bộ người dùng không được phép tự ý chỉnh sửa thông tin cá nhân (US-07 AC-04)
 
     const form = useForm<ProfileFormValues>({
@@ -137,7 +135,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
     if (profileLoading) {
         return (
             <SidebarProvider>
-                <AppSidebar role={sidebarRole} variant="inset" />
+                <AppSidebar role={effectiveRole} variant="inset" />
                 <SidebarInset>
                     <SiteHeader />
                     <main className="flex flex-1 items-center justify-center min-h-screen">
@@ -152,7 +150,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
     if (profileError) {
         return (
             <SidebarProvider>
-                <AppSidebar role={sidebarRole} variant="inset" />
+                <AppSidebar role={effectiveRole} variant="inset" />
                 <SidebarInset>
                     <SiteHeader />
                     <main className="flex flex-1 items-center justify-center min-h-screen">
@@ -165,7 +163,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
 
     return (
         <SidebarProvider>
-            <AppSidebar role={sidebarRole} variant="inset" />
+            <AppSidebar role={effectiveRole} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 
@@ -228,7 +226,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                 <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{SYSTEM_MESSAGES.PROFILE.EMP_CODE}</p>
                                 <p className="font-bold">{form.watch("employeeCode")}</p>
                             </div>
-                            {sidebarRole === "employee" && (
+                            {effectiveRole === "employee" && (
                                 <div className="flex-1 md:flex-none">
                                     <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">{SYSTEM_MESSAGES.PROFILE.MANAGER}</p>
                                     <div className="flex items-center gap-2 justify-start md:justify-end">
@@ -469,7 +467,7 @@ export default function ProfilePage({ sidebarRole }: ProfilePageProps) {
                                             )}
                                         />
 
-                                        {sidebarRole === "employee" && (
+                                        {effectiveRole === "employee" && (
                                             <FormField
                                                 control={form.control}
                                                 name="lineManager"

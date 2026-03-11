@@ -32,6 +32,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { assetService, MyAsset, IncidentReportRow } from "@/services/assetService"
+import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 
 /* ─────────────── CONSTANTS ─────────────── */
 
@@ -90,7 +91,8 @@ function AssetCard({ asset, onReportIssue }: { asset: MyAsset; onReportIssue: (a
 
 /* ─────────────── MAIN PAGE ─────────────── */
 
-export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole?: "employee" | "manager" | "hr" | "admin" }) {
+export default function MyAssetsPage() {
+    const effectiveRole = useEffectiveRole()
     const [assets, setAssets] = useState<MyAsset[]>([])
     const [reports, setReports] = useState<IncidentReportRow[]>([])
     const [loading, setLoading] = useState(true)
@@ -186,7 +188,7 @@ export default function MyAssetsPage({ sidebarRole = "employee" }: { sidebarRole
 
     return (
         <SidebarProvider>
-            <AppSidebar role={sidebarRole === "admin" ? "admin" : (sidebarRole === "hr" ? "hr" : (sidebarRole === "manager" ? "manager" : "employee"))} variant="inset" />
+            <AppSidebar role={effectiveRole} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 

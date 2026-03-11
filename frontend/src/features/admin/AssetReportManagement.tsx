@@ -38,8 +38,11 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 
 export default function AssetReportManagement() {
+    const effectiveRole = useEffectiveRole()
+
     const [reports, setReports] = useState<AdminIncidentListItem[]>([])
     const [loading, setLoading] = useState(true)
     const [keyword, setKeyword] = useState("")
@@ -110,7 +113,7 @@ export default function AssetReportManagement() {
 
     return (
         <SidebarProvider>
-            <AppSidebar role="admin" variant="inset" />
+            <AppSidebar role={effectiveRole} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 

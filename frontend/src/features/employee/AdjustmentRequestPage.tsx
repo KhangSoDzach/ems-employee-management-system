@@ -43,13 +43,13 @@ import { DetailSheet } from "./components/AdjustmentDetailSheet"
 import { CreateRequestModal } from "./components/CreateRequestModal"
 import { EditRequestModal } from "./components/EditRequestModal"
 
-import {
-    attendanceService,
+import { attendanceService,
     type AdjustmentRequestSummary,
     type AdjustmentReason,
     type CreateAdjustmentPayload,
 } from "@/services/attendanceService"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 
 // ─── Backend ↔ UI mappers ─────────────────────────────────────────────────────
 
@@ -137,6 +137,7 @@ const PAGE_SIZE = 10
 
 /* ══════════════ MAIN PAGE ══════════════ */
 export default function AdjustmentRequestPage() {
+    const effectiveRole = useEffectiveRole()
     const [requests, setRequests] = useState<AdjustmentRequest[]>([])
     const [totalElements, setTotalElements] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
@@ -208,7 +209,7 @@ export default function AdjustmentRequestPage() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <SidebarProvider>
-            <AppSidebar role="employee" variant="inset" />
+            <AppSidebar role={effectiveRole} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 

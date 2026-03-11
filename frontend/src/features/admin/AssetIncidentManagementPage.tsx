@@ -64,23 +64,16 @@ const MOCK_INCIDENTS = [
 
 export type IncidentItem = typeof MOCK_INCIDENTS[0];
 
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function AssetIncidentManagementPage({ sidebarRole }: { sidebarRole?: "admin" | "hr" | "manager" | "employee" }) {
+export default function AssetIncidentManagementPage() {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
     const [incidents, setIncidents] = useState<IncidentItem[]>(MOCK_INCIDENTS);
     const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
     const { user } = useAuth();
-
-    // Dynamically resolve role if not provided
-    let effectiveRole = sidebarRole;
-    if (!effectiveRole) {
-        if (user?.roles.includes("ROLE_ADMIN")) effectiveRole = "admin";
-        else if (user?.roles.includes("ROLE_HR")) effectiveRole = "hr";
-        else if (user?.roles.includes("ROLE_MANAGER")) effectiveRole = "manager";
-        else effectiveRole = "employee";
-    }
+    const effectiveRole = useEffectiveRole();
 
     // Permissions logic
     const isManager = effectiveRole === "manager" || user?.roles.includes("ROLE_MANAGER");
@@ -102,7 +95,7 @@ export default function AssetIncidentManagementPage({ sidebarRole }: { sidebarRo
 
     return (
         <SidebarProvider>
-            <AppSidebar variant="inset" role={effectiveRole === "employee" ? undefined : effectiveRole} />
+            <AppSidebar variant="inset" role={effectiveRole} />
 
             <SidebarInset>
                 <SiteHeader />

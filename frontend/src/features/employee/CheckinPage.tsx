@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { useAuth } from "@/contexts/AuthContext"
+import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 
 import { attendanceService, AttendanceRecord, AttendanceSummary } from "@/services/attendanceService"
 import { CameraModal } from "./components/CameraModal"
@@ -52,8 +52,7 @@ type CheckStatus = "unchecked" | "checked_in" | "checked_out"
 
 export default function CheckinPage() {
     const navigate = useNavigate()
-    const { user } = useAuth()
-    const primaryRole: "hr" | "manager" | "employee" = user?.roles?.includes("ROLE_HR") ? "hr" : user?.roles?.includes("ROLE_MANAGER") ? "manager" : "employee"
+    const effectiveRole = useEffectiveRole()
 
     // ── Live clock ────────────────────────────────────────────────────────────
     const [currentTime, setCurrentTime] = useState(() =>
@@ -191,7 +190,7 @@ export default function CheckinPage() {
 
     return (
         <SidebarProvider>
-            <AppSidebar role={primaryRole} variant="inset" />
+            <AppSidebar role={effectiveRole} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 
