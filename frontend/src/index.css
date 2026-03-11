@@ -917,4 +917,19 @@
   .section-title-muted {
     @apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
   }
+
+  /* =========================================
+     RADAR CHART
+     ========================================= */
+  .radar-grid {
+    stroke: #e5e7eb;
+    stroke-width: 1;
+    fill: none;
+  }
+
+  .radar-area {
+    fill: rgba(228, 27, 33, 0.2);
+    stroke: #e41b21;
+    stroke-width: 2;
+  }
 }

@@ -20,6 +20,7 @@ import HRProfilePage from "./features/hr/HRProfilePage";
 import AdminProfilePage from "./features/admin/AdminProfilePage";
 import KpiOkrManagement from "./features/manager/KpiOkrManagement";
 import MemberList from "./features/manager/MemberList";
+import PayrollManagement from "./features/hr/PayrollManagement";
 import AssetReportManagement from "./features/admin/AssetReportManagement";
 import AssetGroupManagement from "./features/manager/AssetGroupManagement";
 import EmployeeManagement from "./features/hr/EmployeeManagement";
@@ -43,15 +44,6 @@ function App() {
                         <Route path="/admin-my-assets" element={<MyAssetsPage sidebarRole="admin" />} />
                     </Route>
 
-                    {/* HR only */}
-                    <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
-                        <Route path="/hr/employees" element={<Dashboard />} />
-                        <Route path="/hr-profile" element={<HRProfilePage />} />
-                        <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
-                        <Route path="/hr-assets" element={<AssetManagementPage sidebarRole="hr" />} />
-                        <Route path="/hr-employees" element={<EmployeeManagement />} />
-                        <Route path="/asset-reports" element={<AssetReportManagement />} />
-                    </Route>
 
                     {/* Shared cross-roles */}
                     <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_HR", "ROLE_MANAGER"]} />}>
@@ -87,9 +79,13 @@ function App() {
 
                     {/* HR only */}
                     <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
+                        <Route path="/hr/employees" element={<Dashboard />} />
                         <Route path="/hr-profile" element={<HRProfilePage />} />
+                        <Route path="/payroll" element={<PayrollManagement />} />
                         <Route path="/hr-my-assets" element={<MyAssetsPage sidebarRole="hr" />} />
-                        <Route path="/hr-assets" element={<AssetManagementPage />} />
+                        <Route path="/hr-assets" element={<AssetManagementPage sidebarRole="hr" />} />
+                        <Route path="/hr-employees" element={<EmployeeManagement />} />
+                        <Route path="/asset-reports" element={<AssetReportManagement />} />
                     </Route>
 
                 </Routes>

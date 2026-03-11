@@ -1,4 +1,5 @@
-import { Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { useState } from "react"
+import { Search, ChevronLeft, ChevronRight, Eye, Star } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -16,7 +17,9 @@ import {
   TableCell,
 } from "@/components/ui/table"
 
-const MOCK_MEMBERS = [
+import { MemberEvaluationSheet, type Member } from "./components/MemberEvaluationSheet"
+
+const MOCK_MEMBERS: Member[] = [
   {
     id: 1,
     name: "Nguyễn Văn A",
@@ -57,6 +60,9 @@ const MOCK_MEMBERS = [
 
 export default function MemberList() {
   const t = SYSTEM_MESSAGES.MEMBER_LIST
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null)
+  const [sheetMode, setSheetMode] = useState<"view" | "edit">("view")
+  const [search, setSearch] = useState<string>("")
 
   return (
     <SidebarProvider>
@@ -76,6 +82,8 @@ export default function MemberList() {
                 <Input
                   className="pl-9"
                   placeholder={t.SEARCH_PLACEHOLDER}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
             </div>
@@ -92,7 +100,15 @@ export default function MemberList() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {MOCK_MEMBERS.map((member) => (
+                  {MOCK_MEMBERS.filter((member) => {
+                  const q = search.trim().toLowerCase()
+                  if (!q) return true
+                  return (
+                    member.name.toLowerCase().includes(q) ||
+                    member.email.toLowerCase().includes(q) ||
+                    member.role.toLowerCase().includes(q)
+                  )
+                }).map((member) => (
                     <TableRow key={member.id} className="hover:bg-muted/30">
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -121,9 +137,34 @@ export default function MemberList() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" className="bg-[#e41b21] hover:bg-[#c9181d] text-white">
-                          {t.BTN_EVALUATE}
-                        </Button>
+                        <div className="inline-flex items-center justify-end gap-2">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-primary hover:bg-primary/10"
+                            title={t.BTN_VIEW_EVALUATION}
+                            aria-label={t.BTN_VIEW_EVALUATION}
+                            onClick={() => {
+                              setSelectedMember(member)
+                              setSheetMode("view")
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-primary hover:bg-primary/10"
+                            title={t.BTN_EVALUATE}
+                            aria-label={t.BTN_EVALUATE}
+                            onClick={() => {
+                              setSelectedMember(member)
+                              setSheetMode("edit")
+                            }}
+                          >
+                            <Star className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -150,6 +191,21 @@ export default function MemberList() {
             </div>
           </div>
         </main>
+        <MemberEvaluationSheet
+          member={selectedMember}
+          open={!!selectedMember}
+          mode={sheetMode}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedMember(null)
+              setSheetMode("view")
+            }
+          }}
+          onSubmit={(data) => {
+            console.log("Đã gửi đánh giá", data)
+            setSelectedMember(null)
+          }}
+        />
       </SidebarInset>
     </SidebarProvider>
   )

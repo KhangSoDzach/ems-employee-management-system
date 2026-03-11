@@ -82,6 +82,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 url: "/members",
               },
               {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
+                url: "/payroll",
+              },
+              {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_KPI,
                 url: "/kpi-okr",
               },
@@ -126,6 +130,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
                   url: "/hr/employees",
+                },
+                {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
+                  url: "/payroll",
                 },
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
