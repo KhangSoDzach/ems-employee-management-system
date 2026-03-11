@@ -74,11 +74,11 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 url: "/manager-profile",
               },
               {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS || "Thành viên nhóm",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS,
                 url: "/members",
               },
               {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_KPI || "Thiết lập KPI/OKR",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_KPI,
                 url: "/kpi-okr",
               },
               {
@@ -99,7 +99,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
               },
 
               {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                 url: "/asset-incidents",
               },
             ],

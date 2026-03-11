@@ -63,7 +63,7 @@ export default function MemberList() {
       <AppSidebar role="manager" variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        
+
         <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
           <div className="max-w-6xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
@@ -73,9 +73,9 @@ export default function MemberList() {
               </div>
               <div className="relative w-96">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                  className="pl-9" 
-                  placeholder={t.SEARCH_PLACEHOLDER} 
+                <Input
+                  className="pl-9"
+                  placeholder={t.SEARCH_PLACEHOLDER}
                 />
               </div>
             </div>
