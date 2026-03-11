@@ -1,5 +1,3 @@
-
-
 -- 1. SYSTEM CONFIGURATION
 -- Store basic office location and radius for check-in
 INSERT IGNORE INTO system_configs (config_key, config_value, description, updated_by, created_at, updated_at)
@@ -76,12 +74,14 @@ UPDATE departments SET head_of_department_id = 2 WHERE code = 'ENG';
 UPDATE departments SET head_of_department_id = 6 WHERE code = 'SAL';
 
 -- 7. ASSETS
-INSERT IGNORE INTO assets (id, asset_code, asset_name, asset_type, description, status, asset_condition, location, assigned_to_id, assigned_date, warranty_until, created_at, updated_at)
+-- NOTE: 'location' column omitted here intentionally — it is added (if missing) and
+-- backfilled in V104__add_location_to_assets.sql to support both old and new DB schemas.
+INSERT IGNORE INTO assets (id, asset_code, asset_name, asset_type, description, status, asset_condition, assigned_to_id, assigned_date, warranty_until, created_at, updated_at)
 VALUES
-(1, 'AST-2026-0001', 'Macbook Pro M3 14"', 'IT_EQUIPMENT', 'Laptop phát cho Dev Senior', 'ASSIGNED', 'NEW', 'Văn phòng L81', 4, '2026-03-01', '2027-03-01', NOW(), NOW()),
-(2, 'AST-2026-0002', 'Dell XPS 15 2024',  'IT_EQUIPMENT', 'Laptop cho Design team',    'ASSIGNED', 'NEW', 'Văn phòng L81', 5, '2026-03-01', '2027-03-01', NOW(), NOW()),
-(3, 'AST-2026-0003', 'Herman Miller Chair', 'FURNITURE',    'Ghế công thái học',       'AVAILABLE', 'GOOD', 'Kho HN', NULL, NULL, '2028-01-01', NOW(), NOW()),
-(4, 'AST-2026-0004', 'Monitor LG 27" 4K',   'IT_EQUIPMENT', 'Màn hình mở rộng',        'ASSIGNED', 'NEW', 'Văn phòng L81', 4, '2026-03-02', '2027-03-02', NOW(), NOW());
+(1, 'AST-2026-0001', 'Macbook Pro M3 14"', 'IT_EQUIPMENT', 'Laptop phát cho Dev Senior', 'ASSIGNED', 'NEW', 4, '2026-03-01', '2027-03-01', NOW(), NOW()),
+(2, 'AST-2026-0002', 'Dell XPS 15 2024',  'IT_EQUIPMENT', 'Laptop cho Design team',    'ASSIGNED', 'NEW', 5, '2026-03-01', '2027-03-01', NOW(), NOW()),
+(3, 'AST-2026-0003', 'Herman Miller Chair', 'FURNITURE',    'Ghế công thái học',       'AVAILABLE', 'GOOD', NULL, NULL, '2028-01-01', NOW(), NOW()),
+(4, 'AST-2026-0004', 'Monitor LG 27" 4K',   'IT_EQUIPMENT', 'Màn hình mở rộng',        'ASSIGNED', 'NEW', 4, '2026-03-02', '2027-03-02', NOW(), NOW());
 
 -- 8. ASSET INCIDENT REPORTS
 INSERT IGNORE INTO asset_incident_reports (report_code, asset_id, incident_type, description, status, reported_by, reported_at, created_at)
