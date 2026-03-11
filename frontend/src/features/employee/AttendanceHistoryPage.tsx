@@ -6,6 +6,7 @@ import { format, startOfMonth, endOfMonth } from "date-fns"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -81,6 +82,8 @@ const PAGE_SIZE = 10
 
 export default function AttendanceHistoryPage() {
     const navigate = useNavigate()
+    const { user } = useAuth()
+    const primaryRole: "hr" | "manager" | "employee" = user?.roles?.includes("ROLE_HR") ? "hr" : user?.roles?.includes("ROLE_MANAGER") ? "manager" : "employee"
 
     // ── Filters ───────────────────────────────────────────────────────────────
     const [search, setSearch] = useState("")
@@ -154,7 +157,7 @@ export default function AttendanceHistoryPage() {
 
     return (
         <SidebarProvider>
-            <AppSidebar role="employee" variant="inset" />
+            <AppSidebar role={primaryRole} variant="inset" />
             <SidebarInset>
                 <SiteHeader />
 

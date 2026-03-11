@@ -74,6 +74,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 url: "/manager-profile",
               },
               {
+                title: "Chấm công",
+                url: "/checkin",
+              },
+              {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS,
                 url: "/members",
               },
@@ -114,6 +118,10 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
                   url: "/hr-profile",
+                },
+                {
+                  title: "Chấm công",
+                  url: "/checkin",
                 },
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
@@ -172,7 +180,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
           ];
 
   return (
-    <Sidebar {...props}>
+    <Sidebar {...props} className="w-55">
       <SidebarHeader className="h-12 border-b px-2 justify-center">
         <VersionSwitcher
           versions={data.versions}
@@ -189,7 +197,9 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 {item.items.map((subItem) => (
                   <SidebarMenuItem key={subItem.title}>
                     <SidebarMenuButton asChild isActive={location.pathname === subItem.url}>
-                      <a href={subItem.url}>{subItem.title}</a>
+                      <a href={subItem.url} className="flex w-full items-center gap-2">
+                        <span className="flex-1 truncate text-left">{subItem.title}</span>
+                      </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
