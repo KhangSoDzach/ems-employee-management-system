@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,7 +15,7 @@ import {
     CardHeader,
     CardTitle
 } from "@/components/ui/card";
-import { forgotPassword, resetPassword } from "./authService";
+import { forgotPassword, resetPassword, changePassword } from "./authService";
 import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
@@ -26,6 +26,8 @@ const TEXT = {
     LOADING_SEND_OTP: "Đang gửi mã OTP...",
     LOADING_RESET: "Đang cập nhật mật khẩu...",
     SUCCESS_RESET: "Đổi mật khẩu thành công!",
+    LABEL_CURRENT_PASSWORD: "Mật khẩu hiện tại",
+    PLACEHOLDER_CURRENT_PASSWORD: "Nhập mật khẩu hiện tại",
 };
 
 interface ForgotPasswordPageProps {
@@ -53,8 +55,19 @@ const otpAndPasswordSchema = z.object({
     path: ["confirmPassword"],
 });
 
+const profileChangePasswordSchema = z.object({
+    currentPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
+    newPassword: z.string().min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
+    confirmPassword: z.string(),
+}).refine((d) => d.newPassword === d.confirmPassword, {
+    message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
+    path: ["confirmPassword"],
+});
+
 type EmailFormValues = z.infer<typeof emailSchema>;
 type OtpPasswordFormValues = z.infer<typeof otpAndPasswordSchema>;
+type ProfileChangePasswordFormValues = z.infer<typeof profileChangePasswordSchema>;
+type ResetFormValues = OtpPasswordFormValues & ProfileChangePasswordFormValues;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -63,18 +76,20 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
 
     /** 1 = enter email | 2 = enter OTP + new password | 3 = success */
     const [step, setStep] = useState<1 | 2 | 3>(isProfileMode ? 2 : 1);
-    const [savedEmail, setSavedEmail] = useState(userEmail);
+    const [savedEmail, setSavedEmail] = useState(userEmail || "");
     const [timeLeft, setTimeLeft] = useState(300);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [showCurrent, setShowCurrent] = useState(false);
 
+    // Sync savedEmail with userEmail prop securely
     useEffect(() => {
-        if (isProfileMode && userEmail) {
+        if (isProfileMode && userEmail && userEmail !== savedEmail) {
             setSavedEmail(userEmail);
         }
-    }, [isProfileMode, userEmail]);
+    }, [isProfileMode, userEmail, savedEmail]);
 
     // ── Form: step 1 ──
     const {
@@ -83,13 +98,16 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
         formState: { errors: emailErrors, isSubmitting: isEmailSubmitting },
     } = useForm<EmailFormValues>({ resolver: zodResolver(emailSchema) });
 
-    // ── Form: step 2 ──
+    // ── Form: step 2 (Dual Mode: Reset with OTP or Change with Current Password) ──
     const {
         register: registerForm,
         handleSubmit: handleSubmitForm,
         setError: setFormError,
         formState: { errors: formErrors, isSubmitting: isFormSubmitting },
-    } = useForm<OtpPasswordFormValues>({ resolver: zodResolver(otpAndPasswordSchema) });
+    } = useForm<ResetFormValues>({
+        // @ts-expect-error - Dynamic resolver based on mode
+        resolver: zodResolver(isProfileMode ? profileChangePasswordSchema : otpAndPasswordSchema)
+    });
 
     // ── Timer ──
     useEffect(() => {
@@ -133,27 +151,36 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
         });
     };
 
-    const onSubmitReset = async (data: OtpPasswordFormValues) => {
+    const onSubmitReset = async (data: ResetFormValues) => {
         toast.dismiss();
 
-        const promise = resetPassword(savedEmail, data.otp, data.newPassword).then(() => {
-            setStep(3);
-        });
+        const promise = isProfileMode
+            ? changePassword(data.currentPassword, data.newPassword)
+            : resetPassword(savedEmail, data.otp, data.newPassword);
 
         toast.promise(promise, {
             loading: TEXT.LOADING_RESET,
             success: TEXT.SUCCESS_RESET,
             error: (err: unknown) => {
-                const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? TEXT.TOAST_OTP_INVALID;
+                const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? (isProfileMode ? "Mật khẩu hiện tại không chính xác" : TEXT.TOAST_OTP_INVALID);
 
-                if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
-                    setFormError("otp", { message: TEXT.TOAST_OTP_INVALID });
+                if (isProfileMode) {
+                    setFormError("currentPassword", { message });
+                } else if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
+                    setFormError("otp" as keyof ResetFormValues, { message: TEXT.TOAST_OTP_INVALID });
                 } else {
-                    setFormError("otp", { message });
+                    setFormError("otp" as keyof ResetFormValues, { message });
                 }
                 return message;
             },
         });
+
+        try {
+            await promise;
+            setStep(3);
+        } catch (error) {
+            console.error("Password change error:", error);
+        }
     };
 
     const handleResend = async () => {
@@ -182,29 +209,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
         }
     };
 
-    const handleProfileSendOtp = async (email?: string) => {
-        const targetEmail = email || (document.getElementById("email") as HTMLInputElement)?.value;
-        if (!targetEmail) {
-            toast.error(SYSTEM_MESSAGES.PROFILE_RESET.TOAST_EMAIL_REQUIRED);
-            return;
-        }
-
-        toast.dismiss();
-
-        const promise = forgotPassword(targetEmail).then(() => {
-            setSavedEmail(targetEmail);
-            setTimeLeft(300);
-            setIsTimerRunning(true);
-        });
-
-        toast.promise(promise, {
-            loading: SYSTEM_MESSAGES.PROFILE_RESET.TOAST_SEND_OTP_LOADING,
-            success: SYSTEM_MESSAGES.PROFILE_RESET.TOAST_SEND_OTP_SUCCESS,
-            error: (err: unknown) => {
-                return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? TEXT.TOAST_SEND_ERROR;
-            },
-        });
-    };
+    // ── Handle Profile Send OTP (Deprecated in new UI but kept for safety if needed elsewhere) ──
 
     // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -236,51 +241,37 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
 
                 <CardContent className="space-y-6">
 
-                    {/* ── Profile Mode: OTP + Password (Step 2) ── */}
+                    {/* ── Profile Mode: Current Password + New Password (Step 2) ── */}
                     {isProfileMode && step === 2 && (
-                        <form onSubmit={handleSubmitForm(onSubmitReset, onError)} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <form onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
 
-                            {/* OTP input */}
+                            {/* Current Password */}
                             <div className="space-y-2">
                                 <RequiredLabel
-                                    htmlFor="otp"
-                                    className={cn("justify-center", formErrors.otp ? "text-destructive" : "")}
+                                    htmlFor="currentPassword"
+                                    className={formErrors.currentPassword ? "text-destructive" : ""}
                                 >
-                                    {TEXT.LABEL_OTP}
+                                    {TEXT.LABEL_CURRENT_PASSWORD}
                                 </RequiredLabel>
-                                <Input
-                                    id="otp"
-                                    type="text"
-                                    placeholder={TEXT.PLACEHOLDER_OTP}
-                                    className={`text-center text-2xl tracking-[0.5em] font-bold h-14 ${formErrors.otp ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                                    maxLength={6}
-                                    inputMode="numeric"
-                                    disabled={isFormSubmitting}
-                                    {...registerForm("otp")}
-                                    onChange={(e) => {
-                                        const value = e.target.value.replace(/[^0-9]/g, "");
-                                        registerForm("otp").onChange({ target: { value, name: "otp" } });
-                                        e.target.value = value;
-                                    }}
-                                />
-                                {formErrors.otp && <p className="text-red-500 text-xs mt-1 text-center">{formErrors.otp.message}</p>}
-                            </div>
-                            {/* Send OTP Button - Below OTP */}
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full font-semibold border-primary/30 text-primary hover:bg-primary/5"
-                                onClick={() => handleProfileSendOtp(savedEmail)}
-                                disabled={isResending}
-                            >
-                                {isResending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_RESENDING}</> : SYSTEM_MESSAGES.PROFILE_RESET.BTN_SEND_OTP}
-                            </Button>
-                            {/* Timer */}
-                            <div className="flex items-center justify-center text-xs">
-                                <p className={`flex items-center gap-1 ${timeLeft === 0 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
-                                    <Timer className="w-3 h-3" />
-                                    {timeLeft > 0 ? `${TEXT.OTP_VALID_SUFFIX}${formatTime(timeLeft)}` : TEXT.OTP_EXPIRED}
-                                </p>
+                                <div className="relative">
+                                    <Input
+                                        id="currentPassword"
+                                        type={showCurrent ? "text" : "password"}
+                                        placeholder={TEXT.PLACEHOLDER_CURRENT_PASSWORD}
+                                        className={`pr-10 ${formErrors.currentPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                                        disabled={isFormSubmitting}
+                                        {...registerForm("currentPassword")}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrent((v) => !v)}
+                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                        tabIndex={-1}
+                                    >
+                                        {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                                {formErrors.currentPassword && <p className="text-red-500 text-xs mt-1">{formErrors.currentPassword?.message?.toString()}</p>}
                             </div>
 
                             {/* New Password */}
@@ -309,7 +300,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
-                                {formErrors.newPassword && <p className="text-red-500 text-xs mt-1">{formErrors.newPassword.message}</p>}
+                                {formErrors.newPassword && <p className="text-red-500 text-xs mt-1">{formErrors.newPassword?.message?.toString()}</p>}
                             </div>
 
                             {/* Confirm Password */}
@@ -338,7 +329,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
                                         {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
-                                {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword.message}</p>}
+                                {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword?.message?.toString()}</p>}
                             </div>
 
                             <Button className="w-full font-bold" size="lg" disabled={isFormSubmitting}>
@@ -378,7 +369,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
 
                     {/* ── Step 2: OTP + New Password (Non-Profile Mode) ── */}
                     {!isProfileMode && step === 2 && (
-                        <form onSubmit={handleSubmitForm(onSubmitReset, onError)} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <form onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
 
                             {/* OTP input */}
                             <div className="space-y-2">
@@ -396,14 +387,14 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
                                     maxLength={6}
                                     inputMode="numeric"
                                     disabled={isFormSubmitting}
-                                    {...registerForm("otp")}
+                                    {...registerForm("otp" as keyof ResetFormValues)}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/[^0-9]/g, "");
-                                        registerForm("otp").onChange({ target: { value, name: "otp" } });
+                                        registerForm("otp" as keyof ResetFormValues).onChange({ target: { value, name: "otp" } });
                                         e.target.value = value;
                                     }}
                                 />
-                                {formErrors.otp && <p className="text-red-500 text-xs mt-1 text-center">{formErrors.otp.message}</p>}
+                                {formErrors.otp && <p className="text-red-500 text-xs mt-1 text-center">{formErrors.otp?.message?.toString()}</p>}
                             </div>
 
                             {/* Timer + Resend */}
@@ -448,7 +439,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
-                                {formErrors.newPassword && <p className="text-red-500 text-xs mt-1">{formErrors.newPassword.message}</p>}
+                                {formErrors.newPassword && <p className="text-red-500 text-xs mt-1">{formErrors.newPassword?.message?.toString()}</p>}
                             </div>
 
                             {/* Confirm Password */}
@@ -477,7 +468,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
                                         {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
-                                {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword.message}</p>}
+                                {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword?.message?.toString()}</p>}
                             </div>
 
                             <Button className="w-full font-bold" size="lg" disabled={isFormSubmitting}>
@@ -509,7 +500,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
                             ) : (
                                 <button
                                     type="button"
-                                    onClick={() => { setStep(isProfileMode ? 0 : 1); setIsTimerRunning(false); }}
+                                    onClick={() => { setStep(1); setIsTimerRunning(false); }}
                                     className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     <ArrowLeft className="mr-2 h-4 w-4" />
