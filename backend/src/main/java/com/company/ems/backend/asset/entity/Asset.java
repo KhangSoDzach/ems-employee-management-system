@@ -9,6 +9,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLRestriction;  // FIX: @Where is deprecated in Hibernate 6
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -50,10 +51,12 @@ public class Asset {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
     private AssetStatus status = AssetStatus.AVAILABLE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "asset_condition", nullable = false, length = 20)
+    @Builder.Default
     private AssetCondition condition = AssetCondition.NEW;
 
     @Column(name = "location", length = 255)

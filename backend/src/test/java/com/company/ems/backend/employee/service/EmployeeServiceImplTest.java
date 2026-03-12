@@ -56,6 +56,12 @@ class EmployeeServiceImplTest {
     @Mock
     private EmployeeEmailNotificationService emailNotificationService;
 
+    @Mock
+    private com.company.ems.backend.user.repository.RoleRepository roleRepository;
+
+    @Mock
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private EmployeeServiceImpl employeeService;
 
@@ -71,6 +77,7 @@ class EmployeeServiceImplTest {
         department = new Department();
         department.setId(1L);
         department.setName("IT");
+        department.setCode("IT");
 
         position = new Position();
         position.setId(1L);
@@ -136,6 +143,12 @@ class EmployeeServiceImplTest {
 
         when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
         when(positionRepository.findById(1L)).thenReturn(Optional.of(position));
+        
+        com.company.ems.backend.user.entity.Role mockRole = new com.company.ems.backend.user.entity.Role();
+        mockRole.setName("ROLE_EMPLOYEE");
+        when(roleRepository.findByName("ROLE_EMPLOYEE")).thenReturn(Optional.of(mockRole));
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        
         when(employeeRepository.save(any(Employee.class))).thenAnswer(i -> {
             Employee emp = i.getArgument(0);
             emp.setId(3L);

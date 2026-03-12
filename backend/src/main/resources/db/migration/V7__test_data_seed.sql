@@ -44,31 +44,37 @@ WHERE u.username = 'employee2' AND r.name = 'ROLE_EMPLOYEE';
 -- 5. EMPLOYEES (manager trước, employee sau vì FK reporting_manager_id)
 -- admin employee record
 INSERT IGNORE INTO employees (
-    first_name, last_name, email, phone, hire_date, status,
+    first_name, last_name, email, phone, gender, date_of_birth, nationality, 
+    national_id, tax_id, hire_date, status, contract_type,
     department_id, position_id, user_id,
     created_at, updated_at, is_deleted, version)
-SELECT 'Admin', 'System', 'admin@ems.company.com', '0900000000',
-       '2020-01-01', 'ACTIVE', 1, 1, u.id,
+SELECT 'Admin', 'Hệ Thống', 'admin@ems.company.com', '0901111222', 'MALE', '1985-01-01', 'Vietnam',
+       '123456789012', '1234567890', '2020-01-01', 'ACTIVE', 'FULL_TIME',
+       1, 1, u.id,
        NOW(), NOW(), FALSE, 0
 FROM users u WHERE u.username = 'admin';
 
 -- manager1 employee record
 INSERT IGNORE INTO employees (
-    first_name, last_name, email, phone, hire_date, status,
+    first_name, last_name, email, phone, gender, date_of_birth, nationality, 
+    national_id, tax_id, hire_date, status, contract_type,
     department_id, position_id, user_id,
     created_at, updated_at, is_deleted, version)
-SELECT 'Nguyen', 'Manager', 'manager1@ems.company.com', '0911111111',
-       '2021-06-01', 'ACTIVE', 2, 2, u.id,
+SELECT 'Nguyễn', 'Văn Quản Lý', 'manager1@ems.company.com', '0912222333', 'MALE', '1988-05-20', 'Vietnam',
+       '012345678901', '0123456789', '2021-06-01', 'ACTIVE', 'FULL_TIME',
+       2, 2, u.id,
        NOW(), NOW(), FALSE, 0
 FROM users u WHERE u.username = 'manager1';
 
 -- employee1 → báo cáo cho manager1
 INSERT IGNORE INTO employees (
-    first_name, last_name, email, phone, hire_date, status,
+    first_name, last_name, email, phone, gender, date_of_birth, nationality, 
+    national_id, tax_id, hire_date, status, contract_type,
     department_id, position_id, user_id, reporting_manager_id,
     created_at, updated_at, is_deleted, version)
-SELECT 'Tran', 'Employee1', 'employee1@ems.company.com', '0922222222',
-       '2022-03-15', 'ACTIVE', 2, 3, u.id,
+SELECT 'Trần', 'Hoàng Dev', 'employee1@ems.company.com', '0923333444', 'MALE', '1995-03-25', 'Vietnam',
+       '112233445566', '1122334455', '2022-03-15', 'ACTIVE', 'FULL_TIME',
+       2, 3, u.id,
        (SELECT e2.id FROM employees e2
         JOIN users u2 ON e2.user_id = u2.id
         WHERE u2.username = 'manager1' LIMIT 1),
@@ -77,11 +83,13 @@ FROM users u WHERE u.username = 'employee1';
 
 -- employee2 → báo cáo cho manager1
 INSERT IGNORE INTO employees (
-    first_name, last_name, email, phone, hire_date, status,
+    first_name, last_name, email, phone, gender, date_of_birth, nationality, 
+    national_id, tax_id, hire_date, status, contract_type,
     department_id, position_id, user_id, reporting_manager_id,
     created_at, updated_at, is_deleted, version)
-SELECT 'Le', 'Employee2', 'employee2@ems.company.com', '0933333333',
-       '2023-01-10', 'ACTIVE', 2, 4, u.id,
+SELECT 'Lê', 'Minh Dev', 'employee2@ems.company.com', '0934444555', 'MALE', '1998-12-10', 'Vietnam',
+       '223344556677', '2233445566', '2023-01-10', 'ACTIVE', 'FULL_TIME',
+       2, 4, u.id,
        (SELECT e2.id FROM employees e2
         JOIN users u2 ON e2.user_id = u2.id
         WHERE u2.username = 'manager1' LIMIT 1),
@@ -102,11 +110,13 @@ SELECT u.id, r.id FROM users u CROSS JOIN roles r
 WHERE u.username = 'hr.user' AND r.name = 'ROLE_HR';
 
 INSERT IGNORE INTO employees (
-    first_name, last_name, email, phone, hire_date, status,
+    first_name, last_name, email, phone, gender, date_of_birth, nationality, 
+    national_id, tax_id, hire_date, status, contract_type,
     department_id, position_id, user_id,
     created_at, updated_at, is_deleted, version)
-SELECT 'Nguyen', 'HR', 'hr@example.com', '0944444444',
-       '2020-06-01', 'ACTIVE', 1, 1, u.id,
+SELECT 'Phạm', 'Thị Nhân Sự', 'hr@example.com', '0945555666', 'FEMALE', '1990-10-15', 'Vietnam',
+       '987654321098', '9876543210', '2020-06-01', 'ACTIVE', 'FULL_TIME',
+       1, 1, u.id,
        NOW(), NOW(), FALSE, 0
 FROM users u WHERE u.username = 'hr.user';
 

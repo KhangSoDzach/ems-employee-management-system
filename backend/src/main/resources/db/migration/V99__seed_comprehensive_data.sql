@@ -58,15 +58,15 @@ INSERT IGNORE INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u CROSS JOIN roles r WHERE u.username = 'it.support' AND r.name = 'ROLE_EMPLOYEE';
 
 -- 6. EMPLOYEES
-INSERT IGNORE INTO employees (id, employee_code, first_name, last_name, email, phone, hire_date, status, department_id, position_id, user_id, reporting_manager_id, annual_leave_balance, sick_leave_balance, created_at, updated_at, is_deleted, version)
+INSERT IGNORE INTO employees (id, employee_code, first_name, last_name, email, phone, gender, date_of_birth, nationality, national_id, tax_id, hire_date, status, contract_type, department_id, position_id, user_id, reporting_manager_id, annual_leave_balance, sick_leave_balance, created_at, updated_at, is_deleted, version)
 VALUES
-(1, 'EMP001', 'Admin', 'System', 'aex31625@gmail.com', '0900000000', '2020-01-01', 'ACTIVE', 1, 1, 1, NULL, 15, 10, NOW(), NOW(), FALSE, 0),
-(2, 'EMP002', 'Nguyen', 'Manager 1', 'manager1@ems.company.com', '0911111111', '2021-06-01', 'ACTIVE', 2, 2, 2, 1, 12, 10, NOW(), NOW(), FALSE, 0),
-(3, 'EMP003', 'Tran', 'HR Manager', 'hr@ems.company.com', '0922222222', '2020-05-15', 'ACTIVE', 1, 1, 3, 1, 14, 10, NOW(), NOW(), FALSE, 0),
-(4, 'EMP004', 'Le', 'Dev Employee 1', 'employee1@ems.company.com', '0933333333', '2022-03-15', 'ACTIVE', 2, 3, 4, 2, 12, 5, NOW(), NOW(), FALSE, 0),
-(5, 'EMP005', 'Pham', 'Dev Employee 2', 'employee2@ems.company.com', '0944444444', '2023-01-10', 'ACTIVE', 2, 4, 5, 2, 12, 5, NOW(), NOW(), FALSE, 0),
-(6, 'EMP006', 'Hoang', 'Sales Lead', 'sales@ems.company.com', '0955555555', '2022-08-01', 'ACTIVE', 4, 5, 6, 1, 11, 8, NOW(), NOW(), FALSE, 0),
-(7, 'EMP007', 'Vu', 'IT Support', 'it.sup@ems.company.com', '0966666666', '2024-02-01', 'ACTIVE', 6, 8, 7, 1, 10, 10, NOW(), NOW(), FALSE, 0);
+(1, 'EMS-2020-001', 'Admin', 'System', 'aex31625@gmail.com', '0901234567', 'MALE',   '1985-01-01', 'Vietnam', '123456789012', '1234567890', '2020-01-01', 'ACTIVE', 'FULL_TIME', 1, 1, 1, NULL, 15, 10, NOW(), NOW(), FALSE, 0),
+(2, 'EMS-2021-002', 'Nguyễn', 'Văn Quản Lý', 'manager1@ems.company.com', '0912345678', 'MALE',   '1988-05-20', 'Vietnam', '012345678901', '0123456789', '2021-06-01', 'ACTIVE', 'FULL_TIME', 2, 2, 2, 1,    12, 10, NOW(), NOW(), FALSE, 0),
+(3, 'EMS-2020-003', 'Trần', 'Thị Nhân Sự', 'hr@ems.company.com', '0923456789', 'FEMALE', '1990-10-15', 'Vietnam', '987654321098', '9876543210', '2020-05-15', 'ACTIVE', 'FULL_TIME', 1, 1, 3, 1,    14, 10, NOW(), NOW(), FALSE, 0),
+(4, 'EMS-2022-004', 'Lê', 'Hoàng Dev', 'employee1@ems.company.com', '0934567890', 'MALE',   '1995-03-25', 'Vietnam', '112233445566', '1122334455', '2022-03-15', 'ACTIVE', 'FULL_TIME', 2, 3, 4, 2,    12, 5,  NOW(), NOW(), FALSE, 0),
+(5, 'EMS-2023-005', 'Phạm', 'Minh Dev', 'employee2@ems.company.com', '0945678901', 'MALE',   '1998-12-10', 'Vietnam', '223344556677', '2233445566', '2023-01-10', 'ACTIVE', 'FULL_TIME', 2, 4, 5, 2,    12, 5,  NOW(), NOW(), FALSE, 0),
+(6, 'EMS-2022-006', 'Hoàng', 'Thị Sales', 'sales@ems.company.com', '0956789012', 'FEMALE', '1994-08-01', 'Vietnam', '334455667788', '3344556677', '2022-08-01', 'ACTIVE', 'FULL_TIME', 4, 5, 6, 1,    11, 8,  NOW(), NOW(), FALSE, 0),
+(7, 'EMS-2024-007', 'Vũ', 'Trọng IT', 'it.sup@ems.company.com', '0967890123', 'MALE',   '2000-02-15', 'Vietnam', '445566778899', '4455667788', '2024-02-01', 'ACTIVE', 'FULL_TIME', 6, 8, 7, 1,    10, 10, NOW(), NOW(), FALSE, 0);
 
 -- Update Head of Department
 UPDATE departments SET head_of_department_id = 3 WHERE code = 'HR';
