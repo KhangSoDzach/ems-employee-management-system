@@ -67,7 +67,7 @@ public class LeaveServiceImpl implements LeaveService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .reason(request.getReason())
-                .status(LeaveStatus.PENDING)
+                .status(LeaveStatus.PENDING_LEVEL_1)
                 .build();
         leave.calculateTotalDays();
 
@@ -174,7 +174,7 @@ public class LeaveServiceImpl implements LeaveService {
             throw new ForbiddenException();
         }
 
-        if (leave.getStatus() != LeaveStatus.PENDING) {
+        if (!leave.isPending()) {
             throw new BusinessException(
                     messages.get(MessageCode.LEAVE_CANNOT_CANCEL, leave.getStatus()));
         }

@@ -227,6 +227,7 @@ public class Leave extends BaseEntity {
      * Withdraw the leave request (by employee). Only allowed on PENDING_LEVEL_1 /
      * legacy PENDING.
      */
+    @SuppressWarnings("deprecation")
     public void withdraw() {
         if (LeaveStatus.PENDING_LEVEL_1.equals(this.status)
                 || LeaveStatus.PENDING.equals(this.status)) {
