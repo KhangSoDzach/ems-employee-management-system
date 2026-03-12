@@ -3,7 +3,6 @@ package com.company.ems.backend.asset.dto;
 import com.company.ems.backend.asset.enums.AssetCondition;
 import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.common.validation.ValidationMessages;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -16,10 +15,12 @@ public final class AssetDto {
 
     private AssetDto() {}
 
+    // ── Response DTOs ──────────────────────────────────────────────────────────
+
     @Data @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Summary {
-        private String id;
+        private String id;          // assetCode — frontend dùng làm key
         private String name;
         private String desc;
         private String type;
@@ -31,6 +32,7 @@ public final class AssetDto {
     @Data @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Detail {
+        private Long   id;          // numeric DB id — dùng cho PUT/DELETE
         private String name;
         private String code;
         private String type;
@@ -40,9 +42,10 @@ public final class AssetDto {
         private String condition;
         private String warranty;
         private String supplier;
-        private String contract;
+        private String contract;    // contractNumber — frontend dùng field này
         private String location;
         private String description;
+        private String notes;
         private String imageUrl;
         private List<HistoryItem> recentHistory;
     }
@@ -57,55 +60,68 @@ public final class AssetDto {
         private String date;
     }
 
+    @Data @Builder
+    public static class CodePreview {
+        private String nextCode;
+    }
+
+    // ── Request DTOs ───────────────────────────────────────────────────────────
+
+    /**
+     * Payload từ form "Thêm tài sản mới".
+     * Frontend gửi dates ở ISO yyyy-MM-dd (từ <input type="date">).
+     */
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
     public static class CreateRequest {
-
         @NotBlank(message = ValidationMessages.ASSET_NAME_REQUIRED)
         @Size(max = 255)
         private String assetName;
 
-        @Size(max = 50)
+        @Size(max = 100)
         private String assetType;
-        @DecimalMin(value = "0.0", message = "Giá trị tài sản không được âm")
+
+        @DecimalMin(value = "0.0", message = "Giá trị không được âm")
         private BigDecimal assetValue;
 
-        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate purchaseDate;
 
+        /** AVAILABLE | RETIRED */
         private AssetStatus initialStatus;
 
+        /** NEW | GOOD | DAMAGED | LOST | DISPOSED */
         private AssetCondition condition;
 
         @Size(max = 255)
         private String location;
 
         private String notes;
-
         private String description;
 
-        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate warrantyUntil;
 
         @Size(max = 255)
         private String supplierName;
 
-        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate contractUntil;
-
-        @Size(max = 500)
-        private String imageUrl;
 
         @Size(max = 100)
         private String contractNumber;
+
+        @Size(max = 500)
+        private String imageUrl;
     }
 
+    /**
+     * Payload từ form "Chỉnh sửa tài sản".
+     * Field names khớp với AssetUpdatePayload của frontend (assetService.ts).
+     * Tất cả optional — null = không đổi.
+     */
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
     public static class UpdateRequest {
-
         @Size(max = 255)
         private String name;
 
-        @Size(max = 50)
+        @Size(max = 100)
         private String type;
 
         private String description;
@@ -113,18 +129,19 @@ public final class AssetDto {
         @DecimalMin("0.0")
         private BigDecimal value;
 
-        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate purchaseDate;
 
-        private String warrantyDate;
+        private String warrantyDate;      // ISO date string
         private String supplier;
-        private String contractDate;
+        private String contractDate;      // ISO date string
 
         private AssetCondition condition;
 
         private String note;
         private String image;
         private String locationOrUser;
+
+        @Size(max = 100)
         private String contractNumber;
     }
 
@@ -142,10 +159,5 @@ public final class AssetDto {
         @NotNull
         private Boolean readyToReuse;
         private String notes;
-    }
-
-    @Data @Builder
-    public static class CodePreview {
-        private String nextCode;
     }
 }

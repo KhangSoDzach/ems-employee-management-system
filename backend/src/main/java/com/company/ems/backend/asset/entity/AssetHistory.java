@@ -25,8 +25,8 @@ public class AssetHistory {
     @Column(name = "action_type", nullable = false, length = 50)
     private AssetActionType actionType;
 
-    @Column(name = "actor_user_id")
-    private Long actorUser;
+    @Column(name = "actor_id")
+    private Long actorId;
 
     @Column(name = "actor_username", length = 100)
     private String actorUsername;
@@ -46,11 +46,4 @@ public class AssetHistory {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if(createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
 }

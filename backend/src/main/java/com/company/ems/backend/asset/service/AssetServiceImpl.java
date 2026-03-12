@@ -23,6 +23,8 @@ import com.company.ems.backend.user.repository.UserRepository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -53,15 +55,18 @@ public class AssetServiceImpl implements AssetService {
             "update", List.of(AssetActionType.UPDATE_ASSET, AssetActionType.CREATE_ASSET,
                     AssetActionType.CHANGE_CONDITION));
 
-    private final AssetRepository assetRepo;
+    private final AssetRepository        assetRepo;
     private final AssetHistoryRepository historyRepo;
-    private final EmployeeRepository employeeRepo;
-    private final UserRepository userRepo;
-    private final AssetCodeGenerator codeGenerator;
-    private final AssetMapper mapper;
-    private final AssetDataScopeService dataScopeService;
-    private final ObjectMapper objectMapper;
-    private final MessageService messages;
+    private final EmployeeRepository     employeeRepo;
+    private final UserRepository         userRepo;
+    private final AssetCodeGenerator     codeGenerator;
+    private final AssetMapper            mapper;
+    private final AssetDataScopeService  dataScopeService;
+    private final ObjectMapper           objectMapper;
+    private final MessageService         messages;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Override
     @Transactional(readOnly = true)
@@ -100,14 +105,16 @@ public class AssetServiceImpl implements AssetService {
                 .getContent();
         return mapper.toDetail(asset, recent);
     }
-
     @Override
     public AssetDto.Detail createAsset(AssetDto.CreateRequest req) {
         CustomUserPrincipal actor = currentPrincipal();
 
-        AssetStatus status = req.getInitialStatus() != null ? req.getInitialStatus() : AssetStatus.AVAILABLE;
+        AssetStatus status = req.getInitialStatus() != null
+                ? req.getInitialStatus()
+                : AssetStatus.AVAILABLE;
         if (status == AssetStatus.ASSIGNED) {
-            throw new AssetStateException(messages.get(MessageCode.ASSET_CANNOT_ASSIGN, AssetStatus.ASSIGNED.name()));
+            throw new AssetStateException(
+                    messages.get(MessageCode.ASSET_CANNOT_ASSIGN, AssetStatus.ASSIGNED.name()));
         }
 
         String code = codeGenerator.nextCode();
@@ -118,6 +125,7 @@ public class AssetServiceImpl implements AssetService {
                 .assetName(req.getAssetName())
                 .assetType(req.getAssetType())
                 .description(req.getDescription())
+                .notes(req.getNotes())
                 .purchaseDate(req.getPurchaseDate())
                 .assetValue(req.getAssetValue())
                 .condition(req.getCondition() != null ? req.getCondition() : AssetCondition.NEW)
@@ -128,7 +136,6 @@ public class AssetServiceImpl implements AssetService {
                 .contractUntil(req.getContractUntil())
                 .contractNumber(req.getContractNumber())
                 .imageUrl(req.getImageUrl())
-                .notes(req.getNotes())
                 .createdBy(actorUser)
                 .build();
 
@@ -137,13 +144,6 @@ public class AssetServiceImpl implements AssetService {
                 messages.get(MessageCode.ASSET_HISTORY_CREATED, code));
 
         log.info("Asset created: code=[{}] by=[{}]", code, actor.getUsername());
-
-        // FIX: Build response directly from the saved entity instead of calling getAssetById().
-        // getAssetById() goes through AssetDataScopeService.requireAccessibleAsset() which
-        // throws ForbiddenException for newly-created AVAILABLE assets (assignedTo == null)
-        // when the caller has DataScope.TEAM or DataScope.SELF instead of DataScope.ALL.
-        // Returning via mapper directly bypasses the scope guard safely — the caller already
-        // passed @PreAuthorize(HAS_HR_OR_ADMIN) at the controller level.
         return mapper.toDetail(asset, List.of());
     }
 
@@ -153,38 +153,27 @@ public class AssetServiceImpl implements AssetService {
         CustomUserPrincipal actor = currentPrincipal();
         AssetCondition prevCond = asset.getCondition();
         String oldValue = snapshot(asset);
-        if (req.getName() != null)
-            asset.setAssetName(req.getName());
-        if (req.getType() != null)
-            asset.setAssetType(req.getType());
-        if (req.getDescription() != null)
-            asset.setDescription(req.getDescription());
-        if (req.getValue() != null)
-            asset.setAssetValue(req.getValue());
-        if (req.getPurchaseDate() != null)
-            asset.setPurchaseDate(req.getPurchaseDate());
-        if (req.getLocationOrUser() != null)
-            asset.setLocation(req.getLocationOrUser());
-        if (req.getCondition() != null)
-            asset.setCondition(req.getCondition());
-        if (req.getNote() != null)
-            asset.setNotes(req.getNote());
-        if (req.getImage() != null)
-            asset.setImageUrl(req.getImage());
-
-        if (req.getWarrantyDate() != null && !req.getWarrantyDate().isBlank())
-            asset.setWarrantyUntil(LocalDate.parse(req.getWarrantyDate()));
-        if (req.getSupplier() != null)
-            asset.setSupplierName(req.getSupplier());
-        if (req.getContractDate() != null && !req.getContractDate().isBlank())
-            asset.setContractUntil(LocalDate.parse(req.getContractDate()));
-        if (req.getContractNumber() != null)
-            asset.setContractNumber(req.getContractNumber());
+        if (req.getName()           != null) asset.setAssetName(req.getName());
+        if (req.getType()           != null) asset.setAssetType(req.getType());
+        if (req.getDescription()    != null) asset.setDescription(req.getDescription());
+        if (req.getValue()          != null) asset.setAssetValue(req.getValue());
+        if (req.getPurchaseDate()   != null) asset.setPurchaseDate(req.getPurchaseDate());
+        if (req.getLocationOrUser() != null) asset.setLocation(req.getLocationOrUser());
+        if (req.getCondition()      != null) asset.setCondition(req.getCondition());
+        if (req.getNote()           != null) asset.setNotes(req.getNote());
+        if (req.getImage()          != null) asset.setImageUrl(req.getImage());
+        if (req.getContractNumber() != null) asset.setContractNumber(req.getContractNumber());
+        // warrantyDate / contractDate: ISO string → LocalDate
+        if (req.getWarrantyDate()   != null && !req.getWarrantyDate().isBlank())
+            asset.setWarrantyUntil(java.time.LocalDate.parse(req.getWarrantyDate()));
+        if (req.getContractDate()   != null && !req.getContractDate().isBlank())
+            asset.setContractUntil(java.time.LocalDate.parse(req.getContractDate()));
+        if (req.getSupplier()       != null) asset.setSupplierName(req.getSupplier());
 
         assetRepo.save(asset);
         String newValue = snapshot(asset);
         appendHistory(asset, AssetActionType.UPDATE_ASSET, actor,
-                "Cập nhật thông tin tài sản", oldValue, newValue);
+                messages.get(MessageCode.ASSET_UPDATED), oldValue, newValue);
 
         if (req.getCondition() != null && prevCond != req.getCondition()) {
             String detail = String.format("Tình trạng: %s → %s",
@@ -194,7 +183,10 @@ public class AssetServiceImpl implements AssetService {
         }
 
         log.info("Asset updated: id=[{}] by=[{}]", id, actor.getUsername());
-        return getAssetById(id);
+        List<AssetHistory> recent = historyRepo
+                .findByAssetId(id, PageRequest.of(0, 5))
+                .getContent();
+        return mapper.toDetail(asset, recent);
     }
 
     @Override
@@ -234,27 +226,32 @@ public class AssetServiceImpl implements AssetService {
         asset.setLocation(target.getFirstName() + " " + target.getLastName());
         assetRepo.save(asset);
 
-        String dept = target.getDepartment() != null ? " (" + target.getDepartment().getName() + ")" : "";
+        String dept  = target.getDepartment() != null ? " (" + target.getDepartment().getName() + ")" : "";
         String notes = req.getNotes() != null ? " | " + req.getNotes() : "";
         String detail = messages.get(MessageCode.ASSET_HISTORY_ASSIGNED,
                 target.getFirstName() + " " + target.getLastName(), dept, notes);
         appendHistory(asset, AssetActionType.ASSIGN_ASSET, actor, detail, oldValue, snapshot(asset));
 
-        log.info("Asset assigned: id=[{}] to empId=[{}] by=[{}]", assetId, req.getEmployeeId(), actor.getUsername());
-        return getAssetById(assetId);
+        log.info("Asset assigned: id=[{}] to empId=[{}] by=[{}]",
+                assetId, req.getEmployeeId(), actor.getUsername());
+        List<AssetHistory> recent = historyRepo
+                .findByAssetId(assetId, PageRequest.of(0, 5))
+                .getContent();
+        return mapper.toDetail(asset, recent);
     }
 
     @Override
     public AssetDto.Detail returnAsset(Long assetId, AssetDto.ReturnRequest req) {
         Asset asset = loadActive(assetId);
         if (asset.getStatus() != AssetStatus.ASSIGNED) {
-            throw new AssetStateException(messages.get(MessageCode.ASSET_CANNOT_RETURN, asset.getStatus().name()));
+            throw new AssetStateException(
+                    messages.get(MessageCode.ASSET_CANNOT_RETURN, asset.getStatus().name()));
         }
 
-        CustomUserPrincipal actor = currentPrincipal();
-        Employee prevEmp = asset.getAssignedTo();
-        AssetCondition prevCond = asset.getCondition();
-        String oldValue = snapshot(asset);
+        CustomUserPrincipal actor   = currentPrincipal();
+        Employee            prevEmp = asset.getAssignedTo();
+        AssetCondition      prevCond = asset.getCondition();
+        String              oldValue = snapshot(asset);
 
         asset.setCondition(req.getConditionOnReturn());
         asset.setReturnDate(LocalDateTime.now());
@@ -276,7 +273,8 @@ public class AssetServiceImpl implements AssetService {
                 mapper.conditionLabel(prevCond),
                 mapper.conditionLabel(req.getConditionOnReturn()))
                 : "";
-        String detail = String.format("Thu hồi từ %s%s%s", fromName, condChange,
+        String detail = String.format("Thu hồi từ %s%s%s",
+                fromName, condChange,
                 req.getNotes() != null ? " | " + req.getNotes() : "");
         String newValue = snapshot(asset);
         appendHistory(asset, AssetActionType.RETURN_ASSET, actor, detail, oldValue, newValue);
@@ -290,11 +288,15 @@ public class AssetServiceImpl implements AssetService {
 
         if (newStatus == AssetStatus.RETIRED) {
             appendHistory(asset, AssetActionType.RETIRE_ASSET, actor,
-                    "Chuyển trạng thái sang Nghỉ hưu", oldValue, newValue);
+                    "Chuyển trạng thái sang Đã thu hồi", oldValue, newValue);
         }
 
         log.info("Asset returned: id=[{}] status=[{}] by=[{}]", assetId, asset.getStatus(), actor.getUsername());
-        return getAssetById(assetId);
+
+        List<AssetHistory> recent = historyRepo
+                .findByAssetId(assetId, PageRequest.of(0, 5))
+                .getContent();
+        return mapper.toDetail(asset, recent);
     }
 
     @Override
@@ -318,7 +320,8 @@ public class AssetServiceImpl implements AssetService {
                 .toList();
 
         return PageResponse.of(content, page, size,
-                histPage.getTotalElements(), histPage.getTotalPages(), messages.get(MessageCode.PAGE_ENTITY_HISTORY));
+                histPage.getTotalElements(), histPage.getTotalPages(),
+                messages.get(MessageCode.PAGE_ENTITY_HISTORY));
     }
 
     @Override
@@ -346,7 +349,8 @@ public class AssetServiceImpl implements AssetService {
     @Override
     @Transactional(readOnly = true)
     public byte[] exportAssetsCsv(AssetStatus status, String type, String keyword) {
-        PageRequest pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest pageable = PageRequest.of(0, Integer.MAX_VALUE,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
         List<Asset> all = dataScopeService.listAssets(status, type, keyword, pageable).getContent();
 
         StringBuilder csv = new StringBuilder();
@@ -361,7 +365,7 @@ public class AssetServiceImpl implements AssetService {
             csv.append(csvEscape(a.getAssetName())).append(',');
             csv.append(csvEscape(a.getAssetType())).append(',');
             csv.append(csvEscape(a.getCondition() != null ? a.getCondition().name() : "")).append(',');
-            csv.append(csvEscape(a.getStatus() != null ? a.getStatus().name() : "")).append(',');
+            csv.append(csvEscape(a.getStatus()    != null ? a.getStatus().name()    : "")).append(',');
 
             String locUser = "";
             if (a.getAssignedTo() != null) {
@@ -370,9 +374,8 @@ public class AssetServiceImpl implements AssetService {
                 locUser = a.getLocation();
             }
             csv.append(csvEscape(locUser)).append(',');
-
-            csv.append(a.getPurchaseDate() != null ? a.getPurchaseDate().format(dtf) : "").append(',');
-            csv.append(a.getAssetValue() != null ? a.getAssetValue().toString() : "").append(',');
+            csv.append(a.getPurchaseDate()  != null ? a.getPurchaseDate().format(dtf)  : "").append(',');
+            csv.append(a.getAssetValue()    != null ? a.getAssetValue().toString()      : "").append(',');
             csv.append(csvEscape(a.getSupplierName())).append(',');
             csv.append(a.getWarrantyUntil() != null ? a.getWarrantyUntil().format(dtf) : "").append('\n');
         }
@@ -389,26 +392,17 @@ public class AssetServiceImpl implements AssetService {
                 .getAuthentication().getPrincipal();
     }
 
-    private void appendHistory(
-            Asset asset,
-            AssetActionType action,
-            CustomUserPrincipal actor,
-            String detail) {
+    private void appendHistory(Asset asset, AssetActionType action,
+                               CustomUserPrincipal actor, String detail) {
         appendHistory(asset, action, actor, detail, null, null);
     }
 
-    private void appendHistory(
-            Asset asset,
-            AssetActionType action,
-            CustomUserPrincipal actor,
-            String detail,
-            String oldValue,
-            String newValue) {
-
-        historyRepo.save(AssetHistory.builder()
+    private void appendHistory(Asset asset, AssetActionType action,
+                               CustomUserPrincipal actor, String detail, String oldValue, String newValue) {
+        em.persist(AssetHistory.builder()
                 .asset(asset)
                 .actionType(action)
-                .id(actor.getUserId())
+                .actorId(actor.getUserId())
                 .actorUsername(actor.getUsername())
                 .detail(detail)
                 .oldValue(oldValue)
@@ -418,25 +412,24 @@ public class AssetServiceImpl implements AssetService {
 
     private String snapshot(Asset asset) {
         Employee assignedTo = asset.getAssignedTo();
-        User assignedBy = asset.getAssignedBy();
+        User     assignedBy = asset.getAssignedBy();
 
         Map<String, Object> snap = new LinkedHashMap<>();
-        snap.put("id", asset.getId());
-        snap.put("assetCode", asset.getAssetCode());
-        snap.put("assetName", asset.getAssetName());
-        snap.put("assetType", asset.getAssetType());
-        snap.put("status", asset.getStatus() != null ? asset.getStatus().name() : null);
-        snap.put("condition", asset.getCondition() != null ? asset.getCondition().name() : null);
-        snap.put("assetValue", asset.getAssetValue());
-        snap.put("purchaseDate", asset.getPurchaseDate() != null ? asset.getPurchaseDate().toString() : null);
-        snap.put("location", asset.getLocation());
-        snap.put("assignedToId", assignedTo != null ? assignedTo.getId() : null);
-        snap.put("assignedToName",
-                assignedTo != null ? (assignedTo.getFirstName() + " " + assignedTo.getLastName()) : null);
-        snap.put("assignedById", assignedBy != null ? assignedBy.getId() : null);
-        snap.put("assignedDate", asset.getAssignedDate() != null ? asset.getAssignedDate().toString() : null);
-        snap.put("returnDate", asset.getReturnDate() != null ? asset.getReturnDate().toString() : null);
-        snap.put("deleted", asset.isDeleted());
+        snap.put("id",             asset.getId());
+        snap.put("assetCode",      asset.getAssetCode());
+        snap.put("assetName",      asset.getAssetName());
+        snap.put("assetType",      asset.getAssetType());
+        snap.put("status",         asset.getStatus()    != null ? asset.getStatus().name()    : null);
+        snap.put("condition",      asset.getCondition() != null ? asset.getCondition().name() : null);
+        snap.put("assetValue",     asset.getAssetValue());
+        snap.put("purchaseDate",   asset.getPurchaseDate()   != null ? asset.getPurchaseDate().toString()   : null);
+        snap.put("location",       asset.getLocation());
+        snap.put("assignedToId",   assignedTo != null ? assignedTo.getId() : null);
+        snap.put("assignedToName", assignedTo != null ? (assignedTo.getFirstName() + " " + assignedTo.getLastName()) : null);
+        snap.put("assignedById",   assignedBy != null ? assignedBy.getId() : null);
+        snap.put("assignedDate",   asset.getAssignedDate() != null ? asset.getAssignedDate().toString() : null);
+        snap.put("returnDate",     asset.getReturnDate()   != null ? asset.getReturnDate().toString()   : null);
+        snap.put("deleted",        asset.isDeleted());
 
         try {
             return objectMapper.writeValueAsString(snap);
@@ -448,8 +441,7 @@ public class AssetServiceImpl implements AssetService {
     }
 
     private String csvEscape(String val) {
-        if (val == null)
-            return "";
+        if (val == null) return "";
         return "\"" + val.replace("\"", "\"\"") + "\"";
     }
 }
