@@ -88,6 +88,13 @@ app:
   mail:
     from: ${MAIL_FROM:no-reply@ems.company.com}
 
+  # Async thread pool for @Async tasks (e.g. email notifications)
+  async:
+    core-pool-size: ${APP_ASYNC_CORE_POOL_SIZE:2}
+    max-pool-size: ${APP_ASYNC_MAX_POOL_SIZE:5}
+    queue-capacity: ${APP_ASYNC_QUEUE_CAPACITY:100}
+    thread-name-prefix: ${APP_ASYNC_THREAD_PREFIX:ems-async-}
+
   password-reset:
     otp-expiry-minutes: 5
     resend-cooldown-seconds: 60
@@ -95,8 +102,8 @@ app:
   # Office location used for geolocation validation on check-in/check-out.
   # Override via env vars (APP_OFFICE_LATITUDE, etc.) in production.
   office:
-    latitude:  ${APP_OFFICE_LATITUDE:10.803746}    # Office location
-    longitude: ${APP_OFFICE_LONGITUDE:106.689661}   # Office location
+    latitude:  ${APP_OFFICE_LATITUDE:10.80374375}    # Office location
+    longitude: ${APP_OFFICE_LONGITUDE:106.6896745}   # Office location
     radius-meters: ${APP_OFFICE_RADIUS_METERS:200}  # Allowed radius in metres (200m — accounts for GPS drift)
 
   # Filesystem storage root for check-in/check-out photos

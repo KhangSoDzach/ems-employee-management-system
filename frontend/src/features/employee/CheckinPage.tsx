@@ -268,17 +268,27 @@ export default function CheckinPage() {
                             </div>
 
                             {/* Right side — camera placeholder / captured photo */}
-                            <div className="asset-image-placeholder hidden md:block">
-                                {todayRecord?.checkInPhotoUrl ? (
-                                    <img
-                                        src={todayRecord.checkInPhotoUrl}
-                                        alt="Check-in photo"
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?q=80&w=2662&auto=format&fit=crop')" }} />
-                                )}
-                            </div>
+                            {(() => {
+                                const photoUrl =
+                                    status === "checked_out"
+                                        ? (todayRecord?.checkOutPhotoUrl ?? todayRecord?.checkInPhotoUrl)
+                                        : todayRecord?.checkInPhotoUrl;
+                                const photoAlt =
+                                    status === "checked_out" ? "Check-out photo" : "Check-in photo";
+                                return (
+                                    <div className="hidden md:block shrink-0 w-48 h-48 rounded-2xl overflow-hidden shadow-lg border-4 border-background z-10 bg-muted relative">
+                                        {photoUrl ? (
+                                            <img
+                                                src={photoUrl}
+                                                alt={photoAlt}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?q=80&w=2662&auto=format&fit=crop')" }} />
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             {/* Background decoration */}
                             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/3" />

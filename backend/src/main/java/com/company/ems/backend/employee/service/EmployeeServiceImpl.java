@@ -1,5 +1,7 @@
 package com.company.ems.backend.employee.service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -35,10 +37,14 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class EmployeeServiceImpl implements EmployeeService {
 
+        /** Date format for default password derivation: ddMMyy (e.g. 110299 for 11/02/1999). */
+        private static final DateTimeFormatter DOB_PASSWORD_FORMATTER = DateTimeFormatter.ofPattern("ddMMyy");
+
         private final EmployeeRepository employeeRepository;
         private final DepartmentRepository departmentRepository;
         private final PositionRepository positionRepository;
         private final DataScopeService dataScopeService;
+        private final EmployeeEmailNotificationService emailNotificationService;
 
         @Override
         public EmployeeResponse createEmployee(EmployeeRequest request) {
@@ -122,6 +128,24 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .build();
 
                 Employee saved = employeeRepository.save(employee);
+
+                // ── Async email notification ──────────────────────────────────
+                // Send default credentials to the employee's registered email.
+                // The email is dispatched on a separate thread so it never
+                // blocks or rolls back the creation transaction.
+                if (saved.getDateOfBirth() != null) {
+                        String rawPassword = buildDefaultPassword(
+                                        saved.getEmployeeCode(), saved.getDateOfBirth());
+                        emailNotificationService.notifyNewEmployeeAsync(
+                                        saved.getEmail(),
+                                        saved.getFirstName() + " " + saved.getLastName(),
+                                        saved.getEmployeeCode(), // username = employee code
+                                        rawPassword);
+                } else {
+                        log.warn("[EMS-EMAIL] Skipping credentials email for employee [{}]: dateOfBirth is null",
+                                        saved.getEmployeeCode());
+                }
+
                 return mapToResponse(saved);
         }
 
@@ -435,5 +459,14 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .createdAt(employee.getCreatedAt())
                                 .updatedAt(employee.getUpdatedAt())
                                 .build();
+        }
+
+        /**
+         * Derives the default login password: {@code employeeCode + DOB(ddMMyy)}.
+         * <p>Example: code {@code IT202600001} + DOB {@code 1999-02-11} => {@code IT202600001110299}.
+         * <p>Never persisted -- transmitted once via welcome email for first-login use.
+         */
+        private String buildDefaultPassword(String employeeCode, LocalDate dateOfBirth) {
+                return employeeCode + dateOfBirth.format(DOB_PASSWORD_FORMATTER);
         }
 }

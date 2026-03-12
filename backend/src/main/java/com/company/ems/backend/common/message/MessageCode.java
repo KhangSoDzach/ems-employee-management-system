@@ -172,7 +172,11 @@ public enum MessageCode {
     // ── Workflow ──────────────────────────────────────────────────────────────
     WORKFLOW_DUPLICATE_LEVEL("workflow.duplicate_level"),
     WORKFLOW_MISSING_ROLE("workflow.missing_assignee_role"),
-    WORKFLOW_MISSING_USER("workflow.missing_assignee_user");
+    WORKFLOW_MISSING_USER("workflow.missing_assignee_user"),
+
+    // ── Email: Account Credentials ─────────────────────────────────────────────────────────
+    EMAIL_CREDENTIALS_SUBJECT("email.credentials.subject"),
+    EMAIL_CREDENTIALS_SEND_FAILED("email.credentials.send_failed");
 
     private final String key;
 }

@@ -2,9 +2,11 @@ package com.company.ems.backend.employee.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +52,9 @@ class EmployeeServiceImplTest {
 
     @Mock
     private DataScopeService dataScopeService;
+
+    @Mock
+    private EmployeeEmailNotificationService emailNotificationService;
 
     @InjectMocks
     private EmployeeServiceImpl employeeService;
@@ -114,6 +119,44 @@ class EmployeeServiceImplTest {
         assertEquals("Developer", response.getPosition());
 
         verify(employeeRepository, times(1)).save(any(Employee.class));
+        // DOB is null in this request → email notification must be skipped
+        verify(emailNotificationService, never()).notifyNewEmployeeAsync(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void createEmployee_ShouldSendEmail_WhenDateOfBirthIsProvided() {
+        // Given
+        EmployeeRequest request = new EmployeeRequest();
+        request.setFirstName("Jane");
+        request.setLastName("Doe");
+        request.setEmail("jane.doe@example.com");
+        request.setDepartmentId(1L);
+        request.setPositionId(1L);
+        request.setDateOfBirth(LocalDate.of(1999, 2, 11)); // DOB: 11/02/99
+
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        when(positionRepository.findById(1L)).thenReturn(Optional.of(position));
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(i -> {
+            Employee emp = i.getArgument(0);
+            emp.setId(3L);
+            emp.setEmployeeCode("IT202600001");
+            return emp;
+        });
+        doNothing().when(emailNotificationService)
+                .notifyNewEmployeeAsync(anyString(), anyString(), anyString(), anyString());
+
+        // When
+        EmployeeResponse response = employeeService.createEmployee(request);
+
+        // Then
+        assertNotNull(response);
+        // Default password = employeeCode + DOB as ddMMyy = IT202600001 + 110299
+        verify(emailNotificationService, times(1))
+                .notifyNewEmployeeAsync(
+                        eq("jane.doe@example.com"),
+                        eq("Jane Doe"),
+                        eq("IT202600001"),
+                        eq("IT202600001110299"));
     }
 
     @Test
