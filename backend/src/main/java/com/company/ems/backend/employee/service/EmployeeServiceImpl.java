@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,10 @@ import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.position.entity.Position;
 import com.company.ems.backend.position.repository.PositionRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
+import com.company.ems.backend.user.entity.Role;
+import com.company.ems.backend.user.entity.User;
 import com.company.ems.backend.user.enums.DataScope;
+import com.company.ems.backend.user.repository.RoleRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +49,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         private final PositionRepository positionRepository;
         private final DataScopeService dataScopeService;
         private final EmployeeEmailNotificationService emailNotificationService;
+        private final RoleRepository roleRepository;
+        private final PasswordEncoder passwordEncoder;
 
         @Override
         public EmployeeResponse createEmployee(EmployeeRequest request) {
@@ -84,7 +90,22 @@ public class EmployeeServiceImpl implements EmployeeService {
                 }
                 String employeeCode = String.format("%s%05d", prefix, seq);
 
-                Employee employee = Employee.builder()
+                // ── Build linked User account ──────────────────────────────────────────
+                User linkedUser = null;
+                String rawPassword = null;
+                if (request.getDateOfBirth() != null) {
+                        rawPassword = buildDefaultPassword(employeeCode, request.getDateOfBirth());
+                        Role employeeRole = roleRepository.findByName("ROLE_EMPLOYEE")
+                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_EMPLOYEE"));
+                        linkedUser = User.builder()
+                                        .username(employeeCode)
+                                        .email(request.getEmail())
+                                        .password(passwordEncoder.encode(rawPassword))
+                                        .build();
+                        linkedUser.getRoles().add(employeeRole);
+                }
+
+                Employee employee = Employee.builder().user(linkedUser)
                                 .employeeCode(employeeCode)
                                 .firstName(request.getFirstName())
                                 .lastName(request.getLastName())
@@ -133,13 +154,11 @@ public class EmployeeServiceImpl implements EmployeeService {
                 // Send default credentials to the employee's registered email.
                 // The email is dispatched on a separate thread so it never
                 // blocks or rolls back the creation transaction.
-                if (saved.getDateOfBirth() != null) {
-                        String rawPassword = buildDefaultPassword(
-                                        saved.getEmployeeCode(), saved.getDateOfBirth());
+                if (rawPassword != null) {
                         emailNotificationService.notifyNewEmployeeAsync(
                                         saved.getEmail(),
                                         saved.getFirstName() + " " + saved.getLastName(),
-                                        saved.getEmployeeCode(), // username = employee code
+                                        saved.getEmployeeCode(),
                                         rawPassword);
                 } else {
                         log.warn("[EMS-EMAIL] Skipping credentials email for employee [{}]: dateOfBirth is null",
@@ -464,7 +483,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         /**
          * Derives the default login password: {@code employeeCode + DOB(ddMMyy)}.
          * <p>Example: code {@code IT202600001} + DOB {@code 1999-02-11} => {@code IT202600001110299}.
-         * <p>Never persisted -- transmitted once via welcome email for first-login use.
          */
         private String buildDefaultPassword(String employeeCode, LocalDate dateOfBirth) {
                 return employeeCode + dateOfBirth.format(DOB_PASSWORD_FORMATTER);
