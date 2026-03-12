@@ -229,6 +229,58 @@ public class GlobalExceptionHandler {
                 return responseFromCode(ErrorCode.RESOURCE_CONFLICT, req);
         }
 
+        // ── Business / Domain exceptions ─────────────────────────────────────────────
+
+        /**
+         * Handles {@link BusinessException} thrown when a business rule is violated
+         * (e.g. duplicate email, duplicate national ID).
+         * Returns HTTP 409 Conflict with the business error code and message.
+         */
+        @ExceptionHandler(BusinessException.class)
+        public ResponseEntity<ApiErrorResponse> handleBusiness(
+                BusinessException ex, HttpServletRequest req) {
+
+                log.warn("[{}] Business rule violation code={} path={}: {}",
+                        traceId(), ex.getErrorCode(), req.getRequestURI(), ex.getMessage());
+
+                ApiErrorResponse body = ApiErrorResponse.of(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getErrorCode(),
+                        ex.getMessage(),
+                        req.getRequestURI(),
+                        traceId());
+
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        }
+
+        /**
+         * Handles {@link ResourceNotFoundException} when entity lookup fails.
+         * Returns HTTP 404 Not Found.
+         */
+        @ExceptionHandler(ResourceNotFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleNotFound(
+                ResourceNotFoundException ex, HttpServletRequest req) {
+
+                log.warn("[{}] Resource not found path={}: {}",
+                        traceId(), req.getRequestURI(), ex.getMessage());
+
+                return responseFromCode(ErrorCode.RESOURCE_NOT_FOUND, req);
+        }
+
+        /**
+         * Handles {@link ForbiddenException} for data-scope access violations.
+         * Returns HTTP 403 Forbidden.
+         */
+        @ExceptionHandler(ForbiddenException.class)
+        public ResponseEntity<ApiErrorResponse> handleForbidden(
+                ForbiddenException ex, HttpServletRequest req) {
+
+                log.warn("[{}] Forbidden path={}: {}",
+                        traceId(), req.getRequestURI(), ex.getMessage());
+
+                return responseFromCode(ErrorCode.ACCESS_DENIED, req);
+        }
+
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ApiErrorResponse> handleAll(Exception ex, HttpServletRequest req) {
 

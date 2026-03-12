@@ -172,19 +172,7 @@ public enum MessageCode {
     // ── Workflow ──────────────────────────────────────────────────────────────
     WORKFLOW_DUPLICATE_LEVEL("workflow.duplicate_level"),
     WORKFLOW_MISSING_ROLE("workflow.missing_assignee_role"),
-    WORKFLOW_MISSING_USER("workflow.missing_assignee_user"),
-
-    // ── KPI / OKR ─────────────────────────────────────────────────────────────
-    KPI_CREATED             ("kpi.created"),
-    KPI_UPDATED             ("kpi.updated"),
-    KPI_DELETED             ("kpi.deleted"),
-    KPI_NOT_FOUND           ("kpi.not_found"),
-    KPI_WEIGHT_EXCEEDED     ("kpi.weight_exceeded"),
-    KPI_INVALID_SCOPE       ("kpi.invalid_scope"),
-    KPI_INVALID_DATE_RANGE  ("kpi.invalid_date_range"),
-    KPI_PERIOD_REQUIRED     ("kpi.period_required"),
-    KPI_LIST                ("kpi.list"),
-    KPI_SUMMARY             ("kpi.summary");
+    WORKFLOW_MISSING_USER("workflow.missing_assignee_user");
 
     private final String key;
 }

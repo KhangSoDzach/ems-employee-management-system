@@ -35,6 +35,9 @@ public class EmployeeControllerTest {
     @MockBean
     private MessageService messages;
 
+    @MockBean
+    private com.company.ems.backend.common.audit.SecurityAuditService securityAuditService;
+
     @Test
     @WithMockUser
     void getEmployeeById_returns_ok_and_payload() throws Exception {

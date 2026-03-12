@@ -24,10 +24,10 @@ import lombok.Setter;
 public class OfficeLocationProperties {
 
     /** Office latitude (WGS-84). */
-    private double latitude = 10.762622;
+    private double latitude = 10.80374375;
 
     /** Office longitude (WGS-84). */
-    private double longitude = 106.660172;
+    private double longitude = 106.6896745;
 
     /** Maximum allowed distance from office in metres (default 30 m). */
     private double radiusMeters = 30.0;
