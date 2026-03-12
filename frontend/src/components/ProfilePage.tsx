@@ -5,7 +5,7 @@ import * as z from "zod"
 import { format, differenceInYears } from "date-fns"
 import {
     CalendarIcon, FileText, Image as ImageIcon,
-    MapPin, ShieldCheck, Briefcase, Download
+    MapPin, ShieldCheck, Briefcase, Download, KeyRound
 } from "lucide-react"
 import { employeeService } from "@/services/employeeService"
 import { useEffectiveRole } from "@/hooks/useEffectiveRole"
@@ -18,6 +18,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+    Dialog,
+    DialogContent,
+} from "@/components/ui/dialog"
 import {
     Form,
     FormControl,
@@ -38,6 +42,7 @@ import { cn } from "@/lib/utils"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 import { DEPARTMENT_OPTIONS, ROLE_OPTIONS, CONTRACT_OPTIONS, WORK_STATUS_OPTIONS } from "@/constants/options"
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
+import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage"
 
 const CONTRACT_CLASSES: Record<string, string> = {
     FULL_TIME: 'bg-green-100 text-green-700',
@@ -95,14 +100,18 @@ export default function ProfilePage() {
     // --- Load hồ sơ thực từ backend GET /api/v1/employees/me ---
     const [profileLoading, setProfileLoading] = useState(true)
     const [profileError, setProfileError] = useState<string | null>(null)
+    const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
+    const [userEmail, setUserEmail] = useState("")
 
     useEffect(() => {
         employeeService.getMyProfile()
             .then((data) => {
+                const email = data.email ?? ""
+                setUserEmail(email)
                 form.reset({
                     employeeCode: (data as unknown as Record<string, string>)["employeeCode"] ?? "",
                     fullName: [data.firstName, data.lastName].filter(Boolean).join(" "),
-                    companyEmail: data.email ?? "",
+                    companyEmail: email,
                     nationalId: "",         // trường nhạy cảm – server không trả
                     phoneNumber: data.phone ?? "",
                     dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(),
@@ -348,6 +357,18 @@ export default function ProfilePage() {
                                                 </FormItem>
                                             )}
                                         />
+
+                                        <div className="flex flex-col justify-end pb-[2px]">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="w-full md:w-auto font-semibold text-primary border-primary/30 hover:bg-primary/5 h-10"
+                                                onClick={() => setResetPasswordOpen(true)}
+                                            >
+                                                <KeyRound className="w-4 h-4 mr-2" />
+                                                {SYSTEM_MESSAGES.PROFILE_RESET.BTN_RESET_PASSWORD}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -627,6 +648,12 @@ export default function ProfilePage() {
                             </div>
                         </form>
                     </Form>
+
+                    <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
+                        <DialogContent className="sm:max-w-md p-0 gap-0 rounded-xl overflow-hidden border-none shadow-2xl max-h-[90vh] overflow-y-auto">
+                            <ForgotPasswordPage isProfileMode={true} userEmail={userEmail} />
+                        </DialogContent>
+                    </Dialog>
 
                 </main>
             </SidebarInset>

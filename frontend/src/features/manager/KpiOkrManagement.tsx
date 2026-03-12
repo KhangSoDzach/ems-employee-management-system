@@ -97,8 +97,8 @@ export default function KpiOkrManagement() {
                 </div>
                 
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-red-600">85%</span>
-                  <span className="text-sm text-muted-foreground font-medium">/ 100% mục tiêu</span>
+                  <span className="text-4xl font-bold text-red-600">{t.MOCK_WEIGHT}</span>
+                  <span className="text-sm text-muted-foreground font-medium">{t.MOCK_TOTAL}</span>
                 </div>
                 
                 <div className="w-full max-w-md bg-muted rounded-full h-2.5 overflow-hidden">
@@ -117,11 +117,11 @@ export default function KpiOkrManagement() {
               <div className="flex flex-col border-l pl-8 h-full space-y-6 min-w-[200px]">
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-1">{t.TARGET_COUNT}</p>
-                  <p className="text-2xl font-bold text-foreground">12</p>
+                  <p className="text-2xl font-bold text-foreground">{t.MOCK_TARGET}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-1">{t.DAYS_LEFT}</p>
-                  <p className="text-2xl font-bold text-foreground">5 {t.DAYS}</p>
+                  <p className="text-2xl font-bold text-foreground">{t.MOCK_DAYS}{t.DAYS}</p>
                 </div>
               </div>
             </div>
@@ -180,7 +180,7 @@ export default function KpiOkrManagement() {
                           {row.type}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center font-bold text-foreground">{row.weight}%</TableCell>
+                      <TableCell className="text-center font-bold text-foreground">{row.weight}{SYSTEM_MESSAGES.SYMBOLS.PERCENT}</TableCell>
                       <TableCell className="text-muted-foreground">
                         <p className="max-w-[120px] truncate">{row.metric}</p>
                       </TableCell>
@@ -189,7 +189,7 @@ export default function KpiOkrManagement() {
                       <TableCell className="pl-6 md:pl-8">
                         <div className="flex flex-col items-center gap-1.5 w-[80px]">
                           <span className={`font-bold ${row.status === 'good' ? 'text-emerald-600' : 'text-orange-500'}`}>
-                            {row.ratio}%
+                            {row.ratio}{SYSTEM_MESSAGES.SYMBOLS.PERCENT}
                           </span>
                           <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                             <div 
@@ -216,19 +216,19 @@ export default function KpiOkrManagement() {
               
               {/* Pagination */}
               <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">
-                <span className="text-sm text-muted-foreground">{t.PAGINATION_SHOW} 4/12 {t.PAGINATION_ITEMS}</span>
+                <span className="text-sm text-muted-foreground">{t.PAGINATION_SHOW}{t.PAGINATION_RANGE}{t.PAGINATION_ITEMS}</span>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="icon" disabled>
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
                   <Button size="icon" className="bg-[#e41b21] hover:bg-[#c9181d] text-white w-8 h-8">
-                    1
+                    {1}
                   </Button>
                   <Button variant="ghost" size="icon" className="w-8 h-8">
-                    2
+                    {2}
                   </Button>
                   <Button variant="ghost" size="icon" className="w-8 h-8">
-                    3
+                    {3}
                   </Button>
                   <Button variant="outline" size="icon">
                     <ChevronRight className="w-4 h-4" />
