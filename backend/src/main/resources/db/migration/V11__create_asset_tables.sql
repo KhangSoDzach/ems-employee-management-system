@@ -58,33 +58,20 @@ CREATE TABLE IF NOT EXISTS assets (
     COMMENT = 'Bảng tài sản công ty';
 
 
--- ── Bảng asset_history ──────────────────────────────────────
--- Lịch sử bất biến — chỉ INSERT, không UPDATE/DELETE
--- Hiển thị trong AssetFullHistoryModal (Image 4)
 CREATE TABLE IF NOT EXISTS asset_history (
-                                             id              BIGINT       NOT NULL AUTO_INCREMENT,
-                                             asset_id        BIGINT       NOT NULL,
+                                             id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                             asset_id BIGINT NOT NULL,
+                                             action_type VARCHAR(50) NOT NULL,
+    actor_user_id BIGINT,
+    actor_username VARCHAR(100),
+    old_value TEXT,
+    new_value TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- action_type: CREATE_ASSET|UPDATE_ASSET|ASSIGN_ASSET|RETURN_ASSET|...
-    -- Map sang tab filter: assign / return / update (Image 4)
-                                             action_type     VARCHAR(30)  NOT NULL,
+    FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
+    FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE SET NULL,
 
-    actor_id        BIGINT       NULL,
-    actor_username  VARCHAR(100) NULL     COMMENT 'Người thực hiện — cột Image 4',
-    -- detail: Nội dung chi tiết — VD: "Cấp phát cho Nguyễn Văn A (Phòng Marketing)"
-    detail          VARCHAR(500) NULL,
-    old_value       TEXT         NULL     COMMENT 'Snapshot JSON trước',
-    new_value       TEXT         NULL     COMMENT 'Snapshot JSON sau',
-    notes           VARCHAR(500) NULL,
-    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (id),
-    CONSTRAINT fk_ah_asset FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
-
-    INDEX idx_ah_asset_id   (asset_id),
-    INDEX idx_ah_created_at (created_at),
-    INDEX idx_ah_action     (action_type)
-    ) ENGINE = InnoDB
-    DEFAULT CHARSET = utf8mb4
-    COLLATE = utf8mb4_unicode_ci
-    COMMENT = 'Lịch sử tài sản — append-only';
+    INDEX idx_asset_id (asset_id),
+    INDEX idx_action_type (action_type),
+    INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

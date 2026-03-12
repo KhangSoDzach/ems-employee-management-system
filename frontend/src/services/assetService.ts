@@ -36,7 +36,7 @@ export interface EmployeeOption {
 
 // ─── Asset list summary ───────────────────────────────────────────────────────
 export interface AssetSummary {
-    id: string;          // Long as string from backend (mapper stringifies)
+    id: string;
     name: string;
     desc: string | null;
     type: string | null;
@@ -76,15 +76,15 @@ export interface AssetCreatePayload {
     assetName: string;
     assetType?: string;
     assetValue?: number;
-    purchaseDate?: string;          // ISO date
+    purchaseDate?: string;
     initialStatus?: AssetStatus;
     condition?: AssetCondition;
     location?: string;
     notes?: string;
     description?: string;
-    warrantyUntil?: string;         // ISO date
+    warrantyUntil?: string;
     supplierName?: string;
-    contractUntil?: string;         // ISO date
+    contractUntil?: string;
     imageUrl?: string;
     contractNumber?: string;
 }
@@ -94,10 +94,10 @@ export interface AssetUpdatePayload {
     type?: string;
     description?: string;
     value?: number;
-    purchaseDate?: string;          // ISO date
-    warrantyDate?: string;          // ISO date string
+    purchaseDate?: string;
+    warrantyDate?: string;
     supplier?: string;
-    contractDate?: string;          // ISO date string
+    contractDate?: string;
     condition?: AssetCondition;
     note?: string;
     image?: string;
@@ -189,7 +189,10 @@ interface PageResponse<T> {
 export const assetService = {
     getMyAssets: (): Promise<MyAsset[]> =>
         api.get<ApiResponse<PageResponse<MyAsset>>>('/my/assets')
-            .then(res => res.data.content),
+            // FIX: was `.then(res => res.data)` → returned ApiResponse wrapper, not MyAsset[].
+            // Axios wraps the HTTP response body in res.data, so res.data = ApiResponse<...>.
+            // The actual payload is always in res.data.data.
+            .then(res => res.data.data.content),
 
     submitReport: (assetId: number, data: { incidentType: string; description: string }, attachment?: File): Promise<IncidentReportDetail> => {
         const formData = new FormData();
@@ -199,33 +202,33 @@ export const assetService = {
         }
         return api.post<ApiResponse<IncidentReportDetail>>(`/assets/${assetId}/report`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
-        }).then(res => res.data);
+        }).then(res => res.data.data);
     },
 
     getMyReports: (page = 0, size = 10): Promise<PageResponse<IncidentReportRow>> =>
         api.get<ApiResponse<PageResponse<IncidentReportRow>>>('/my/reports', { params: { page, size } })
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     getMyReportDetail: (id: number): Promise<IncidentReportDetail> =>
         api.get<ApiResponse<IncidentReportDetail>>(`/my/reports/${id}`)
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     // Admin/HR APIs
     getAllReports: (params: { status?: string; employeeId?: number; fromDate?: string; toDate?: string; keyword?: string; page?: number; size?: number }): Promise<PageResponse<AdminIncidentListItem>> =>
         api.get<ApiResponse<PageResponse<AdminIncidentListItem>>>('/admin/asset-reports', { params })
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     getAdminReportDetail: (id: number): Promise<IncidentReportDetail> =>
         api.get<ApiResponse<IncidentReportDetail>>(`/admin/asset-reports/${id}`)
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     approveReport: (id: number, note?: string): Promise<IncidentReportDetail> =>
         api.post<ApiResponse<IncidentReportDetail>>(`/admin/asset-reports/${id}/approve`, { note })
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     rejectReport: (id: number, note?: string): Promise<IncidentReportDetail> =>
         api.post<ApiResponse<IncidentReportDetail>>(`/admin/asset-reports/${id}/reject`, { note })
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     // ─── Asset Management (HR/Admin/Manager) ──────────────────────────────────
     listAssets: (params: {
@@ -233,40 +236,40 @@ export const assetService = {
         status?: AssetStatus; type?: string; keyword?: string;
     }): Promise<PageResponse<AssetSummary>> =>
         api.get<ApiResponse<PageResponse<AssetSummary>>>('/assets', { params })
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     getNextCode: (): Promise<string> =>
         api.get<ApiResponse<{ nextCode: string }>>('/assets/next-code')
-            .then(res => res.data.nextCode),
+            .then(res => res.data.data.nextCode),
 
     getAssetById: (id: number | string): Promise<AssetDetail> =>
         api.get<ApiResponse<AssetDetail>>(`/assets/${id}`)
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     createAsset: (payload: AssetCreatePayload): Promise<AssetDetail> =>
         api.post<ApiResponse<AssetDetail>>('/assets', payload)
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     updateAsset: (id: number | string, payload: AssetUpdatePayload): Promise<AssetDetail> =>
         api.put<ApiResponse<AssetDetail>>(`/assets/${id}`, payload)
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     deleteAsset: (id: number | string): Promise<void> =>
         api.delete(`/assets/${id}`).then(() => undefined),
 
     assignAsset: (id: number | string, payload: AssignPayload): Promise<AssetDetail> =>
         api.post<ApiResponse<AssetDetail>>(`/assets/${id}/assign`, payload)
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     returnAsset: (id: number | string, payload: ReturnPayload): Promise<AssetDetail> =>
         api.post<ApiResponse<AssetDetail>>(`/assets/${id}/return`, payload)
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     getHistory: (id: number | string, params: {
         historyType?: string; page?: number; size?: number;
     }): Promise<PageResponse<AssetHistoryItem>> =>
         api.get<ApiResponse<PageResponse<AssetHistoryItem>>>(`/assets/${id}/history`, { params })
-            .then(res => res.data),
+            .then(res => res.data.data),
 
     exportHistory: (id: number | string): Promise<Blob> =>
         api.get(`/assets/${id}/history/export`, { responseType: 'blob' })
@@ -280,5 +283,5 @@ export const assetService = {
     searchEmployees: (keyword: string, page = 0, size = 20): Promise<PageResponse<EmployeeOption>> =>
         api.get<ApiResponse<PageResponse<EmployeeOption>>>('/employees', {
             params: { search: keyword, page, size },
-        }).then(res => res.data),
+        }).then(res => res.data.data),
 };

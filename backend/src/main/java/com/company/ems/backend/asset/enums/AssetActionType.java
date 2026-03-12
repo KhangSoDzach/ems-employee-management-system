@@ -6,6 +6,7 @@ public enum AssetActionType {
     ASSIGN_ASSET,
     RETURN_ASSET,
     CHANGE_CONDITION,
+    CHANGE_STATUS,
     RETIRE_ASSET,
     SOFT_DELETE
 }

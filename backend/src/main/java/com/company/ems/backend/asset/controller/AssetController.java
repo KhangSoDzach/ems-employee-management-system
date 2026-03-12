@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/assets")
+// support both current (v1) and legacy (no version) endpoints to avoid 500 errors
+@RequestMapping({"/api/v1/assets", "/api/assets"})
 @RequiredArgsConstructor
 public class AssetController {
 

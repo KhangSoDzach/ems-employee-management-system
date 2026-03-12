@@ -1,4 +1,5 @@
 import { DollarSign, Gift, Percent, FileText } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import {
   Sheet,
@@ -9,7 +10,9 @@ import {
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
+import { useAuth } from "@/contexts/AuthContext"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 export type SalarySlip = {
@@ -17,29 +20,50 @@ export type SalarySlip = {
   period: string
   paymentDate: string
   baseSalary: string
+  bonus: string
   allowances: Array<{ label: string; amount: string }>
   deductions: Array<{ label: string; amount: string }>
   totalIncome: string
   totalDeductions: string
   netPay: string
   status: "paid" | "pending"
+
+  // Employee + payment metadata (optional)
+  employeeName?: string
+  employeeId?: string
+  department?: string
+  role?: string
+  paymentMethod?: string
+  paymentReference?: string
 }
 
 interface SalarySlipSheetProps {
   slip: SalarySlip | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSave?: (slip: SalarySlip) => void
 }
 
-export const SalarySlipSheet = ({ slip, open, onOpenChange }: SalarySlipSheetProps) => {
-  if (!slip) return null
+export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlipSheetProps) => {
+  const { user } = useAuth()
+  const isHr = user?.roles?.includes("ROLE_HR")
 
-  const totalAllowances = slip.allowances.reduce((acc, cur) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [form, setForm] = useState<SalarySlip | null>(slip)
+
+  useEffect(() => {
+    setForm(slip)
+    setIsEditing(false)
+  }, [slip])
+
+  if (!slip || !form) return null
+
+  const totalAllowances = form.allowances.reduce((acc, cur) => {
     const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
     return acc + (Number.isNaN(parsed) ? 0 : parsed)
   }, 0)
 
-  const totalDeductions = slip.deductions.reduce((acc, cur) => {
+  const totalDeductions = form.deductions.reduce((acc, cur) => {
     const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
     return acc + (Number.isNaN(parsed) ? 0 : parsed)
   }, 0)
@@ -56,20 +80,109 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange }: SalarySlipSheetPro
               <SheetTitle className="text-xl font-bold tracking-tight text-foreground">
                 {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TITLE}
               </SheetTitle>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="font-mono px-2 py-0.5 text-xs bg-background shadow-sm border">
-                  {slip.id}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PERIOD}: {slip.period}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PAYMENT_DATE}: {slip.paymentDate}
-                </span>
-              </div>
+
               <SheetDescription className="text-sm font-medium text-muted-foreground">
                 {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_DESC}
               </SheetDescription>
+
+              {isHr ? (
+                <div className="flex gap-2">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setForm(slip)
+                          setIsEditing(false)
+                        }}
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          if (onSave && form) {
+                            onSave(form)
+                          }
+                          setIsEditing(false)
+                        }}
+                      >
+                        Lưu
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                      Chỉnh sửa
+                    </Button>
+                  )}
+                </div>
+              ) : null}
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {isHr ? (
+                  <div className="space-y-1">
+                    {form.employeeName ? (
+                      <p className="text-sm font-semibold">{form.employeeName}</p>
+                    ) : null}
+                    <p className="text-xs text-muted-foreground">
+                      {form.employeeId ?? ""}
+                      {form.department ? ` • ${form.department}` : ""}
+                      {form.role ? ` • ${form.role}` : ""}
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant={form.status === "paid" ? "secondary" : "outline"}
+                      className="text-[11px] px-2 py-1"
+                    >
+                      {form.status === "paid" ? "Đã thanh toán" : "Chờ thanh toán"}
+                    </Badge>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PERIOD}: {form.period}
+                  </p>
+
+                  <p className="text-xs text-muted-foreground">
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PAYMENT_DATE}: {form.paymentDate}
+                  </p>
+
+                  {isHr ? (
+                    <>
+                      {isEditing ? (
+                        <div className="space-y-1">
+                          <Input
+                            value={form.paymentMethod ?? ""}
+                            placeholder="Phương thức"
+                            onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
+                            className="text-xs"
+                          />
+                          <Input
+                            value={form.paymentReference ?? ""}
+                            placeholder="Mã tham chiếu"
+                            onChange={(e) => setForm({ ...form, paymentReference: e.target.value })}
+                            className="text-xs"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          {form.paymentMethod ? (
+                            <p className="text-xs text-muted-foreground">Phương thức: {form.paymentMethod}</p>
+                          ) : null}
+                          {form.paymentReference ? (
+                            <p className="text-xs text-muted-foreground">Ref: {form.paymentReference}</p>
+                          ) : null}
+                        </>
+                      )}
+                    </>
+                  ) : null}
+                </div>
+              </div>
             </SheetHeader>
           </div>
         </div>
@@ -85,7 +198,37 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange }: SalarySlipSheetPro
               <div className="bg-muted/20 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_BASE_SALARY}</span>
-                  <span className="font-semibold text-foreground">{slip.baseSalary}</span>
+                  {isEditing ? (
+                    <Input
+                      value={form.baseSalary}
+                      onChange={(e) => setForm({ ...form, baseSalary: e.target.value })}
+                      className="w-32"
+                    />
+                  ) : (
+                    <span className="font-semibold text-foreground">{form.baseSalary}</span>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Bonus */}
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Gift className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-lg">Thưởng</h3>
+              </div>
+              <div className="bg-muted/20 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Thưởng</span>
+                  {isEditing ? (
+                    <Input
+                      value={form.bonus}
+                      onChange={(e) => setForm({ ...form, bonus: e.target.value })}
+                      className="w-32"
+                    />
+                  ) : (
+                    <span className="font-semibold text-foreground">{form.bonus}</span>
+                  )}
                 </div>
               </div>
             </section>
@@ -97,10 +240,24 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange }: SalarySlipSheetPro
                 <h3 className="font-semibold text-lg">{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_ALLOWANCES}</h3>
               </div>
               <div className="bg-muted/20 rounded-xl p-4 space-y-3">
-                {slip.allowances.map((a) => (
+                {form.allowances.map((a, idx) => (
                   <div key={a.label} className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">{a.label}</span>
-                    <span className="font-medium text-emerald-600 dark:text-emerald-400">+ {a.amount}</span>
+                    {isEditing ? (
+                      <Input
+                        value={a.amount}
+                        onChange={(e) => {
+                          const next = [...form.allowances]
+                          const current = next[idx]
+                          if (!current) return
+                          next[idx] = { ...current, amount: e.target.value }
+                          setForm({ ...form, allowances: next })
+                        }}
+                        className="w-28 text-right"
+                      />
+                    ) : (
+                      <span className="font-medium text-emerald-600 dark:text-emerald-400">+ {a.amount}</span>
+                    )}
                   </div>
                 ))}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
