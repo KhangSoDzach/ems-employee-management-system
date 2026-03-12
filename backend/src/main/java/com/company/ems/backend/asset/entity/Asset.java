@@ -7,8 +7,8 @@ import com.company.ems.backend.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;  // FIX: @Where is deprecated in Hibernate 6
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,19 +16,23 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "assets")
-@Where(clause = "deleted = false")
+@SQLRestriction("deleted = false")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Asset {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "asset_code", nullable = false, unique = true, length = 20)
     private String assetCode;
+
     @Column(name = "asset_name", nullable = false, length = 255)
     private String assetName;
+
     @Column(name = "asset_type", length = 50)
     private String assetType;
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
@@ -51,6 +55,7 @@ public class Asset {
     @Enumerated(EnumType.STRING)
     @Column(name = "asset_condition", nullable = false, length = 20)
     private AssetCondition condition = AssetCondition.NEW;
+
     @Column(name = "location", length = 255)
     private String location;
 
@@ -67,15 +72,19 @@ public class Asset {
 
     @Column(name = "return_date")
     private LocalDateTime returnDate;
+
     @Column(name = "warranty_until")
     private LocalDate warrantyUntil;
 
     @Column(name = "supplier_name", length = 255)
     private String supplierName;
+
     @Column(name = "contract_until")
     private LocalDate contractUntil;
+
     @Column(name = "contract_number", length = 100)
     private String contractNumber;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
     private User createdBy;

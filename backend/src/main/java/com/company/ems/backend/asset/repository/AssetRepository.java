@@ -83,7 +83,7 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
             @Param("keyword") String keyword,
             Pageable pageable);
 
-    @Query("SELECT COUNT(a) FROM Asset a WHERE a.assetCode LIKE :prefix%")
+    @Query("SELECT COUNT(a) FROM Asset a WHERE a.assetCode LIKE CONCAT(:prefix, '%') AND a.deleted = false")
     long countByAssetCodeStartingWith(@Param("prefix") String prefix);
 
     boolean existsByAssetCode(String assetCode);

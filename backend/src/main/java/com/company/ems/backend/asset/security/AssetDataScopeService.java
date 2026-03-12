@@ -70,6 +70,7 @@ public class AssetDataScopeService {
         assertAssetBelongsToEmployee(asset, principal);
         return asset;
     }
+
     private Long resolveEmployeeId(CustomUserPrincipal principal) {
         return employeeRepository.findEmployeeIdByUserId(principal.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException(principal.getUsername()));
@@ -78,6 +79,37 @@ public class AssetDataScopeService {
     private Long resolveManagerDepartmentId(CustomUserPrincipal principal) {
         return employeeRepository.findDepartmentIdByUserId(principal.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException(principal.getUsername()));
+    }
+
+    /**
+     * FIX: The original implementation threw ForbiddenException when
+     * asset.getAssignedTo() == null.  Every newly created AVAILABLE asset has
+     * assignedTo == null, so managers could never read/use a freshly created asset.
+     * <p>
+     * New logic: unassigned assets are visible to any manager (they belong to no
+     * department yet). Only when the asset IS assigned do we enforce the
+     * department boundary.
+     */
+    private void assertAssetInManagerDepartment(Asset asset, CustomUserPrincipal principal) {
+        // Unassigned assets are accessible to all managers — no department to check.
+        if (asset.getAssignedTo() == null) {
+            return;
+        }
+
+        // Assigned but department unknown — let through rather than silently deny.
+        if (asset.getAssignedTo().getDepartment() == null) {
+            return;
+        }
+
+        Long managerDeptId = employeeRepository.findDepartmentIdByUserId(principal.getUserId())
+                .orElse(null);
+        Long assetDeptId = asset.getAssignedTo().getDepartment().getId();
+
+        if (managerDeptId == null || !assetDeptId.equals(managerDeptId)) {
+            log.warn("SCOPE_DENY [TEAM]: manager=[{}] tried asset=[{}] in dept=[{}], own dept=[{}]",
+                    principal.getUsername(), asset.getId(), assetDeptId, managerDeptId);
+            throw new ForbiddenException();
+        }
     }
 
     private void assertAssetBelongsToEmployee(Asset asset, CustomUserPrincipal principal) {
@@ -94,21 +126,6 @@ public class AssetDataScopeService {
             log.warn("SCOPE_DENY [SELF]: user=[{}] tried asset=[{}] assigned to empId=[{}]",
                     principal.getUsername(), asset.getId(),
                     asset.getAssignedTo().getId());
-            throw new ForbiddenException();
-        }
-    }
-
-    private void assertAssetInManagerDepartment(Asset asset, CustomUserPrincipal principal) {
-        if (asset.getAssignedTo() == null
-                || asset.getAssignedTo().getDepartment() == null) {
-            throw new ForbiddenException();
-        }
-        Long managerDeptId = employeeRepository.findDepartmentIdByUserId(principal.getUserId())
-                .orElse(null);
-        Long assetDeptId = asset.getAssignedTo().getDepartment().getId();
-        if (!assetDeptId.equals(managerDeptId)) {
-            log.warn("SCOPE_DENY [TEAM]: manager=[{}] tried asset=[{}] in dept=[{}], own dept=[{}]",
-                    principal.getUsername(), asset.getId(), assetDeptId, managerDeptId);
             throw new ForbiddenException();
         }
     }

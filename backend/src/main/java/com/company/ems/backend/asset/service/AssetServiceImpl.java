@@ -112,6 +112,7 @@ public class AssetServiceImpl implements AssetService {
 
         String code = codeGenerator.nextCode();
         User actorUser = userRepo.findById(actor.getUserId()).orElse(null);
+
         Asset asset = Asset.builder()
                 .assetCode(code)
                 .assetName(req.getAssetName())
@@ -136,7 +137,14 @@ public class AssetServiceImpl implements AssetService {
                 messages.get(MessageCode.ASSET_HISTORY_CREATED, code));
 
         log.info("Asset created: code=[{}] by=[{}]", code, actor.getUsername());
-        return getAssetById(asset.getId());
+
+        // FIX: Build response directly from the saved entity instead of calling getAssetById().
+        // getAssetById() goes through AssetDataScopeService.requireAccessibleAsset() which
+        // throws ForbiddenException for newly-created AVAILABLE assets (assignedTo == null)
+        // when the caller has DataScope.TEAM or DataScope.SELF instead of DataScope.ALL.
+        // Returning via mapper directly bypasses the scope guard safely — the caller already
+        // passed @PreAuthorize(HAS_HR_OR_ADMIN) at the controller level.
+        return mapper.toDetail(asset, List.of());
     }
 
     @Override
@@ -265,8 +273,8 @@ public class AssetServiceImpl implements AssetService {
                 : "N/A";
         String condChange = prevCond != req.getConditionOnReturn()
                 ? " | " + messages.get(MessageCode.ASSET_HISTORY_CONDITION,
-                        mapper.conditionLabel(prevCond),
-                        mapper.conditionLabel(req.getConditionOnReturn()))
+                mapper.conditionLabel(prevCond),
+                mapper.conditionLabel(req.getConditionOnReturn()))
                 : "";
         String detail = String.format("Thu hồi từ %s%s%s", fromName, condChange,
                 req.getNotes() != null ? " | " + req.getNotes() : "");
@@ -300,8 +308,8 @@ public class AssetServiceImpl implements AssetService {
         List<AssetActionType> actionTypes = (historyType == null
                 || historyType.isBlank()
                 || historyType.equalsIgnoreCase("all"))
-                        ? null
-                        : HISTORY_FILTER.get(historyType.toLowerCase());
+                ? null
+                : HISTORY_FILTER.get(historyType.toLowerCase());
 
         Page<AssetHistory> histPage = historyRepo.findFiltered(assetId, actionTypes, pageable);
 
@@ -400,7 +408,7 @@ public class AssetServiceImpl implements AssetService {
         historyRepo.save(AssetHistory.builder()
                 .asset(asset)
                 .actionType(action)
-                .actorId(actor.getUserId())
+                .id(actor.getUserId())
                 .actorUsername(actor.getUsername())
                 .detail(detail)
                 .oldValue(oldValue)

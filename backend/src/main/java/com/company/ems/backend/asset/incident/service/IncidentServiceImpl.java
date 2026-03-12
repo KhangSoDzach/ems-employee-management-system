@@ -205,7 +205,7 @@ public class IncidentServiceImpl implements IncidentService {
         historyRepo.save(AssetHistory.builder()
                 .asset(asset)
                 .actionType(AssetActionType.CHANGE_CONDITION)
-                .actorId(processor.getId())
+                .id(processor.getId())
                 .actorUsername(processor.getUsername())
                 .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
                 .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")

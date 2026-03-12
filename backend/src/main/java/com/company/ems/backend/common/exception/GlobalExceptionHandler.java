@@ -1,6 +1,8 @@
 package com.company.ems.backend.common.exception;
 
+import com.company.ems.backend.asset.exception.AssetStateException;
 import com.company.ems.backend.common.audit.SecurityAuditService;
+import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.enums.ErrorCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.response.ApiErrorResponse;
@@ -45,8 +47,49 @@ public class GlobalExceptionHandler {
 
                 ErrorCode code = ex.getErrorCode();
                 log.warn("[{}] AppException code={} path={}", traceId(), code.name(), req.getRequestURI());
-
                 return responseFromCode(code, req);
+        }
+
+        @ExceptionHandler(ResourceNotFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleNotFound(
+                ResourceNotFoundException ex, HttpServletRequest req) {
+
+                log.warn("[{}] ResourceNotFound resource={} field={} value={} path={}",
+                        traceId(), ex.getResource(), ex.getField(), ex.getValue(), req.getRequestURI());
+
+                ApiErrorResponse body = ApiErrorResponse.of(
+                        HttpStatus.NOT_FOUND.value(),
+                        "RESOURCE_NOT_FOUND",
+                        ex.getMessage(),
+                        req.getRequestURI(),
+                        traceId());
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+        }
+
+        @ExceptionHandler(AssetStateException.class)
+        public ResponseEntity<ApiResponse<Void>> handleAssetStateException(
+                AssetStateException ex) {
+
+                log.warn("Asset state error: {}", ex.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+        }
+
+        @ExceptionHandler(BusinessException.class)
+        public ResponseEntity<ApiErrorResponse> handleBusiness(
+                BusinessException ex, HttpServletRequest req) {
+
+                log.warn("[{}] BusinessException code={} message={} path={}",
+                        traceId(), ex.getErrorCode(), ex.getMessage(), req.getRequestURI());
+
+                ApiErrorResponse body = ApiErrorResponse.of(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getErrorCode(),
+                        ex.getMessage(),
+                        req.getRequestURI(),
+                        traceId());
+
+                return ResponseEntity.badRequest().body(body);
         }
 
         @ExceptionHandler(BadCredentialsException.class)
@@ -114,6 +157,16 @@ public class GlobalExceptionHandler {
                 return responseFromCode(ErrorCode.ACCESS_DENIED, req);
         }
 
+        // handle ForbiddenException thrown by data scope checks, map to 403
+        @ExceptionHandler(com.company.ems.backend.common.exception.ForbiddenException.class)
+        public ResponseEntity<ApiErrorResponse> handleForbidden(
+                com.company.ems.backend.common.exception.ForbiddenException ex, HttpServletRequest req) {
+
+                auditService.logAccessDenied(req);
+                log.warn("[{}] Forbidden path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                return responseFromCode(ErrorCode.ACCESS_DENIED, req);
+        }
+
         @ExceptionHandler(MethodArgumentNotValidException.class)
         public ResponseEntity<ApiErrorResponse> handleValidation(
                 MethodArgumentNotValidException ex, HttpServletRequest req) {
@@ -138,8 +191,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(HttpMessageNotReadableException.class)
         public ResponseEntity<ApiErrorResponse> handleNotReadable(
                 HttpMessageNotReadableException ex, HttpServletRequest req) {
-
-                log.warn("[{}] Not readable path={}", traceId(), req.getRequestURI());
+                log.warn("[{}] Not readable cause={} path={}",
+                        traceId(), ex.getMostSpecificCause().getMessage(), req.getRequestURI());
                 return responseFromCode(ErrorCode.VALID_REQUEST_BODY, req);
         }
 
@@ -149,7 +202,6 @@ public class GlobalExceptionHandler {
 
                 log.warn("[{}] Type mismatch param={} value={} path={}",
                         traceId(), ex.getName(), ex.getValue(), req.getRequestURI());
-
                 return responseFromCode(ErrorCode.VALID_PARAM_INVALID, req);
         }
 
@@ -158,7 +210,6 @@ public class GlobalExceptionHandler {
                 MissingServletRequestParameterException ex, HttpServletRequest req) {
 
                 log.warn("[{}] Missing param={} path={}", traceId(), ex.getParameterName(), req.getRequestURI());
-
                 return responseFromCode(ErrorCode.VALID_PARAM_MISSING, req);
         }
 
@@ -167,15 +218,14 @@ public class GlobalExceptionHandler {
                 HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
 
                 log.warn("[{}] Method not allowed method={} path={}", traceId(), ex.getMethod(), req.getRequestURI());
-
                 return responseFromCode(ErrorCode.VALID_METHOD_NOT_ALLOWED, req);
         }
 
         @ExceptionHandler(DataIntegrityViolationException.class)
         public ResponseEntity<ApiErrorResponse> handleDataIntegrity(
                 DataIntegrityViolationException ex, HttpServletRequest req) {
-
-                log.error("[{}] Data integrity path={}", traceId(), req.getRequestURI());
+                log.error("[{}] Data integrity cause={} path={}",
+                        traceId(), ex.getMostSpecificCause().getMessage(), req.getRequestURI());
                 return responseFromCode(ErrorCode.RESOURCE_CONFLICT, req);
         }
 

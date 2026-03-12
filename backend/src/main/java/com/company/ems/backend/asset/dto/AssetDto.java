@@ -3,6 +3,7 @@ package com.company.ems.backend.asset.dto;
 import com.company.ems.backend.asset.enums.AssetCondition;
 import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.common.validation.ValidationMessages;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -56,35 +57,39 @@ public final class AssetDto {
         private String date;
     }
 
-
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
     public static class CreateRequest {
+
         @NotBlank(message = ValidationMessages.ASSET_NAME_REQUIRED)
         @Size(max = 255)
         private String assetName;
 
         @Size(max = 50)
         private String assetType;
-
-        @DecimalMin("0.0")
+        @DecimalMin(value = "0.0", message = "Giá trị tài sản không được âm")
         private BigDecimal assetValue;
 
+        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate purchaseDate;
 
         private AssetStatus initialStatus;
 
         private AssetCondition condition;
+
         @Size(max = 255)
         private String location;
 
         private String notes;
+
         private String description;
 
+        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate warrantyUntil;
 
         @Size(max = 255)
         private String supplierName;
 
+        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate contractUntil;
 
         @Size(max = 500)
@@ -93,8 +98,10 @@ public final class AssetDto {
         @Size(max = 100)
         private String contractNumber;
     }
+
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
     public static class UpdateRequest {
+
         @Size(max = 255)
         private String name;
 
@@ -106,6 +113,7 @@ public final class AssetDto {
         @DecimalMin("0.0")
         private BigDecimal value;
 
+        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate purchaseDate;
 
         private String warrantyDate;
@@ -127,7 +135,6 @@ public final class AssetDto {
         private String notes;
     }
 
-
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
     public static class ReturnRequest {
         @NotNull
@@ -136,7 +143,6 @@ public final class AssetDto {
         private Boolean readyToReuse;
         private String notes;
     }
-
 
     @Data @Builder
     public static class CodePreview {

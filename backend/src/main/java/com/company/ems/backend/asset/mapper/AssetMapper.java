@@ -6,6 +6,7 @@ import com.company.ems.backend.asset.entity.AssetHistory;
 import com.company.ems.backend.asset.enums.AssetActionType;
 import com.company.ems.backend.asset.enums.AssetCondition;
 import com.company.ems.backend.asset.enums.AssetStatus;
+import com.company.ems.backend.asset.enums.AssetType;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.entity.Employee;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -44,7 +46,7 @@ public class AssetMapper {
         };
     }
 
-    private static final java.util.Map<AssetStatus, String> STATUS_COLORS = java.util.Map.of(
+    private static final Map<AssetStatus, String> STATUS_COLORS = Map.of(
             AssetStatus.AVAILABLE, "bg-green-100 text-green-700",
             AssetStatus.ASSIGNED, "bg-blue-100 text-blue-700",
             AssetStatus.RETIRED, "bg-yellow-100 text-yellow-700");
@@ -62,6 +64,7 @@ public class AssetMapper {
     public String actionLabel(AssetActionType t) {
         return switch (t) {
             case ASSIGN_ASSET -> messages.get(MessageCode.ASSET_ACTION_ASSIGN);
+            case CHANGE_STATUS -> null;
             case RETURN_ASSET, RETIRE_ASSET -> messages.get(MessageCode.ASSET_ACTION_RETURN);
             case CREATE_ASSET, UPDATE_ASSET,
                     CHANGE_CONDITION, SOFT_DELETE ->
@@ -72,6 +75,7 @@ public class AssetMapper {
     private static String historyType(AssetActionType t) {
         return switch (t) {
             case ASSIGN_ASSET -> "assign";
+            case CHANGE_STATUS -> null;
             case RETURN_ASSET, RETIRE_ASSET -> "return";
             case CREATE_ASSET, UPDATE_ASSET,
                     CHANGE_CONDITION, SOFT_DELETE ->
@@ -92,23 +96,23 @@ public class AssetMapper {
     }
 
     public AssetDto.Detail toDetail(Asset a, List<AssetHistory> recentHistory) {
+        if(a == null) {
+            return null;
+        }
         return AssetDto.Detail.builder()
                 .name(a.getAssetName())
                 .code(a.getAssetCode())
-                .type(a.getAssetType())
+                .type(String.valueOf(AssetType.valueOf(a.getAssetType())))
                 .value(formatVND(a.getAssetValue()))
                 .purchaseDate(formatDate(a.getPurchaseDate()))
                 .status(statusLabelUpper(a.getStatus()))
                 .condition(conditionLabel(a.getCondition()))
-                .warranty(formatDate(a.getWarrantyUntil()))
+                .warranty(String.valueOf(a.getWarrantyUntil()))
                 .supplier(a.getSupplierName())
                 .contract(a.getContractNumber())
-                .location(resolveUser(a))
+                .location(a.getLocation())
                 .description(a.getDescription())
                 .imageUrl(a.getImageUrl())
-                .recentHistory(recentHistory.stream()
-                        .map(this::toHistoryItemDetail)
-                        .collect(Collectors.toList()))
                 .build();
     }
 
