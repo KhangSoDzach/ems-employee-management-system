@@ -46,21 +46,25 @@ public class OfficeConfigServiceImpl implements OfficeConfigService {
 
     @PostConstruct
     public void loadFromDatabase() {
-        Optional<SystemConfig> latCfg = configRepository.findByConfigKey(KEY_LATITUDE);
-        Optional<SystemConfig> lonCfg = configRepository.findByConfigKey(KEY_LONGITUDE);
+        try {
+            Optional<SystemConfig> latCfg = configRepository.findByConfigKey(KEY_LATITUDE);
+            Optional<SystemConfig> lonCfg = configRepository.findByConfigKey(KEY_LONGITUDE);
 
-        if (latCfg.isPresent() && lonCfg.isPresent()) {
-            double lat = Double.parseDouble(latCfg.get().getConfigValue());
-            double lon = Double.parseDouble(lonCfg.get().getConfigValue());
-            officeProps.setLatitude(lat);
-            officeProps.setLongitude(lon);
-            log.info("Office location loaded from DB → lat={}, lon={}", lat, lon);
+            if (latCfg.isPresent() && lonCfg.isPresent()) {
+                double lat = Double.parseDouble(latCfg.get().getConfigValue());
+                double lon = Double.parseDouble(lonCfg.get().getConfigValue());
+                officeProps.setLatitude(lat);
+                officeProps.setLongitude(lon);
+                log.info("Office location loaded from DB → lat={}, lon={}", lat, lon);
+            }
+            configRepository.findByConfigKey(KEY_RADIUS_METERS).ifPresent(cfg -> {
+                double radius = Double.parseDouble(cfg.getConfigValue());
+                officeProps.setRadiusMeters(radius);
+                log.info("Office radius loaded from DB → {}m", radius);
+            });
+        } catch (Exception e) {
+            log.warn("Could not load office config from database (it might be empty or table not created yet): {}", e.getMessage());
         }
-        configRepository.findByConfigKey(KEY_RADIUS_METERS).ifPresent(cfg -> {
-            double radius = Double.parseDouble(cfg.getConfigValue());
-            officeProps.setRadiusMeters(radius);
-            log.info("Office radius loaded from DB → {}m", radius);
-        });
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────

@@ -15,4 +15,18 @@ public interface EmailPort {
      * @param otp     the 6-digit plain-text OTP to include in the email
      */
     void sendPasswordResetOtp(String toEmail, String otp);
+
+    /**
+     * Send a welcome email containing the new employee's login credentials.
+     * Must be invoked asynchronously so it never blocks the employee-creation
+     * transaction. If delivery fails, the caller is responsible for logging
+     * the error without propagating the exception.
+     *
+     * @param toEmail     HR-registered email address of the new employee
+     * @param fullName    employee's full name (used for personalisation)
+     * @param username    login username — the auto-generated employee code
+     * @param rawPassword auto-generated default password (employeeCode + DOB as ddMMyy)
+     */
+    void sendAccountCredentialsEmail(String toEmail, String fullName,
+                                     String username, String rawPassword);
 }
