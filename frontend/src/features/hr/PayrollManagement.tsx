@@ -21,6 +21,7 @@ import {
   TableCell,
 } from "@/components/ui/table"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { SalarySlipSheet, type SalarySlip } from "../employee/components/SalarySlipSheet"
 
 type PayrollRow = {
   id: number
@@ -29,11 +30,13 @@ type PayrollRow = {
   department: string
   role: string
   baseSalary: string
-  allowance: string
   bonus: string
+  allowance: string
   deduction: string
   netSalary: string
   status: "PROCESSED" | "PENDING" | "REVIEW"
+  paymentMethod?: string
+  paymentReference?: string
 }
 
 const MOCK_PAYROLL: PayrollRow[] = [
@@ -48,6 +51,8 @@ const MOCK_PAYROLL: PayrollRow[] = [
     bonus: "+$200",
     deduction: "-$120",
     netSalary: "$7,030",
+    paymentMethod: "Chuyển khoản",
+    paymentReference: "REF-2045",
     status: "PROCESSED",
   },
   {
@@ -61,6 +66,8 @@ const MOCK_PAYROLL: PayrollRow[] = [
     bonus: "+$0",
     deduction: "-$50",
     netSalary: "$4,450",
+    paymentMethod: "Tiền mặt",
+    paymentReference: "REF-2089",
     status: "PENDING",
   },
   {
@@ -74,6 +81,8 @@ const MOCK_PAYROLL: PayrollRow[] = [
     bonus: "+$150",
     deduction: "-$80",
     netSalary: "$5,570",
+    paymentMethod: "Chuyển khoản",
+    paymentReference: "REF-2104",
     status: "PROCESSED",
   },
   {
@@ -87,26 +96,73 @@ const MOCK_PAYROLL: PayrollRow[] = [
     bonus: "+$500",
     deduction: "-$150",
     netSalary: "$8,750",
+    paymentMethod: "Chuyển khoản",
+    paymentReference: "REF-2155",
     status: "REVIEW",
   },
 ]
 
 export default function PayrollManagement() {
   const t = SYSTEM_MESSAGES.PAYROLL
+  const [payrollRows, setPayrollRows] = useState<PayrollRow[]>(MOCK_PAYROLL)
+  const [selectedSlip, setSelectedSlip] = useState<SalarySlip | null>(null)
   const [period, setPeriod] = useState("October 2023")
   const [department, setDepartment] = useState("All Departments")
   const [employee, setEmployee] = useState("")
   const [status, setStatus] = useState("All Status")
 
+  const handleSaveSlip = (updated: SalarySlip) => {
+    setPayrollRows((prev) =>
+      prev.map((row) =>
+        row.id === updated.id
+          ? {
+              ...row,
+              baseSalary: updated.baseSalary,
+              bonus: updated.bonus,
+              allowance: updated.allowances[0]?.amount ?? row.allowance,
+              deduction: updated.deductions[0]?.amount ?? row.deduction,
+              netSalary: updated.netPay,
+              paymentMethod: updated.paymentMethod,
+              paymentReference: updated.paymentReference,
+            }
+          : row
+      )
+    )
+
+    setSelectedSlip(updated)
+  }
+
+  const handleOpenSlip = (row: PayrollRow) => {
+    setSelectedSlip({
+      id: row.id,
+      period: "Tháng 04/2024",
+      paymentDate: "05/05/2024",
+      baseSalary: row.baseSalary,
+      bonus: row.bonus,
+      allowances: [{ label: "Phụ cấp", amount: row.allowance }],
+      deductions: [{ label: "Khấu trừ", amount: row.deduction }],
+      totalIncome: row.baseSalary,
+      totalDeductions: row.deduction,
+      netPay: row.netSalary,
+      status: row.status === "PROCESSED" ? "paid" : "pending",
+      employeeName: row.name,
+      employeeId: row.employeeId,
+      department: row.department,
+      role: row.role,
+      paymentMethod: row.paymentMethod,
+      paymentReference: row.paymentReference,
+    })
+  }
+
   const filtered = useMemo(() => {
     const q = employee.trim().toLowerCase()
-    return MOCK_PAYROLL.filter((row) => {
+    return payrollRows.filter((row) => {
       const matchesEmployee = !q || row.name.toLowerCase().includes(q) || row.employeeId.toLowerCase().includes(q)
       const matchesDept = department === "All Departments" || row.department === department
       const matchesStatus = status === "All Status" || row.status === status
       return matchesEmployee && matchesDept && matchesStatus
     })
-  }, [employee, department, status])
+  }, [employee, department, status, payrollRows])
 
   return (
     <SidebarProvider>
@@ -210,7 +266,11 @@ export default function PayrollManagement() {
               </TableHeader>
               <TableBody>
                 {filtered.map((row) => (
-                  <TableRow key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                  <TableRow
+                    key={row.id}
+                    className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
+                    onClick={() => handleOpenSlip(row)}
+                  >
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="size-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-slate-300">
@@ -249,12 +309,18 @@ export default function PayrollManagement() {
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleOpenSlip(row)
+                          }}
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                       
                       </div>
                     </TableCell>
                   </TableRow>
@@ -285,6 +351,15 @@ export default function PayrollManagement() {
           </section>
         </main>
       </SidebarInset>
+
+      <SalarySlipSheet
+        slip={selectedSlip}
+        open={!!selectedSlip}
+        onOpenChange={(open) => {
+          if (!open) setSelectedSlip(null)
+        }}
+        onSave={handleSaveSlip}
+      />
     </SidebarProvider>
   )
 }
