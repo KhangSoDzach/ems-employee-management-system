@@ -2,7 +2,6 @@ package com.company.ems.backend.common.exception;
 
 import com.company.ems.backend.asset.exception.AssetStateException;
 import com.company.ems.backend.common.audit.SecurityAuditService;
-import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.enums.ErrorCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.response.ApiErrorResponse;
@@ -40,7 +39,7 @@ public class GlobalExceptionHandler {
 
         private final MessageService       messageService;
         private final SecurityAuditService auditService;
-
+        
         @ExceptionHandler(AppException.class)
         public ResponseEntity<ApiErrorResponse> handleAppException(
                 AppException ex, HttpServletRequest req) {
@@ -48,48 +47,6 @@ public class GlobalExceptionHandler {
                 ErrorCode code = ex.getErrorCode();
                 log.warn("[{}] AppException code={} path={}", traceId(), code.name(), req.getRequestURI());
                 return responseFromCode(code, req);
-        }
-
-        @ExceptionHandler(ResourceNotFoundException.class)
-        public ResponseEntity<ApiErrorResponse> handleNotFound(
-                ResourceNotFoundException ex, HttpServletRequest req) {
-
-                log.warn("[{}] ResourceNotFound resource={} field={} value={} path={}",
-                        traceId(), ex.getResource(), ex.getField(), ex.getValue(), req.getRequestURI());
-
-                ApiErrorResponse body = ApiErrorResponse.of(
-                        HttpStatus.NOT_FOUND.value(),
-                        "RESOURCE_NOT_FOUND",
-                        ex.getMessage(),
-                        req.getRequestURI(),
-                        traceId());
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-        }
-
-        @ExceptionHandler(AssetStateException.class)
-        public ResponseEntity<ApiResponse<Void>> handleAssetStateException(
-                AssetStateException ex) {
-
-                log.warn("Asset state error: {}", ex.getMessage());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
-        }
-
-        @ExceptionHandler(BusinessException.class)
-        public ResponseEntity<ApiErrorResponse> handleBusiness(
-                BusinessException ex, HttpServletRequest req) {
-
-                log.warn("[{}] BusinessException code={} message={} path={}",
-                        traceId(), ex.getErrorCode(), ex.getMessage(), req.getRequestURI());
-
-                ApiErrorResponse body = ApiErrorResponse.of(
-                        HttpStatus.BAD_REQUEST.value(),
-                        ex.getErrorCode(),
-                        ex.getMessage(),
-                        req.getRequestURI(),
-                        traceId());
-
-                return ResponseEntity.badRequest().body(body);
         }
 
         @ExceptionHandler(BadCredentialsException.class)
@@ -143,8 +100,8 @@ public class GlobalExceptionHandler {
                 JwtException ex, HttpServletRequest req) {
 
                 auditService.logTokenInvalid(req);
-                log.warn("[{}] JWT invalid={} path={}",
-                        traceId(), ex.getClass().getSimpleName(), req.getRequestURI());
+                log.warn("[{}] JWT invalid={} path={}", traceId(),
+                        ex.getClass().getSimpleName(), req.getRequestURI());
                 return responseFromCode(ErrorCode.AUTH_TOKEN_INVALID, req);
         }
 
@@ -157,14 +114,41 @@ public class GlobalExceptionHandler {
                 return responseFromCode(ErrorCode.ACCESS_DENIED, req);
         }
 
-        // handle ForbiddenException thrown by data scope checks, map to 403
-        @ExceptionHandler(com.company.ems.backend.common.exception.ForbiddenException.class)
+        @ExceptionHandler(ForbiddenException.class)
         public ResponseEntity<ApiErrorResponse> handleForbidden(
-                com.company.ems.backend.common.exception.ForbiddenException ex, HttpServletRequest req) {
+                ForbiddenException ex, HttpServletRequest req) {
 
-                auditService.logAccessDenied(req);
-                log.warn("[{}] Forbidden path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
-                return responseFromCode(ErrorCode.ACCESS_DENIED, req);
+                log.warn("[{}] Forbidden path={} msg={}", traceId(), req.getRequestURI(), ex.getMessage());
+                return response(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED,
+                        ex.getMessage(), req);
+        }
+
+        @ExceptionHandler(ResourceNotFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleNotFound(
+                ResourceNotFoundException ex, HttpServletRequest req) {
+
+                log.warn("[{}] NotFound path={} msg={}", traceId(), req.getRequestURI(), ex.getMessage());
+                return response(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND,
+                        ex.getMessage(), req);
+        }
+
+        @ExceptionHandler(AssetStateException.class)
+        public ResponseEntity<ApiErrorResponse> handleAssetState(
+                AssetStateException ex, HttpServletRequest req) {
+
+                log.warn("[{}] AssetState path={} msg={}", traceId(), req.getRequestURI(), ex.getMessage());
+                return response(HttpStatus.BAD_REQUEST, ErrorCode.VALID_REQUEST_BODY,
+                        ex.getMessage(), req);
+        }
+
+        @ExceptionHandler(BusinessException.class)
+        public ResponseEntity<ApiErrorResponse> handleBusiness(
+                BusinessException ex, HttpServletRequest req) {
+
+                log.warn("[{}] Business error={} path={} msg={}", traceId(),
+                        ex.getErrorCode(), req.getRequestURI(), ex.getMessage());
+                return response(HttpStatus.BAD_REQUEST, ErrorCode.VALID_REQUEST_BODY,
+                        ex.getMessage(), req);
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -191,8 +175,9 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(HttpMessageNotReadableException.class)
         public ResponseEntity<ApiErrorResponse> handleNotReadable(
                 HttpMessageNotReadableException ex, HttpServletRequest req) {
-                log.warn("[{}] Not readable cause={} path={}",
-                        traceId(), ex.getMostSpecificCause().getMessage(), req.getRequestURI());
+
+                log.warn("[{}] Not readable path={} cause={}", traceId(),
+                        req.getRequestURI(), ex.getMostSpecificCause().getMessage());
                 return responseFromCode(ErrorCode.VALID_REQUEST_BODY, req);
         }
 
@@ -224,61 +209,9 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(DataIntegrityViolationException.class)
         public ResponseEntity<ApiErrorResponse> handleDataIntegrity(
                 DataIntegrityViolationException ex, HttpServletRequest req) {
-                log.error("[{}] Data integrity cause={} path={}",
-                        traceId(), ex.getMostSpecificCause().getMessage(), req.getRequestURI());
+
+                log.error("[{}] Data integrity path={}", traceId(), req.getRequestURI());
                 return responseFromCode(ErrorCode.RESOURCE_CONFLICT, req);
-        }
-
-        // ── Business / Domain exceptions ─────────────────────────────────────────────
-
-        /**
-         * Handles {@link BusinessException} thrown when a business rule is violated
-         * (e.g. duplicate email, duplicate national ID).
-         * Returns HTTP 409 Conflict with the business error code and message.
-         */
-        @ExceptionHandler(BusinessException.class)
-        public ResponseEntity<ApiErrorResponse> handleBusiness(
-                BusinessException ex, HttpServletRequest req) {
-
-                log.warn("[{}] Business rule violation code={} path={}: {}",
-                        traceId(), ex.getErrorCode(), req.getRequestURI(), ex.getMessage());
-
-                ApiErrorResponse body = ApiErrorResponse.of(
-                        HttpStatus.CONFLICT.value(),
-                        ex.getErrorCode(),
-                        ex.getMessage(),
-                        req.getRequestURI(),
-                        traceId());
-
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-        }
-
-        /**
-         * Handles {@link ResourceNotFoundException} when entity lookup fails.
-         * Returns HTTP 404 Not Found.
-         */
-        @ExceptionHandler(ResourceNotFoundException.class)
-        public ResponseEntity<ApiErrorResponse> handleNotFound(
-                ResourceNotFoundException ex, HttpServletRequest req) {
-
-                log.warn("[{}] Resource not found path={}: {}",
-                        traceId(), req.getRequestURI(), ex.getMessage());
-
-                return responseFromCode(ErrorCode.RESOURCE_NOT_FOUND, req);
-        }
-
-        /**
-         * Handles {@link ForbiddenException} for data-scope access violations.
-         * Returns HTTP 403 Forbidden.
-         */
-        @ExceptionHandler(ForbiddenException.class)
-        public ResponseEntity<ApiErrorResponse> handleForbidden(
-                ForbiddenException ex, HttpServletRequest req) {
-
-                log.warn("[{}] Forbidden path={}: {}",
-                        traceId(), req.getRequestURI(), ex.getMessage());
-
-                return responseFromCode(ErrorCode.ACCESS_DENIED, req);
         }
 
         @ExceptionHandler(Exception.class)
