@@ -819,6 +819,19 @@ export const SYSTEM_MESSAGES = {
         LINK_FORGOT: "Quên mật khẩu?",
     },
 
+    // Profile Reset Password
+    PROFILE_RESET: {
+        BTN_RESET_PASSWORD: "Thiết lập lại mật khẩu",
+        DIALOG_TITLE: "Đổi mật khẩu",
+        DIALOG_DESC: "Đã gửi mã 6 số đến email của bạn",
+        BTN_SEND_OTP: "Gửi mã OTP",
+        BTN_RESEND_OTP: "Gửi lại mã mới",
+        BTN_SENDING_OTP: "Đang gửi...",
+        TOAST_SEND_OTP_SUCCESS: "Mã OTP đã được gửi đến email của bạn!",
+        TOAST_SEND_OTP_LOADING: "Đang gửi mã OTP...",
+        TOAST_EMAIL_REQUIRED: "Vui lòng nhập email công ty",
+    },
+
     // Forgot Password
     FORGOT_PASSWORD: {
         TITLE: "Quên mật khẩu?",

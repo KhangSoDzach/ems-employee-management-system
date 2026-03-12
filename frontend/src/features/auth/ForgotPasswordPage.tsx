@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,6 +28,11 @@ const TEXT = {
     SUCCESS_RESET: "Đổi mật khẩu thành công!",
 };
 
+interface ForgotPasswordPageProps {
+    isProfileMode?: boolean;
+    userEmail?: string;
+}
+
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const emailSchema = z.object({
@@ -53,17 +58,23 @@ type OtpPasswordFormValues = z.infer<typeof otpAndPasswordSchema>;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const ForgotPasswordPage = () => {
+export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: ForgotPasswordPageProps) => {
     const navigate = useNavigate();
 
     /** 1 = enter email | 2 = enter OTP + new password | 3 = success */
-    const [step, setStep] = useState<1 | 2 | 3>(1);
-    const [savedEmail, setSavedEmail] = useState("");
+    const [step, setStep] = useState<1 | 2 | 3>(isProfileMode ? 2 : 1);
+    const [savedEmail, setSavedEmail] = useState(userEmail);
     const [timeLeft, setTimeLeft] = useState(300);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+
+    useEffect(() => {
+        if (isProfileMode && userEmail) {
+            setSavedEmail(userEmail);
+        }
+    }, [isProfileMode, userEmail]);
 
     // ── Form: step 1 ──
     const {
@@ -171,29 +182,34 @@ export const ForgotPasswordPage = () => {
         }
     };
 
+    const handleProfileSendOtp = async (email?: string) => {
+        const targetEmail = email || (document.getElementById("email") as HTMLInputElement)?.value;
+        if (!targetEmail) {
+            toast.error(SYSTEM_MESSAGES.PROFILE_RESET.TOAST_EMAIL_REQUIRED);
+            return;
+        }
+
+        toast.dismiss();
+
+        const promise = forgotPassword(targetEmail).then(() => {
+            setSavedEmail(targetEmail);
+            setTimeLeft(300);
+            setIsTimerRunning(true);
+        });
+
+        toast.promise(promise, {
+            loading: SYSTEM_MESSAGES.PROFILE_RESET.TOAST_SEND_OTP_LOADING,
+            success: SYSTEM_MESSAGES.PROFILE_RESET.TOAST_SEND_OTP_SUCCESS,
+            error: (err: unknown) => {
+                return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? TEXT.TOAST_SEND_ERROR;
+            },
+        });
+    };
+
     // ─── Render ───────────────────────────────────────────────────────────────
 
-    return (
-        <div className="min-h-screen w-full relative flex items-center justify-center bg-background overflow-hidden p-4">
-            {/* Background */}
-            <div
-                className="absolute inset-0 z-0"
-                style={{
-                    background: "#ffffff",
-                    backgroundImage: `radial-gradient(circle at top right, rgba(249, 86, 86, 0.938), transparent 70%)`,
-                    filter: "blur(80px)",
-                    backgroundRepeat: "no-repeat",
-                }}
-            />
-            <div
-                className="absolute inset-0 z-0 opacity-40 pointer-events-none"
-                style={{
-                    backgroundImage: `linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)`,
-                    backgroundSize: "24px 24px",
-                    maskImage: `radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%)`,
-                }}
-            />
-
+    const renderContent = () => (
+        <>
             <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
 
                 <CardHeader className="text-center space-y-2 pb-6">
@@ -204,21 +220,134 @@ export const ForgotPasswordPage = () => {
                     </div>
 
                     <CardTitle className="text-2xl font-bold">
-                        {step === 1 && TEXT.TITLE}
-                        {step === 2 && TEXT.TITLE_OTP}
+                        {isProfileMode && SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_TITLE}
+                        {!isProfileMode && step === 1 && TEXT.TITLE}
+                        {!isProfileMode && step === 2 && TEXT.TITLE_OTP}
                         {step === 3 && TEXT.SUCCESS_TITLE}
                     </CardTitle>
 
                     <CardDescription>
-                        {step === 1 && TEXT.DESC}
-                        {step === 2 && <>{TEXT.DESC_OTP_PREFIX}<span className="font-semibold text-foreground">{savedEmail}</span></>}
+                        {isProfileMode && SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_DESC}
+                        {!isProfileMode && step === 1 && TEXT.DESC}
+                        {!isProfileMode && step === 2 && <>{TEXT.DESC_OTP_PREFIX}<span className="font-semibold text-foreground">{savedEmail}</span></>}
                         {step === 3 && TEXT.SUCCESS_DESC}
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
 
-                    {/* ── Step 1: Email ── */}
+                    {/* ── Profile Mode: OTP + Password (Step 2) ── */}
+                    {isProfileMode && step === 2 && (
+                        <form onSubmit={handleSubmitForm(onSubmitReset, onError)} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+
+                            {/* OTP input */}
+                            <div className="space-y-2">
+                                <RequiredLabel
+                                    htmlFor="otp"
+                                    className={cn("justify-center", formErrors.otp ? "text-destructive" : "")}
+                                >
+                                    {TEXT.LABEL_OTP}
+                                </RequiredLabel>
+                                <Input
+                                    id="otp"
+                                    type="text"
+                                    placeholder={TEXT.PLACEHOLDER_OTP}
+                                    className={`text-center text-2xl tracking-[0.5em] font-bold h-14 ${formErrors.otp ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                                    maxLength={6}
+                                    inputMode="numeric"
+                                    disabled={isFormSubmitting}
+                                    {...registerForm("otp")}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9]/g, "");
+                                        registerForm("otp").onChange({ target: { value, name: "otp" } });
+                                        e.target.value = value;
+                                    }}
+                                />
+                                {formErrors.otp && <p className="text-red-500 text-xs mt-1 text-center">{formErrors.otp.message}</p>}
+                            </div>
+                            {/* Send OTP Button - Below OTP */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full font-semibold border-primary/30 text-primary hover:bg-primary/5"
+                                onClick={() => handleProfileSendOtp(savedEmail)}
+                                disabled={isResending}
+                            >
+                                {isResending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_RESENDING}</> : SYSTEM_MESSAGES.PROFILE_RESET.BTN_SEND_OTP}
+                            </Button>
+                            {/* Timer */}
+                            <div className="flex items-center justify-center text-xs">
+                                <p className={`flex items-center gap-1 ${timeLeft === 0 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                                    <Timer className="w-3 h-3" />
+                                    {timeLeft > 0 ? `${TEXT.OTP_VALID_SUFFIX}${formatTime(timeLeft)}` : TEXT.OTP_EXPIRED}
+                                </p>
+                            </div>
+
+                            {/* New Password */}
+                            <div className="space-y-2">
+                                <RequiredLabel
+                                    htmlFor="newPassword"
+                                    className={formErrors.newPassword ? "text-destructive" : ""}
+                                >
+                                    {TEXT.LABEL_PASSWORD}
+                                </RequiredLabel>
+                                <div className="relative">
+                                    <Input
+                                        id="newPassword"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder={TEXT.PLACEHOLDER_PASSWORD}
+                                        className={`pr-10 ${formErrors.newPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                                        disabled={isFormSubmitting}
+                                        {...registerForm("newPassword")}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((v) => !v)}
+                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                        tabIndex={-1}
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                                {formErrors.newPassword && <p className="text-red-500 text-xs mt-1">{formErrors.newPassword.message}</p>}
+                            </div>
+
+                            {/* Confirm Password */}
+                            <div className="space-y-2">
+                                <RequiredLabel
+                                    htmlFor="confirmPassword"
+                                    className={formErrors.confirmPassword ? "text-destructive" : ""}
+                                >
+                                    {TEXT.LABEL_CONFIRM}
+                                </RequiredLabel>
+                                <div className="relative">
+                                    <Input
+                                        id="confirmPassword"
+                                        type={showConfirm ? "text" : "password"}
+                                        placeholder={TEXT.PLACEHOLDER_CONFIRM}
+                                        className={`pr-10 ${formErrors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                                        disabled={isFormSubmitting}
+                                        {...registerForm("confirmPassword")}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirm((v) => !v)}
+                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                        tabIndex={-1}
+                                    >
+                                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                                {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword.message}</p>}
+                            </div>
+
+                            <Button className="w-full font-bold" size="lg" disabled={isFormSubmitting}>
+                                {isFormSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_VERIFYING}</> : TEXT.BTN_VERIFY}
+                            </Button>
+                        </form>
+                    )}
+
+                    {/* ── Step 1: Email (Non-Profile Mode) ── */}
                     {step === 1 && (
                         <form onSubmit={handleSubmitEmail(onSendCode, onError)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="space-y-2">
@@ -247,8 +376,8 @@ export const ForgotPasswordPage = () => {
                         </form>
                     )}
 
-                    {/* ── Step 2: OTP + New Password ── */}
-                    {step === 2 && (
+                    {/* ── Step 2: OTP + New Password (Non-Profile Mode) ── */}
+                    {!isProfileMode && step === 2 && (
                         <form onSubmit={handleSubmitForm(onSubmitReset, onError)} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
 
                             {/* OTP input */}
@@ -363,14 +492,14 @@ export const ForgotPasswordPage = () => {
                             <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
                                 <CheckCircle2 className="w-10 h-10 text-green-500" />
                             </div>
-                            <Button className="w-full font-bold" size="lg" onClick={() => navigate("/login")}>
-                                {TEXT.BTN_GO_LOGIN}
+                            <Button className="w-full font-bold" size="lg" onClick={() => isProfileMode ? window.location.reload() : navigate("/login")}>
+                                {isProfileMode ? SYSTEM_MESSAGES.BTN_CLOSE : TEXT.BTN_GO_LOGIN}
                             </Button>
                         </div>
                     )}
 
                     {/* Back link */}
-                    {step !== 3 && (
+                    {!isProfileMode && step !== 3 && (
                         <div className="text-center pt-2">
                             {step === 1 ? (
                                 <Link to="/login" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
@@ -380,7 +509,7 @@ export const ForgotPasswordPage = () => {
                             ) : (
                                 <button
                                     type="button"
-                                    onClick={() => { setStep(1); setIsTimerRunning(false); }}
+                                    onClick={() => { setStep(isProfileMode ? 0 : 1); setIsTimerRunning(false); }}
                                     className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -392,6 +521,34 @@ export const ForgotPasswordPage = () => {
 
                 </CardContent>
             </Card>
+        </>
+    );
+
+    if (isProfileMode) {
+        return renderContent();
+    }
+
+    return (
+        <div className="min-h-screen w-full relative flex items-center justify-center bg-background overflow-hidden p-4">
+            {/* Background */}
+            <div
+                className="absolute inset-0 z-0"
+                style={{
+                    background: "#ffffff",
+                    backgroundImage: `radial-gradient(circle at top right, rgba(249, 86, 86, 0.938), transparent 70%)`,
+                    filter: "blur(80px)",
+                    backgroundRepeat: "no-repeat",
+                }}
+            />
+            <div
+                className="absolute inset-0 z-0 opacity-40 pointer-events-none"
+                style={{
+                    backgroundImage: `linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)`,
+                    backgroundSize: "24px 24px",
+                    maskImage: `radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%)`,
+                }}
+            />
+            {renderContent()}
         </div>
     );
 };
