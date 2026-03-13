@@ -176,6 +176,35 @@ public class AuthController {
         }
 
         /**
+         * Change password for the current authenticated user
+         * POST /api/v1/auth/change-password
+         *
+         * @param request Update password request
+         * @return Success message
+         */
+        @PostMapping("/change-password")
+        @SecurityRequirement(name = "bearerAuth")
+        @Operation(summary = "Change password", description = "Change password for the current authenticated user")
+        public ResponseEntity<ApiResponse<Void>> changePassword(
+                        @Valid @RequestBody com.company.ems.backend.auth.dto.ChangePasswordRequest request,
+                        @AuthenticationPrincipal UserDetails userDetails,
+                        HttpServletRequest httpRequest) {
+
+                if (userDetails == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(ApiResponse.error(messages.get(MessageCode.ERROR_UNAUTHENTICATED)));
+                }
+
+                User user = authenticationService.getUserByUsername(userDetails.getUsername());
+                RequestContext ctx = buildRequestContext(httpRequest);
+
+                authenticationService.changePassword(user.getId(), request, ctx);
+
+                return ResponseEntity.ok(
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
+        }
+
+        /**
          * Extract device information from HTTP request
          *
          * @param request HTTP request
