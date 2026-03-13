@@ -360,6 +360,31 @@ export const SYSTEM_MESSAGES = {
         CREATE_BTN_SUBMITTING: "Đang gửi...",
     },
 
+    // Unified Requests (Leave + Adjustment)
+    REQUEST: {
+        HEADING: "Yêu cầu của tôi",
+        TITLE: "Quản lý yêu cầu",
+        DESC: "Tạo và quản lý các yêu cầu nghỉ phép, điều chỉnh chấm công và các yêu cầu khác.",
+        BTN_CREATE: "Tạo yêu cầu",
+        CREATE_LEAVE: "Xin nghỉ phép",
+        CREATE_ADJUSTMENT: "Điều chỉnh chấm công",
+        CREATE_OTHER: "Yêu cầu khác",
+        SEARCH_PLACEHOLDER: "Tìm kiếm yêu cầu...",
+        FILTER_STATUS: "Trạng thái",
+        FILTER_TYPE: "Loại yêu cầu",
+        FILTER_ALL_STATUS: "Tất cả trạng thái",
+        FILTER_ALL_TYPE: "Tất cả loại",
+        TABLE_ID: "Mã yêu cầu",
+        TABLE_DATE_CREATED: "Ngày tạo",
+        TABLE_TYPE: "Loại yêu cầu",
+        TABLE_STATUS: "Trạng thái",
+        TABLE_REASON: "Vấn đề",
+        EMPTY_TITLE: "Chưa có yêu cầu nào",
+        EMPTY_DESC: "Bạn chưa tạo yêu cầu nào.",
+        EMPTY_FILTER_TITLE: "Không tìm thấy yêu cầu nào",
+        EMPTY_FILTER_DESC: "Thử điều chỉnh bộ lọc hoặc tìm kiếm khác.",
+    },
+
     // Asset Management
     ASSET: {
         TITLE: "Quản lý tài sản",
@@ -591,6 +616,8 @@ export const SYSTEM_MESSAGES = {
         LABEL_DESC: "Mô tả",
         // New keys added to fix errors
         MSG_REQUIRE_NAME: "Vui lòng nhập tên tài sản",
+        MSG_REQUIRE_TYPE: "Vui lòng nhập loại tài sản",
+        MSG_REQUIRE_LOCATION: "Vui lòng nhập vị trí",
         MSG_CREATE_SUCCESS: "Tạo tài sản thành công!",
         MSG_CREATE_ERROR: "Không thể tạo tài sản. Vui lòng thử lại.",
         LABEL_IMAGE: "Hình ảnh tài sản",
@@ -948,6 +975,7 @@ export const SYSTEM_MESSAGES = {
         FILTER_EMPLOYEE_PLACEHOLDER: "Tìm kiếm nhân viên...",
         FILTER_STATUS: "Trạng thái",
         BTN_RESET: "Đặt lại",
+        BTN_CLEAR: "Xóa bộ lọc",
         BTN_SEARCH: "Tìm kiếm",
         TABLE_EMPLOYEE: "Nhân viên",
         TABLE_DEPARTMENT: "Phòng ban/Vị trí",

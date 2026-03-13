@@ -71,7 +71,11 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   const set = (field: keyof AssetCreatePayload, value: unknown) => {
     setForm((f) => ({ ...f, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
     }
   };
 
@@ -83,12 +87,12 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
     if (!form.assetName.trim()) newErrors.assetName = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
-    if (!form.assetType?.trim()) newErrors.assetType = "Vui lòng nhập loại tài sản";
-    if (!form.location?.trim()) newErrors.location = "Vui lòng nhập vị trí";
+    if (!form.assetType?.trim()) newErrors.assetType = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
+    if (!form.location?.trim()) newErrors.location = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error("Vui lòng điền đầy đủ thông tin");
+      toast.error(Object.values(newErrors)[0]);
       return;
     }
 
@@ -113,14 +117,15 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
-      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* HEADER */}
-        <div className="flex items-center justify-between px-8 py-5 border-b">
+        <div className="flex items-center justify-between px-8 py-5 border-b flex-none">
           <h2 className="text-xl font-semibold text-gray-900">{SYSTEM_MESSAGES.ASSET_CREATE.TITLE_ADD}</h2>
           <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8 max-h-[80vh] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8 min-h-0">
           {/* LEFT COLUMN */}
           <div className="lg:col-span-1 space-y-6">
             {/* IMAGE UPLOAD */}
@@ -277,10 +282,11 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
                 className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-primary" />
             </div>
           </div>
+          </div>
         </div>
 
         {/* FOOTER */}
-        <div className="flex justify-end gap-3 px-8 py-5 border-t bg-gray-50">
+        <div className="flex justify-end gap-3 px-8 py-5 border-t bg-gray-50 flex-none">
           <button onClick={onClose}
             className="px-5 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-white">
             {SYSTEM_MESSAGES.BTN_CANCEL}
