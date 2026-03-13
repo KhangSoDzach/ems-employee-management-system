@@ -99,8 +99,8 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 url: "/approve-adjustments",
               },
               {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_ADJ || "Điều chỉnh chấm công",
-                url: "/adjustment-requests",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
+                url: "/request",
               },
               {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_GROUP_ASSET,
@@ -152,8 +152,8 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                   url: "/assets",
                 },
                 {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_ADJ || "Điều chỉnh chấm công",
-                  url: "/adjustment-requests",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST ,
+                  url: "/request",
                 },
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
@@ -184,7 +184,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                   url: "/checkin",
                 },
                 {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_LEAVE,
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
                   url: "/request",
                 },
                 
