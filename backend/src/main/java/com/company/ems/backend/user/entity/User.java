@@ -64,6 +64,13 @@ public class User extends BaseEntity {
     private Boolean credentialsNonExpired = true;
 
     @Column
+    private LocalDateTime lastPasswordChange;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean forcePasswordChange = false;
+
+    @Column
     private LocalDateTime lastLogin;
 
     @Column

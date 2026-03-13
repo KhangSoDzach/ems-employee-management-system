@@ -25,6 +25,8 @@ import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.user.entity.User;
 import com.company.ems.backend.user.repository.UserRepository;
+import com.company.ems.backend.auth.dto.ChangePasswordRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ public class AuthenticationService {
     private final CustomUserDetailsService userDetailsService;
     private final JwtProperties jwtProperties;
     private final AuditLogService auditLogService;
+    private final PasswordEncoder passwordEncoder;
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCK_DURATION_MINUTES = 15;
@@ -171,6 +174,39 @@ public class AuthenticationService {
                 AuthActionType.TOKEN_REVOKED, actor, String.valueOf(userId),
                 actor, "JWT", "SUCCESS", ctx);
         log.info("User logged out from all devices: {}", userId);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request, RequestContext ctx) {
+        log.debug("Change password request for user ID: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadCredentialsException("User not found: ID " + userId));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            log.warn("Change password failed: invalid current password for user: {}", user.getUsername());
+            auditLogService.logAuthEvent(
+                    AuthActionType.LOGIN_FAILED, user.getUsername(), String.valueOf(user.getId()),
+                    user.getUsername(), "JWT", "FAILED", ctx);
+            throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("New password cannot be the same as the current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setLastPasswordChange(LocalDateTime.now());
+        user.setForcePasswordChange(false);
+        userRepository.save(user);
+
+        // Terminate all sessions across devices
+        refreshTokenService.revokeAllUserTokens(user.getId());
+
+        auditLogService.logAuthEvent(
+                AuthActionType.PASSWORD_CHANGED, user.getUsername(), String.valueOf(user.getId()),
+                user.getUsername(), "JWT", "SUCCESS", ctx);
+        log.info("Password changed successfully for user: {}", user.getUsername());
     }
 
     private void handleFailedLoginAttempt(User user) {

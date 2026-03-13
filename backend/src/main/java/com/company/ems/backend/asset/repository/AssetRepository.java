@@ -1,19 +1,23 @@
 package com.company.ems.backend.asset.repository;
 
-import com.company.ems.backend.asset.entity.Asset;
-import com.company.ems.backend.asset.enums.AssetStatus;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Optional;
+import com.company.ems.backend.asset.entity.Asset;
+import com.company.ems.backend.asset.enums.AssetStatus;
 
 public interface AssetRepository extends JpaRepository<Asset, Long> {
 
     @Query("SELECT a FROM Asset a WHERE a.id = :id AND a.deleted = false")
     Optional<Asset> findActiveById(@Param("id") Long id);
+
+        @Query("SELECT a FROM Asset a WHERE a.assetCode = :assetCode AND a.deleted = false")
+        Optional<Asset> findActiveByAssetCode(@Param("assetCode") String assetCode);
 
     @Query("""
             SELECT a FROM Asset a

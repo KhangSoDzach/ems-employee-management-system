@@ -1,5 +1,14 @@
 package com.company.ems.backend.asset.mapper;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.company.ems.backend.asset.dto.AssetDto;
 import com.company.ems.backend.asset.entity.Asset;
 import com.company.ems.backend.asset.entity.AssetHistory;
@@ -9,15 +18,8 @@ import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.entity.Employee;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -84,6 +86,7 @@ public class AssetMapper {
 
     public AssetDto.Summary toSummary(Asset a) {
         return AssetDto.Summary.builder()
+                .dbId(a.getId())
                 .id(a.getAssetCode())
                 .name(a.getAssetName())
                 .desc(a.getDescription())
