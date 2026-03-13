@@ -43,19 +43,27 @@ export default function AssetManagementPage() {
   const [openDetail, setOpenDetail] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<AssetDetail | null>(null);
 
   const handleOpenDetail = useCallback(async (summary: AssetSummary) => {
-    setSelectedId(summary.id);
+    if (summary.dbId == null) {
+      toast.error(SYSTEM_MESSAGES.ERROR);
+      return;
+    }
+    setSelectedId(summary.dbId);
     setOpenDetail(true);
   }, []);
 
   const handleOpenEdit = useCallback(async (summary: AssetSummary) => {
+    if (summary.dbId == null) {
+      toast.error(SYSTEM_MESSAGES.ERROR);
+      return;
+    }
     setLoading(true);
     try {
-      const full = await assetService.getAssetById(summary.id);
-      setSelectedId(summary.id);
+      const full = await assetService.getAssetById(summary.dbId);
+      setSelectedId(summary.dbId);
       setSelectedAsset(full);
       setOpenEdit(true);
     } catch {
@@ -95,7 +103,7 @@ export default function AssetManagementPage() {
 
   useEffect(() => { fetchList(); }, [fetchList]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm(SYSTEM_MESSAGES.BTN_DELETE + "?")) return;
     try {
       await assetService.deleteAsset(id);
@@ -250,7 +258,7 @@ export default function AssetManagementPage() {
                           <Trash2
                             size={18}
                             className="cursor-pointer hover:text-red-500"
-                            onClick={() => handleDelete(asset.id)}
+                            onClick={() => asset.dbId != null && handleDelete(asset.dbId)}
                           />
                         </div>
                       </td>

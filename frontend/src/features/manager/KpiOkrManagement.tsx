@@ -36,48 +36,10 @@ function progressColor(p: number) {
 
 export default function KpiOkrManagement() {
   const t = SYSTEM_MESSAGES.KPI_OKR
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [items, setItems]             = useState<KpiItem[]>([])
-  const [summary, setSummary]         = useState<SummaryData | null>(null)
-  const [loading, setLoading]         = useState(false)
-  const [search, setSearch]           = useState("")
-  const [page, setPage]               = useState(0)
-  const [totalPages, setTotalPages]   = useState(1)
-  const [totalElements, setTotalElements] = useState(0)
-
-  const fetchList = useCallback(async (p = 0, q = "") => {
-    setLoading(true)
-    try {
-      const params: Record<string, unknown> = { page: p, size: 10 }
-      if (q.trim()) params.search = q.trim()
-      const res = await api.get("/kpi-objectives", { params }) as { data: PageResponse }
-      setItems(res.data.content ?? [])
-      setTotalPages(res.data.totalPages ?? 1)
-      setTotalElements(res.data.totalElements ?? 0)
-    } catch { setItems([]) }
-    finally { setLoading(false) }
-  }, [])
-
-  const fetchSummary = useCallback(async () => {
-    try {
-      const res = await api.get("/kpi-objectives/summary") as { data: SummaryData }
-      setSummary(res.data)
-    } catch { /* optional */ }
-  }, [])
-
-  useEffect(() => { fetchList(0); fetchSummary() }, [fetchList, fetchSummary])
-
-  useEffect(() => {
-    const id = setTimeout(() => { setPage(0); fetchList(0, search) }, 400)
-    return () => clearTimeout(id)
-  }, [search, fetchList])
-
-  const handleSuccess = () => { fetchList(page, search); fetchSummary() }
-  const goPage = (p: number) => { setPage(p); fetchList(p, search) }
-
-  const totalWeight = summary?.totalWeight ?? 0
-  const weightPct   = Math.min(totalWeight, 100)
-  const isActive    = totalWeight >= 100
+  const totalWeight = mockData.reduce((sum, row) => sum + row.weight, 0)
+  const totalTargets = mockData.length
+  const daysLeft = 45
+  const paginationRangeText = `1-4 `
 
   return (
     <SidebarProvider>
@@ -97,8 +59,8 @@ export default function KpiOkrManagement() {
                   <span>{t.TOTAL_WEIGHT}</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-red-600">{weightPct}%</span>
-                  <span className="text-sm text-muted-foreground font-medium">/ 100% mục tiêu</span>
+                  <span className="text-4xl font-bold text-red-600">{totalWeight}%</span>
+                  <span className="text-sm text-muted-foreground font-medium">/ 100%</span>
                 </div>
                 <div className="w-full max-w-md bg-muted rounded-full h-2.5 overflow-hidden">
                   <div className={`h-2.5 rounded-full transition-all ${isActive ? "bg-emerald-500" : "bg-red-600"}`}
@@ -112,11 +74,11 @@ export default function KpiOkrManagement() {
               <div className="flex flex-col border-l pl-8 space-y-6 min-w-[200px]">
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-1">{t.TARGET_COUNT}</p>
-                  <p className="text-2xl font-bold text-foreground">{totalElements}</p>
+                  <p className="text-2xl font-bold text-foreground">{totalTargets}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-1">{t.DAYS_LEFT}</p>
-                  <p className="text-2xl font-bold text-foreground">{summary?.daysLeft ?? "—"} {summary ? t.DAYS : ""}</p>
+                  <p className="text-2xl font-bold text-foreground">{daysLeft}{t.DAYS}</p>
                 </div>
               </div>
             </div>
@@ -202,17 +164,24 @@ export default function KpiOkrManagement() {
               )}
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">
-                  <span className="text-sm text-muted-foreground">{t.PAGINATION_SHOW} {items.length}/{totalElements} {t.PAGINATION_ITEMS}</span>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" disabled={page === 0} onClick={() => goPage(page - 1)}><ChevronLeft className="w-4 h-4" /></Button>
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <Button key={i} size="icon" className={`w-8 h-8 ${i === page ? "bg-[#e41b21] hover:bg-[#c9181d] text-white" : ""}`}
-                        variant={i === page ? "default" : "ghost"} onClick={() => goPage(i)}>{i + 1}</Button>
-                    ))}
-                    <Button variant="outline" size="icon" disabled={page >= totalPages - 1} onClick={() => goPage(page + 1)}><ChevronRight className="w-4 h-4" /></Button>
-                  </div>
+              <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">
+                <span className="text-sm text-muted-foreground">{t.PAGINATION_SHOW}{paginationRangeText}{t.PAGINATION_ITEMS}</span>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" disabled>
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button size="icon" className="bg-[#e41b21] hover:bg-[#c9181d] text-white w-8 h-8">
+                    {1}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="w-8 h-8">
+                    {2}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="w-8 h-8">
+                    {3}
+                  </Button>
+                  <Button variant="outline" size="icon">
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
                 </div>
               )}
             </div>

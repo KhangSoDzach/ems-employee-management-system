@@ -50,6 +50,41 @@ function statusLabel(s: AttendanceRecord["status"]) {
 
 type CheckStatus = "unchecked" | "checked_in" | "checked_out"
 
+function dateKeyFromRecord(record: AttendanceRecord | null): string | null {
+    if (!record) return null
+
+    if (typeof record.date === "string" && record.date.length >= 10) {
+        return record.date.slice(0, 10)
+    }
+
+    if (record.checkInTime) {
+        const d = new Date(record.checkInTime)
+        if (!Number.isNaN(d.getTime())) {
+            return format(d, "yyyy-MM-dd")
+        }
+    }
+
+    return null
+}
+
+function upsertHistoryRecord(history: AttendanceRecord[], record: AttendanceRecord): AttendanceRecord[] {
+    const key = dateKeyFromRecord(record)
+    if (!key) return history
+
+    const existingIdx = history.findIndex((item) => dateKeyFromRecord(item) === key)
+    if (existingIdx >= 0) {
+        const next = [...history]
+        next[existingIdx] = record
+        return next
+    }
+
+    return [record, ...history].sort((a, b) => {
+        const aDate = dateKeyFromRecord(a) ?? ""
+        const bDate = dateKeyFromRecord(b) ?? ""
+        return bDate.localeCompare(aDate)
+    })
+}
+
 export default function CheckinPage() {
     const navigate = useNavigate()
     const effectiveRole = useEffectiveRole()
@@ -87,27 +122,30 @@ export default function CheckinPage() {
 
     // ── Fetch today's record + summary + recent history ───────────────────────
     const fetchAll = useCallback(async () => {
-        try {
-            const today = format(new Date(), "yyyy-MM-dd")
-            const sevenDaysAgo = format(subDays(new Date(), 6), "yyyy-MM-dd")
+        const today = format(new Date(), "yyyy-MM-dd")
+        const sevenDaysAgo = format(subDays(new Date(), 6), "yyyy-MM-dd")
 
-            const [historyPage, sum] = await Promise.all([
-                attendanceService.getAttendance({ page: 0, size: 7, startDate: sevenDaysAgo, endDate: today }),
-                attendanceService.getSummary(),
-            ])
+        const [historyResult, summaryResult] = await Promise.allSettled([
+            attendanceService.getAttendance({ page: 0, size: 7, startDate: sevenDaysAgo, endDate: today }),
+            attendanceService.getSummary(),
+        ])
 
-            const records = historyPage.content
-            setSummary(sum)
+        if (historyResult.status === "fulfilled") {
+            const records = historyResult.value.content ?? []
             setHistory(records)
 
-            // Today's record is the most recent one on today's date
-            const todayRec = records.find(r => r.date === today) ?? null
-            setTodayRecord(todayRec)
-        } catch {
-            // Silently fail - user may not have attendance records yet
-        } finally {
-            setLoading(false)
+            const todayRec = records.find((r) => dateKeyFromRecord(r) === today) ?? null
+            setTodayRecord((prev) => {
+                if (todayRec) return todayRec
+                return dateKeyFromRecord(prev) === today ? prev : null
+            })
         }
+
+        if (summaryResult.status === "fulfilled") {
+            setSummary(summaryResult.value)
+        }
+
+        setLoading(false)
     }, [])
 
     useEffect(() => { fetchAll() }, [fetchAll])
@@ -132,6 +170,7 @@ export default function CheckinPage() {
                     checkInMethod: "CAMERA_GEO",
                 })
                 setTodayRecord(rec)
+                setHistory((prev) => upsertHistoryRecord(prev, rec))
                 toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE)
             } else {
                 const rec = await attendanceService.checkOut({
@@ -141,6 +180,7 @@ export default function CheckinPage() {
                     locationLabel: result.locationLabel,
                 })
                 setTodayRecord(rec)
+                setHistory((prev) => upsertHistoryRecord(prev, rec))
                 toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE)
             }
             await fetchAll()

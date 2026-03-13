@@ -9,6 +9,9 @@ public enum AuthActionType {
     /** User authenticated with valid credentials (SSO or JWT). */
     LOGIN_SUCCESS,
 
+    /** User successfully changed their own password. */
+    PASSWORD_CHANGED,
+
     /**
      * Authentication attempt was rejected (bad credentials, locked account,
      * disabled).

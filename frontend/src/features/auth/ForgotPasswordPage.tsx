@@ -16,6 +16,7 @@ import {
     CardTitle
 } from "@/components/ui/card";
 import { forgotPassword, resetPassword, changePassword } from "./authService";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
@@ -151,33 +152,37 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
         });
     };
 
-    const onSubmitReset = async (data: ResetFormValues) => {
-        toast.dismiss();
-
-        const promise = isProfileMode
-            ? changePassword(data.currentPassword, data.newPassword)
-            : resetPassword(savedEmail, data.otp, data.newPassword);
-
-        toast.promise(promise, {
-            loading: TEXT.LOADING_RESET,
-            success: TEXT.SUCCESS_RESET,
-            error: (err: unknown) => {
-                const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? (isProfileMode ? "Mật khẩu hiện tại không chính xác" : TEXT.TOAST_OTP_INVALID);
-
-                if (isProfileMode) {
-                    setFormError("currentPassword", { message });
-                } else if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
-                    setFormError("otp" as keyof ResetFormValues, { message: TEXT.TOAST_OTP_INVALID });
-                } else {
-                    setFormError("otp" as keyof ResetFormValues, { message });
-                }
-                return message;
-            },
-        });
-
-        try {
-            await promise;
+    const resetMutation = useMutation({
+        mutationFn: (data: ResetFormValues) =>
+            isProfileMode
+                ? changePassword(data.currentPassword, data.newPassword)
+                : resetPassword(savedEmail, data.otp, data.newPassword),
+        onMutate: () => {
+            toast.dismiss();
+            toast.loading(TEXT.LOADING_RESET);
+        },
+        onSuccess: () => {
+            toast.dismiss();
+            toast.success(TEXT.SUCCESS_RESET);
             setStep(3);
+        },
+        onError: (err: unknown) => {
+            toast.dismiss();
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? (isProfileMode ? "Mật khẩu hiện tại không chính xác" : TEXT.TOAST_OTP_INVALID);
+            toast.error(message);
+            if (isProfileMode) {
+                setFormError("currentPassword", { message });
+            } else if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
+                setFormError("otp" as keyof ResetFormValues, { message: TEXT.TOAST_OTP_INVALID });
+            } else {
+                setFormError("otp" as keyof ResetFormValues, { message });
+            }
+        }
+    });
+
+    const onSubmitReset = async (data: ResetFormValues) => {
+        try {
+            await resetMutation.mutateAsync(data);
         } catch (error) {
             console.error("Password change error:", error);
         }
