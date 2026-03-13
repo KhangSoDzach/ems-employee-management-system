@@ -148,6 +148,7 @@ public final class AssetDto {
         private String note;
         private String image;
         private String locationOrUser;
+        private Long assignedEmployeeId;
 
         @Size(max = 100)
         private String contractNumber;

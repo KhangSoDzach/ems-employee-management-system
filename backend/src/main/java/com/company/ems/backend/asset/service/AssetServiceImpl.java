@@ -176,6 +176,12 @@ public class AssetServiceImpl implements AssetService {
         if (req.getValue()          != null) asset.setAssetValue(req.getValue());
         if (req.getPurchaseDate()   != null) asset.setPurchaseDate(req.getPurchaseDate());
         if (req.getLocationOrUser() != null) asset.setLocation(req.getLocationOrUser());
+        if (req.getAssignedEmployeeId() != null) {
+            Employee target = employeeRepo.findById(req.getAssignedEmployeeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", req.getAssignedEmployeeId()));
+            asset.setAssignedTo(target);
+            asset.setLocation(target.getFirstName() + " " + target.getLastName());
+        }
         if (req.getCondition()      != null) asset.setCondition(req.getCondition());
         if (req.getNote()           != null) asset.setNotes(req.getNote());
         if (req.getImage()          != null) asset.setImageUrl(req.getImage());

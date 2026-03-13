@@ -1,5 +1,9 @@
 package com.company.ems.backend.employee.dto;
 
+import java.time.LocalDate;
+
+import com.company.ems.backend.common.validation.ValidAge;
+import com.company.ems.backend.common.validation.ValidationMessages;
 import com.company.ems.backend.employee.enums.ContractType;
 import com.company.ems.backend.employee.enums.Gender;
 
@@ -7,13 +11,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import com.company.ems.backend.common.validation.ValidAge;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 @Data
 @Builder
@@ -62,7 +63,7 @@ public class EmployeeRequest {
     private String taxId;
     private String socialSecurityNumber;
 
-    @Pattern(regexp = "^$|^([0-9]{9}|[0-9]{12})$", message = "INVALID_FORMAT|National ID must be 9 or 12 digits|e.g. 001234567890")
+    @Pattern(regexp = "^$|^([0-9]{9}|[0-9]{12})$", message = ValidationMessages.EMPLOYEE_NATIONAL_ID)
     private String nationalId;
 
     private String bankAccountNumber;

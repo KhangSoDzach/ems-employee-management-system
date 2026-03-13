@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { employeeService, EmployeeRequest, EmployeeResponse } from "@/services/employeeService";
 import { lookupService, DepartmentOption, PositionOption, ManagerOption, MANAGER_LEVEL } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 interface Props {
     open: boolean;
@@ -33,6 +34,35 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const normalizeValidationMessage = (message: string): string => {
+        const parts = message.split("|").map((part) => part.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+            const detail = parts[1] ?? message;
+            const hint = parts[2];
+            return hint ? `${detail} (${hint})` : detail;
+        }
+        return message;
+    };
+
+    const applyServerValidationErrors = (error: any): boolean => {
+        const fieldErrors = error?.response?.data?.fieldErrors;
+        if (fieldErrors && typeof fieldErrors === "object") {
+            const normalized: Record<string, string> = {};
+            Object.entries(fieldErrors as Record<string, unknown>).forEach(([field, message]) => {
+                if (typeof message === "string") {
+                    normalized[field] = normalizeValidationMessage(message);
+                }
+            });
+            setErrors((prev) => ({ ...prev, ...normalized }));
+            const firstFieldError = Object.values(normalized)[0];
+            if (firstFieldError) {
+                toast.error(firstFieldError);
+            }
+            return true;
+        }
+        return false;
+    };
+
     const hasError = (field: string) => !!errors[field];
     const inputClass = (field: string) =>
         `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${
@@ -50,20 +80,23 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.firstName.trim()) newErrors.firstName = "Vui lòng nhập tên";
-        if (!formData.lastName.trim()) newErrors.lastName = "Vui lòng nhập họ";
+        if (!formData.firstName.trim()) newErrors.firstName = FORM_VALIDATION_MESSAGES.REQUIRED;
+        if (!formData.lastName.trim()) newErrors.lastName = FORM_VALIDATION_MESSAGES.REQUIRED;
         if (!formData.email.trim()) {
-            newErrors.email = "Vui lòng nhập email";
+            newErrors.email = FORM_VALIDATION_MESSAGES.REQUIRED;
         } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-            newErrors.email = "Email không hợp lệ";
+            newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_INVALID;
         }
 
-        if (!formData.departmentId) newErrors.departmentId = "Vui lòng chọn phòng ban";
-        if (!formData.positionId) newErrors.positionId = "Vui lòng chọn vị trí";
+        if (!formData.departmentId) newErrors.departmentId = FORM_VALIDATION_MESSAGES.DEPT_REQUIRED;
+        if (!formData.positionId) newErrors.positionId = FORM_VALIDATION_MESSAGES.ROLE_REQUIRED;
         // Date of birth / hire date are not edited here, so we skip validation.
-        if (!formData.salary || formData.salary <= 0) newErrors.salary = "Nhập lương hợp lệ";
+        if (!formData.salary || formData.salary <= 0) newErrors.salary = FORM_VALIDATION_MESSAGES.REQUIRED;
 
         setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            toast.error(Object.values(newErrors)[0] ?? SYSTEM_MESSAGES.EMPLOYEE.MSG_VALIDATION_ERROR);
+        }
         return Object.keys(newErrors).length === 0;
     };
 
@@ -164,7 +197,14 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
             toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_SUCCESS);
             onSuccess();
         } catch (error: any) {
-            const msg = error.response?.data?.message || SYSTEM_MESSAGES.ERROR;
+            if (applyServerValidationErrors(error)) {
+                return;
+            }
+            const rawMessage = error?.response?.data?.message as string | undefined;
+            const msg =
+                rawMessage === "Request body is invalid or missing. Please check the JSON format"
+                    ? SYSTEM_MESSAGES.EMPLOYEE.MSG_VALIDATION_ERROR
+                    : rawMessage || SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_ERROR;
             toast.error(msg);
         } finally {
             setLoading(false);
@@ -224,7 +264,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Họ</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Họ <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             name="lastName"
@@ -235,7 +275,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Tên</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Tên <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             name="firstName"
@@ -246,7 +286,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
                                     </div>
                                     <div className="space-y-1 col-span-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Email công ty</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Email công ty <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             type="email"
@@ -278,7 +318,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản <span className="text-red-500">*</span></label>
                                         <input
                                             type="number"
                                             name="salary"
@@ -301,7 +341,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 <h4 className="flex items-center gap-2 text-xs font-bold text-blue-700 uppercase tracking-widest">Công việc hiện tại</h4>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Phòng ban</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Phòng ban <span className="text-red-500">*</span></label>
                                         <select
                                             name="departmentId"
                                             value={formData.departmentId}
@@ -314,7 +354,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.departmentId && <p className="text-xs text-red-500 mt-1">{errors.departmentId}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Vị trí</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Vị trí <span className="text-red-500">*</span></label>
                                         <select
                                             name="positionId"
                                             value={formData.positionId}
