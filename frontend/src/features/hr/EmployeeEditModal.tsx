@@ -31,6 +31,42 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
         salary: 0,
     });
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const hasError = (field: string) => !!errors[field];
+    const inputClass = (field: string) =>
+        `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${
+            hasError(field)
+                ? "border-red-500 focus:ring-red-500"
+                : "border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary"
+        }`;
+    const selectClass = (field: string) =>
+        `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-white ${
+            hasError(field)
+                ? "border-red-500 focus:ring-red-500"
+                : "border border-gray-200 dark:border-gray-800"
+        }`;
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+
+        if (!formData.firstName.trim()) newErrors.firstName = "Vui lòng nhập tên";
+        if (!formData.lastName.trim()) newErrors.lastName = "Vui lòng nhập họ";
+        if (!formData.email.trim()) {
+            newErrors.email = "Vui lòng nhập email";
+        } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+            newErrors.email = "Email không hợp lệ";
+        }
+
+        if (!formData.departmentId) newErrors.departmentId = "Vui lòng chọn phòng ban";
+        if (!formData.positionId) newErrors.positionId = "Vui lòng chọn vị trí";
+        // Date of birth / hire date are not edited here, so we skip validation.
+        if (!formData.salary || formData.salary <= 0) newErrors.salary = "Nhập lương hợp lệ";
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     useEffect(() => {
         if (open) {
             lookupService.getDepartments().then(setDepartments);
@@ -118,6 +154,10 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
         e.preventDefault();
         if (!employeeId) return;
 
+        if (!validateForm()) {
+            return;
+        }
+
         setLoading(true);
         try {
             await employeeService.updateEmployee(employeeId, formData);
@@ -149,6 +189,12 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
             }
             return updated;
         });
+
+        setErrors(prev => {
+            const next = { ...prev };
+            delete next[name];
+            return next;
+        });
     };
 
     return (
@@ -179,15 +225,37 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Họ</label>
-                                        <input required name="lastName" value={formData.lastName} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800" />
+                                        <input
+                                            required
+                                            name="lastName"
+                                            value={formData.lastName}
+                                            onChange={handleChange}
+                                            className={inputClass("lastName")}
+                                        />
+                                        {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Tên</label>
-                                        <input required name="firstName" value={formData.firstName} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800" />
+                                        <input
+                                            required
+                                            name="firstName"
+                                            value={formData.firstName}
+                                            onChange={handleChange}
+                                            className={inputClass("firstName")}
+                                        />
+                                        {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
                                     </div>
                                     <div className="space-y-1 col-span-2">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Email công ty</label>
-                                        <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800" />
+                                        <input
+                                            required
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            className={inputClass("email")}
+                                        />
+                                        {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Số điện thoại</label>
@@ -211,7 +279,14 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản</label>
-                                        <input type="number" name="salary" value={formData.salary} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 font-bold text-blue-600" />
+                                        <input
+                                            type="number"
+                                            name="salary"
+                                            value={formData.salary}
+                                            onChange={handleChange}
+                                            className={inputClass("salary") + " text-blue-600 font-bold"}
+                                        />
+                                        {errors.salary && <p className="text-xs text-red-500 mt-1">{errors.salary}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Ghi chú</label>
@@ -227,17 +302,30 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Phòng ban</label>
-                                        <select name="departmentId" value={formData.departmentId} onChange={handleChange} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold bg-white">
+                                        <select
+                                            name="departmentId"
+                                            value={formData.departmentId}
+                                            onChange={handleChange}
+                                            className={selectClass("departmentId")}
+                                        >
                                             <option value={0}>Chọn phòng ban...</option>
                                             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                         </select>
+                                        {errors.departmentId && <p className="text-xs text-red-500 mt-1">{errors.departmentId}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Vị trí</label>
-                                        <select name="positionId" value={formData.positionId} onChange={handleChange} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold bg-white" disabled={!formData.departmentId}>
+                                        <select
+                                            name="positionId"
+                                            value={formData.positionId}
+                                            onChange={handleChange}
+                                            className={selectClass("positionId") + " disabled:opacity-50"}
+                                            disabled={!formData.departmentId}
+                                        >
                                             <option value={0}>Chọn vị trí...</option>
                                             {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                                         </select>
+                                        {errors.positionId && <p className="text-xs text-red-500 mt-1">{errors.positionId}</p>}
                                     </div>
 
                                     {!isManagerPosition ? (

@@ -49,6 +49,45 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
         notes: "",
     });
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+
+        if (!formData.firstName.trim()) newErrors.firstName = "Vui lòng nhập tên";
+        if (!formData.lastName.trim()) newErrors.lastName = "Vui lòng nhập họ";
+        if (!formData.email.trim()) {
+            newErrors.email = "Vui lòng nhập email";
+        } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+            newErrors.email = "Email không hợp lệ";
+        }
+
+        if (!formData.departmentId) newErrors.departmentId = "Vui lòng chọn phòng ban";
+        if (!formData.positionId) newErrors.positionId = "Vui lòng chọn vị trí";
+        if (!formData.dateOfBirth) newErrors.dateOfBirth = "Vui lòng chọn ngày sinh";
+        if (!formData.hireDate) newErrors.hireDate = "Vui lòng chọn ngày vào làm";
+
+        if (!formData.salary || formData.salary <= 0) newErrors.salary = "Nhập lương hợp lệ";
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const hasError = (field: string) => !!errors[field];
+    const inputClass = (field: string) =>
+        `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${
+            hasError(field)
+                ? "border-red-500 focus:ring-red-500"
+                : "border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary"
+        }`;
+    const selectClass = (field: string) =>
+        `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-white ${
+            hasError(field)
+                ? "border-red-500 focus:ring-red-500"
+                : "border border-gray-200 dark:border-gray-800"
+        }`;
+
+
     // ✅ AFTER formData is declared — safe to access formData.positionId
     const selectedPosition = positions.find(p => p.id === formData.positionId);
     const isManagerPosition = selectedPosition ? selectedPosition.level >= MANAGER_LEVEL : false;
@@ -77,12 +116,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (formData.departmentId === 0 || formData.positionId === 0) {
-            toast.error("Vui lòng chọn Phòng ban và Vị trí");
-            return;
-        }
-        if (!formData.dateOfBirth) {
-            toast.error("Vui lòng nhập ngày sinh");
+        if (!validateForm()) {
             return;
         }
 
@@ -141,6 +175,13 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
             }
             return updated;
         });
+
+        // Clear field-level validation errors as user types
+        setErrors(prev => {
+            const next = { ...prev };
+            delete next[name];
+            return next;
+        });
     };
 
     return (
@@ -174,15 +215,40 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Họ</label>
-                                        <input required name="lastName" value={formData.lastName} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium" placeholder="VD: Nguyễn Văn" />
+                                        <input
+                                            required
+                                            name="lastName"
+                                            value={formData.lastName}
+                                            onChange={handleChange}
+                                            className={inputClass("lastName")}
+                                            placeholder="VD: Nguyễn Văn"
+                                        />
+                                        {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Tên</label>
-                                        <input required name="firstName" value={formData.firstName} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium" placeholder="VD: A" />
+                                        <input
+                                            required
+                                            name="firstName"
+                                            value={formData.firstName}
+                                            onChange={handleChange}
+                                            className={inputClass("firstName")}
+                                            placeholder="VD: A"
+                                        />
+                                        {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
                                     </div>
                                     <div className="space-y-1 col-span-2">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Email công ty</label>
-                                        <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium" placeholder="email@company.com" />
+                                        <input
+                                            required
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            className={inputClass("email")}
+                                            placeholder="email@company.com"
+                                        />
+                                        {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Số điện thoại</label>
@@ -198,7 +264,15 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Ngày sinh</label>
-                                        <input required type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 outline-none transition-all text-sm font-medium" />
+                                        <input
+                                            required
+                                            type="date"
+                                            name="dateOfBirth"
+                                            value={formData.dateOfBirth}
+                                            onChange={handleChange}
+                                            className={inputClass("dateOfBirth")}
+                                        />
+                                        {errors.dateOfBirth && <p className="text-xs text-red-500 mt-1">{errors.dateOfBirth}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">CCCD/CMND</label>
@@ -245,10 +319,17 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Phòng ban <span className="text-red-500">*</span></label>
-                                        <select required name="departmentId" value={formData.departmentId} onChange={handleChange} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-bold bg-white">
+                                        <select
+                                            required
+                                            name="departmentId"
+                                            value={formData.departmentId}
+                                            onChange={handleChange}
+                                            className={selectClass("departmentId")}
+                                        >
                                             <option value={0}>Chọn phòng ban...</option>
                                             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                         </select>
+                                        {errors.departmentId && <p className="text-xs text-red-500 mt-1">{errors.departmentId}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Vị trí <span className="text-red-500">*</span></label>
@@ -258,7 +339,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                             value={formData.positionId}
                                             onChange={handleChange}
                                             disabled={!formData.departmentId || positionsLoading}
-                                            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-bold bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className={selectClass("positionId") + " disabled:opacity-50 disabled:cursor-not-allowed"}
                                         >
                                             <option value={0}>
                                                 {!formData.departmentId
@@ -274,6 +355,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                         {!formData.departmentId && (
                                             <p className="text-[10px] text-gray-400 italic">Chọn phòng ban để xem danh sách vị trí</p>
                                         )}
+                                        {errors.positionId && <p className="text-xs text-red-500 mt-1">{errors.positionId}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Hợp đồng</label>
@@ -288,7 +370,15 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Ngày vào làm</label>
-                                        <input required type="date" name="hireDate" value={formData.hireDate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-medium" />
+                                        <input
+                                            required
+                                            type="date"
+                                            name="hireDate"
+                                            value={formData.hireDate}
+                                            onChange={handleChange}
+                                            className={inputClass("hireDate")}
+                                        />
+                                        {errors.hireDate && <p className="text-xs text-red-500 mt-1">{errors.hireDate}</p>}
                                     </div>
 
                                     {/* Reporting Manager — chỉ hiện khi vị trí KHÔNG phải manager */}
@@ -336,9 +426,16 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản (Gross)</label>
                                         <div className="relative">
-                                            <input type="number" name="salary" value={formData.salary} onChange={handleChange} className="w-full pl-4 pr-12 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-bold text-blue-600" />
+                                            <input
+                                                type="number"
+                                                name="salary"
+                                                value={formData.salary}
+                                                onChange={handleChange}
+                                                className={inputClass("salary") + " pl-4 pr-12 text-blue-600 font-bold"}
+                                            />
                                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">VNĐ</span>
                                         </div>
+                                        {errors.salary && <p className="text-xs text-red-500 mt-1">{errors.salary}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Ngân hàng</label>
