@@ -30,9 +30,9 @@ type PayrollRow = {
   department: string
   role: string
   baseSalary: string
-  bonus: string
-  allowance: string
-  deduction: string
+  bonus: Array<{ label: string; amount: string }>
+  allowance: Array<{ label: string; amount: string }>
+  deduction: Array<{ label: string; amount: string }>
   netSalary: string
   status: "PROCESSED" | "PENDING" | "REVIEW"
   paymentMethod?: string
@@ -47,9 +47,9 @@ const MOCK_PAYROLL: PayrollRow[] = [
     department: "Engineering",
     role: "Senior Dev",
     baseSalary: "$6,500",
-    allowance: "$450",
-    bonus: "+$200",
-    deduction: "-$120",
+    allowance: [{ label: "Phụ cấp", amount: "$450" }],
+    bonus: [{ label: "Thưởng KPI", amount: "+$200" }],
+    deduction: [{ label: "Khấu trừ", amount: "-$120" }],
     netSalary: "$7,030",
     paymentMethod: "Chuyển khoản",
     paymentReference: "REF-2045",
@@ -62,9 +62,9 @@ const MOCK_PAYROLL: PayrollRow[] = [
     department: "Marketing",
     role: "Specialist",
     baseSalary: "$4,200",
-    allowance: "$300",
-    bonus: "+$0",
-    deduction: "-$50",
+    allowance: [{ label: "Phụ cấp", amount: "$300" }],
+    bonus: [],
+    deduction: [{ label: "Khấu trừ", amount: "-$50" }],
     netSalary: "$4,450",
     paymentMethod: "Tiền mặt",
     paymentReference: "REF-2089",
@@ -77,9 +77,9 @@ const MOCK_PAYROLL: PayrollRow[] = [
     department: "Design",
     role: "UI Designer",
     baseSalary: "$5,000",
-    allowance: "$500",
-    bonus: "+$150",
-    deduction: "-$80",
+    allowance: [{ label: "Phụ cấp", amount: "$500" }],
+    bonus: [{ label: "Thưởng dự án", amount: "+$150" }],
+    deduction: [{ label: "Khấu trừ", amount: "-$80" }],
     netSalary: "$5,570",
     paymentMethod: "Chuyển khoản",
     paymentReference: "REF-2104",
@@ -92,9 +92,9 @@ const MOCK_PAYROLL: PayrollRow[] = [
     department: "Engineering",
     role: "DevOps",
     baseSalary: "$7,800",
-    allowance: "$600",
-    bonus: "+$500",
-    deduction: "-$150",
+    allowance: [{ label: "Phụ cấp", amount: "$600" }],
+    bonus: [{ label: "Thưởng hiệu suất", amount: "+$500" }],
+    deduction: [{ label: "Khấu trừ", amount: "-$150" }],
     netSalary: "$8,750",
     paymentMethod: "Chuyển khoản",
     paymentReference: "REF-2155",
@@ -111,7 +111,27 @@ export default function PayrollManagement() {
   const [employee, setEmployee] = useState("")
   const [status, setStatus] = useState("All Status")
 
+  const calculateTotal = (items: Array<{ amount: string }>) => {
+    return items.reduce((acc, cur) => {
+      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
+      return acc + (Number.isNaN(parsed) ? 0 : parsed)
+    }, 0)
+  }
+
   const handleSaveSlip = (updated: SalarySlip) => {
+    const totalBonus = updated.bonus.reduce((acc, cur) => {
+      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
+      return acc + (Number.isNaN(parsed) ? 0 : parsed)
+    }, 0)
+    const totalAllowance = updated.allowances.reduce((acc, cur) => {
+      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
+      return acc + (Number.isNaN(parsed) ? 0 : parsed)
+    }, 0)
+    const totalDeduction = updated.deductions.reduce((acc, cur) => {
+      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
+      return acc + (Number.isNaN(parsed) ? 0 : parsed)
+    }, 0)
+
     setPayrollRows((prev) =>
       prev.map((row) =>
         row.id === updated.id
@@ -119,8 +139,8 @@ export default function PayrollManagement() {
               ...row,
               baseSalary: updated.baseSalary,
               bonus: updated.bonus,
-              allowance: updated.allowances[0]?.amount ?? row.allowance,
-              deduction: updated.deductions[0]?.amount ?? row.deduction,
+              allowance: updated.allowances,
+              deduction: updated.deductions,
               netSalary: updated.netPay,
               paymentMethod: updated.paymentMethod,
               paymentReference: updated.paymentReference,
@@ -139,10 +159,10 @@ export default function PayrollManagement() {
       paymentDate: "05/05/2024",
       baseSalary: row.baseSalary,
       bonus: row.bonus,
-      allowances: [{ label: "Phụ cấp", amount: row.allowance }],
-      deductions: [{ label: "Khấu trừ", amount: row.deduction }],
+      allowances: row.allowance,
+      deductions: row.deduction,
       totalIncome: row.baseSalary,
-      totalDeductions: row.deduction,
+      totalDeductions: row.deduction[0]?.amount ?? "0",
       netPay: row.netSalary,
       status: row.status === "PROCESSED" ? "paid" : "pending",
       employeeName: row.name,
@@ -290,10 +310,10 @@ export default function PayrollManagement() {
                       <p className="text-sm font-medium">{row.department}</p>
                       <p className="text-xs text-muted-foreground">{row.role}</p>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm font-medium text-right">{row.baseSalary}</TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-right">{row.allowance}</TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-right text-green-600 font-medium">{row.bonus}</TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-right text-red-500 font-medium">{row.deduction}</TableCell>
+                    <TableCell className="px-4 py-4 text-sm text-right">{row.baseSalary}</TableCell>
+                    <TableCell className="px-4 py-4 text-sm text-right">{calculateTotal(row.allowance).toLocaleString("vi-VN")} đ</TableCell>
+                    <TableCell className="px-4 py-4 text-sm text-right text-green-600 font-medium">{calculateTotal(row.bonus).toLocaleString("vi-VN")} đ</TableCell>
+                    <TableCell className="px-4 py-4 text-sm text-right text-red-500 font-medium">{calculateTotal(row.deduction).toLocaleString("vi-VN")} đ</TableCell>
                     <TableCell className="px-4 py-4 text-sm font-bold text-right">{row.netSalary}</TableCell>
                     <TableCell className="px-4 py-4 text-center">
                       <span

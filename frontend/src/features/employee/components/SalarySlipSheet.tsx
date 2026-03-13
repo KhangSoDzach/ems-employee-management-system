@@ -1,4 +1,4 @@
-import { DollarSign, Gift, Percent, FileText } from "lucide-react"
+import { DollarSign, Gift, Percent, FileText, Plus, X } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import {
@@ -20,7 +20,7 @@ export type SalarySlip = {
   period: string
   paymentDate: string
   baseSalary: string
-  bonus: string
+  bonus: Array<{ label: string; amount: string }>
   allowances: Array<{ label: string; amount: string }>
   deductions: Array<{ label: string; amount: string }>
   totalIncome: string
@@ -57,6 +57,11 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
   }, [slip])
 
   if (!slip || !form) return null
+
+  const totalBonus = form.bonus.reduce((acc, cur) => {
+    const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
+    return acc + (Number.isNaN(parsed) ? 0 : parsed)
+  }, 0)
 
   const totalAllowances = form.allowances.reduce((acc, cur) => {
     const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
@@ -217,18 +222,70 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                 <Gift className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold text-lg">Thưởng</h3>
               </div>
-              <div className="bg-muted/20 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Thưởng</span>
-                  {isEditing ? (
-                    <Input
-                      value={form.bonus}
-                      onChange={(e) => setForm({ ...form, bonus: e.target.value })}
-                      className="w-32"
-                    />
-                  ) : (
-                    <span className="font-semibold text-foreground">{form.bonus}</span>
-                  )}
+              <div className="bg-muted/20 rounded-xl p-4 space-y-3">
+                {form.bonus.map((b, idx) => (
+                  <div key={b.label} className="flex justify-between items-center">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={b.label}
+                          onChange={(e) => {
+                            const next = [...form.bonus]
+                            const current = next[idx]
+                            if (!current) return
+                            next[idx] = { ...current, label: e.target.value }
+                            setForm({ ...form, bonus: next })
+                          }}
+                          className="flex-1 text-sm"
+                          placeholder="Loại thưởng"
+                        />
+                        <Input
+                          value={b.amount}
+                          onChange={(e) => {
+                            const next = [...form.bonus]
+                            const current = next[idx]
+                            if (!current) return
+                            next[idx] = { ...current, amount: e.target.value }
+                            setForm({ ...form, bonus: next })
+                          }}
+                          className="w-28 text-right"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500"
+                          onClick={() => {
+                            const next = form.bonus.filter((_, i) => i !== idx)
+                            setForm({ ...form, bonus: next })
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-sm text-muted-foreground">{b.label}</span>
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">+ {b.amount}</span>
+                      </>
+                    )}
+                  </div>
+                ))}
+                {isEditing && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setForm({ ...form, bonus: [...form.bonus, { label: "", amount: "" }] })
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Thêm thưởng
+                  </Button>
+                )}
+                <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
+                  <span>Tổng thưởng</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">+ {totalBonus.toLocaleString("vi-VN")} đ</span>
                 </div>
               </div>
             </section>
@@ -242,24 +299,64 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
               <div className="bg-muted/20 rounded-xl p-4 space-y-3">
                 {form.allowances.map((a, idx) => (
                   <div key={a.label} className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">{a.label}</span>
                     {isEditing ? (
-                      <Input
-                        value={a.amount}
-                        onChange={(e) => {
-                          const next = [...form.allowances]
-                          const current = next[idx]
-                          if (!current) return
-                          next[idx] = { ...current, amount: e.target.value }
-                          setForm({ ...form, allowances: next })
-                        }}
-                        className="w-28 text-right"
-                      />
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={a.label}
+                          onChange={(e) => {
+                            const next = [...form.allowances]
+                            const current = next[idx]
+                            if (!current) return
+                            next[idx] = { ...current, label: e.target.value }
+                            setForm({ ...form, allowances: next })
+                          }}
+                          className="flex-1 text-sm"
+                          placeholder="Loại phụ cấp"
+                        />
+                        <Input
+                          value={a.amount}
+                          onChange={(e) => {
+                            const next = [...form.allowances]
+                            const current = next[idx]
+                            if (!current) return
+                            next[idx] = { ...current, amount: e.target.value }
+                            setForm({ ...form, allowances: next })
+                          }}
+                          className="w-28 text-right"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500"
+                          onClick={() => {
+                            const next = form.allowances.filter((_, i) => i !== idx)
+                            setForm({ ...form, allowances: next })
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     ) : (
-                      <span className="font-medium text-emerald-600 dark:text-emerald-400">+ {a.amount}</span>
+                      <>
+                        <span className="text-sm text-muted-foreground">{a.label}</span>
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">+ {a.amount}</span>
+                      </>
                     )}
                   </div>
                 ))}
+                {isEditing && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setForm({ ...form, allowances: [...form.allowances, { label: "", amount: "" }] })
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Thêm phụ cấp
+                  </Button>
+                )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
                   <span>{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_ALLOWANCES}</span>
                   <span className="text-emerald-600 dark:text-emerald-400">+ {totalAllowances.toLocaleString("vi-VN")} đ</span>
@@ -274,12 +371,66 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                 <h3 className="font-semibold text-lg">{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_DEDUCTIONS}</h3>
               </div>
               <div className="bg-muted/20 rounded-xl p-4 space-y-3">
-                {slip.deductions.map((d) => (
-                  <div key={d.label} className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">{d.label}</span>
-                    <span className="font-medium text-primary">- {d.amount}</span>
+                {form.deductions.map((d, idx) => (
+                  <div key={d.label} className="flex justify-between items-center">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={d.label}
+                          onChange={(e) => {
+                            const next = [...form.deductions]
+                            const current = next[idx]
+                            if (!current) return
+                            next[idx] = { ...current, label: e.target.value }
+                            setForm({ ...form, deductions: next })
+                          }}
+                          className="flex-1 text-sm"
+                          placeholder="Loại khấu trừ"
+                        />
+                        <Input
+                          value={d.amount}
+                          onChange={(e) => {
+                            const next = [...form.deductions]
+                            const current = next[idx]
+                            if (!current) return
+                            next[idx] = { ...current, amount: e.target.value }
+                            setForm({ ...form, deductions: next })
+                          }}
+                          className="w-28 text-right"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500"
+                          onClick={() => {
+                            const next = form.deductions.filter((_, i) => i !== idx)
+                            setForm({ ...form, deductions: next })
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-sm text-muted-foreground">{d.label}</span>
+                        <span className="font-medium text-primary">- {d.amount}</span>
+                      </>
+                    )}
                   </div>
                 ))}
+                {isEditing && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setForm({ ...form, deductions: [...form.deductions, { label: "", amount: "" }] })
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Thêm khấu trừ
+                  </Button>
+                )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
                   <span>{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_DEDUCTIONS}</span>
                   <span className="text-primary">- {totalDeductions.toLocaleString("vi-VN")} đ</span>
