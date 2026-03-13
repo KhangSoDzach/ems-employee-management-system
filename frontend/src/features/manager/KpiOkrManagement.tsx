@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useMemo, useState } from "react"
 import { Search, Filter, Plus, Pencil, Eye, ChevronLeft, ChevronRight, BarChart2, AlertTriangle, Loader2 } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge"
 import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from "@/components/ui/table"
-import api from "@/lib/axios"
 
 interface KpiItem {
   id: number; name: string; description?: string
@@ -20,8 +19,39 @@ interface KpiItem {
   weight: number; scopeType: string; status: string
   periodStart: string; periodEnd: string
 }
-interface SummaryData { totalWeight: number; totalCount: number; daysLeft: number }
-interface PageResponse { content: KpiItem[]; totalElements: number; totalPages: number; number: number }
+
+const mockData: KpiItem[] = [
+  {
+    id: 1,
+    name: "Doanh thu quý 1",
+    description: "Tăng trưởng doanh thu theo kế hoạch",
+    type: "KPI",
+    metricType: "VND",
+    targetValue: 500000000,
+    actualValue: 420000000,
+    progress: 84,
+    weight: 30,
+    scopeType: "TEAM",
+    status: "ACTIVE",
+    periodStart: "2026-01-01",
+    periodEnd: "2026-03-31",
+  },
+  {
+    id: 2,
+    name: "Tỷ lệ hoàn thành OKR",
+    description: "Đảm bảo tiến độ OKR toàn team",
+    type: "OKR",
+    metricType: "PERCENT",
+    targetValue: 100,
+    actualValue: 76,
+    progress: 76,
+    weight: 25,
+    scopeType: "TEAM",
+    status: "ACTIVE",
+    periodStart: "2026-01-01",
+    periodEnd: "2026-03-31",
+  },
+]
 
 function formatValue(v: number, mt: string) {
   if (mt === "VND") return new Intl.NumberFormat("vi-VN").format(v)
@@ -36,10 +66,29 @@ function progressColor(p: number) {
 
 export default function KpiOkrManagement() {
   const t = SYSTEM_MESSAGES.KPI_OKR
-  const totalWeight = mockData.reduce((sum, row) => sum + row.weight, 0)
-  const totalTargets = mockData.length
+  const [search, setSearch] = useState("")
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [loading] = useState(false)
+
+  const items = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return mockData
+    return mockData.filter((row) =>
+      row.name.toLowerCase().includes(q) ||
+      (row.description ?? "").toLowerCase().includes(q)
+    )
+  }, [search])
+
+  const totalWeight = items.reduce((sum, row) => sum + row.weight, 0)
+  const totalTargets = items.length
   const daysLeft = 45
+  const weightPct = Math.min(totalWeight, 100)
+  const isActive = totalWeight >= 100
   const paginationRangeText = `1-4 `
+
+  const handleSuccess = () => {
+    setIsModalOpen(false)
+  }
 
   return (
     <SidebarProvider>
@@ -183,7 +232,7 @@ export default function KpiOkrManagement() {
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
-              )}
+              </div>
             </div>
 
           </div>
