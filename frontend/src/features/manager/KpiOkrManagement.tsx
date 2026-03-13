@@ -72,6 +72,10 @@ const mockData = [
 export default function KpiOkrManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const t = SYSTEM_MESSAGES.KPI_OKR
+  const totalWeight = mockData.reduce((sum, row) => sum + row.weight, 0)
+  const totalTargets = mockData.length
+  const daysLeft = 45
+  const paginationRangeText = `1-4 `
 
   return (
     <SidebarProvider>
@@ -97,8 +101,8 @@ export default function KpiOkrManagement() {
                 </div>
                 
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-red-600">{t.MOCK_WEIGHT}</span>
-                  <span className="text-sm text-muted-foreground font-medium">{t.MOCK_TOTAL}</span>
+                  <span className="text-4xl font-bold text-red-600">{totalWeight}%</span>
+                  <span className="text-sm text-muted-foreground font-medium">/ 100%</span>
                 </div>
                 
                 <div className="w-full max-w-md bg-muted rounded-full h-2.5 overflow-hidden">
@@ -117,11 +121,11 @@ export default function KpiOkrManagement() {
               <div className="flex flex-col border-l pl-8 h-full space-y-6 min-w-[200px]">
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-1">{t.TARGET_COUNT}</p>
-                  <p className="text-2xl font-bold text-foreground">{t.MOCK_TARGET}</p>
+                  <p className="text-2xl font-bold text-foreground">{totalTargets}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-1">{t.DAYS_LEFT}</p>
-                  <p className="text-2xl font-bold text-foreground">{t.MOCK_DAYS}{t.DAYS}</p>
+                  <p className="text-2xl font-bold text-foreground">{daysLeft}{t.DAYS}</p>
                 </div>
               </div>
             </div>
@@ -216,7 +220,7 @@ export default function KpiOkrManagement() {
               
               {/* Pagination */}
               <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">
-                <span className="text-sm text-muted-foreground">{t.PAGINATION_SHOW}{t.PAGINATION_RANGE}{t.PAGINATION_ITEMS}</span>
+                <span className="text-sm text-muted-foreground">{t.PAGINATION_SHOW}{paginationRangeText}{t.PAGINATION_ITEMS}</span>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="icon" disabled>
                     <ChevronLeft className="w-4 h-4" />

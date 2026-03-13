@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Search, ChevronLeft, ChevronRight, Eye, Edit } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Eye } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -119,19 +119,6 @@ export default function PayrollManagement() {
   }
 
   const handleSaveSlip = (updated: SalarySlip) => {
-    const totalBonus = updated.bonus.reduce((acc, cur) => {
-      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
-      return acc + (Number.isNaN(parsed) ? 0 : parsed)
-    }, 0)
-    const totalAllowance = updated.allowances.reduce((acc, cur) => {
-      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
-      return acc + (Number.isNaN(parsed) ? 0 : parsed)
-    }, 0)
-    const totalDeduction = updated.deductions.reduce((acc, cur) => {
-      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
-      return acc + (Number.isNaN(parsed) ? 0 : parsed)
-    }, 0)
-
     setPayrollRows((prev) =>
       prev.map((row) =>
         row.id === updated.id
