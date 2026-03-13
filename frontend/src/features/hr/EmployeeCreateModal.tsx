@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { employeeService, EmployeeRequest } from "@/services/employeeService";
 import { lookupService, DepartmentOption, PositionOption, ManagerOption, MANAGER_LEVEL } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 interface Props {
     open: boolean;
@@ -51,27 +52,59 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const normalizeValidationMessage = (message: string): string => {
+        const parts = message.split("|").map((part) => part.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+            const detail = parts[1] ?? message;
+            const hint = parts[2];
+            return hint ? `${detail} (${hint})` : detail;
+        }
+        return message;
+    };
+
+    const applyServerValidationErrors = (error: any): boolean => {
+        const fieldErrors = error?.response?.data?.fieldErrors;
+        if (fieldErrors && typeof fieldErrors === "object") {
+            const normalized: Record<string, string> = {};
+            Object.entries(fieldErrors as Record<string, unknown>).forEach(([field, message]) => {
+                if (typeof message === "string") {
+                    normalized[field] = normalizeValidationMessage(message);
+                }
+            });
+            setErrors((prev) => ({ ...prev, ...normalized }));
+            const firstFieldError = Object.values(normalized)[0];
+            if (firstFieldError) {
+                toast.error(firstFieldError);
+            }
+            return true;
+        }
+        return false;
+    };
+
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.firstName.trim()) newErrors.firstName = "Vui lòng nhập tên";
-        if (!formData.lastName.trim()) newErrors.lastName = "Vui lòng nhập họ";
+        if (!formData.firstName.trim()) newErrors.firstName = FORM_VALIDATION_MESSAGES.REQUIRED;
+        if (!formData.lastName.trim()) newErrors.lastName = FORM_VALIDATION_MESSAGES.REQUIRED;
         if (!formData.email.trim()) {
-            newErrors.email = "Vui lòng nhập email";
+            newErrors.email = FORM_VALIDATION_MESSAGES.REQUIRED;
         } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-            newErrors.email = "Email không hợp lệ";
+            newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_INVALID;
         }
 
-        if (!formData.departmentId) newErrors.departmentId = "Vui lòng chọn phòng ban";
-        if (!formData.positionId) newErrors.positionId = "Vui lòng chọn vị trí";
-        if (!formData.dateOfBirth) newErrors.dateOfBirth = "Vui lòng chọn ngày sinh";
-        if (!formData.hireDate) newErrors.hireDate = "Vui lòng chọn ngày vào làm";
-        if (!formData.nationalId?.trim()) newErrors.nationalId = "Vui lòng nhập CCCD/CMND";
-        if (!formData.address?.trim()) newErrors.address = "Vui lòng nhập địa chỉ";
+        if (!formData.departmentId) newErrors.departmentId = FORM_VALIDATION_MESSAGES.DEPT_REQUIRED;
+        if (!formData.positionId) newErrors.positionId = FORM_VALIDATION_MESSAGES.ROLE_REQUIRED;
+        if (!formData.dateOfBirth) newErrors.dateOfBirth = FORM_VALIDATION_MESSAGES.DOB_REQUIRED;
+        if (!formData.hireDate) newErrors.hireDate = FORM_VALIDATION_MESSAGES.START_DATE_REQUIRED;
+        if (!formData.nationalId?.trim()) newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_FORMAT;
+        if (!formData.address?.trim()) newErrors.address = FORM_VALIDATION_MESSAGES.REQUIRED;
 
-        if (!formData.salary || formData.salary <= 0) newErrors.salary = "Nhập lương hợp lệ";
+        if (!formData.salary || formData.salary <= 0) newErrors.salary = FORM_VALIDATION_MESSAGES.REQUIRED;
 
         setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            toast.error(Object.values(newErrors)[0] ?? SYSTEM_MESSAGES.EMPLOYEE.MSG_VALIDATION_ERROR);
+        }
         return Object.keys(newErrors).length === 0;
     };
 
@@ -152,7 +185,14 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
             onSuccess();
         } catch (error: any) {
             console.error(error);
-            const msg = error.response?.data?.message || SYSTEM_MESSAGES.ERROR;
+            if (applyServerValidationErrors(error)) {
+                return;
+            }
+            const rawMessage = error?.response?.data?.message as string | undefined;
+            const msg =
+                rawMessage === "Request body is invalid or missing. Please check the JSON format"
+                    ? SYSTEM_MESSAGES.EMPLOYEE.MSG_VALIDATION_ERROR
+                    : rawMessage || SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_ERROR;
             toast.error(msg);
         } finally {
             setLoading(false);
@@ -187,12 +227,12 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-hidden">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
 
-            <div className="relative bg-white dark:bg-gray-900 w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col my-auto transition-all animate-in fade-in zoom-in duration-200">
+            <div className="relative bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col transition-all animate-in fade-in zoom-in duration-200 overflow-hidden">
                 {/* HEADER */}
-                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900 z-10 rounded-t-2xl">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 rounded-t-2xl">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary/10 text-primary rounded-lg">
                             <User size={20} />
@@ -205,7 +245,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                 </div>
 
                 {/* FORM */}
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain p-8 custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
                         {/* SECTION: PERSONAL */}

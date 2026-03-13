@@ -104,6 +104,7 @@ export interface AssetUpdatePayload {
     note?: string;
     image?: string;
     locationOrUser?: string;
+    assignedEmployeeId?: number;
     contractNumber?: string;
 }
 

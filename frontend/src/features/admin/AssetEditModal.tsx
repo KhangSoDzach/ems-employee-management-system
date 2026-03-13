@@ -35,6 +35,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
   const [employeeOptions, setEmployeeOptions] = useState<EmployeeOption[]>([]);
   const [employeeLoading, setEmployeeLoading] = useState(false);
   const [openEmployeeDropdown, setOpenEmployeeDropdown] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
 
   const [form, setForm] = useState<AssetUpdatePayload>({
     name: "",
@@ -73,6 +74,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
     setErrors({});
     setEmployeeKeyword(asset.location ?? "");
     setEmployeeOptions([]);
+    setSelectedEmployeeId(null);
     setOpenEmployeeDropdown(false);
   }, [open, asset]);
 
@@ -126,6 +128,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
         warrantyDate: form.warrantyDate || undefined,
         contractDate: form.contractDate || undefined,
         value: form.value || undefined,
+        assignedEmployeeId: selectedEmployeeId ?? undefined,
       };
       const updated = await assetService.updateAsset(assetId, payload);
       toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
@@ -232,6 +235,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
                     onChange={(e) => {
                       setEmployeeKeyword(e.target.value);
                       set("locationOrUser", "");
+                      setSelectedEmployeeId(null);
                       setOpenEmployeeDropdown(true);
                     }}
                     className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm ${errors.locationOrUser ? "border-red-500" : "border-gray-200"}`}
@@ -255,6 +259,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
                               type="button"
                               onClick={() => {
                                 set("locationOrUser", fullName);
+                                setSelectedEmployeeId(employee.id);
                                 setEmployeeKeyword(fullName);
                                 setOpenEmployeeDropdown(false);
                               }}
