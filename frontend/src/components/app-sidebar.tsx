@@ -187,10 +187,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_LEAVE,
                   url: "/request",
                 },
-                {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST_ADJ,
-                  url: "/adjustment-requests",
-                },
+                
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                   url: "/my-assets",

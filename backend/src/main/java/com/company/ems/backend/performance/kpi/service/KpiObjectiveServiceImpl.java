@@ -57,9 +57,9 @@ public class KpiObjectiveServiceImpl implements KpiObjectiveService {
         BigDecimal newTotal = existing.add(req.getWeight());
         if (newTotal.compareTo(MAX_TOTAL_WEIGHT) > 0) {
             throw new AppException(ErrorCode.VALID_PARAM_INVALID,
-                    messages.get(MessageCode.KPI_WEIGHT_EXCEEDED,
-                            existing.stripTrailingZeros().toPlainString(),
-                            req.getWeight().stripTrailingZeros().toPlainString()));
+                    "weight",
+                    String.format("%.2f%% (total would reach %.2f%%, limit: 100%%)",
+                            req.getWeight().doubleValue(), newTotal.doubleValue()));
         }
 
         KpiStatus status = newTotal.compareTo(MAX_TOTAL_WEIGHT) == 0
@@ -109,15 +109,14 @@ public class KpiObjectiveServiceImpl implements KpiObjectiveService {
             BigDecimal newTotal = otherWeights.add(newWeight);
             if (newTotal.compareTo(MAX_TOTAL_WEIGHT) > 0) {
                 throw new AppException(ErrorCode.VALID_PARAM_INVALID,
-                        messages.get(MessageCode.KPI_WEIGHT_EXCEEDED,
-                                otherWeights.stripTrailingZeros().toPlainString(),
-                                newWeight.stripTrailingZeros().toPlainString()));
+                        "weight",
+                        String.format("%.2f%% (total would reach %.2f%%, limit: 100%%)",
+                                newWeight.doubleValue(), newTotal.doubleValue()));
             }
             entity.setStatus(newTotal.compareTo(MAX_TOTAL_WEIGHT) == 0
                     ? KpiStatus.ACTIVE : KpiStatus.INCOMPLETE);
         }
 
-        // Apply updates
         if (req.getName()        != null) entity.setName(req.getName());
         if (req.getMetricType()  != null) entity.setMetricType(req.getMetricType());
         if (req.getTargetValue() != null) entity.setTargetValue(req.getTargetValue());
@@ -207,8 +206,7 @@ public class KpiObjectiveServiceImpl implements KpiObjectiveService {
 
     private KpiObjective loadActive(Long id) {
         return kpiRepo.findActiveById(id).orElseThrow(() ->
-                new AppException(ErrorCode.RESOURCE_NOT_FOUND,
-                        messages.get(MessageCode.KPI_NOT_FOUND, id)));
+                new AppException(ErrorCode.RESOURCE_NOT_FOUND, "KpiObjective id=" + id));
     }
 
     private void requireManagerOrAbove() {
@@ -231,7 +229,7 @@ public class KpiObjectiveServiceImpl implements KpiObjectiveService {
     private void validateDateRange(LocalDate start, LocalDate end) {
         if (start != null && end != null && !start.isBefore(end)) {
             throw new AppException(ErrorCode.VALID_PARAM_INVALID,
-                    messages.get(MessageCode.KPI_INVALID_DATE_RANGE));
+                    "periodEnd", "must be after periodStart (" + start + ")");
         }
     }
 
@@ -239,8 +237,7 @@ public class KpiObjectiveServiceImpl implements KpiObjectiveService {
         if (scopeType == ScopeType.COMPANY) return;
 
         if (scopeId == null) {
-            throw new AppException(ErrorCode.VALID_PARAM_MISSING,
-                    messages.get(MessageCode.KPI_PERIOD_REQUIRED));
+            throw new AppException(ErrorCode.VALID_PARAM_MISSING, "scopeId");
         }
 
         boolean exists = switch (scopeType) {
@@ -251,7 +248,7 @@ public class KpiObjectiveServiceImpl implements KpiObjectiveService {
 
         if (!exists) {
             throw new AppException(ErrorCode.RESOURCE_NOT_FOUND,
-                    messages.get(MessageCode.KPI_INVALID_SCOPE, scopeType, scopeId));
+                    scopeType.name() + " id=" + scopeId);
         }
     }
 

@@ -73,7 +73,11 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
   const set = (field: keyof AssetUpdatePayload, value: unknown) => {
     setForm((f) => ({ ...f, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
     }
   };
 
@@ -85,12 +89,12 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
     if (!form.name?.trim()) newErrors.name = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
-    if (!form.type?.trim()) newErrors.type = "Vui lòng nhập loại tài sản";
-    if (!form.locationOrUser?.trim()) newErrors.locationOrUser = "Vui lòng nhập vị trí";
+    if (!form.type?.trim()) newErrors.type = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
+    if (!form.locationOrUser?.trim()) newErrors.locationOrUser = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error("Vui lòng điền đầy đủ thông tin");
+      toast.error(Object.values(newErrors)[0]);
       return;
     }
 
@@ -115,16 +119,17 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
-      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* HEADER */}
-        <div className="flex items-center justify-between px-8 py-5 border-b">
+        <div className="flex items-center justify-between px-8 py-5 border-b flex-none">
           <h2 className="text-xl font-semibold text-gray-900">
             {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_EDIT}{SYSTEM_MESSAGES.ASSET_CREATE.TXT_CODE_BRACKET_START}{asset.code}{SYSTEM_MESSAGES.ASSET_CREATE.TXT_CODE_BRACKET_END}
           </h2>
           <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8 max-h-[80vh] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8 min-h-0">
           {/* LEFT COLUMN */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-gray-50 rounded-xl border p-4">
@@ -227,7 +232,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 px-8 py-5 border-t bg-gray-50">
+        <div className="flex justify-end gap-3 px-8 py-5 border-t bg-gray-50 flex-none">
           <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-white">{SYSTEM_MESSAGES.BTN_CANCEL}</button>
           <button onClick={handleSubmit} disabled={saving}
             className="px-5 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 shadow flex items-center gap-2 disabled:opacity-60">
@@ -235,6 +240,7 @@ export default function AssetEditModal({ open, asset, assetId, onClose, onSave }
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 }

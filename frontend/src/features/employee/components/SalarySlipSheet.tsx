@@ -48,15 +48,25 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
   const { user } = useAuth()
   const isHr = user?.roles?.includes("ROLE_HR")
 
+  const normalizeSlip = (s: SalarySlip | null): SalarySlip | null =>
+    s
+      ? {
+          ...s,
+          bonus: s.bonus ?? [],
+          allowances: s.allowances ?? [],
+          deductions: s.deductions ?? [],
+        }
+      : null
+
   const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState<SalarySlip | null>(slip)
+  const [form, setForm] = useState<SalarySlip | null>(normalizeSlip(slip))
 
   useEffect(() => {
-    setForm(slip)
+    setForm(normalizeSlip(slip))
     setIsEditing(false)
   }, [slip])
 
-  if (!slip || !form) return null
+  if (!form) return null
 
   const totalBonus = form.bonus.reduce((acc, cur) => {
     const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
@@ -443,7 +453,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
               <span className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
                 {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_NET_PAY}
               </span>
-              <span className="text-4xl font-bold text-primary">{slip.netPay}</span>
+              <span className="text-4xl font-bold text-primary">{form.netPay}</span>
             </div>
           </div>
         </div>

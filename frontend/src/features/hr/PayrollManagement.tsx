@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react"
 import { Search, ChevronLeft, ChevronRight, Eye } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Table,
   TableHeader,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 import { SalarySlipSheet, type SalarySlip } from "../employee/components/SalarySlipSheet"
+import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges"
 
 type PayrollRow = {
   id: number
@@ -171,6 +172,19 @@ export default function PayrollManagement() {
     })
   }, [employee, department, status, payrollRows])
 
+  const hasFilter =
+    employee.trim() !== "" ||
+    department !== "All Departments" ||
+    status !== "All Status" ||
+    period !== "October 2023"
+
+  const clearAllFilters = () => {
+    setEmployee("")
+    setDepartment("All Departments")
+    setStatus("All Status")
+    setPeriod("October 2023")
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar role="hr" variant="inset" />
@@ -184,75 +198,169 @@ export default function PayrollManagement() {
           </div>
 
           <section className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">{t.FILTER_PERIOD}</label>
-                <Select value={period} onValueChange={setPeriod}>
-                  <SelectTrigger className="h-9 w-full text-sm">
-                    <SelectValue placeholder={t.FILTER_PERIOD} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="October 2023">October 2023</SelectItem>
-                    <SelectItem value="September 2023">September 2023</SelectItem>
-                    <SelectItem value="August 2023">August 2023</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold">Bộ lọc</h2>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">{t.FILTER_DEPARTMENT}</label>
-                <Select value={department} onValueChange={setDepartment}>
-                  <SelectTrigger className="h-9 w-full text-sm">
-                    <SelectValue placeholder={t.FILTER_DEPARTMENT} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Departments">All Departments</SelectItem>
-                    <SelectItem value="Engineering">Engineering</SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">{t.FILTER_EMPLOYEE}</label>
-                <Input
-                  value={employee}
-                  onChange={(e) => setEmployee(e.target.value)}
-                  placeholder={t.FILTER_EMPLOYEE_PLACEHOLDER}
-                  className="w-full"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">{t.FILTER_STATUS}</label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="h-9 w-full text-sm">
-                    <SelectValue placeholder={t.FILTER_STATUS} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Status">All Status</SelectItem>
-                    <SelectItem value="PROCESSED">Processed</SelectItem>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="REVIEW">Review</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-2">
+                {hasFilter && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 text-sm text-muted-foreground"
+                    onClick={clearAllFilters}
+                  >
+                    {t.BTN_CLEAR}
+                  </Button>
+                )}
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <Button variant="outline" onClick={() => {
-                setPeriod("October 2023")
-                setDepartment("All Departments")
-                setEmployee("")
-                setStatus("All Status")
-              }}>
-                {t.BTN_RESET}
-              </Button>
-              <Button className="flex items-center gap-2" onClick={() => { /* noop */ }}>
-                <Search className="w-4 h-4" />
-                {t.BTN_SEARCH}
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <div className="relative flex-1 min-w-[180px] max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder={t.FILTER_EMPLOYEE_PLACEHOLDER}
+                  value={employee}
+                  onChange={(e) => setEmployee(e.target.value)}
+                  className="pl-9 h-9 w-full text-sm"
+                />
+                {employee && (
+                  <button
+                    type="button"
+                    onClick={() => setEmployee("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    {t.FILTER_PERIOD}
+                    {period !== "October 2023" && (
+                      <ActiveFilterBadge
+                        value={period}
+                        colorClass="border-primary/20 bg-primary/10 text-primary"
+                        onClear={() => setPeriod("October 2023")}
+                      />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuItem
+                    onClick={() => setPeriod("October 2023")}
+                    className={cn("cursor-pointer text-sm", period === "October 2023" && "font-bold text-primary")}
+                  >
+                    October 2023
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setPeriod("September 2023")}
+                    className={cn("cursor-pointer text-sm", period === "September 2023" && "font-bold text-primary")}
+                  >
+                    September 2023
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setPeriod("August 2023")}
+                    className={cn("cursor-pointer text-sm", period === "August 2023" && "font-bold text-primary")}
+                  >
+                    August 2023
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
+                    <Building className="w-3.5 h-3.5" />
+                    {t.FILTER_DEPARTMENT}
+                    {department !== "All Departments" && (
+                      <ActiveFilterBadge
+                        value={department}
+                        colorClass="border-primary/20 bg-primary/10 text-primary"
+                        onClear={() => setDepartment("All Departments")}
+                      />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuItem
+                    onClick={() => setDepartment("All Departments")}
+                    className={cn("cursor-pointer text-sm", department === "All Departments" && "font-bold text-primary")}
+                  >
+                    All Departments
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setDepartment("Engineering")}
+                    className={cn("cursor-pointer text-sm", department === "Engineering" && "font-bold text-primary")}
+                  >
+                    Engineering
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setDepartment("Design")}
+                    className={cn("cursor-pointer text-sm", department === "Design" && "font-bold text-primary")}
+                  >
+                    Design
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setDepartment("Marketing")}
+                    className={cn("cursor-pointer text-sm", department === "Marketing" && "font-bold text-primary")}
+                  >
+                    Marketing
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    {t.FILTER_STATUS}
+                    {status !== "All Status" && (
+                      <ActiveFilterBadge
+                        value={status}
+                        colorClass="border-primary/20 bg-primary/10 text-primary"
+                        onClear={() => setStatus("All Status")}
+                      />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuItem
+                    onClick={() => setStatus("All Status")}
+                    className={cn("cursor-pointer text-sm", status === "All Status" && "font-bold text-primary")}
+                  >
+                    All Status
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setStatus("PROCESSED")}
+                    className={cn("cursor-pointer text-sm", status === "PROCESSED" && "font-bold text-primary")}
+                  >
+                    Processed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setStatus("PENDING")}
+                    className={cn("cursor-pointer text-sm", status === "PENDING" && "font-bold text-primary")}
+                  >
+                    Pending
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setStatus("REVIEW")}
+                    className={cn("cursor-pointer text-sm", status === "REVIEW" && "font-bold text-primary")}
+                  >
+                    Review
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="mt-6 text-sm text-muted-foreground">
+              Hiển thị {filtered.length} kết quả
             </div>
           </section>
 

@@ -3,14 +3,13 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import Dashboard from "./features/admin/Dashboard";
 import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import EmployeeDashboard from "./features/employee/EmployeeDashboard";
-import LeaveRequestPage from "./features/employee/LeaveRequestPage";
+import RequestPage from "./features/employee/RequestPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 // import { ProtectedRoute } from "@/components/ProtectedRoute";
 import CheckinPage from "./features/employee/CheckinPage";
 import { Toaster } from "@/components/ui/sonner";
 import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
 import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
-import AdjustmentRequestPage from "./features/employee/AdjustmentRequestPage";
 import AssetManagementPage from "./features/admin/Asset-Management";
 import AssetIncidentManagementPage from "./features/admin/AssetIncidentManagementPage";
 import ApproveAdjustmentRequest from "./features/manager/ApproveAdjustmentRequest";
@@ -57,14 +56,14 @@ function App() {
                     {/* <Route element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE", "ROLE_HR", "ROLE_MANAGER"]} />}> */}
                         <Route path="/checkin" element={<CheckinPage />} />
                         <Route path="/attendance" element={<AttendanceHistoryPage />} />
-                        <Route path="/adjustment-requests" element={<AdjustmentRequestPage />} />
+                        <Route path="/adjustment-requests" element={<RequestPage />} />
                     {/* </Route> */}
 
                     {/* Employee only */}
                     {/* <Route element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE"]} />}> */}
                         <Route path="/employee" element={<EmployeeDashboard />} />
                         <Route path="/salary-history" element={<SalaryHistoryPage />} />
-                        <Route path="/request" element={<LeaveRequestPage />} />
+                        <Route path="/request" element={<RequestPage />} />
                     {/* </Route> */}
 
                     {/* Manager only */}
