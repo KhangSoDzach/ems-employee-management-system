@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { X, UploadCloud, Loader2 } from "lucide-react";
+import { X, UploadCloud, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import {
   assetService,
   AssetCreatePayload,
   AssetStatus,
   AssetCondition,
+  EmployeeOption,
   ASSET_STATUS_LABELS,
   ASSET_CONDITION_LABELS,
 } from "@/services/assetService";
@@ -35,6 +36,11 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   const [nextCode, setNextCode] = useState("—");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [employeeKeyword, setEmployeeKeyword] = useState("");
+  const [employeeOptions, setEmployeeOptions] = useState<EmployeeOption[]>([]);
+  const [employeeLoading, setEmployeeLoading] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeOption | null>(null);
+  const [openEmployeeDropdown, setOpenEmployeeDropdown] = useState(false);
 
   const [form, setForm] = useState<AssetCreatePayload>({
     assetName: "",
@@ -64,7 +70,23 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
     });
     setImagePreview(null);
     setErrors({});
+    setEmployeeKeyword("");
+    setEmployeeOptions([]);
+    setSelectedEmployee(null);
+    setOpenEmployeeDropdown(false);
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !openEmployeeDropdown) return;
+    const timer = setTimeout(() => {
+      setEmployeeLoading(true);
+      assetService.searchEmployees(employeeKeyword)
+        .then((res) => setEmployeeOptions(res.content))
+        .catch(() => setEmployeeOptions([]))
+        .finally(() => setEmployeeLoading(false));
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [open, openEmployeeDropdown, employeeKeyword]);
 
   if (!open) return null;
 
@@ -88,7 +110,7 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
     const newErrors: Record<string, string> = {};
     if (!form.assetName.trim()) newErrors.assetName = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
     if (!form.assetType?.trim()) newErrors.assetType = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
-    if (!form.location?.trim()) newErrors.location = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+    if (!selectedEmployee || !form.location?.trim()) newErrors.location = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -242,15 +264,60 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
                 </select>
               </div>
 
-              {/* Vị trí */}
+              {/* Người sử dụng */}
               <div className="space-y-1 md:col-span-2">
                 <label className="text-sm font-medium text-gray-700">
                   {/* eslint-disable-next-line react/jsx-no-literals */}
-                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_LOCATION_ONLY} <span className="text-red-500">*</span>
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_USER_ONLY} <span className="text-red-500">*</span>
                 </label>
-                <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_LOCATION} value={form.location ?? ""}
-                  onChange={(e) => set("location", e.target.value)}
-                  className={`w-full border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary ${errors.location ? "border-red-500" : "border-gray-200"}`} />
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_USER_SEARCH}
+                    value={employeeKeyword}
+                    onFocus={() => setOpenEmployeeDropdown(true)}
+                    onChange={(e) => {
+                      setEmployeeKeyword(e.target.value);
+                      setSelectedEmployee(null);
+                      set("location", "");
+                      setOpenEmployeeDropdown(true);
+                    }}
+                    className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary ${errors.location ? "border-red-500" : "border-gray-200"}`}
+                  />
+
+                  {openEmployeeDropdown && (
+                    <div className="absolute z-20 mt-2 w-full max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
+                      {employeeLoading ? (
+                        <div className="px-3 py-3 text-sm text-gray-500 flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {SYSTEM_MESSAGES.LOADING}
+                        </div>
+                      ) : employeeOptions.length === 0 ? (
+                        <div className="px-3 py-3 text-sm text-gray-500">{SYSTEM_MESSAGES.NO_DATA}</div>
+                      ) : (
+                        employeeOptions.map((employee) => {
+                          const fullName = `${employee.firstName ?? ""} ${employee.lastName ?? ""}`.trim();
+                          return (
+                            <button
+                              key={employee.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedEmployee(employee);
+                                set("location", fullName);
+                                setEmployeeKeyword(fullName);
+                                setOpenEmployeeDropdown(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                            >
+                              <div className="font-medium text-gray-800">{fullName}</div>
+                              <div className="text-xs text-gray-500">{employee.department ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</div>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
                 {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
               </div>
             </div>
