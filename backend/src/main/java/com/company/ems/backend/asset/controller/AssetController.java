@@ -31,7 +31,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-// support both current (v1) and legacy (no version) endpoints to avoid 500 errors
 @RequestMapping({"/api/v1/assets", "/api/assets"})
 @RequiredArgsConstructor
 public class AssetController {

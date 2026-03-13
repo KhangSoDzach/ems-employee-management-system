@@ -49,8 +49,8 @@ export const SYSTEM_MESSAGES = {
         MENU_APPROVE_ADJ: "Duyệt điều chỉnh chấm công",
         MENU_GROUP_ASSET: "Tài sản nhóm",
         MENU_CHECKIN: "Chấm công",
-        MENU_REQUEST_LEAVE: "Tạo đơn nghỉ phép",
-        MENU_REQUEST_ADJ: "Điều chỉnh chấm công",
+        MENU_REQUEST: "Tạo đơn nghỉ phép",
+        
         MENU_MY_ASSETS: "Tài sản của tôi",
         MENU_MEMBERS: "Thành viên nhóm",
         MENU_KPI: "Thiết lập KPI/OKR",
