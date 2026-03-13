@@ -66,6 +66,8 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
         if (!formData.positionId) newErrors.positionId = "Vui lòng chọn vị trí";
         if (!formData.dateOfBirth) newErrors.dateOfBirth = "Vui lòng chọn ngày sinh";
         if (!formData.hireDate) newErrors.hireDate = "Vui lòng chọn ngày vào làm";
+        if (!formData.nationalId?.trim()) newErrors.nationalId = "Vui lòng nhập CCCD/CMND";
+        if (!formData.address?.trim()) newErrors.address = "Vui lòng nhập địa chỉ";
 
         if (!formData.salary || formData.salary <= 0) newErrors.salary = "Nhập lương hợp lệ";
 
@@ -214,7 +216,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Họ</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Họ <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             name="lastName"
@@ -226,7 +228,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                         {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Tên</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Tên <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             name="firstName"
@@ -238,7 +240,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                         {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
                                     </div>
                                     <div className="space-y-1 col-span-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Email công ty</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Email công ty <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             type="email"
@@ -263,7 +265,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Ngày sinh</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Ngày sinh <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             type="date"
@@ -275,8 +277,16 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                         {errors.dateOfBirth && <p className="text-xs text-red-500 mt-1">{errors.dateOfBirth}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">CCCD/CMND</label>
-                                        <input name="nationalId" value={formData.nationalId} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium" placeholder="12 số" />
+                                        <label className="text-xs font-bold text-gray-500 uppercase">CCCD/CMND <span className="text-red-500">*</span></label>
+                                        <input
+                                            required
+                                            name="nationalId"
+                                            value={formData.nationalId}
+                                            onChange={handleChange}
+                                            className={inputClass("nationalId")}
+                                            placeholder="12 số"
+                                        />
+                                        {errors.nationalId && <p className="text-xs text-red-500 mt-1">{errors.nationalId}</p>}
                                     </div>
                                 </div>
                             </div>
@@ -287,8 +297,16 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="col-span-2 space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Địa chỉ cụ thể</label>
-                                        <input name="address" value={formData.address || ""} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium" placeholder="Số nhà, tên đường..." />
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Địa chỉ cụ thể <span className="text-red-500">*</span></label>
+                                        <input
+                                            required
+                                            name="address"
+                                            value={formData.address || ""}
+                                            onChange={handleChange}
+                                            className={inputClass("address")}
+                                            placeholder="Số nhà, tên đường..."
+                                        />
+                                        {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Thành phố</label>
@@ -369,7 +387,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Ngày vào làm</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Ngày vào làm <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             type="date"
@@ -424,7 +442,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                 </h4>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản (Gross)</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản (Gross) <span className="text-red-500">*</span></label>
                                         <div className="relative">
                                             <input
                                                 type="number"

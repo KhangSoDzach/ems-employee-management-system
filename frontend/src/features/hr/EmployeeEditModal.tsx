@@ -224,7 +224,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Họ</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Họ <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             name="lastName"
@@ -235,7 +235,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Tên</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Tên <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             name="firstName"
@@ -246,7 +246,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
                                     </div>
                                     <div className="space-y-1 col-span-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Email công ty</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Email công ty <span className="text-red-500">*</span></label>
                                         <input
                                             required
                                             type="email"
@@ -278,7 +278,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản <span className="text-red-500">*</span></label>
                                         <input
                                             type="number"
                                             name="salary"
@@ -301,7 +301,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                 <h4 className="flex items-center gap-2 text-xs font-bold text-blue-700 uppercase tracking-widest">Công việc hiện tại</h4>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Phòng ban</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Phòng ban <span className="text-red-500">*</span></label>
                                         <select
                                             name="departmentId"
                                             value={formData.departmentId}
@@ -314,7 +314,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.departmentId && <p className="text-xs text-red-500 mt-1">{errors.departmentId}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Vị trí</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Vị trí <span className="text-red-500">*</span></label>
                                         <select
                                             name="positionId"
                                             value={formData.positionId}

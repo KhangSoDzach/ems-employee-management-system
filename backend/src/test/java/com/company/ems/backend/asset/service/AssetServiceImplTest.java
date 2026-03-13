@@ -1,21 +1,20 @@
 package com.company.ems.backend.asset.service;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import com.company.ems.backend.asset.entity.Asset;
 import com.company.ems.backend.asset.enums.AssetCondition;
 import com.company.ems.backend.asset.enums.AssetStatus;
+import com.company.ems.backend.asset.repository.AssetRepository;
 import com.company.ems.backend.asset.security.AssetDataScopeService;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
@@ -36,6 +36,9 @@ public class AssetServiceImplTest {
 
     @Mock
     private MessageService messages;
+
+        @Mock
+        private AssetRepository assetRepo;
 
     @InjectMocks
     private AssetServiceImpl assetService;
@@ -87,4 +90,19 @@ public class AssetServiceImplTest {
         org.junit.jupiter.api.Assertions.assertTrue(csvString.contains(
                 "10,\"AST-001\",\"MacBook Pro\",\"Laptop\",\"GOOD\",\"AVAILABLE\",\"John Doe\",15/01/2023,1500.00,\"Apple\",15/01/2025"));
     }
+
+        @Test
+        void testResolveAssetIdWithNumericId() {
+                Long resolved = assetService.resolveAssetId("123");
+                assertEquals(123L, resolved);
+        }
+
+        @Test
+        void testResolveAssetIdWithAssetCode() {
+                when(assetRepo.findActiveByAssetCode("AST-2026-0003")).thenReturn(java.util.Optional.of(testAsset));
+
+                Long resolved = assetService.resolveAssetId("AST-2026-0003");
+
+                assertEquals(10L, resolved);
+        }
 }

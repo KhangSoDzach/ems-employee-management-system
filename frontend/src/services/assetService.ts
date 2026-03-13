@@ -36,7 +36,7 @@ export interface EmployeeOption {
 
 // ─── Asset list summary ───────────────────────────────────────────────────────
 export interface AssetSummary {
-    dbId: number;
+    dbId?: number;
     id: string;
     name: string;
     desc: string | null;
@@ -48,6 +48,7 @@ export interface AssetSummary {
 
 // ─── Asset detail ─────────────────────────────────────────────────────────────
 export interface AssetDetail {
+    id?: number;
     name: string;
     code: string;
     type: string | null;
