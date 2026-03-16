@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2, Download } from "lucide-react";
+import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2, Download, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import AssetDetailModal from "./AssetDetailModal";
 import AssetCreateModal from "./AssetCreateModal";
@@ -16,6 +16,14 @@ import {
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
   { label: SYSTEM_MESSAGES.ASSET.FILTER_ALL, value: "" },
@@ -45,6 +53,10 @@ export default function AssetManagementPage() {
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<AssetDetail | null>(null);
+
+  // FIX: Delete confirmation state (replaces window.confirm)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const resolveAssetIdentifier = useCallback((summary: AssetSummary): number | string | null => {
     if (summary.dbId != null) return summary.dbId;
@@ -111,14 +123,24 @@ export default function AssetManagementPage() {
 
   useEffect(() => { fetchList(); }, [fetchList]);
 
-  const handleDelete = async (id: number | string) => {
-    if (!confirm(SYSTEM_MESSAGES.BTN_DELETE + "?")) return;
+  // FIX: Step 1 — just open confirm dialog (was: window.confirm)
+  const handleDelete = (id: number | string, name: string) => {
+    setDeleteTarget({ id, name });
+  };
+
+  // FIX: Step 2 — actual delete after user confirms
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await assetService.deleteAsset(id);
+      await assetService.deleteAsset(deleteTarget.id);
       toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
+      setDeleteTarget(null);
       fetchList();
     } catch {
       toast.error(SYSTEM_MESSAGES.ERROR);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -272,7 +294,7 @@ export default function AssetManagementPage() {
                                 toast.error(SYSTEM_MESSAGES.ERROR);
                                 return;
                               }
-                              void handleDelete(identifier);
+                              handleDelete(identifier, asset.name);
                             }}
                           />
                         </div>
@@ -342,6 +364,45 @@ export default function AssetManagementPage() {
           onClose={() => setOpenEdit(false)}
           onSave={() => { fetchList(); setOpenEdit(false); }}
         />
+
+        {/* ===== DELETE CONFIRMATION DIALOG ===== */}
+        <Dialog
+          open={!!deleteTarget}
+          onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-5 h-5" />
+                Xác nhận xóa tài sản
+              </DialogTitle>
+              <DialogDescription className="pt-2">
+                Bạn có chắc muốn xóa tài sản{" "}
+                <span className="font-semibold text-gray-900">"{deleteTarget?.name}"</span>?
+                <br />
+                Hành động này không thể hoàn tác.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 pt-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition flex items-center gap-2"
+              >
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {deleting ? "Đang xóa..." : "Xóa tài sản"}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </SidebarInset>
     </SidebarProvider>
   );
