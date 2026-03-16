@@ -1,0 +1,4 @@
+#!/bin/sh
+
+npm run -s check:conflicts
+npx --no-install lint-staged
