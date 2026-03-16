@@ -17,17 +17,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
 import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
-import com.company.ems.backend.common.message.MessageCode;
-import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.service.EmployeeService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -40,7 +39,7 @@ public class EmployeeController {
     private final MessageService messages;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')") //enum
     @Operation(summary = "Create a new employee", description = "Creates a new employee record and returns the basic employee details")
     public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(
             @Valid @RequestBody EmployeeRequest request) {

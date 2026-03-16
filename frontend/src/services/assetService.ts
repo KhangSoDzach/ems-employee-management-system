@@ -36,6 +36,7 @@ export interface EmployeeOption {
 
 // ─── Asset list summary ───────────────────────────────────────────────────────
 export interface AssetSummary {
+    dbId?: number;
     id: string;
     name: string;
     desc: string | null;
@@ -47,6 +48,7 @@ export interface AssetSummary {
 
 // ─── Asset detail ─────────────────────────────────────────────────────────────
 export interface AssetDetail {
+    id?: number;
     name: string;
     code: string;
     type: string | null;
@@ -102,6 +104,7 @@ export interface AssetUpdatePayload {
     note?: string;
     image?: string;
     locationOrUser?: string;
+    assignedEmployeeId?: number;
     contractNumber?: string;
 }
 
@@ -172,6 +175,18 @@ export interface AdminIncidentListItem {
     statusColor: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// HOW THE AXIOS INTERCEPTOR WORKS:
+//   api.interceptors.response.use((response) => response.data)
+//
+// The interceptor already unwraps AxiosResponse and returns response.data
+// which IS the raw HTTP body = ApiResponse<T> = { success, message, data: T }
+//
+// So in .then(res => ...), `res` is already ApiResponse<T>:
+//   CORRECT: .then(res => res.data)       → gets T ✓
+//   WRONG:   .then(res => res.data.data)  → undefined 💥 (old bug)
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface ApiResponse<T> {
     success: boolean;
     message: string;
@@ -186,102 +201,112 @@ interface PageResponse<T> {
     totalPages: number;
 }
 
-export const assetService = {
-    getMyAssets: (): Promise<MyAsset[]> =>
-        api.get<ApiResponse<PageResponse<MyAsset>>>('/my/assets')
-            // FIX: was `.then(res => res.data)` → returned ApiResponse wrapper, not MyAsset[].
-            // Axios wraps the HTTP response body in res.data, so res.data = ApiResponse<...>.
-            // The actual payload is always in res.data.data.
-            .then(res => res.data.data.content),
+// Helper type: cast api call result as ApiResponse<T> promise
+type AR<T> = Promise<ApiResponse<T>>;
 
-    submitReport: (assetId: number, data: { incidentType: string; description: string }, attachment?: File): Promise<IncidentReportDetail> => {
+export const assetService = {
+
+    // ─── Employee: My Assets ──────────────────────────────────────────────────
+
+    getMyAssets: (): Promise<MyAsset[]> =>
+        (api.get('/my/assets') as unknown as AR<PageResponse<MyAsset>>)
+            .then(res => res.data.content),
+
+    submitReport: (
+        assetId: number,
+        data: { incidentType: string; description: string },
+        attachment?: File
+    ): Promise<IncidentReportDetail> => {
         const formData = new FormData();
         formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
-        if (attachment) {
-            formData.append('attachment', attachment);
-        }
-        return api.post<ApiResponse<IncidentReportDetail>>(`/assets/${assetId}/report`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        }).then(res => res.data.data);
+        if (attachment) formData.append('attachment', attachment);
+        return (api.post(`/assets/${assetId}/report`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        }) as unknown as AR<IncidentReportDetail>)
+            .then(res => res.data);
     },
 
     getMyReports: (page = 0, size = 10): Promise<PageResponse<IncidentReportRow>> =>
-        api.get<ApiResponse<PageResponse<IncidentReportRow>>>('/my/reports', { params: { page, size } })
-            .then(res => res.data.data),
+        (api.get('/my/reports', { params: { page, size } }) as unknown as AR<PageResponse<IncidentReportRow>>)
+            .then(res => res.data),
 
     getMyReportDetail: (id: number): Promise<IncidentReportDetail> =>
-        api.get<ApiResponse<IncidentReportDetail>>(`/my/reports/${id}`)
-            .then(res => res.data.data),
+        (api.get(`/my/reports/${id}`) as unknown as AR<IncidentReportDetail>)
+            .then(res => res.data),
 
-    // Admin/HR APIs
-    getAllReports: (params: { status?: string; employeeId?: number; fromDate?: string; toDate?: string; keyword?: string; page?: number; size?: number }): Promise<PageResponse<AdminIncidentListItem>> =>
-        api.get<ApiResponse<PageResponse<AdminIncidentListItem>>>('/admin/asset-reports', { params })
-            .then(res => res.data.data),
+    // ─── Admin/HR: Incident Reports ───────────────────────────────────────────
+
+    getAllReports: (params: {
+        status?: string; employeeId?: number; fromDate?: string;
+        toDate?: string; keyword?: string; page?: number; size?: number;
+    }): Promise<PageResponse<AdminIncidentListItem>> =>
+        (api.get('/admin/asset-reports', { params }) as unknown as AR<PageResponse<AdminIncidentListItem>>)
+            .then(res => res.data),
 
     getAdminReportDetail: (id: number): Promise<IncidentReportDetail> =>
-        api.get<ApiResponse<IncidentReportDetail>>(`/admin/asset-reports/${id}`)
-            .then(res => res.data.data),
+        (api.get(`/admin/asset-reports/${id}`) as unknown as AR<IncidentReportDetail>)
+            .then(res => res.data),
 
     approveReport: (id: number, note?: string): Promise<IncidentReportDetail> =>
-        api.post<ApiResponse<IncidentReportDetail>>(`/admin/asset-reports/${id}/approve`, { note })
-            .then(res => res.data.data),
+        (api.post(`/admin/asset-reports/${id}/approve`, { note }) as unknown as AR<IncidentReportDetail>)
+            .then(res => res.data),
 
     rejectReport: (id: number, note?: string): Promise<IncidentReportDetail> =>
-        api.post<ApiResponse<IncidentReportDetail>>(`/admin/asset-reports/${id}/reject`, { note })
-            .then(res => res.data.data),
+        (api.post(`/admin/asset-reports/${id}/reject`, { note }) as unknown as AR<IncidentReportDetail>)
+            .then(res => res.data),
 
-    // ─── Asset Management (HR/Admin/Manager) ──────────────────────────────────
+    // ─── Asset Management (Admin/HR/Manager) ──────────────────────────────────
+
     listAssets: (params: {
         page?: number; size?: number;
         status?: AssetStatus; type?: string; keyword?: string;
     }): Promise<PageResponse<AssetSummary>> =>
-        api.get<ApiResponse<PageResponse<AssetSummary>>>('/assets', { params })
-            .then(res => res.data.data),
+        (api.get('/assets', { params }) as unknown as AR<PageResponse<AssetSummary>>)
+            .then(res => res.data),
 
+    /** Returns auto-generated code preview (e.g. "TS-001") */
     getNextCode: (): Promise<string> =>
-        api.get<ApiResponse<{ nextCode: string }>>('/assets/next-code')
-            .then(res => res.data.data.nextCode),
+        (api.get('/assets/next-code') as unknown as AR<{ nextCode: string }>)
+            .then(res => res.data.nextCode),
 
     getAssetById: (id: number | string): Promise<AssetDetail> =>
-        api.get<ApiResponse<AssetDetail>>(`/assets/${id}`)
-            .then(res => res.data.data),
+        (api.get(`/assets/${id}`) as unknown as AR<AssetDetail>)
+            .then(res => res.data),
 
     createAsset: (payload: AssetCreatePayload): Promise<AssetDetail> =>
-        api.post<ApiResponse<AssetDetail>>('/assets', payload)
-            .then(res => res.data.data),
+        (api.post('/assets', payload) as unknown as AR<AssetDetail>)
+            .then(res => res.data),
 
     updateAsset: (id: number | string, payload: AssetUpdatePayload): Promise<AssetDetail> =>
-        api.put<ApiResponse<AssetDetail>>(`/assets/${id}`, payload)
-            .then(res => res.data.data),
+        (api.put(`/assets/${id}`, payload) as unknown as AR<AssetDetail>)
+            .then(res => res.data),
 
     deleteAsset: (id: number | string): Promise<void> =>
         api.delete(`/assets/${id}`).then(() => undefined),
 
     assignAsset: (id: number | string, payload: AssignPayload): Promise<AssetDetail> =>
-        api.post<ApiResponse<AssetDetail>>(`/assets/${id}/assign`, payload)
-            .then(res => res.data.data),
+        (api.post(`/assets/${id}/assign`, payload) as unknown as AR<AssetDetail>)
+            .then(res => res.data),
 
     returnAsset: (id: number | string, payload: ReturnPayload): Promise<AssetDetail> =>
-        api.post<ApiResponse<AssetDetail>>(`/assets/${id}/return`, payload)
-            .then(res => res.data.data),
+        (api.post(`/assets/${id}/return`, payload) as unknown as AR<AssetDetail>)
+            .then(res => res.data),
 
     getHistory: (id: number | string, params: {
         historyType?: string; page?: number; size?: number;
     }): Promise<PageResponse<AssetHistoryItem>> =>
-        api.get<ApiResponse<PageResponse<AssetHistoryItem>>>(`/assets/${id}/history`, { params })
-            .then(res => res.data.data),
+        (api.get(`/assets/${id}/history`, { params }) as unknown as AR<PageResponse<AssetHistoryItem>>)
+            .then(res => res.data),
 
+    // Blob exports — interceptor returns response.data (= Blob) directly
     exportHistory: (id: number | string): Promise<Blob> =>
-        api.get(`/assets/${id}/history/export`, { responseType: 'blob' })
-            .then(res => res.data),
+        api.get(`/assets/${id}/history/export`, { responseType: 'blob' }) as unknown as Promise<Blob>,
 
-    exportAssets: (params: { status?: AssetStatus; type?: string; keyword?: string; }): Promise<Blob> =>
-        api.get('/assets/export', { params, responseType: 'blob' })
-            .then(res => res.data),
+    exportAssets: (params: { status?: AssetStatus; type?: string; keyword?: string }): Promise<Blob> =>
+        api.get('/assets/export', { params, responseType: 'blob' }) as unknown as Promise<Blob>,
 
     // Search employees for assign dropdown
     searchEmployees: (keyword: string, page = 0, size = 20): Promise<PageResponse<EmployeeOption>> =>
-        api.get<ApiResponse<PageResponse<EmployeeOption>>>('/employees', {
-            params: { search: keyword, page, size },
-        }).then(res => res.data.data),
+        (api.get('/employees', { params: { search: keyword, page, size } }) as unknown as AR<PageResponse<EmployeeOption>>)
+            .then(res => res.data),
 };

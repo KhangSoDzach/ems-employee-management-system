@@ -185,10 +185,12 @@ export function CameraModal({
           )}
 
           {/* Init loading */}
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <p className="text-sm">{SYSTEM_MESSAGES.CAMERA.LOADING}</p>
-          </div>
+          {step === 'init' && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 text-muted-foreground bg-muted/85">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <p className="text-sm">{SYSTEM_MESSAGES.CAMERA.LOADING}</p>
+            </div>
+          )}
 
           {/* Canvas (off-screen) */}
           <canvas ref={canvasRef} className="hidden" />

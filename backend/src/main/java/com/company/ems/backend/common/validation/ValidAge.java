@@ -1,15 +1,20 @@
 package com.company.ems.backend.common.validation;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-import java.lang.annotation.*;
 
 @Documented
 @Constraint(validatedBy = AgeValidator.class)
 @Target({ ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidAge {
-    String message() default "INVALID_AGE|Age must be between {min} and {max} years|YYYY-MM-DD";
+    String message() default ValidationMessages.EMPLOYEE_AGE_RANGE;
 
     Class<?>[] groups() default {};
 

@@ -31,6 +31,7 @@ const MOCK_SALARY_DATA: SalarySlip[] = [
     period: "Tháng 04/2024",
     paymentDate: "05/05/2024",
     baseSalary: "23,000,000đ",
+    bonus: [],
     allowances: [
       { label: "Phụ cấp ăn trưa", amount: "730,000đ" },
       { label: "Phụ cấp đi lại", amount: "500,000đ" },
@@ -52,6 +53,7 @@ const MOCK_SALARY_DATA: SalarySlip[] = [
     period: "Tháng 03/2024",
     paymentDate: "05/04/2024",
     baseSalary: "23,000,000đ",
+    bonus: [],
     allowances: [
       { label: "Phụ cấp ăn trưa", amount: "730,000đ" },
       { label: "Phụ cấp đi lại", amount: "500,000đ" },
@@ -72,6 +74,7 @@ const MOCK_SALARY_DATA: SalarySlip[] = [
     period: "Tháng 02/2024",
     paymentDate: "05/03/2024",
     baseSalary: "25,000,000đ",
+    bonus: [],
     allowances: [
       { label: "Phụ cấp ăn trưa", amount: "730,000đ" },
       { label: "Phụ cấp đi lại", amount: "500,000đ" },
@@ -93,6 +96,7 @@ const MOCK_SALARY_DATA: SalarySlip[] = [
     period: "Tháng 01/2024",
     paymentDate: "05/02/2024",
     baseSalary: "23,000,000đ",
+    bonus: [],
     allowances: [
       { label: "Phụ cấp ăn trưa", amount: "730,000đ" },
       { label: "Phụ cấp đi lại", amount: "500,000đ" },
@@ -118,7 +122,7 @@ export default function SalaryHistoryPage() {
   const t = SYSTEM_MESSAGES.SALARY_HISTORY
 
   const filteredData = MOCK_SALARY_DATA.filter((row) => {
-    const [day, month, year] = row.paymentDate.split("/")
+    const [, month, year] = row.paymentDate.split("/")
 
     const matchesYear = selectedYear === "all" || year === selectedYear
     const matchesMonth = selectedMonth === "all" || month === selectedMonth

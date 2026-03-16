@@ -1,15 +1,22 @@
 package com.company.ems.backend.asset.dto;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
 import com.company.ems.backend.asset.enums.AssetCondition;
 import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.common.validation.ValidationMessages;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.*;
-import lombok.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public final class AssetDto {
 
@@ -20,6 +27,7 @@ public final class AssetDto {
     @Data @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Summary {
+        private Long dbId;         // numeric DB id — dùng cho GET/PUT/DELETE theo path variable
         private String id;          // assetCode — frontend dùng làm key
         private String name;
         private String desc;
@@ -140,6 +148,7 @@ public final class AssetDto {
         private String note;
         private String image;
         private String locationOrUser;
+        private Long assignedEmployeeId;
 
         @Size(max = 100)
         private String contractNumber;

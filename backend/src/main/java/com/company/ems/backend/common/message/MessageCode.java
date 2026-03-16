@@ -173,26 +173,30 @@ public enum MessageCode {
     WORKFLOW_DUPLICATE_LEVEL("workflow.duplicate_level"),
     WORKFLOW_MISSING_ROLE("workflow.missing_assignee_role"),
     WORKFLOW_MISSING_USER("workflow.missing_assignee_user"),
-    // ── KPI / OKR ───────────────────────────────────────────────────────────────────────
-    KPI_CREATED("kpi.created"),
-    KPI_UPDATED("kpi.updated"),
-    KPI_DELETED("kpi.deleted"),
-    KPI_NOT_FOUND("kpi.not_found"),
-    KPI_LIST("kpi.list"),
-    KPI_WEIGHT_EXCEEDED("kpi.weight_exceeded"),
-    KPI_INVALID_WEIGHT("kpi.invalid_weight"),
-    KPI_INVALID_TARGET("kpi.invalid_target"),
-    KPI_INVALID_PERIOD("kpi.invalid_period"),
-    KPI_DUPLICATE_SCOPE_PERIOD("kpi.duplicate_scope_period"),
-    KPI_CANNOT_UPDATE_ACTIVE("kpi.cannot_update_active"),
-    KPI_CANNOT_DELETE_ACTIVE("kpi.cannot_delete_active"),
-    KPI_PROGRESS_UPDATED("kpi.progress_updated"),
-    KPI_PROGRESS_INVALID("kpi.progress_invalid"),
-    // Used in controller GET /summary and in service validations
-    KPI_SUMMARY("kpi.summary"),
-    KPI_INVALID_DATE_RANGE("kpi.invalid_date_range"),
-    KPI_PERIOD_REQUIRED("kpi.period_required"),
-    KPI_INVALID_SCOPE("kpi.invalid_scope");
+
+    // ── KPI / OKR ─────────────────────────────────────────────────────────────
+    KPI_CREATED             ("kpi.created"),
+    KPI_UPDATED             ("kpi.updated"),
+    KPI_DELETED             ("kpi.deleted"),
+    KPI_NOT_FOUND           ("kpi.not_found"),
+    KPI_WEIGHT_EXCEEDED     ("kpi.weight_exceeded"),
+    KPI_INVALID_SCOPE       ("kpi.invalid_scope"),
+    KPI_INVALID_DATE_RANGE  ("kpi.invalid_date_range"),
+    KPI_PERIOD_REQUIRED     ("kpi.period_required"),
+    KPI_LIST                ("kpi.list"),
+    KPI_SUMMARY             ("kpi.summary"),
+
+    // ── Performance Review ────────────────────────────────────────────────────
+    REVIEW_CREATED          ("review.created"),
+    REVIEW_UPDATED          ("review.updated"),
+    REVIEW_DELETED          ("review.deleted"),
+    REVIEW_NOT_FOUND        ("review.not_found"),
+    REVIEW_LIST             ("review.list"),
+    REVIEW_DETAIL           ("review.detail"),
+    REVIEW_DUPLICATE        ("review.duplicate"),
+    REVIEW_SELF_ONLY        ("review.self_only"),
+    REVIEW_INVALID_PERIOD   ("review.invalid_period"),
+    REVIEW_EMPLOYEE_NOT_FOUND("review.employee_not_found");
 
     private final String key;
 }

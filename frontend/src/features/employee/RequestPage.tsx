@@ -66,6 +66,7 @@ import { CreateRequestModal } from "./components/CreateRequestModal"
 import { EditRequestModal } from "./components/EditRequestModal"
 import { attendanceService, type AdjustmentRequestSummary, type AdjustmentReason, type CreateAdjustmentPayload } from "@/services/attendanceService"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 
 const PAGE_SIZE = 10
 
@@ -153,6 +154,7 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
 )
 
 export default function RequestPage() {
+   const effectiveRole = useEffectiveRole()
   // Leave state
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
   const [leaveLoading, setLeaveLoading] = useState(true)
@@ -289,7 +291,7 @@ export default function RequestPage() {
 
   return (
     <SidebarProvider>
-      <AppSidebar role="employee" variant="inset" />
+      <AppSidebar role={effectiveRole} variant="inset" />
       <SidebarInset>
         <SiteHeader />
 
@@ -403,49 +405,7 @@ export default function RequestPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap">
-                      <SlidersHorizontal className="w-4 h-4" />
-                      {SYSTEM_MESSAGES.REQUEST.FILTER_TYPE}
-                      {leaveType !== "ALL" && (
-                        <>
-                          <div className="w-px h-4 bg-border mx-1" />
-                          <ActiveFilterBadge
-                            value={LEAVE_TYPE_CONFIG[leaveType].label}
-                            colorClass={LEAVE_TYPE_CONFIG[leaveType].badgeClass}
-                            onClear={() => setLeaveType("ALL")}
-                          />
-                        </>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px]">
-                    <DropdownMenuItem onClick={() => setLeaveType("ALL")} className="font-medium cursor-pointer">
-                      {SYSTEM_MESSAGES.REQUEST.FILTER_ALL_TYPE}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {LEAVE_TYPE_OPTIONS.map(([value, config]) => (
-                      <DropdownMenuItem
-                        key={value}
-                        onClick={() => setLeaveType(value)}
-                        className={cn("cursor-pointer", leaveType === value && "bg-muted font-medium")}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "w-2 h-2 rounded-full inline-block",
-                            value === "annual" && "bg-indigo-500",
-                            value === "sick" && "bg-rose-500",
-                            value === "unpaid" && "bg-slate-500",
-                            value === "personal" && "bg-violet-500",
-                          )} />
-                          {config.label}
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
+              
                 {leaveHasFilter && (
                   <Button
                     variant="ghost"

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Search, ChevronLeft, ChevronRight, Eye, Calendar, Building, User, Filter, SlidersHorizontal, X } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Eye, Filter, X, SlidersHorizontal, Building } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"

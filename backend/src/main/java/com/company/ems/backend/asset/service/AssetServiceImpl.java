@@ -1,5 +1,20 @@
 package com.company.ems.backend.asset.service;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.company.ems.backend.asset.dto.AssetDto;
 import com.company.ems.backend.asset.entity.Asset;
 import com.company.ems.backend.asset.entity.AssetHistory;
@@ -20,27 +35,13 @@ import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.user.entity.User;
 import com.company.ems.backend.user.repository.UserRepository;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +68,22 @@ public class AssetServiceImpl implements AssetService {
 
     @PersistenceContext
     private EntityManager em;
+
+        @Override
+        @Transactional(readOnly = true)
+        public Long resolveAssetId(String idOrCode) {
+                if (idOrCode == null || idOrCode.isBlank()) {
+                        throw new ResourceNotFoundException("Asset", "id", idOrCode);
+                }
+
+                try {
+                        return Long.parseLong(idOrCode);
+                } catch (NumberFormatException ignored) {
+                        return assetRepo.findActiveByAssetCode(idOrCode)
+                                        .map(Asset::getId)
+                                        .orElseThrow(() -> new ResourceNotFoundException("Asset", "code", idOrCode));
+                }
+        }
 
     @Override
     @Transactional(readOnly = true)
@@ -159,6 +176,12 @@ public class AssetServiceImpl implements AssetService {
         if (req.getValue()          != null) asset.setAssetValue(req.getValue());
         if (req.getPurchaseDate()   != null) asset.setPurchaseDate(req.getPurchaseDate());
         if (req.getLocationOrUser() != null) asset.setLocation(req.getLocationOrUser());
+        if (req.getAssignedEmployeeId() != null) {
+            Employee target = employeeRepo.findById(req.getAssignedEmployeeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", req.getAssignedEmployeeId()));
+            asset.setAssignedTo(target);
+            asset.setLocation(target.getFirstName() + " " + target.getLastName());
+        }
         if (req.getCondition()      != null) asset.setCondition(req.getCondition());
         if (req.getNote()           != null) asset.setNotes(req.getNote());
         if (req.getImage()          != null) asset.setImageUrl(req.getImage());

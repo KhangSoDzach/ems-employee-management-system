@@ -5,6 +5,8 @@ import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.common.dto.PageResponse;
 
 public interface AssetService {
+    Long resolveAssetId(String idOrCode);
+
     AssetDto.CodePreview previewNextCode();
 
     PageResponse<AssetDto.Summary> listAssets(int page, int size, AssetStatus status, String type, String keyword);
