@@ -27,8 +27,8 @@ public class AssetMapper {
 
     private final MessageService messages;
 
-    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final DateTimeFormatter DETAIL_DT_FMT = DateTimeFormatter.ofPattern("HH:mm, dd/MM/yyyy");
 
     private String statusLabel(AssetStatus s) {

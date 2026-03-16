@@ -70,7 +70,7 @@ export default function EmployeeManagementPage() {
             toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_SUCCESS);
             fetchList();
         } catch {
-            toast.error(SYSTEM_MESSAGES.ERROR);
+            toast.error(SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_ERROR);
         }
     };
 
