@@ -29,7 +29,6 @@ import com.company.ems.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -188,7 +187,8 @@ public class AuthenticationService {
     }
 
     private String buildDeviceInfo(RequestContext ctx) {
-        if (ctx == null) return "Unknown";
+        if (ctx == null)
+            return "Unknown";
         String ua = ctx.getUserAgent() != null ? ctx.getUserAgent() : "Unknown";
         String ip = ctx.getIpAddress() != null ? ctx.getIpAddress() : "Unknown";
         return ua + " | IP: " + ip;
