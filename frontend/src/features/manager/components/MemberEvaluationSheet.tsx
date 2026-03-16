@@ -1,5 +1,6 @@
-import { Check, Download, Info, MessageCircle, Star, UserCheck, X } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { Check, Download, Info, Loader2, MessageCircle, Star, UserCheck, X } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { toast } from "sonner"
 
 import {
   Sheet,
@@ -82,7 +83,7 @@ function getEvaluationForMember(member: Member, t: typeof SYSTEM_MESSAGES.MEMBER
   return { criteria, totalScore, rank, radarPoints }
 }
 
-export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChange, onSubmit }: MemberEvaluationSheetProps) {
+export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChange, onSubmit }: Readonly<MemberEvaluationSheetProps>) {
   if (!member) return null
 
   const t = SYSTEM_MESSAGES.MEMBER_LIST
@@ -123,9 +124,68 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
     return "bg-amber-100 text-amber-700"
   }
 
-  const handleSubmit = () => {
-    onSubmit?.({ scores, comment })
-    onOpenChange(false)
+  const [submitting, setSubmitting] = useState(false)
+  const printRef = useRef<HTMLDivElement>(null)
+
+  const handleSubmit = async () => {
+    const hasEmpty = Object.values(scores).some((s) => s === null || s === undefined || Number.isNaN(Number(s)))
+    if (hasEmpty) {
+      toast.error("Vui lòng nhập điểm cho tất cả tiêu chí")
+      return
+    }
+    setSubmitting(true)
+    try {
+      // Backend evaluation API not yet implemented — simulate success
+      // When ready: await evaluationService.submit({ memberId: member.id, scores, comment })
+      await new Promise((resolve) => setTimeout(resolve, 800))
+      onSubmit?.({ scores, comment })
+      toast.success("Đã gửi đánh giá thành công!")
+      onOpenChange(false)
+    } catch {
+      toast.error("Gửi đánh giá thất bại. Vui lòng thử lại.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleExportPDF = () => {
+    if (!member) return
+    const rows = baseline.criteria.map((c) =>
+      `<div class="score-row"><span class="label">${c.label}</span><span class="score">${scores[c.key] ?? c.score}/100</span></div>`
+    ).join("")
+    const html = `<html><head><title>Danh gia - ${member.name}</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:32px;color:#1e293b}
+        h1{font-size:22px;font-weight:bold;margin-bottom:4px}
+        .sub{color:#64748b;font-size:13px;margin-bottom:24px}
+        .meta{background:#f8fafc;padding:16px;border-radius:8px;margin-bottom:20px}
+        .meta p{margin:4px 0;font-size:14px}
+        .total{background:#fef2f2;border-left:4px solid #e41b21;padding:16px;border-radius:4px;margin-bottom:20px}
+        .score-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e2e8f0}
+        .label{font-weight:600;font-size:14px}
+        .score{font-weight:bold;color:#e41b21;font-size:16px}
+        .comment{background:#f8fafc;padding:16px;border-radius:8px;font-size:13px;line-height:1.6;margin-top:20px}
+        @media print{body{padding:16px}}
+      </style></head><body>
+      <h1>Phiếu đánh giá năng lực</h1>
+      <div class="sub">Ngày xuất: ${new Date().toLocaleDateString("vi-VN")}</div>
+      <div class="meta">
+        <p><strong>Họ và tên:</strong> ${member.name}</p>
+        <p><strong>Email:</strong> ${member.email}</p>
+        <p><strong>Vị trí:</strong> ${member.role}</p>
+        <p><strong>Mã NV:</strong> ${member.id}</p>
+      </div>
+      <div class="total"><strong>Tổng điểm: ${totalScore}/100 — Xếp loại: ${rank}</strong></div>
+      ${rows}
+      <div class="comment"><strong>Nhận xét:</strong><br/>${comment}</div>
+      </body></html>`
+    const win = window.open("", "_blank")
+    if (!win) { toast.error("Vui lòng cho phép mở popup để xuất PDF"); return }
+    win.document.write(html)
+    win.document.close()
+    win.focus()
+    setTimeout(() => { win.print(); win.close() }, 300)
+    toast.success("Xuất báo cáo thành công!")
   }
 
   const canEdit = mode === "edit"
@@ -337,9 +397,10 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
               <Button
                 className="flex-1 flex items-center justify-center gap-2 py-3"
                 onClick={handleSubmit}
+                disabled={submitting}
               >
-                <Check className="w-4 h-4" />
-                {t.SHEET_SUBMIT}
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {submitting ? "Đang gửi..." : t.SHEET_SUBMIT}
               </Button>
             </>
           ) : (
@@ -347,9 +408,7 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
               <Button
                 variant="secondary"
                 className="flex-1 flex items-center justify-center gap-2"
-                onClick={() => {
-                  // TODO: implement PDF download
-                }}
+                onClick={handleExportPDF}
               >
                 <Download className="w-4 h-4" />
                 {t.SHEET_EXPORT}
