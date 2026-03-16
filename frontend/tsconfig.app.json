@@ -33,5 +33,5 @@
   },
   "include": [
     "src"
-, "src/features/manager/AssetGroupManagement.tsx"  ]
+  ]
 }

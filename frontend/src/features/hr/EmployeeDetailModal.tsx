@@ -25,7 +25,7 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
 
             <div className="relative bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl flex flex-col transition-all animate-in fade-in zoom-in duration-200">
@@ -36,8 +36,8 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                             <User size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Chi tiết nhân viên</h2>
-                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{employee?.employeeCode ?? "Loading..."}</p>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{SYSTEM_MESSAGES.EMPLOYEE.MODAL_DETAIL_TITLE}</h2>
+                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{employee?.employeeCode ?? SYSTEM_MESSAGES.LOADING}</p>
                         </div>
                     </div>
                     <button
@@ -53,15 +53,15 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                             <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-                            <p className="font-medium animate-pulse">Đang tải thông tin nhân viên...</p>
+                            <p className="font-medium animate-pulse">{SYSTEM_MESSAGES.EMPLOYEE.LOADING_DETAIL}</p>
                         </div>
                     ) : !employee ? (
-                        <div className="text-center py-20 text-gray-400">Không tìm thấy dữ liệu</div>
+                        <div className="text-center py-20 text-gray-400">{SYSTEM_MESSAGES.NO_DATA}</div>
                     ) : (
                         <>
                             {/* TOP SECTION: PROFILE SUMMARY */}
                             <div className="flex flex-col md:flex-row gap-6 items-start">
-                                <div className="w-32 h-32 rounded-2xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0 border-4 border-white dark:border-gray-800 shadow-lg relative group">
+                                <div className="w-32 h-32 rounded-2xl bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0 border-4 border-white dark:border-gray-800 shadow-lg relative group">
                                     {employee.avatarUrl ? (
                                         <img src={employee.avatarUrl} alt="" className="w-full h-full object-cover" />
                                     ) : (
@@ -88,7 +88,7 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                                                 </span>
                                                 <span className="text-gray-400 text-xs font-medium">•</span>
                                                 <span className="text-gray-500 text-xs font-semibold uppercase tracking-wide">
-                                                    Phòng {employee.department}
+                                                    {SYSTEM_MESSAGES.LABEL_DEPARTMENT}{SYSTEM_MESSAGES.SYMBOLS.SPACE}{employee.department}
                                                 </span>
                                             </div>
                                         </div>
@@ -97,7 +97,7 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                                             : "bg-red-50 text-red-600 border border-red-200"
                                             }`}>
                                             <div className={`w-2 h-2 rounded-full ${employee.status === "ACTIVE" ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-                                            {employee.status === "ACTIVE" ? "ĐANG LÀM VIỆC" : "NGHỈ VIỆC"}
+                                            {employee.status === "ACTIVE" ? SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE_CAP : SYSTEM_MESSAGES.EMPLOYEE.STATUS_INACTIVE_CAP}
                                         </div>
                                     </div>
 
@@ -108,18 +108,18 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                                         </div>
                                         <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                                             <Phone size={16} className="text-gray-400" />
-                                            <span className="font-medium text-gray-900 dark:text-white">{employee.phone ?? "N/A"}</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{employee.phone ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</span>
                                         </div>
                                         <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                                             <Calendar size={16} className="text-gray-400" />
                                             <div>
-                                                <p className="text-[10px] text-gray-400 uppercase font-bold leading-tight">Ngày vào làm</p>
+                                                <p className="text-[10px] text-gray-400 uppercase font-bold leading-tight">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_JOIN_DATE}</p>
                                                 <span className="font-medium text-gray-900 dark:text-white">{employee.hireDate}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                                             <MapPin size={16} className="text-gray-400" />
-                                            <span className="font-medium text-gray-900 dark:text-white">{employee.workLocation ?? "Văn phòng chính"}</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{employee.workLocation ?? SYSTEM_MESSAGES.EMPLOYEE.DEFAULT_WORK_LOCATION}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -130,28 +130,28 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                                 {/* PERSONAL INFO */}
                                 <div className="space-y-4">
                                     <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white border-l-4 border-primary pl-3 uppercase tracking-wider">
-                                        <User size={16} /> Thông tin cá nhân
+                                        <User size={16} /> {SYSTEM_MESSAGES.EMPLOYEE.SECTION_PERSONAL}
                                     </h4>
                                     <div className="grid grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Ngày sinh</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_DOB}</p>
                                             <p className="text-sm font-semibold">{employee.dateOfBirth}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Giới tính</p>
-                                            <p className="text-sm font-semibold">{employee.gender ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_GENDER}</p>
+                                            <p className="text-sm font-semibold">{employee.gender ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">CMND/CCCD</p>
-                                            <p className="text-sm font-semibold">{employee.nationalId ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONAL_ID}</p>
+                                            <p className="text-sm font-semibold">{employee.nationalId ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Quốc tịch</p>
-                                            <p className="text-sm font-semibold">{employee.nationality ?? "Việt Nam"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONALITY}</p>
+                                            <p className="text-sm font-semibold">{employee.nationality ?? SYSTEM_MESSAGES.EMPLOYEE.DEFAULT_NATIONALITY}</p>
                                         </div>
                                         <div className="col-span-2">
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Địa chỉ</p>
-                                            <p className="text-sm font-semibold">{employee.address ? `${employee.address}, ${employee.city ?? ""}, ${employee.state ?? ""}` : "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_ADDRESS}</p>
+                                            <p className="text-sm font-semibold">{employee.address ? `${employee.address}, ${employee.city ?? ""}, ${employee.state ?? ""}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -159,42 +159,42 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                                 {/* EMPLOYMENT INFO */}
                                 <div className="space-y-4">
                                     <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white border-l-4 border-blue-500 pl-3 uppercase tracking-wider">
-                                        <Briefcase size={16} /> Thông tin công việc
+                                        <Briefcase size={16} /> {SYSTEM_MESSAGES.EMPLOYEE.SECTION_JOB}
                                     </h4>
                                     <div className="grid grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Loại hợp đồng</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_CONTRACT}</p>
                                             <p className="text-sm font-semibold">{
-                                                employee.contractType === "FULL_TIME" ? "Toàn thời gian" :
-                                                    employee.contractType === "PART_TIME" ? "Bán thời gian" :
-                                                        employee.contractType === "CONTRACT" ? "Hợp đồng có thời hạn" :
-                                                            employee.contractType === "INTERN" ? "Thực tập sinh" :
-                                                                employee.contractType === "CONSULTANT" ? "Tư vấn viên" :
-                                                                    employee.contractType === "TEMPORARY" ? "Thời vụ" :
-                                                                        employee.contractType ?? "N/A"
+                                                employee.contractType === "FULL_TIME" ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.FULL_TIME :
+                                                    employee.contractType === "PART_TIME" ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.PART_TIME :
+                                                        employee.contractType === "CONTRACT" ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.CONTRACT :
+                                                            employee.contractType === "INTERN" ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.INTERN :
+                                                                employee.contractType === "CONSULTANT" ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.CONSULTANT :
+                                                                    employee.contractType === "TEMPORARY" ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.TEMPORARY :
+                                                                        employee.contractType ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
                                             }</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Lương cơ bản</p>
-                                            <p className="text-sm font-bold text-blue-600">{employee.salary ? employee.salary.toLocaleString() + " VNĐ" : "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_SALARY}</p>
+                                            <p className="text-sm font-bold text-blue-600">{employee.salary ? employee.salary.toLocaleString() + SYSTEM_MESSAGES.COMMON.CURRENCY_VND : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Người quản lý</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_MANAGER}</p>
                                             <p className="text-sm font-semibold flex items-center gap-1.5 underline decoration-gray-200 cursor-help">
-                                                {employee.reportingManagerName ?? "N/A"}
+                                                {employee.reportingManagerName ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Kết thúc thử việc</p>
-                                            <p className="text-sm font-semibold">{employee.probationEndDate ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_PROBATION_END}</p>
+                                            <p className="text-sm font-semibold">{employee.probationEndDate ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Phép năm tồn</p>
-                                            <p className="text-sm font-bold text-green-600">{employee.annualLeaveBalance ?? 0} ngày</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_LEAVE_ANNUAL}</p>
+                                            <p className="text-sm font-bold text-green-600">{employee.annualLeaveBalance ?? 0} {SYSTEM_MESSAGES.COMMON.DAYS_UNIT}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Phép bệnh tồn</p>
-                                            <p className="text-sm font-bold text-amber-600">{employee.sickLeaveBalance ?? 0} ngày</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_LEAVE_SICK}</p>
+                                            <p className="text-sm font-bold text-amber-600">{employee.sickLeaveBalance ?? 0} {SYSTEM_MESSAGES.COMMON.DAYS_UNIT}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -202,20 +202,20 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                                 {/* EMERGENCY CONTACT */}
                                 <div className="space-y-4">
                                     <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white border-l-4 border-red-500 pl-3 uppercase tracking-wider">
-                                        <Users size={16} /> Liên hệ khẩn cấp
+                                        <Users size={16} /> {SYSTEM_MESSAGES.EMPLOYEE.SECTION_EMERGENCY}
                                     </h4>
                                     <div className="grid grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                                         <div className="col-span-2">
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Họ tên</p>
-                                            <p className="text-sm font-semibold">{employee.emergencyContactName ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMERGENCY_NAME}</p>
+                                            <p className="text-sm font-semibold">{employee.emergencyContactName ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Quan hệ</p>
-                                            <p className="text-sm font-semibold">{employee.emergencyContactRelation ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMERGENCY_RELATION}</p>
+                                            <p className="text-sm font-semibold">{employee.emergencyContactRelation ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Số điện thoại</p>
-                                            <p className="text-sm font-bold text-red-600">{employee.emergencyContactPhone ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}</p>
+                                            <p className="text-sm font-bold text-red-600">{employee.emergencyContactPhone ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -223,24 +223,24 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                                 {/* TAX & BANKING */}
                                 <div className="space-y-4">
                                     <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white border-l-4 border-amber-500 pl-3 uppercase tracking-wider">
-                                        <CreditCard size={16} /> Tài chính & Thuế
+                                        <CreditCard size={16} /> {SYSTEM_MESSAGES.EMPLOYEE.SECTION_FINANCE}
                                     </h4>
                                     <div className="grid grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Mã số thuế</p>
-                                            <p className="text-sm font-semibold">{employee.taxId ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_TAX_ID}</p>
+                                            <p className="text-sm font-semibold">{employee.taxId ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Số sổ BHXH</p>
-                                            <p className="text-sm font-semibold">{employee.socialSecurityNumber ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_SOCIAL_ID}</p>
+                                            <p className="text-sm font-semibold">{employee.socialSecurityNumber ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                         <div className="col-span-2 border-t border-gray-100 dark:border-gray-700 pt-3 mt-1">
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Tài khoản ngân hàng</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_BANK_ACCOUNT}</p>
                                             <p className="text-sm font-bold flex items-center gap-2 uppercase">
                                                 <Building size={14} className="text-gray-400" />
-                                                {employee.bankName} - {employee.bankAccountNumber ?? "N/A"}
+                                                {employee.bankName}{SYSTEM_MESSAGES.SYMBOLS.DASH}{employee.bankAccountNumber ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                                             </p>
-                                            <p className="text-[10px] text-gray-400 mt-0.5">Chi nhánh: {employee.bankBranch ?? "N/A"}</p>
+                                            <p className="text-[10px] text-gray-400 mt-0.5">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_BANK_BRANCH}{SYSTEM_MESSAGES.SYMBOLS.COLON}{employee.bankBranch ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -250,10 +250,10 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
                             {employee.notes && (
                                 <div className="space-y-4">
                                     <h4 className="text-sm font-bold text-gray-900 dark:text-white border-l-4 border-gray-400 pl-3 uppercase tracking-wider">
-                                        Ghi chú
+                                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NOTES}
                                     </h4>
                                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-300 italic whitespace-pre-wrap">
-                                        "{employee.notes}"
+                                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}{employee.notes}{SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                                     </div>
                                 </div>
                             )}

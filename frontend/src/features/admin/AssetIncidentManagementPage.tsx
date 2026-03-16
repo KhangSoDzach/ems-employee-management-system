@@ -88,7 +88,7 @@ export default function AssetIncidentManagementPage() {
         const matchesStatus = statusFilter === "All" || incident.status === statusFilter;
         // Mock filtering out if it's an employee (only sees their own)
         const isOwnRecord = incident.employeeName === (user?.firstName + ' ' + user?.lastName) || incident.employeeName === "David Smith"; // mockup David Smith as employee
-        if (isEmployee && !isOwnRecord) return false;
+        if (isEmployee && !isOwnRecord) { return false; }
 
         return matchesSearch && matchesStatus;
     });
@@ -104,7 +104,7 @@ export default function AssetIncidentManagementPage() {
                     {/* ===== HEADER ===== */}
                     <div className="page-header">
                         <div>
-                            <h1 className="page-title">{SYSTEM_MESSAGES.ASSET_INCIDENT.TITLE}</h1>
+                            <h1 className="page-heading">{SYSTEM_MESSAGES.ASSET_INCIDENT.TITLE}</h1>
                             <p className="page-subtitle text-sm mt-1">{SYSTEM_MESSAGES.ASSET_INCIDENT.SUBTITLE}</p>
                         </div>
                     </div>

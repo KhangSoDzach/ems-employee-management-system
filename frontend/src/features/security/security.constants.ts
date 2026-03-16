@@ -1,0 +1,88 @@
+export const SECURITY_CONSTANTS = {
+    TABS: {
+        PASSWORD: "Thay đổi mật khẩu",
+        TWO_FACTOR: "Xác thực hai yếu tố (2FA)",
+    },
+    PASSWORD: {
+        TITLE: "Thay đổi mật khẩu",
+        DESC: "Đảm bảo tài khoản của bạn đang sử dụng một mật khẩu mạnh để giữ an toàn.",
+        LABEL_CURRENT: "Mật khẩu hiện tại",
+        LABEL_NEW: "Mật khẩu mới",
+        LABEL_CONFIRM: "Xác nhận mật khẩu mới",
+        PLACEHOLDER_CURRENT: "Nhập mật khẩu hiện tại",
+        PLACEHOLDER_NEW: "Tối thiểu 8 ký tự",
+        PLACEHOLDER_CONFIRM: "Nhập lại mật khẩu mới",
+        BTN_SAVE: "Lưu thay đổi",
+        ERR_REQUIRED: "Bắt buộc nhập trường này",
+        ERR_MIN_LENGTH: "Mật khẩu phải có tối thiểu 8 ký tự",
+        ERR_COMPLEXITY: "Mật khẩu phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+        ERR_SAME_AS_CURRENT: "Mật khẩu mới không được trùng với mật khẩu hiện tại",
+        ERR_MISMATCH: "Xác nhận mật khẩu không khớp",
+        MSG_SUCCESS: "Thay đổi mật khẩu thành công!",
+        MSG_WRONG_CURRENT: "Mật khẩu hiện tại không chính xác",
+    },
+    TWO_FACTOR: {
+        TITLE: "Xác thực hai yếu tố (2FA)",
+        DESC: "Thêm một lớp bảo mật bổ sung cho tài khoản của bạn bằng cách yêu cầu mã xác thực khi đăng nhập.",
+        SWITCH_LABEL: "Bật xác thực hai yếu tố",
+        STATUS_OFF: "Hiện tại 2FA đang tắt. Chúng tôi khuyên bạn nên bật tính năng này.",
+        STATUS_ON: "Xác thực hai yếu tố đang hoạt động. Tài khoản của bạn đã được bảo vệ tốt hơn.",
+        DIALOG_ENABLE_TITLE: "Thiết lập xác thực 2 lớp",
+        DIALOG_ENABLE_DESC: "Quét mã QR bằng ứng dụng xác thực (Google Authenticator, Authy...) để nhận mã OTP.",
+        LABEL_SECRET_KEY: "Khóa bí mật (Secret Key)",
+        COPY_SUCCESS: "Đã sao chép khóa bí mật!",
+        WARNING_SECRET: "Khóa bí mật này chỉ hiển thị một lần duy nhất. Hãy lưu giữ cẩn thận.",
+        LABEL_OTP: "Nhập mã OTP 6 số",
+        BTN_CONFIRM: "Xác nhận & Kích hoạt",
+        BTN_DISABLE: "Tắt ứng dụng",
+        MSG_ENABLE_SUCCESS: "Đã kích hoạt 2FA thành công!",
+        MSG_DISABLE_SUCCESS: "Đã tắt 2FA thành công!",
+        MSG_EMAIL_SENT: "Một email xác nhận đã được gửi đến hòm thư của bạn.",
+        
+        RECOVERY_TITLE: "Mã dự phòng (Recovery Codes)",
+        RECOVERY_DESC: "Hãy lưu các mã này ở nơi an toàn. Bạn có thể dùng chúng để đăng nhập nếu mất quyền truy cập vào ứng dụng xác thực.",
+        BTN_COPY_RECOVERY: "Sao chép mã",
+        BTN_DOWNLOAD_RECOVERY: "Tải về (.txt)",
+        
+        ALERT_DISABLE_TITLE: "Bạn có chắc chắn muốn tắt 2FA?",
+        ALERT_DISABLE_DESC: "Việc tắt 2FA sẽ làm giảm mức độ bảo mật cho tài khoản của bạn. Vui lòng xác nhận mật khẩu để tiếp tục.",
+        LABEL_CONFIRM_PWD: "Mật khẩu xác nhận",
+        BTN_CANCEL: "Hủy bỏ",
+        BTN_CONFIRM_DISABLE: "Xác nhận tắt",
+        
+        LABEL_2FA_TOGGLE: "Xác thực 2 lớp",
+        BTN_COPY: "Sao chép",
+        BTN_DONE: "Xong",
+    },
+    SIDEBAR_SETTINGS: {
+        TITLE: "Cài đặt",
+        PREFERENCES: "Tùy chọn",
+        NOTIFICATIONS: "Thông báo",
+        DARK_MODE: "Chế độ tối",
+        ACCOUNT: "Tài khoản",
+        ACCOUNT_SETTINGS: "Thiết lập tài khoản",
+        SECURITY_2FA: "Bảo mật (2FA)",
+        PRIVACY: "Quyền riêng tư",
+        SIGN_OUT: "Đăng xuất",
+        LOGOUT_ERROR: "Lỗi đăng xuất",
+        CONFIRM_PWD_PLACEHOLDER: "Xác nhận mật khẩu",
+        
+        ACCOUNT_VIEW: {
+            EDIT_PROFILE: "Chỉnh sửa hồ sơ",
+            EMAIL: "Địa chỉ Email",
+            LANGUAGE: "Ngôn ngữ",
+            LANG_VAL: "Tiếng Việt",
+            PRIMARY: "Chính",
+            DESC: "Quản lý danh tính và thông tin liên hệ cơ bản của bạn."
+        },
+        PRIVACY_VIEW: {
+            VISIBILITY: "Hiển thị hồ sơ",
+            VISIBILITY_DESC: "Quyết định ai có thể xem thứ hạng và thống kê hiệu suất của bạn.",
+            LOGGING: "Ghi nhật ký hoạt động",
+            LOGGING_DESC: "Cho phép thu thập dữ liệu sử dụng để cải thiện trải nghiệm EMS.",
+            DATA_MGMT: "Quản lý dữ liệu",
+            DATA_MGMT_DESC: "Các hành động vĩnh viễn liên quan đến dữ liệu tài khoản.",
+            BTN_EXPORT: "Yêu cầu trích xuất dữ liệu"
+        }
+    }
+};

@@ -98,11 +98,11 @@ export default function EmployeeManagementPage() {
                     {/* HEADER */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                            <h1 className="page-heading">
                                 {SYSTEM_MESSAGES.EMPLOYEE.TITLE}
                             </h1>
                             <p className="text-sm text-gray-500">
-                                Quản lý thông tin hồ sơ và trạng thái làm việc của nhân viên
+                                {SYSTEM_MESSAGES.EMPLOYEE.DESC_MGMT}
                             </p>
                         </div>
 
@@ -164,13 +164,13 @@ export default function EmployeeManagementPage() {
                                     className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 transition ml-2"
                                 >
                                     <FilterX size={14} />
-                                    Xóa lọc
+                                    {SYSTEM_MESSAGES.EMPLOYEE.BTN_CLEAR_FILTER}
                                 </button>
                             )}
                         </div>
 
                         <div className="text-sm font-medium text-gray-500 bg-white dark:bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800">
-                            Tổng số: <span className="text-gray-900 dark:text-white">{totalElements}</span> nhân viên
+                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_TOTAL} <span className="text-gray-900 dark:text-white">{totalElements}</span> {SYSTEM_MESSAGES.EMPLOYEE.LABEL_UNIT}
                         </div>
                     </div>
 
@@ -213,7 +213,7 @@ export default function EmployeeManagementPage() {
                                                 <td className="px-6 py-4 font-bold text-primary">{emp.employeeCode}</td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0 border border-gray-200 dark:border-gray-700">
+                                                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0 border border-gray-200 dark:border-gray-700">
                                                             {emp.avatarUrl ? (
                                                                 <img src={emp.avatarUrl} alt="" className="w-full h-full object-cover" />
                                                             ) : (

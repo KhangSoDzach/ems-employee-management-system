@@ -178,12 +178,10 @@ export default function ProfilePage() {
 
                 <main className="page-layout-wrapper">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                        <div>
-                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{SYSTEM_MESSAGES.PROFILE.BREADCRUMB}</p>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                {SYSTEM_MESSAGES.PROFILE.TITLE}
-                            </h1>
-                        </div>
+                        {/* Page Header */}
+                        <h1 className="page-heading">
+                            {SYSTEM_MESSAGES.PROFILE.TITLE}
+                        </h1>
                         <div className="flex items-center gap-3">
                             {canEdit ? (
                                 <>
@@ -651,7 +649,11 @@ export default function ProfilePage() {
 
                     <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
                         <DialogContent className="sm:max-w-md p-0 gap-0 rounded-xl overflow-hidden border-none shadow-2xl max-h-[90vh] overflow-y-auto">
-                            <ForgotPasswordPage isProfileMode={true} userEmail={userEmail} />
+                            <ForgotPasswordPage 
+                                isProfileMode={true} 
+                                userEmail={userEmail} 
+                                onClose={() => setResetPasswordOpen(false)}
+                            />
                         </DialogContent>
                     </Dialog>
 

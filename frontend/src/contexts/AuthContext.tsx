@@ -77,13 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const res = await api.post("/auth/login", { username, password }) as unknown as ApiResponse<{ accessToken: string; refreshToken: string }>;
             const { accessToken, refreshToken } = res.data;
 
-            if (!accessToken) throw new Error("No access token in response");
+            if (!accessToken) {
+                throw new Error("No access token in response");
+            }
 
             localStorage.setItem("access_token", accessToken);
             localStorage.setItem("refresh_token", refreshToken);
 
             const userInfo = await fetchCurrentUser();
-            if (!userInfo) throw new Error("Failed to fetch user info after login");
+            if (!userInfo) {
+                throw new Error("Failed to fetch user info after login");
+            }
             setUser(userInfo);
             return userInfo;
         },
@@ -128,6 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 /** Must be used inside <AuthProvider> */
 export function useAuth(): AuthContextType {
     const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
+    if (!ctx) {
+        throw new Error("useAuth must be used within <AuthProvider>");
+    }
     return ctx;
 }

@@ -104,7 +104,7 @@ export default function Page() {
 
                 <main className="page-layout-main">
                     <div className="page-header">
-                        <h1 className="page-title">{SYSTEM_MESSAGES.EMPLOYEE.TITLE}</h1>
+                        <h1 className="page-heading">{SYSTEM_MESSAGES.EMPLOYEE.TITLE}</h1>
 
                         <button
                             onClick={() => {

@@ -70,6 +70,8 @@
   --color-status-returned: var(--status-returned);
   --color-status-returned-fg: var(--status-returned-fg);
   --color-status-returned-border: var(--status-returned-border);
+  /* Custom Z-Index */
+  --z-index-60: 60;
 }
 
 /* =========================================
@@ -574,7 +576,7 @@
      PAGE HEADINGS
      ========================================= */
   .page-heading {
-    @apply text-3xl font-bold tracking-tight text-foreground;
+    @apply text-3xl font-extrabold tracking-tight text-foreground;
   }
 
   .page-heading-sm {

@@ -44,8 +44,8 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
         return message;
     };
 
-    const applyServerValidationErrors = (error: any): boolean => {
-        const fieldErrors = error?.response?.data?.fieldErrors;
+    const applyServerValidationErrors = (error: unknown): boolean => {
+        const fieldErrors = (error as any)?.response?.data?.fieldErrors;
         if (fieldErrors && typeof fieldErrors === "object") {
             const normalized: Record<string, string> = {};
             Object.entries(fieldErrors as Record<string, unknown>).forEach(([field, message]) => {
@@ -196,11 +196,11 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
             await employeeService.updateEmployee(employeeId, formData);
             toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_SUCCESS);
             onSuccess();
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (applyServerValidationErrors(error)) {
                 return;
             }
-            const rawMessage = error?.response?.data?.message as string | undefined;
+            const rawMessage = (error as any)?.response?.data?.message as string | undefined;
             const msg =
                 rawMessage === "Request body is invalid or missing. Please check the JSON format"
                     ? SYSTEM_MESSAGES.EMPLOYEE.MSG_VALIDATION_ERROR
@@ -238,7 +238,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 overflow-y-auto">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
 
             <div className="relative bg-white dark:bg-gray-900 w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col my-auto animate-in fade-in zoom-in duration-200">
@@ -247,7 +247,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                         <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                             <Briefcase size={20} />
                         </div>
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Cập nhật hồ sơ nhân viên</h2>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">{SYSTEM_MESSAGES.EMPLOYEE.MODAL_UPDATE_TITLE}</h2>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors">
                         <X size={20} />
@@ -260,11 +260,11 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                         <div className="lg:col-span-2 space-y-6">
                             <div className="space-y-4 text-sm font-medium">
                                 <h4 className="flex items-center gap-2 text-xs font-bold text-blue-500 border-l-4 border-blue-500 pl-3 uppercase tracking-widest">
-                                    Thông tin cơ bản
+                                    {SYSTEM_MESSAGES.EMPLOYEE.SECTION_BASIC}
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Họ <span className="text-red-500">*</span></label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_LAST_NAME} <span className="text-red-500">{SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}</span></label>
                                         <input
                                             required
                                             name="lastName"
@@ -275,7 +275,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Tên <span className="text-red-500">*</span></label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_FIRST_NAME} <span className="text-red-500">{SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}</span></label>
                                         <input
                                             required
                                             name="firstName"
@@ -286,7 +286,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
                                     </div>
                                     <div className="space-y-1 col-span-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Email công ty <span className="text-red-500">*</span></label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_COMP_EMAIL} <span className="text-red-500">{SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}</span></label>
                                         <input
                                             required
                                             type="email"
@@ -298,15 +298,15 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Số điện thoại</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}</label>
                                         <input name="phone" value={formData.phone} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800" />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Giới tính</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_GENDER}</label>
                                         <select name="gender" value={formData.gender} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white">
-                                            <option value="MALE">Nam</option>
-                                            <option value="FEMALE">Nữ</option>
-                                            <option value="OTHER">Khác</option>
+                                            <option value="MALE">{SYSTEM_MESSAGES.EMPLOYEE.GENDER_MALE}</option>
+                                            <option value="FEMALE">{SYSTEM_MESSAGES.EMPLOYEE.GENDER_FEMALE}</option>
+                                            <option value="OTHER">{SYSTEM_MESSAGES.EMPLOYEE.GENDER_OTHER}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -314,11 +314,11 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
 
                             <div className="space-y-4">
                                 <h4 className="flex items-center gap-2 text-xs font-bold text-blue-500 border-l-4 border-blue-500 pl-3 uppercase tracking-widest">
-                                    Tài chính & Ghi chú
+                                    {SYSTEM_MESSAGES.EMPLOYEE.SECTION_FINANCE_NOTES}
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Lương cơ bản <span className="text-red-500">*</span></label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_SALARY} <span className="text-red-500">{SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}</span></label>
                                         <input
                                             type="number"
                                             name="salary"
@@ -329,8 +329,8 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                         {errors.salary && <p className="text-xs text-red-500 mt-1">{errors.salary}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Ghi chú</label>
-                                        <textarea name="notes" value={formData.notes || ""} onChange={handleChange} rows={3} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 resize-none" placeholder="Nhập ghi chú thêm..." />
+                                        <label className="text-xs font-bold text-gray-500 uppercase">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_NOTES}</label>
+                                        <textarea name="notes" value={formData.notes || ""} onChange={handleChange} rows={3} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 resize-none" placeholder={SYSTEM_MESSAGES.EMPLOYEE.PLACEHOLDER_NOTES} />
                                     </div>
                                 </div>
                             </div>
@@ -338,23 +338,23 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
 
                         <div className="space-y-8 bg-blue-50/20 dark:bg-gray-800/50 p-6 rounded-2xl border border-blue-100 dark:border-gray-800">
                             <div className="space-y-4">
-                                <h4 className="flex items-center gap-2 text-xs font-bold text-blue-700 uppercase tracking-widest">Công việc hiện tại</h4>
+                                <h4 className="flex items-center gap-2 text-xs font-bold text-blue-700 uppercase tracking-widest">{SYSTEM_MESSAGES.EMPLOYEE.SECTION_CURRENT_JOB}</h4>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Phòng ban <span className="text-red-500">*</span></label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_DEPARTMENT} <span className="text-red-500">{SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}</span></label>
                                         <select
                                             name="departmentId"
                                             value={formData.departmentId}
                                             onChange={handleChange}
                                             className={selectClass("departmentId")}
                                         >
-                                            <option value={0}>Chọn phòng ban...</option>
+                                            <option value={0}>{SYSTEM_MESSAGES.EMPLOYEE.SELECT_DEPT}</option>
                                             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                         </select>
                                         {errors.departmentId && <p className="text-xs text-red-500 mt-1">{errors.departmentId}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Vị trí <span className="text-red-500">*</span></label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_POSITION} <span className="text-red-500">{SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}</span></label>
                                         <select
                                             name="positionId"
                                             value={formData.positionId}
@@ -362,7 +362,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                             className={selectClass("positionId") + " disabled:opacity-50"}
                                             disabled={!formData.departmentId}
                                         >
-                                            <option value={0}>Chọn vị trí...</option>
+                                            <option value={0}>{SYSTEM_MESSAGES.EMPLOYEE.SELECT_POSITION}</option>
                                             {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                                         </select>
                                         {errors.positionId && <p className="text-xs text-red-500 mt-1">{errors.positionId}</p>}
@@ -370,7 +370,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
 
                                     {!isManagerPosition ? (
                                         <div className="space-y-1">
-                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Trưởng phòng / Quản lý</label>
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_REPORTING_MANAGER}</label>
                                             <select
                                                 name="reportingManagerId"
                                                 value={formData.reportingManagerId ?? ""}
@@ -378,7 +378,7 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                                 disabled={!formData.positionId}
                                                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold bg-white disabled:opacity-50"
                                             >
-                                                <option value="">— Không chỉ định —</option>
+                                                <option value="">{SYSTEM_MESSAGES.EMPLOYEE.OPTION_NO_MANAGER}</option>
                                                 {managers.map(m => (
                                                     <option key={m.id} value={m.id}>
                                                         {m.name} {m.position ? `(${m.position})` : ""}
@@ -389,25 +389,25 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
                                     ) : (
                                         <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30">
                                             <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                                                Cấp bậc Trưởng phòng / Quản lý.
+                                                {SYSTEM_MESSAGES.EMPLOYEE.MSG_MANAGER_LEVEL}
                                             </p>
                                         </div>
                                     )}
 
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Loại hợp đồng</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_CONTRACT}</label>
                                         <select name="contractType" value={formData.contractType} onChange={handleChange} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold bg-white">
-                                            <option value="FULL_TIME">Toàn thời gian (Full-time)</option>
-                                            <option value="PART_TIME">Bán thời gian (Part-time)</option>
-                                            <option value="CONTRACT">Hợp đồng có thời hạn</option>
-                                            <option value="INTERN">Thực tập sinh</option>
-                                            <option value="CONSULTANT">Tư vấn viên</option>
-                                            <option value="TEMPORARY">Thời vụ</option>
+                                            <option value="FULL_TIME">{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.FULL_TIME}</option>
+                                            <option value="PART_TIME">{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.PART_TIME}</option>
+                                            <option value="CONTRACT">{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.CONTRACT}</option>
+                                            <option value="INTERN">{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.INTERN}</option>
+                                            <option value="CONSULTANT">{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.CONSULTANT}</option>
+                                            <option value="TEMPORARY">{SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.TEMPORARY}</option>
                                         </select>
                                     </div>
                                     <div className="bg-white/50 dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex items-center justify-between">
                                         <div>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase">Mã NV</p>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase">{SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE_SHORT}</p>
                                             <p className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{employee?.employeeCode}</p>
                                         </div>
                                         <ShieldCheck size={24} className="text-blue-500 opacity-20" />
@@ -420,11 +420,11 @@ export default function EmployeeEditModal({ open, employeeId, employee, onClose,
 
                     <div className="mt-12 pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3">
                         <button type="button" onClick={onClose} className="px-6 py-2 border border-gray-200 dark:border-gray-800 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition drop-shadow-sm">
-                            Hủy bỏ
+                            {SYSTEM_MESSAGES.BTN_CANCEL}
                         </button>
                         <button type="submit" disabled={loading} className="px-8 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/25 flex items-center gap-2">
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={18} />}
-                            Lưu hồ sơ
+                            {SYSTEM_MESSAGES.EMPLOYEE.BTN_SAVE_PROFILE}
                         </button>
                     </div>
                 </form>

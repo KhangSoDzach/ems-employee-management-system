@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { User, Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
+import { User, Lock, Mail, Eye, EyeOff, Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,12 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
@@ -24,6 +30,9 @@ const TEXT = {
     TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại thông tin đăng nhập",
     LOADING: "Đang xác thực...",
     SUCCESS: "Đăng nhập thành công!",
+    TWO_FACTOR_TIP_1: "Dùng mã",
+    TWO_FACTOR_TIP_2: "123456",
+    TWO_FACTOR_TIP_3: "để thử nghiệm UI",
 };
 
 const loginSchema = z.object({
@@ -36,9 +45,15 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 /** Trả về route home tương ứng với role của user */
 function getRedirectByRole(roles: string[]): string {
-    if (roles.includes("ROLE_ADMIN")) return "/profile";
-    if (roles.includes("ROLE_HR")) return "/profile";
-    if (roles.includes("ROLE_MANAGER")) return "/profile";
+    if (roles.includes("ROLE_ADMIN")) {
+        return "/profile";
+    }
+    if (roles.includes("ROLE_HR")) {
+        return "/profile";
+    }
+    if (roles.includes("ROLE_MANAGER")) {
+        return "/profile";
+    }
     return "/profile"; // ROLE_EMPLOYEE
 }
 
@@ -46,6 +61,10 @@ export const LoginPage = () => {
     const navigate = useNavigate();
     const { login, isAuthenticated, user } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
+    const [show2faDialog, setShow2faDialog] = useState(false);
+    const [otpValue, setOtpValue] = useState("");
+    const [isVerifying2fa, setIsVerifying2fa] = useState(false);
+    const [pendingLoginData, setPendingLoginData] = useState<LoginFormValues | null>(null);
 
     const {
         register,
@@ -79,6 +98,15 @@ export const LoginPage = () => {
     const onSubmit = async (data: LoginFormValues) => {
         toast.dismiss();
 
+        // MOCK: Giả lập nếu user đã bật 2FA (Chỉ làm UI theo yêu cầu)
+        const mock2faEnabled = localStorage.getItem("is2faEnabled") === "true";
+
+        if (mock2faEnabled) {
+            setPendingLoginData(data);
+            setShow2faDialog(true);
+            return;
+        }
+
         const loginPromise = login(data.email, data.password).then((userInfo) => {
             if (data.remember) {
                 localStorage.setItem("rememberedEmail", data.email);
@@ -97,6 +125,35 @@ export const LoginPage = () => {
                 return apiErr.response?.data?.message || SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID;
             },
         });
+    };
+
+    const handleVerify2fa = async () => {
+        if (otpValue.length < 6 || !pendingLoginData) {
+            return;
+        }
+        
+        setIsVerifying2fa(true);
+        toast.dismiss();
+
+        try {
+            // MOCK: Giả lập xác thực mã OTP
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            if (otpValue === "123456") { // Mã test PIN
+                const userInfo = await login(pendingLoginData.email, pendingLoginData.password);
+                if (pendingLoginData.remember) {
+                    localStorage.setItem("rememberedEmail", pendingLoginData.email);
+                }
+                toast.success(TEXT.SUCCESS);
+                navigate(getRedirectByRole(userInfo.roles), { replace: true });
+            } else {
+                toast.error(SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.TOAST_INVALID);
+            }
+        } catch {
+            toast.error(SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID);
+        } finally {
+            setIsVerifying2fa(false);
+        }
     };
 
     const onError = (errors: FieldErrors<LoginFormValues>) => {
@@ -234,6 +291,97 @@ export const LoginPage = () => {
                     </form>
                 </CardContent>
             </Card>
+
+            {/* 2FA Login Dialog */}
+            <Dialog open={show2faDialog} onOpenChange={setShow2faDialog}>
+                <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
+                    <div className="bg-primary/5 p-8 text-center space-y-4">
+                        <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto shadow-sm border border-primary/20">
+                            <ShieldCheck size={40} className="text-primary" />
+                        </div>
+                        <div className="space-y-2">
+                            <DialogTitle className="text-2xl font-bold text-slate-900">
+                                {SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.TITLE}
+                            </DialogTitle>
+                            <DialogDescription className="text-slate-500 font-medium">
+                                {SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.DESC}
+                            </DialogDescription>
+                        </div>
+                    </div>
+
+                    <div className="p-8 pt-6 space-y-8">
+                        <div className="space-y-4">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block text-center">
+                                {SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.LABEL_OTP}
+                            </label>
+                            
+                            <div className="flex justify-center gap-3">
+                                {[...Array(6)].map((_, i) => (
+                                    <input
+                                        key={i}
+                                        type="text"
+                                        maxLength={1}
+                                        className="w-12 h-14 text-center border-2 border-slate-100 rounded-2xl font-bold text-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none bg-slate-50/50"
+                                        value={otpValue[i] || ""}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/[^0-9]/g, "");
+                                            if (val) {
+                                                const newOtp = otpValue.split("");
+                                                newOtp[i] = val;
+                                                const finalOtp = newOtp.join("");
+                                                setOtpValue(finalOtp);
+                                                if (i < 5) {
+                                                    (e.target.nextSibling as HTMLInputElement)?.focus();
+                                                }
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Backspace" && !otpValue[i] && i > 0) {
+                                                const newOtp = otpValue.split("");
+                                                newOtp[i-1] = "";
+                                                setOtpValue(newOtp.join(""));
+                                                (e.currentTarget.previousSibling as HTMLInputElement)?.focus();
+                                            }
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                            
+                            <p className="text-[11px] text-center text-slate-400">
+                                {TEXT.TWO_FACTOR_TIP_1} <span className="font-bold text-primary">{TEXT.TWO_FACTOR_TIP_2}</span> {TEXT.TWO_FACTOR_TIP_3}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                            <Button 
+                                className="w-full h-12 rounded-2xl font-bold text-base shadow-lg shadow-primary/20" 
+                                onClick={handleVerify2fa}
+                                disabled={otpValue.length < 6 || isVerifying2fa}
+                            >
+                                {isVerifying2fa ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> {TEXT.BTN_PROCESSING}
+                                    </>
+                                ) : (
+                                    SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.BTN_VERIFY
+                                )}
+                            </Button>
+                            
+                            <Button 
+                                variant="ghost" 
+                                className="w-full h-12 rounded-2xl font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                                onClick={() => {
+                                    setShow2faDialog(false);
+                                    setOtpValue("");
+                                }}
+                            >
+                                <ArrowLeft size={18} className="mr-2" />
+                                {SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.BTN_BACK}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

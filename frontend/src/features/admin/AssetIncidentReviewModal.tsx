@@ -14,7 +14,9 @@ interface AssetIncidentReviewModalProps {
 export default function AssetIncidentReviewModal({ open, onClose, incident, onUpdate }: AssetIncidentReviewModalProps) {
     const [condition, setCondition] = useState("");
 
-    if (!open || !incident) return null;
+    if (!open || !incident) {
+        return null;
+    }
 
     const handleApprove = () => {
         if (!condition) {

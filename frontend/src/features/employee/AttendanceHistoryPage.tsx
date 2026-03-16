@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
 import { Search, Calendar, Clock, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
-import { useNavigate } from "react-router-dom"
 import { format, startOfMonth, endOfMonth } from "date-fns"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -81,7 +80,6 @@ function SummaryCard({ label, value, sub, color, loading }: { label: string; val
 const PAGE_SIZE = 10
 
 export default function AttendanceHistoryPage() {
-    const navigate = useNavigate()
     const effectiveRole = useEffectiveRole()
 
     // ── Filters ───────────────────────────────────────────────────────────────
@@ -164,17 +162,7 @@ export default function AttendanceHistoryPage() {
                     {/* Header */}
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
                         <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <button
-                                    onClick={() => navigate("/checkin")}
-                                    className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm font-medium transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4" /> {SYSTEM_MESSAGES.ATTENDANCE_HIST.BREADCRUMB}
-                                </button>
-                                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.SYMBOLS.SLASH}</span>
-                                <span className="text-sm font-semibold text-foreground">{SYSTEM_MESSAGES.ATTENDANCE_HIST.TITLE}</span>
-                            </div>
-                            <h2 className="page-heading">{SYSTEM_MESSAGES.ATTENDANCE_HIST.TITLE}</h2>
+                            <h1 className="page-heading">{SYSTEM_MESSAGES.ATTENDANCE_HIST.TITLE}</h1>
                             <p className="text-muted-foreground mt-1">{SYSTEM_MESSAGES.ATTENDANCE_HIST.DESC}</p>
                         </div>
                     </div>

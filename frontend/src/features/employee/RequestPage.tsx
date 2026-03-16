@@ -298,9 +298,6 @@ export default function RequestPage() {
         <main className="page-layout-wrapper">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.REQUEST.HEADING}</span>
-              </div>
               <h1 className="page-heading">{SYSTEM_MESSAGES.REQUEST.TITLE}</h1>
               <p className="text-muted-foreground mt-1">{SYSTEM_MESSAGES.REQUEST.DESC}</p>
             </div>
