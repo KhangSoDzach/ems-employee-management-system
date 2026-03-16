@@ -158,7 +158,7 @@ export default function AssetManagementPage() {
         <main className="flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950">
           {/* ===== HEADER ===== */}
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold">{SYSTEM_MESSAGES.ASSET.TITLE}</h1>
+            <h1 className="page-heading">{SYSTEM_MESSAGES.ASSET.TITLE}</h1>
 
             <div className="flex items-center gap-4">
               <input

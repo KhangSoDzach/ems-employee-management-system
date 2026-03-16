@@ -192,12 +192,7 @@ export default function MyAssetsPage() {
 
                     {/* ── Page Header ── */}
                     <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.MY_ASSETS.BREADCRUMB}</span>
-                            <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.SYMBOLS.SLASH}</span>
-                            <span className="text-sm font-semibold text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</span>
-                        </div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</h1>
+                        <h1 className="page-heading">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</h1>
                         <p className="text-muted-foreground mt-1 text-sm">
                             {SYSTEM_MESSAGES.MY_ASSETS.DESCRIPTION}
                         </p>

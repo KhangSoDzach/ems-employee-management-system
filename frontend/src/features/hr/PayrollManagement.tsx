@@ -389,7 +389,7 @@ export default function PayrollManagement() {
                   >
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-slate-300">
+                        <div className="size-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-slate-300">
                           {row.name
                             .split(" ")
                             .slice(0, 2)

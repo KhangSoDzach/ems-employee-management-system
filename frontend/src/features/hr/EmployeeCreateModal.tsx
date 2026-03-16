@@ -227,7 +227,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-hidden">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 overflow-hidden">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
 
             <div className="relative bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col transition-all animate-in fade-in zoom-in duration-200 overflow-hidden">
@@ -469,7 +469,7 @@ export default function EmployeeCreateModal({ open, onClose, onSuccess }: Props)
                                     )}
                                     {isManagerPosition && (
                                         <div className="col-span-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                                            <Info size={14} className="text-blue-500 flex-shrink-0" />
+                                            <Info size={14} className="text-blue-500 shrink-0" />
                                             <p className="text-xs text-blue-600 dark:text-blue-400">Vị trí này là <strong>Trưởng phòng</strong> — không cần chỉ định người quản lý trực tiếp.</p>
                                         </div>
                                     )}

@@ -15,7 +15,9 @@ export default function AssetIncidentReviewModal({open, onClose, incident, onUpd
     const [note,       setNote]       = useState("");
     const [processing, setProcessing] = useState(false);
 
-    if (!open || !incident) return null;
+    if (!open || !incident) {
+        return null;
+    }
 
     const handleApprove = async () => {
         setProcessing(true);

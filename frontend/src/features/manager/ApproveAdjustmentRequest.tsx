@@ -155,11 +155,6 @@ const ApproveAdjustmentRequest: React.FC = () => {
                     {/* Page Header */}
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.MGMT_ADJ.BREADCRUMB_PARENT}</span>
-                                <span className="text-muted-foreground text-sm">{SYSTEM_MESSAGES.SYMBOLS.SLASH}</span>
-                                <span className="text-sm font-semibold text-foreground">{SYSTEM_MESSAGES.MGMT_ADJ.BREADCRUMB_CURRENT}</span>
-                            </div>
                             <h1 className="page-heading">
                                 {SYSTEM_MESSAGES.MGMT_ADJ.TITLE}
                             </h1>

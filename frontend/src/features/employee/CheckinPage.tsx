@@ -238,8 +238,7 @@ export default function CheckinPage() {
                     {/* Page header */}
                     <div className="flex flex-col md:flex-row items-center justify-between space-y-2 mb-6">
                         <div>
-                            <p className="section-title text-muted-foreground uppercase tracking-wider mb-1">{SYSTEM_MESSAGES.CHECKIN.BREADCRUMB}</p>
-                            <h2 className="page-heading mt-1">{SYSTEM_MESSAGES.CHECKIN.TITLE}</h2>
+                            <h1 className="page-heading">{SYSTEM_MESSAGES.CHECKIN.TITLE}</h1>
                             <p className="text-muted-foreground font-medium mt-1">{SYSTEM_MESSAGES.CHECKIN.DESC}</p>
                         </div>
                         <div className="btn-date capitalize">

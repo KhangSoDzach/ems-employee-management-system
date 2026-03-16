@@ -95,7 +95,7 @@ export default function AssetGroupManagement() {
           {/* HEADER */}
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold">{SYSTEM_MESSAGES.ASSET_GROUP.TITLE}</h1>
+              <h1 className="page-heading">{SYSTEM_MESSAGES.ASSET_GROUP.TITLE}</h1>
               <p className="text-muted-foreground mt-1">
                 {SYSTEM_MESSAGES.ASSET_GROUP.TITLE_DESC}
               </p>

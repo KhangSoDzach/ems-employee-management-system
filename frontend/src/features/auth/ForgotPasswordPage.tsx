@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm, FieldErrors } from "react-hook-form";
+import { useForm, FieldErrors, UseFormRegister } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { User, Mail, ArrowLeft, KeyRound, Timer, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
@@ -34,6 +34,7 @@ const TEXT = {
 interface ForgotPasswordPageProps {
     isProfileMode?: boolean;
     userEmail?: string;
+    onClose?: () => void;
 }
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -70,27 +71,380 @@ type OtpPasswordFormValues = z.infer<typeof otpAndPasswordSchema>;
 type ProfileChangePasswordFormValues = z.infer<typeof profileChangePasswordSchema>;
 type ResetFormValues = OtpPasswordFormValues & ProfileChangePasswordFormValues;
 
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+const StepIcon = ({ step }: { step: 1 | 2 | 3 }) => (
+    <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
+        {step === 1 && <User className="text-primary w-8 h-8" />}
+        {step === 2 && <KeyRound className="text-primary w-8 h-8" />}
+        {step === 3 && <CheckCircle2 className="text-green-500 w-8 h-8" />}
+    </div>
+);
+
+const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolean; step: 1 | 2 | 3; savedEmail: string }) => {
+    const getTitle = () => {
+        if (step === 3) {
+            return TEXT.SUCCESS_TITLE;
+        }
+        if (isProfileMode) {
+            return SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_TITLE;
+        }
+        if (step === 1) {
+            return TEXT.TITLE;
+        }
+        return TEXT.TITLE_OTP;
+    };
+
+    const getDesc = () => {
+        if (step === 3) {
+            return TEXT.SUCCESS_DESC;
+        }
+        if (isProfileMode) {
+            return SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_DESC;
+        }
+        if (step === 1) {
+            return TEXT.DESC;
+        }
+        return (
+            <>
+                {TEXT.DESC_OTP_PREFIX}
+                <span className="font-semibold text-foreground">{savedEmail}</span>
+            </>
+        );
+    };
+
+    return (
+        <div className="text-center space-y-2 pb-6">
+            <StepIcon step={step} />
+            <CardTitle className="text-2xl font-bold">{getTitle()}</CardTitle>
+            <CardDescription>{getDesc()}</CardDescription>
+        </div>
+    );
+};
+
+interface PasswordFieldProps {
+    id: string;
+    label: string;
+    placeholder: string;
+    show: boolean;
+    setShow: (v: boolean) => void;
+    error?: string;
+    disabled: boolean;
+    registration: ReturnType<UseFormRegister<ResetFormValues>>;
+}
+
+const PasswordField = ({ id, label, placeholder, show, setShow, error, disabled, registration }: PasswordFieldProps) => (
+    <div className="space-y-2">
+        <RequiredLabel htmlFor={id} className={error ? "text-destructive" : ""}>
+            {label}
+        </RequiredLabel>
+        <div className="relative">
+            <Input
+                id={id}
+                type={show ? "text" : "password"}
+                placeholder={placeholder}
+                className={`pr-10 ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                disabled={disabled}
+                {...registration}
+            />
+            <button
+                type="button"
+                onClick={() => setShow(!show)}
+                className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+            >
+                {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+        </div>
+        {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+);
+
+const ProfileChangePasswordForm = ({
+    register,
+    errors,
+    isSubmitting,
+    onSubmit,
+    showCurrent,
+    setShowCurrent,
+    showPassword,
+    setShowPassword,
+    showConfirm,
+    setShowConfirm
+}: {
+    register: UseFormRegister<ResetFormValues>;
+    errors: FieldErrors<ResetFormValues>;
+    isSubmitting: boolean;
+    onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
+    showCurrent: boolean;
+    setShowCurrent: (v: boolean) => void;
+    showPassword: boolean;
+    setShowPassword: (v: boolean) => void;
+    showConfirm: boolean;
+    setShowConfirm: (v: boolean) => void;
+}) => (
+    <form onSubmit={onSubmit} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+        <PasswordField
+            id="currentPassword"
+            label={TEXT.LABEL_CURRENT_PASSWORD}
+            placeholder={TEXT.PLACEHOLDER_CURRENT_PASSWORD}
+            show={showCurrent}
+            setShow={setShowCurrent}
+            error={errors.currentPassword?.message?.toString()}
+            disabled={isSubmitting}
+            registration={register("currentPassword")}
+        />
+
+        <PasswordField
+            id="newPassword"
+            label={TEXT.LABEL_PASSWORD}
+            placeholder={TEXT.PLACEHOLDER_PASSWORD}
+            show={showPassword}
+            setShow={setShowPassword}
+            error={errors.newPassword?.message?.toString()}
+            disabled={isSubmitting}
+            registration={register("newPassword")}
+        />
+
+        <PasswordField
+            id="confirmPassword"
+            label={TEXT.LABEL_CONFIRM}
+            placeholder={TEXT.PLACEHOLDER_CONFIRM}
+            show={showConfirm}
+            setShow={setShowConfirm}
+            error={errors.confirmPassword?.message?.toString()}
+            disabled={isSubmitting}
+            registration={register("confirmPassword")}
+        />
+
+        <Button className="w-full font-bold" size="lg" disabled={isSubmitting}>
+            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_VERIFYING}</> : TEXT.BTN_VERIFY}
+        </Button>
+    </form>
+);
+
+const EmailStepForm = ({
+    register,
+    errors,
+    isSubmitting,
+    onSubmit
+}: {
+    register: UseFormRegister<EmailFormValues>;
+    errors: FieldErrors<EmailFormValues>;
+    isSubmitting: boolean;
+    onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
+}) => (
+    <form onSubmit={onSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+        <div className="space-y-2">
+            <RequiredLabel htmlFor="email" className={errors.email ? "text-destructive" : ""}>
+                {TEXT.LABEL_EMAIL}
+            </RequiredLabel>
+            <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+                <Input
+                    id="email"
+                    placeholder={TEXT.PLACEHOLDER_EMAIL}
+                    className={`pl-9 ${errors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    disabled={isSubmitting}
+                    {...register("email")}
+                />
+            </div>
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+        </div>
+        <Button type="submit" className="w-full font-bold" size="lg" disabled={isSubmitting}>
+            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_SENDING}</> : TEXT.BTN_SEND}
+        </Button>
+    </form>
+);
+
+const OtpTimerSection = ({
+    timeLeft,
+    formatTime,
+    handleResend,
+    isResending
+}: {
+    timeLeft: number;
+    formatTime: (s: number) => string;
+    handleResend: () => void;
+    isResending: boolean;
+}) => (
+    <div className="flex items-center justify-between text-xs">
+        <p className={`flex items-center gap-1 ${timeLeft === 0 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+            <Timer className="w-3 h-3" />
+            {timeLeft > 0 ? `${TEXT.OTP_VALID_SUFFIX}${formatTime(timeLeft)}` : TEXT.OTP_EXPIRED}
+        </p>
+        <button
+            type="button"
+            onClick={handleResend}
+            disabled={timeLeft > 0 || isResending}
+            className={`font-medium transition-colors ${timeLeft > 0 || isResending ? "text-muted-foreground cursor-not-allowed opacity-50" : "text-primary hover:underline cursor-pointer"}`}
+        >
+            {isResending ? (
+                <>
+                    <Loader2 className="inline mr-1 h-3 w-3 animate-spin" />
+                    {TEXT.BTN_RESENDING}
+                </>
+            ) : (
+                TEXT.BTN_RESEND
+            )}
+        </button>
+    </div>
+);
+
+const OtpInput = ({
+    register,
+    error,
+    disabled
+}: {
+    register: ReturnType<UseFormRegister<ResetFormValues>>;
+    error?: string;
+    disabled: boolean;
+}) => (
+    <div className="space-y-2">
+        <RequiredLabel htmlFor="otp" className={cn("justify-center", error ? "text-destructive" : "")}>
+            {TEXT.LABEL_OTP}
+        </RequiredLabel>
+        <Input
+            id="otp"
+            type="text"
+            placeholder={TEXT.PLACEHOLDER_OTP}
+            className={`text-center text-2xl tracking-[0.5em] font-bold h-14 ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
+            maxLength={6}
+            inputMode="numeric"
+            disabled={disabled}
+            {...register}
+            onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, "");
+                register.onChange({ target: { value, name: "otp" } });
+                e.target.value = value;
+            }}
+        />
+        {error && <p className="text-red-500 text-xs mt-1 text-center">{error}</p>}
+    </div>
+);
+
+const OtpResetPasswordForm = ({
+    register,
+    errors,
+    isSubmitting,
+    onSubmit,
+    timeLeft,
+    formatTime,
+    handleResend,
+    isResending,
+    showPassword,
+    setShowPassword,
+    showConfirm,
+    setShowConfirm
+}: {
+    register: UseFormRegister<ResetFormValues>;
+    errors: FieldErrors<ResetFormValues>;
+    isSubmitting: boolean;
+    onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
+    timeLeft: number;
+    formatTime: (s: number) => string;
+    handleResend: () => void;
+    isResending: boolean;
+    showPassword: boolean;
+    setShowPassword: (v: boolean) => void;
+    showConfirm: boolean;
+    setShowConfirm: (v: boolean) => void;
+}) => (
+    <form onSubmit={onSubmit} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+        <OtpInput
+            register={register("otp")}
+            error={errors.otp?.message?.toString()}
+            disabled={isSubmitting}
+        />
+
+        <OtpTimerSection
+            timeLeft={timeLeft}
+            formatTime={formatTime}
+            handleResend={handleResend}
+            isResending={isResending}
+        />
+
+        <PasswordField
+            id="newPassword"
+            label={TEXT.LABEL_PASSWORD}
+            placeholder={TEXT.PLACEHOLDER_PASSWORD}
+            show={showPassword}
+            setShow={setShowPassword}
+            error={errors.newPassword?.message?.toString()}
+            disabled={isSubmitting}
+            registration={register("newPassword")}
+        />
+
+        <PasswordField
+            id="confirmPassword"
+            label={TEXT.LABEL_CONFIRM}
+            placeholder={TEXT.PLACEHOLDER_CONFIRM}
+            show={showConfirm}
+            setShow={setShowConfirm}
+            error={errors.confirmPassword?.message?.toString()}
+            disabled={isSubmitting}
+            registration={register("confirmPassword")}
+        />
+
+        <Button className="w-full font-bold" size="lg" disabled={isSubmitting}>
+            {isSubmitting ? (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {TEXT.BTN_VERIFYING}
+                </>
+            ) : (
+                TEXT.BTN_VERIFY
+            )}
+        </Button>
+    </form>
+);
+
+const SuccessState = ({ isProfileMode, onClose, navigate }: { isProfileMode: boolean; onClose?: () => void; navigate: (p: string) => void }) => (
+    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-300">
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle2 className="w-10 h-10 text-green-500" />
+        </div>
+        <Button className="w-full font-bold" size="lg" onClick={() => isProfileMode ? (onClose ? onClose() : window.location.reload()) : navigate("/login")}>
+            {isProfileMode ? SYSTEM_MESSAGES.BTN_CLOSE : TEXT.BTN_GO_LOGIN}
+        </Button>
+    </div>
+);
+
+const ResetFooter = ({ step, setStep, setIsTimerRunning }: { step: 1 | 2; setStep: React.Dispatch<React.SetStateAction<1 | 2 | 3>>; setIsTimerRunning: React.Dispatch<React.SetStateAction<boolean>> }) => (
+    <div className="text-center pt-2">
+        {step === 1 ? (
+            <Link to="/login" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {TEXT.LINK_BACK_LOGIN}
+            </Link>
+        ) : (
+            <button
+                type="button"
+                onClick={() => { setStep(1); setIsTimerRunning(false); }}
+                className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {TEXT.BTN_BACK_EMAIL}
+            </button>
+        )}
+    </div>
+);
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: ForgotPasswordPageProps) => {
+export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onClose }: ForgotPasswordPageProps) => {
     const navigate = useNavigate();
 
     /** 1 = enter email | 2 = enter OTP + new password | 3 = success */
     const [step, setStep] = useState<1 | 2 | 3>(isProfileMode ? 2 : 1);
-    const [savedEmail, setSavedEmail] = useState(userEmail || "");
+    // Initialize savedEmail with userEmail if in profile mode
+    const [savedEmail, setSavedEmail] = useState(isProfileMode ? userEmail : (userEmail || ""));
     const [timeLeft, setTimeLeft] = useState(300);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [showCurrent, setShowCurrent] = useState(false);
-
-    // Sync savedEmail with userEmail prop securely
-    useEffect(() => {
-        if (isProfileMode && userEmail && userEmail !== savedEmail) {
-            setSavedEmail(userEmail);
-        }
-    }, [isProfileMode, userEmail, savedEmail]);
 
     // ── Form: step 1 ──
     const {
@@ -112,7 +466,9 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
 
     // ── Timer ──
     useEffect(() => {
-        if (!isTimerRunning || timeLeft <= 0) return;
+        if (!isTimerRunning || timeLeft <= 0) {
+            return;
+        }
         const interval = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
@@ -189,7 +545,9 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
     };
 
     const handleResend = async () => {
-        if (timeLeft > 0 || isResending) return;
+        if (timeLeft > 0 || isResending) {
+            return;
+        }
         toast.dismiss();
         setIsResending(true);
 
@@ -214,310 +572,68 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "" }: Fo
         }
     };
 
-    // ── Handle Profile Send OTP (Deprecated in new UI but kept for safety if needed elsewhere) ──
 
     // ─── Render ───────────────────────────────────────────────────────────────
 
+
+
     const renderContent = () => (
-        <>
-            <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
+        <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
+            <CardHeader>
+                <StepHeader isProfileMode={isProfileMode} step={step} savedEmail={savedEmail} />
+            </CardHeader>
 
-                <CardHeader className="text-center space-y-2 pb-6">
-                    <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
-                        {step === 1 && <User className="text-primary w-8 h-8" />}
-                        {step === 2 && <KeyRound className="text-primary w-8 h-8" />}
-                        {step === 3 && <CheckCircle2 className="text-green-500 w-8 h-8" />}
-                    </div>
+            <CardContent className="space-y-6">
+                {isProfileMode && step === 2 && (
+                    <ProfileChangePasswordForm
+                        register={registerForm}
+                        errors={formErrors}
+                        isSubmitting={isFormSubmitting}
+                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))}
+                        showCurrent={showCurrent}
+                        setShowCurrent={setShowCurrent}
+                        showPassword={showPassword}
+                        setShowPassword={setShowPassword}
+                        showConfirm={showConfirm}
+                        setShowConfirm={setShowConfirm}
+                    />
+                )}
 
-                    <CardTitle className="text-2xl font-bold">
-                        {isProfileMode && SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_TITLE}
-                        {!isProfileMode && step === 1 && TEXT.TITLE}
-                        {!isProfileMode && step === 2 && TEXT.TITLE_OTP}
-                        {step === 3 && TEXT.SUCCESS_TITLE}
-                    </CardTitle>
+                {step === 1 && (
+                    <EmailStepForm
+                        register={registerEmail}
+                        errors={emailErrors}
+                        isSubmitting={isEmailSubmitting}
+                        onSubmit={handleSubmitEmail(onSendCode, onError)}
+                    />
+                )}
 
-                    <CardDescription>
-                        {isProfileMode && SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_DESC}
-                        {!isProfileMode && step === 1 && TEXT.DESC}
-                        {!isProfileMode && step === 2 && <>{TEXT.DESC_OTP_PREFIX}<span className="font-semibold text-foreground">{savedEmail}</span></>}
-                        {step === 3 && TEXT.SUCCESS_DESC}
-                    </CardDescription>
-                </CardHeader>
+                {!isProfileMode && step === 2 && (
+                    <OtpResetPasswordForm
+                        register={registerForm}
+                        errors={formErrors}
+                        isSubmitting={isFormSubmitting}
+                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))}
+                        timeLeft={timeLeft}
+                        formatTime={formatTime}
+                        handleResend={handleResend}
+                        isResending={isResending}
+                        showPassword={showPassword}
+                        setShowPassword={setShowPassword}
+                        showConfirm={showConfirm}
+                        setShowConfirm={setShowConfirm}
+                    />
+                )}
 
-                <CardContent className="space-y-6">
+                {step === 3 && (
+                    <SuccessState isProfileMode={isProfileMode} onClose={onClose} navigate={navigate} />
+                )}
 
-                    {/* ── Profile Mode: Current Password + New Password (Step 2) ── */}
-                    {isProfileMode && step === 2 && (
-                        <form onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-
-                            {/* Current Password */}
-                            <div className="space-y-2">
-                                <RequiredLabel
-                                    htmlFor="currentPassword"
-                                    className={formErrors.currentPassword ? "text-destructive" : ""}
-                                >
-                                    {TEXT.LABEL_CURRENT_PASSWORD}
-                                </RequiredLabel>
-                                <div className="relative">
-                                    <Input
-                                        id="currentPassword"
-                                        type={showCurrent ? "text" : "password"}
-                                        placeholder={TEXT.PLACEHOLDER_CURRENT_PASSWORD}
-                                        className={`pr-10 ${formErrors.currentPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                                        disabled={isFormSubmitting}
-                                        {...registerForm("currentPassword")}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowCurrent((v) => !v)}
-                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
-                                        tabIndex={-1}
-                                    >
-                                        {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                                {formErrors.currentPassword && <p className="text-red-500 text-xs mt-1">{formErrors.currentPassword?.message?.toString()}</p>}
-                            </div>
-
-                            {/* New Password */}
-                            <div className="space-y-2">
-                                <RequiredLabel
-                                    htmlFor="newPassword"
-                                    className={formErrors.newPassword ? "text-destructive" : ""}
-                                >
-                                    {TEXT.LABEL_PASSWORD}
-                                </RequiredLabel>
-                                <div className="relative">
-                                    <Input
-                                        id="newPassword"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder={TEXT.PLACEHOLDER_PASSWORD}
-                                        className={`pr-10 ${formErrors.newPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                                        disabled={isFormSubmitting}
-                                        {...registerForm("newPassword")}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword((v) => !v)}
-                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
-                                        tabIndex={-1}
-                                    >
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                                {formErrors.newPassword && <p className="text-red-500 text-xs mt-1">{formErrors.newPassword?.message?.toString()}</p>}
-                            </div>
-
-                            {/* Confirm Password */}
-                            <div className="space-y-2">
-                                <RequiredLabel
-                                    htmlFor="confirmPassword"
-                                    className={formErrors.confirmPassword ? "text-destructive" : ""}
-                                >
-                                    {TEXT.LABEL_CONFIRM}
-                                </RequiredLabel>
-                                <div className="relative">
-                                    <Input
-                                        id="confirmPassword"
-                                        type={showConfirm ? "text" : "password"}
-                                        placeholder={TEXT.PLACEHOLDER_CONFIRM}
-                                        className={`pr-10 ${formErrors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                                        disabled={isFormSubmitting}
-                                        {...registerForm("confirmPassword")}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirm((v) => !v)}
-                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
-                                        tabIndex={-1}
-                                    >
-                                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                                {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword?.message?.toString()}</p>}
-                            </div>
-
-                            <Button className="w-full font-bold" size="lg" disabled={isFormSubmitting}>
-                                {isFormSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_VERIFYING}</> : TEXT.BTN_VERIFY}
-                            </Button>
-                        </form>
-                    )}
-
-                    {/* ── Step 1: Email (Non-Profile Mode) ── */}
-                    {step === 1 && (
-                        <form onSubmit={handleSubmitEmail(onSendCode, onError)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="space-y-2">
-                                <RequiredLabel
-                                    htmlFor="email"
-                                    className={emailErrors.email ? "text-destructive" : ""}
-                                >
-                                    {TEXT.LABEL_EMAIL}
-                                </RequiredLabel>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
-                                    <Input
-                                        id="email"
-                                        placeholder={TEXT.PLACEHOLDER_EMAIL}
-                                        className={`pl-9 ${emailErrors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                                        disabled={isEmailSubmitting}
-                                        {...registerEmail("email")}
-                                    />
-                                </div>
-                                {emailErrors.email && <p className="text-red-500 text-xs mt-1">{emailErrors.email.message}</p>}
-                            </div>
-
-                            <Button type="submit" className="w-full font-bold" size="lg" disabled={isEmailSubmitting}>
-                                {isEmailSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_SENDING}</> : TEXT.BTN_SEND}
-                            </Button>
-                        </form>
-                    )}
-
-                    {/* ── Step 2: OTP + New Password (Non-Profile Mode) ── */}
-                    {!isProfileMode && step === 2 && (
-                        <form onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-
-                            {/* OTP input */}
-                            <div className="space-y-2">
-                                <RequiredLabel
-                                    htmlFor="otp"
-                                    className={cn("justify-center", formErrors.otp ? "text-destructive" : "")}
-                                >
-                                    {TEXT.LABEL_OTP}
-                                </RequiredLabel>
-                                <Input
-                                    id="otp"
-                                    type="text"
-                                    placeholder={TEXT.PLACEHOLDER_OTP}
-                                    className={`text-center text-2xl tracking-[0.5em] font-bold h-14 ${formErrors.otp ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                                    maxLength={6}
-                                    inputMode="numeric"
-                                    disabled={isFormSubmitting}
-                                    {...registerForm("otp" as keyof ResetFormValues)}
-                                    onChange={(e) => {
-                                        const value = e.target.value.replace(/[^0-9]/g, "");
-                                        registerForm("otp" as keyof ResetFormValues).onChange({ target: { value, name: "otp" } });
-                                        e.target.value = value;
-                                    }}
-                                />
-                                {formErrors.otp && <p className="text-red-500 text-xs mt-1 text-center">{formErrors.otp?.message?.toString()}</p>}
-                            </div>
-
-                            {/* Timer + Resend */}
-                            <div className="flex items-center justify-between text-xs">
-                                <p className={`flex items-center gap-1 ${timeLeft === 0 ? "text-destructive font-bold" : "text-muted-foreground"}`}>
-                                    <Timer className="w-3 h-3" />
-                                    {timeLeft > 0 ? `${TEXT.OTP_VALID_SUFFIX}${formatTime(timeLeft)}` : TEXT.OTP_EXPIRED}
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={handleResend}
-                                    disabled={timeLeft > 0 || isResending}
-                                    className={`font-medium transition-colors ${timeLeft > 0 || isResending ? "text-muted-foreground cursor-not-allowed opacity-50" : "text-primary hover:underline cursor-pointer"}`}
-                                >
-                                    {isResending ? <><Loader2 className="inline mr-1 h-3 w-3 animate-spin" />{TEXT.BTN_RESENDING}</> : TEXT.BTN_RESEND}
-                                </button>
-                            </div>
-
-                            {/* New Password */}
-                            <div className="space-y-2">
-                                <RequiredLabel
-                                    htmlFor="newPassword"
-                                    className={formErrors.newPassword ? "text-destructive" : ""}
-                                >
-                                    {TEXT.LABEL_PASSWORD}
-                                </RequiredLabel>
-                                <div className="relative">
-                                    <Input
-                                        id="newPassword"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder={TEXT.PLACEHOLDER_PASSWORD}
-                                        className={`pr-10 ${formErrors.newPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                                        disabled={isFormSubmitting}
-                                        {...registerForm("newPassword")}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword((v) => !v)}
-                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
-                                        tabIndex={-1}
-                                    >
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                                {formErrors.newPassword && <p className="text-red-500 text-xs mt-1">{formErrors.newPassword?.message?.toString()}</p>}
-                            </div>
-
-                            {/* Confirm Password */}
-                            <div className="space-y-2">
-                                <RequiredLabel
-                                    htmlFor="confirmPassword"
-                                    className={formErrors.confirmPassword ? "text-destructive" : ""}
-                                >
-                                    {TEXT.LABEL_CONFIRM}
-                                </RequiredLabel>
-                                <div className="relative">
-                                    <Input
-                                        id="confirmPassword"
-                                        type={showConfirm ? "text" : "password"}
-                                        placeholder={TEXT.PLACEHOLDER_CONFIRM}
-                                        className={`pr-10 ${formErrors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                                        disabled={isFormSubmitting}
-                                        {...registerForm("confirmPassword")}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirm((v) => !v)}
-                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
-                                        tabIndex={-1}
-                                    >
-                                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                                {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword?.message?.toString()}</p>}
-                            </div>
-
-                            <Button className="w-full font-bold" size="lg" disabled={isFormSubmitting}>
-                                {isFormSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{TEXT.BTN_VERIFYING}</> : TEXT.BTN_VERIFY}
-                            </Button>
-                        </form>
-                    )}
-
-                    {/* ── Step 3: Success ── */}
-                    {step === 3 && (
-                        <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-300">
-                            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-                                <CheckCircle2 className="w-10 h-10 text-green-500" />
-                            </div>
-                            <Button className="w-full font-bold" size="lg" onClick={() => isProfileMode ? window.location.reload() : navigate("/login")}>
-                                {isProfileMode ? SYSTEM_MESSAGES.BTN_CLOSE : TEXT.BTN_GO_LOGIN}
-                            </Button>
-                        </div>
-                    )}
-
-                    {/* Back link */}
-                    {!isProfileMode && step !== 3 && (
-                        <div className="text-center pt-2">
-                            {step === 1 ? (
-                                <Link to="/login" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                                    <ArrowLeft className="mr-2 h-4 w-4" />
-                                    {TEXT.LINK_BACK_LOGIN}
-                                </Link>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => { setStep(1); setIsTimerRunning(false); }}
-                                    className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-                                >
-                                    <ArrowLeft className="mr-2 h-4 w-4" />
-                                    {TEXT.BTN_BACK_EMAIL}
-                                </button>
-                            )}
-                        </div>
-                    )}
-
-                </CardContent>
-            </Card>
-        </>
+                {!isProfileMode && step !== 3 && (
+                    <ResetFooter step={step} setStep={setStep} setIsTimerRunning={setIsTimerRunning} />
+                )}
+            </CardContent>
+        </Card>
     );
 
     if (isProfileMode) {
