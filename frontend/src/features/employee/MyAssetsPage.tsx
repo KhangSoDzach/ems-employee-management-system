@@ -39,17 +39,13 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 const INCIDENT_TYPES = [
-    { value: "Hardware Malfunction", label: "Lỗi phần cứng (Hardware Malfunction)" },
-    { value: "Screen Flickering", label: "Màn hình nhấp nháy (Screen Flickering)" },
-    { value: "Battery Issue", label: "Lỗi pin (Battery Issue)" },
-    { value: "Peripheral Not Working", label: "Thiết bị ngoại vi hỏng (Peripheral Not Working)" },
-    { value: "Software / OS Issue", label: "Lỗi phần mềm / HĐH (Software / OS Issue)" },
-    { value: "Other", label: "Khác (Other)" },
+    { value: "DAMAGED", label: "Hư hỏng / Lỗi thiết bị (Damaged)" },
+        { value: "LOST",    label: "Mất mát / Thất lạc (Lost/Stolen)" },
 ]
 
 /* ─────────────── ASSET CARD ─────────────── */
 
-function AssetCard({ asset, onReportIssue }: { asset: MyAsset; onReportIssue: (asset: MyAsset) => void }) {
+function AssetCard({ asset, onReportIssue }: Readonly<{ asset: MyAsset; onReportIssue: (asset: MyAsset) => void }>) {
     const isLaptop = asset.assetType?.toLowerCase().includes("laptop")
     const isMonitor = asset.assetType?.toLowerCase().includes("monitor")
     const Icon = isLaptop ? Laptop : (isMonitor ? Monitor : Mouse)
@@ -140,7 +136,7 @@ export default function MyAssetsPage() {
     }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
+        if (e.target.files?.[0]) {
             const file = e.target.files[0]
             if (file.size > 5 * 1024 * 1024) {
                 toast.error(SYSTEM_MESSAGES.MY_ASSETS.MAX_FILE_SIZE_ERROR)

@@ -1,97 +1,119 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { MoreVertical, Droplets, ShieldAlert, MonitorX, Cpu } from "lucide-react";
+import { MoreVertical, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { INCIDENT_STATUS_OPTIONS } from "@/constants/options";
 import AssetIncidentReviewModal from "./AssetIncidentReviewModal";
-
-const MOCK_INCIDENTS = [
-    {
-        id: "1",
-        employeeName: "Sarah Jenkins",
-        employeeDept: "Engineering",
-        employeeAvatar: "SJ",
-        assetName: "MacBook Pro 16\"",
-        assetId: "LPT-2023-084",
-        incidentType: "Liquid Damage",
-        incidentIcon: <Droplets className="w-4 h-4 text-orange-500" />,
-        dateReported: "Oct 24, 2023",
-        status: "Pending",
-        statusClass: "bg-yellow-100 text-yellow-700"
-    },
-    {
-        id: "2",
-        employeeName: "Marcus Chen",
-        employeeDept: "Sales",
-        employeeAvatar: "MC",
-        assetName: "iPhone 14 Pro",
-        assetId: "MOB-2022-112",
-        incidentType: "Lost/Stolen",
-        incidentIcon: <ShieldAlert className="w-4 h-4 text-red-500" />,
-        dateReported: "Oct 23, 2023",
-        status: "Pending",
-        statusClass: "bg-red-100 text-red-700"
-    },
-    {
-        id: "3",
-        employeeName: "Emily Jones",
-        employeeDept: "Marketing",
-        employeeAvatar: "EJ",
-        assetName: "Dell UltraSharp 27\"",
-        assetId: "MON-2021-045",
-        incidentType: "Screen Cracked",
-        incidentIcon: <MonitorX className="w-4 h-4 text-slate-500" />,
-        dateReported: "Oct 21, 2023",
-        status: "Rejected",
-        statusClass: "bg-slate-100 text-slate-700"
-    },
-    {
-        id: "4",
-        employeeName: "David Smith",
-        employeeDept: "Finance",
-        employeeAvatar: "DS",
-        assetName: "Lenovo ThinkPad X1",
-        assetId: "LPT-2022-156",
-        incidentType: "Hardware Failure",
-        incidentIcon: <Cpu className="w-4 h-4 text-slate-500" />,
-        dateReported: "Oct 19, 2023",
-        status: "Approved",
-        statusClass: "bg-green-100 text-green-700"
-    }
-];
-
-export type IncidentItem = typeof MOCK_INCIDENTS[0];
-
+import { assetService, AdminIncidentListItem } from "@/services/assetService";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useAuth } from "@/contexts/AuthContext";
+export interface IncidentItem {
+    id: string;
+    numericId: number;
+    employeeName: string;
+    employeeDept: string;
+    employeeAvatar: string;
+    assetName: string;
+    assetId: string;
+    incidentType: string;
+    dateReported: string;
+    status: string;
+    statusClass: string;
+}
+
+function mapToIncidentItem(r: AdminIncidentListItem): IncidentItem {
+    const initials = r.employeeName
+        .split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+    const statusClass =
+        r.status === "APPROVED" ? "bg-green-100 text-green-700"  :
+        r.status === "REJECTED" ? "bg-red-100 text-red-700"      :
+                                  "bg-yellow-100 text-yellow-700";
+    return {
+        id:             String(r.id),
+        numericId:      r.id,
+        employeeName:   r.employeeName,
+        employeeDept:   "",
+        employeeAvatar: initials,
+        assetName:      r.asset,
+        assetId:        r.reportId,
+        incidentType:   r.issueTypeLabel,
+        dateReported:   r.reportedAt,
+        status:         r.status,
+        statusClass,
+    };
+}
 
 export default function AssetIncidentManagementPage() {
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("All");
-    const [incidents, setIncidents] = useState<IncidentItem[]>(MOCK_INCIDENTS);
+    const [search,           setSearch]           = useState("");
+    const [statusFilter,     setStatusFilter]     = useState("All");
+    const [incidents,        setIncidents]        = useState<IncidentItem[]>([]);
+    const [loading,          setLoading]          = useState(true);
     const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
-    const { user } = useAuth();
+    const { user }      = useAuth();
     const effectiveRole = useEffectiveRole();
 
-    // Permissions logic
-    const isManager = effectiveRole === "manager" || user?.roles.includes("ROLE_MANAGER");
-    const isEmployee = effectiveRole === "employee" || (user?.roles.includes("ROLE_EMPLOYEE") && !user?.roles.includes("ROLE_ADMIN") && !user?.roles.includes("ROLE_HR") && !user?.roles.includes("ROLE_MANAGER"));
+    const isManager  = effectiveRole === "manager"  || user?.roles.includes("ROLE_MANAGER");
+    const isEmployee = effectiveRole === "employee" ||
+        (user?.roles.includes("ROLE_EMPLOYEE") &&
+         !user?.roles.includes("ROLE_ADMIN") &&
+         !user?.roles.includes("ROLE_HR") &&
+         !user?.roles.includes("ROLE_MANAGER"));
     const canProcess = !isManager && !isEmployee;
+
+    const fetchIncidents = useCallback(async () => {
+        setLoading(true);
+        try {
+            const page = await assetService.getAllReports({
+                keyword: search || undefined,
+                status:  statusFilter === "All" ? undefined : statusFilter.toUpperCase(),
+                page: 0,
+                size: 100,
+            });
+            setIncidents(page.content.map(mapToIncidentItem));
+        } catch {
+            toast.error("Không thể tải danh sách sự cố. Vui lòng thử lại.");
+        } finally {
+            setLoading(false);
+        }
+    }, [search, statusFilter]);
+
+    useEffect(() => { fetchIncidents(); }, [fetchIncidents]);
 
     const filteredIncidents = incidents.filter(incident => {
         const matchesSearch =
             incident.employeeName.toLowerCase().includes(search.toLowerCase()) ||
-            incident.assetName.toLowerCase().includes(search.toLowerCase()) ||
+            incident.assetName.toLowerCase().includes(search.toLowerCase())    ||
             incident.assetId.toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = statusFilter === "All" || incident.status === statusFilter;
-        // Mock filtering out if it's an employee (only sees their own)
-        const isOwnRecord = incident.employeeName === (user?.firstName + ' ' + user?.lastName) || incident.employeeName === "David Smith"; // mockup David Smith as employee
-        if (isEmployee && !isOwnRecord) return false;
-
+        const matchesStatus =
+            statusFilter === "All" || incident.status === statusFilter.toUpperCase();
+        if (isEmployee) {
+            const fullName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim();
+            if (incident.employeeName !== fullName) return false;
+        }
         return matchesSearch && matchesStatus;
     });
+
+    const handleUpdate = async (id: string, newStatus: string, note?: string) => {
+        const item = incidents.find(i => i.id === id);
+        if (!item) return;
+        try {
+            if (newStatus === "Resolved" || newStatus === "APPROVED") {
+                await assetService.approveReport(item.numericId, note);
+                toast.success("Đã phê duyệt báo cáo sự cố.");
+            } else {
+                await assetService.rejectReport(item.numericId, note);
+                toast.success("Đã từ chối báo cáo sự cố.");
+            }
+            fetchIncidents();
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })
+                ?.response?.data?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.";
+            toast.error(msg);
+        }
+    };
 
     return (
         <SidebarProvider>
@@ -101,7 +123,7 @@ export default function AssetIncidentManagementPage() {
                 <SiteHeader />
 
                 <main className="page-layout-main">
-                    {/* ===== HEADER ===== */}
+                    {/* HEADER */}
                     <div className="page-header">
                         <div>
                             <h1 className="page-title">{SYSTEM_MESSAGES.ASSET_INCIDENT.TITLE}</h1>
@@ -109,7 +131,7 @@ export default function AssetIncidentManagementPage() {
                         </div>
                     </div>
 
-                    {/* ===== CONTENT CARDS / TABLE ===== */}
+                    {/* TABLE */}
                     <div className="data-table-container mt-4">
                         <div className="flex items-center justify-between p-4 border-b">
                             <input
@@ -146,7 +168,22 @@ export default function AssetIncidentManagementPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredIncidents.map(incident => (
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                <span className="text-sm">Đang tải dữ liệu...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : filteredIncidents.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400 text-sm">
+                                            Không có sự cố nào.
+                                        </td>
+                                    </tr>
+                                ) : filteredIncidents.map(incident => (
                                     <tr key={incident.id} className="data-table-row">
                                         <td className="data-table-cell">
                                             <div className="flex items-center gap-3">
@@ -155,26 +192,30 @@ export default function AssetIncidentManagementPage() {
                                                 </div>
                                                 <div>
                                                     <div className="font-semibold text-gray-900">{incident.employeeName}</div>
-                                                    <div className="text-xs text-gray-500">{incident.employeeDept}</div>
+                                                    {incident.employeeDept && (
+                                                        <div className="text-xs text-gray-500">{incident.employeeDept}</div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="data-table-cell">
                                             <div className="font-medium text-gray-900">{incident.assetName}</div>
-                                            <div className="text-xs text-gray-500">{SYSTEM_MESSAGES.ASSET_INCIDENT.LABEL_ID} {incident.assetId}</div>
+                                            <div className="text-xs text-gray-500">
+                                                {SYSTEM_MESSAGES.ASSET_INCIDENT.LABEL_ID} {incident.assetId}
+                                            </div>
                                         </td>
                                         <td className="data-table-cell">
-                                            <div className="flex items-center gap-2">
-                                                {incident.incidentIcon}
-                                                <span className="text-sm font-medium text-gray-700">{incident.incidentType}</span>
-                                            </div>
+                                            {/* FIX: bỏ incidentIcon (là JSX mock), chỉ hiện text */}
+                                            <span className="text-sm font-medium text-gray-700">{incident.incidentType}</span>
                                         </td>
                                         <td className="data-table-cell text-gray-600">
                                             {incident.dateReported}
                                         </td>
                                         <td className="data-table-cell">
                                             <span className={`status-badge-base ${incident.statusClass} rounded-full px-3 py-1 font-medium text-xs`}>
-                                                {incident.status}
+                                                {incident.status === "PENDING"  ? "Pending"  :
+                                                 incident.status === "APPROVED" ? "Approved" :
+                                                 incident.status === "REJECTED" ? "Rejected" : incident.status}
                                             </span>
                                         </td>
                                         {canProcess && (
@@ -192,42 +233,23 @@ export default function AssetIncidentManagementPage() {
                             </tbody>
                         </table>
 
-                        {/* ===== PAGINATION ===== */}
+                        {/* PAGINATION */}
                         <div className="pagination-container">
                             <div className="pagination-info">
-                                {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_SHOW} {1} {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_TO} {filteredIncidents.length} {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_OF} {filteredIncidents.length} {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_RESULTS}
-                            </div>
-                            <div className="pagination-buttons">
-                                <button className="pagination-btn-inactive flex items-center justify-center text-gray-500 disabled:opacity-50">
-                                    {SYSTEM_MESSAGES.ASSET_INCIDENT.BTN_PREV}
-                                </button>
-                                <button className="pagination-btn-inactive flex items-center justify-center text-gray-700">
-                                    {SYSTEM_MESSAGES.ASSET_INCIDENT.BTN_NEXT}
-                                </button>
+                                {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_SHOW}{" "}
+                                {filteredIncidents.length}{" "}
+                                {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_RESULTS}
                             </div>
                         </div>
                     </div>
                 </main>
 
+                {/* FIX 4: onUpdate giờ là handleUpdate — gọi API thật */}
                 <AssetIncidentReviewModal
                     open={!!selectedIncident}
                     onClose={() => setSelectedIncident(null)}
                     incident={selectedIncident}
-                    onUpdate={(id, status, condition) => {
-                        setIncidents(prev => prev.map(inc => {
-                            if (inc.id === id) {
-                                return {
-                                    ...inc,
-                                    status,
-                                    statusClass: status === "Approved" ? "bg-green-100 text-green-700" : status === "Rejected" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"
-                                }
-                            }
-                            return inc;
-                        }));
-                        if (condition) {
-                            console.log("Updated asset condition to:", condition);
-                        }
-                    }}
+                    onUpdate={handleUpdate}
                 />
             </SidebarInset>
         </SidebarProvider>

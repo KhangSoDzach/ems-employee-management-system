@@ -28,7 +28,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * REST controller exposing read-only Audit Log endpoints.
  * <p>
- * Access control (AC-03): all endpoints require {@code AUDIT_LOG_VIEW} permission.
+ * Access control (AC-03): all endpoints require {@code AUDIT_LOG_VIEW}
+ * permission.
  * Any user without that permission receives HTTP 403 Forbidden.
  * <p>
  * No write (POST/PUT/DELETE) endpoints are exposed – audit log is append-only.
@@ -41,7 +42,7 @@ import lombok.RequiredArgsConstructor;
 public class AuditLogController {
 
     private final AuditLogService auditLogService;
-    private final MessageService  messages;
+    private final MessageService messages;
 
     @GetMapping
     @PreAuthorize("hasPermission(null, 'AUDIT_LOG_VIEW')")
