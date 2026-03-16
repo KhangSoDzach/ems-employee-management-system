@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Filter, SlidersHorizontal, Building, X } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
