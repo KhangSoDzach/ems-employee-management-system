@@ -1,13 +1,13 @@
-import { useState } from "react"
-import { Search, ChevronLeft, ChevronRight, Eye, Star } from "lucide-react"
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { useMemo, useState } from "react";
+import { Search, ChevronLeft, ChevronRight, Eye, Star } from "lucide-react";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableHeader,
@@ -15,54 +15,95 @@ import {
   TableHead,
   TableBody,
   TableCell,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-import { MemberEvaluationSheet, type Member } from "./components/MemberEvaluationSheet"
+import {
+  MemberEvaluationSheet,
+  type Member,
+} from "./components/MemberEvaluationSheet";
+import { useTeamMembers } from "./hooks/useTeamMembers";
 
-const MOCK_MEMBERS: Member[] = [
-  {
-    id: 1,
-    name: "Nguyễn Văn A",
-    email: "nguyenvana@oneconnect.vn",
-    role: "Frontend Developer",
-    roleColor: "bg-blue-100 text-blue-700 hover:bg-blue-100",
-    skills: ["ReactJS", "UI/UX", "Tailwind"],
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCm4INhsyCANwKbMo9UdFQZNZBE0dohMQfaDIPpcBPNvyAiGsLfmA3ZsBMkDF4ElkFo4-vyGZyG58oRW7BBUQJQYptiSJTz6dUHlq9BJXURomDucD6VvRjqyan5Eex6H4uTdvdjTbI9tp62jGpaHYf1iQ11FSEc5VanKNX1DuRh09qCLWb9TaMtFGc4dKugYAmaIv8YbhH5J85V7zDpzyM66TBIwxwJmg2Z2COyZxGd29FlVHUchGI1oNVpMOtUIVdg-L_Br3y1L2aK",
-  },
-  {
-    id: 2,
-    name: "Trần Thị B",
-    email: "tranthib@oneconnect.vn",
-    role: "Backend Developer",
-    roleColor: "bg-purple-100 text-purple-700 hover:bg-purple-100",
-    skills: ["Node.js", "SQL", "AWS"],
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBGk3ZluTur1vu8mw_ujSuSXGVT0PZ-_a3gezreTdvMNgFDUNeffoDBF3OKzhRFktUBUJ2wVPddDcSSstLtcDV8FhKvqwdrArdMSjoU6JY2Fn8yLugBVxYU9VlYXBY9fWLCK7QPvq-cNxsztu3qfVm7l3fqF_PMR4g4G-_znNNLl-Gqd2hLHdIj-jRHdzS7UJrD1Wek94oAaRXekD5CMzyjIbFPPexZHRCa6Po4aM-zCCWSeS0RlkfVrLuUKekigCIh9N15HBpCcU24",
-  },
-  {
-    id: 3,
-    name: "Lê Văn C",
-    email: "levanc@oneconnect.vn",
-    role: "Project Manager",
-    roleColor: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
-    skills: ["Agile", "Scrums", "Jira"],
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAmqz1M3ypAEQuJOmIT6U9GAuhQIEDhl_U4B2IhBz_ROVSyDlrckcrwXODFov0d9Iq6QLPpBw8Z0_rEPhZvDPVrjBhJWiZgLaDgSGJNxTefaaQ5jt_rZeuTdGxJXo_TulUjOO3x9IZRea0_VDhcI4gKBJ2KwSfxd-M-X_MdKZ0JyFA697f22wzbE2rV0kEk3PhZBqwCh257L36PjOzjPPFKRzQTq4Ycm_VhanpM9XN0OKq6VFzi4q1SFdwGpa1RrdhY-l2rhYH2NBlo",
-  },
-  {
-    id: 4,
-    name: "Phạm Minh D",
-    email: "phamminhd@oneconnect.vn",
-    role: "UI Designer",
-    roleColor: "bg-amber-100 text-amber-700 hover:bg-amber-100",
-    skills: ["Figma", "Adobe XD", "Prototyping"],
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuDALCSUQnwu5oz4rcrRDEUtdQDZza-PTr_zq5EtTIbeJjJ43vgpFDlDU0jPoAWPYQZ39QejwwinYMMoc-QvKR4IqPZD77bg8YuVFoLQasa1JRqaKsf9mAodte0D1N92l33QlXbvWJ3DcM3ocofGRvke4vP8wPv0Lk4GoUGiwpaNdgKvuYEyEWFzbxhxsB8rpyuxP3R64Uk6I1XbawC8jmkqV71_9_7d9OnVP1A18DQbWho-NsbxWVWt59Lih0i8layri2BH4pHxNzUs",
-  }
-]
+// Role badge colour is a UI concern only — derive it from position title
+function roleColor(positionTitle: string | null): string {
+  const title = (positionTitle ?? "").toLowerCase();
+  if (
+    title.includes("frontend") ||
+    title.includes("react") ||
+    title.includes("ui")
+  )
+    return "bg-blue-100 text-blue-700 hover:bg-blue-100";
+  if (
+    title.includes("backend") ||
+    title.includes("java") ||
+    title.includes("server")
+  )
+    return "bg-purple-100 text-purple-700 hover:bg-purple-100";
+  if (title.includes("manager") || title.includes("lead"))
+    return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
+  if (title.includes("design") || title.includes("ux"))
+    return "bg-amber-100 text-amber-700 hover:bg-amber-100";
+  if (
+    title.includes("devops") ||
+    title.includes("cloud") ||
+    title.includes("infra")
+  )
+    return "bg-orange-100 text-orange-700 hover:bg-orange-100";
+  return "bg-gray-100 text-gray-700 hover:bg-gray-100";
+}
+
+const PAGE_SIZE = 10;
 
 export default function MemberList() {
-  const t = SYSTEM_MESSAGES.MEMBER_LIST
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null)
-  const [sheetMode, setSheetMode] = useState<"view" | "edit">("view")
-  const [search, setSearch] = useState<string>("")
+  const t = SYSTEM_MESSAGES.MEMBER_LIST;
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [sheetMode, setSheetMode] = useState<"view" | "edit">("view");
+  const [search, setSearch] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [page, setPage] = useState(0);
+
+  // Debounce search input so we don't spam the API on every keystroke
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(0);
+    // simple inline debounce using a timeout ref would be better; for now
+    // we accept a brief delay by setting debouncedSearch only when the value changes.
+    clearTimeout(
+      (
+        window as Window &
+          typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+      )._searchTimer,
+    );
+    (
+      window as Window &
+        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+    )._searchTimer = setTimeout(() => {
+      setDebouncedSearch(value);
+    }, 400);
+  };
+
+  const { data, isLoading, isError } = useTeamMembers({
+    page,
+    size: PAGE_SIZE,
+    search: debouncedSearch || undefined,
+  });
+
+  const totalPages = data?.totalPages ?? 1;
+  const totalElements = data?.totalElements ?? 0;
+
+  // Map API MemberResponse → the Member type consumed by MemberEvaluationSheet
+  const members: Member[] = useMemo(
+    () =>
+      (data?.content ?? []).map((m) => ({
+        id: m.id,
+        name: m.fullName,
+        email: m.email,
+        role: m.positionTitle ?? "—",
+        roleColor: roleColor(m.positionTitle),
+        skills: [] as string[], // UI shows position/department; skills are not in the slim DTO
+        avatar: m.avatarUrl ?? "",
+      })),
+    [data],
+  );
 
   return (
     <SidebarProvider>
@@ -83,107 +124,172 @@ export default function MemberList() {
                   className="pl-9"
                   placeholder={t.SEARCH_PLACEHOLDER}
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                 />
               </div>
             </div>
 
             {/* Table Card */}
             <div className="card-soft">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40">
-                    <TableHead>{t.TABLE_NAME}</TableHead>
-                    <TableHead>{t.TABLE_ROLE}</TableHead>
-                    <TableHead>{t.TABLE_SKILLS}</TableHead>
-                    <TableHead className="text-right">{t.TABLE_ACTIONS}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {MOCK_MEMBERS.filter((member) => {
-                  const q = search.trim().toLowerCase()
-                  if (!q) return true
-                  return (
-                    member.name.toLowerCase().includes(q) ||
-                    member.email.toLowerCase().includes(q) ||
-                    member.role.toLowerCase().includes(q)
-                  )
-                }).map((member) => (
-                    <TableRow key={member.id} className="hover:bg-muted/30">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10 border">
-                            <AvatarImage src={member.avatar} alt={member.name} />
-                            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold text-foreground">{member.name}</p>
-                            <p className="text-sm text-muted-foreground">{member.email}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={`border-transparent ${member.roleColor}`}>
-                          {member.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          {member.skills.map((skill, idx) => (
-                            <Badge key={idx} variant="secondary">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="inline-flex items-center justify-end gap-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-primary hover:bg-primary/10"
-                            title={t.BTN_VIEW_EVALUATION}
-                            aria-label={t.BTN_VIEW_EVALUATION}
-                            onClick={() => {
-                              setSelectedMember(member)
-                              setSheetMode("view")
-                            }}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-primary hover:bg-primary/10"
-                            title={t.BTN_EVALUATE}
-                            aria-label={t.BTN_EVALUATE}
-                            onClick={() => {
-                              setSelectedMember(member)
-                              setSheetMode("edit")
-                            }}
-                          >
-                            <Star className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              {isLoading ? (
+                <div className="py-16 text-center text-sm text-muted-foreground">
+                  Đang tải danh sách thành viên…
+                </div>
+              ) : isError ? (
+                <div className="py-16 text-center text-sm text-destructive">
+                  Không thể tải danh sách. Vui lòng thử lại.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40">
+                      <TableHead>{t.TABLE_NAME}</TableHead>
+                      <TableHead>{t.TABLE_ROLE}</TableHead>
+                      <TableHead>{t.TABLE_SKILLS}</TableHead>
+                      <TableHead className="text-right">
+                        {t.TABLE_ACTIONS}
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {members.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="py-12 text-center text-sm text-muted-foreground"
+                        >
+                          Không tìm thấy thành viên nào.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      members.map((member) => (
+                        <TableRow key={member.id} className="hover:bg-muted/30">
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-10 h-10 border">
+                                <AvatarImage
+                                  src={member.avatar}
+                                  alt={member.name}
+                                />
+                                <AvatarFallback>
+                                  {member.name.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-semibold text-foreground">
+                                  {member.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {member.email}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`border-transparent ${member.roleColor}`}
+                            >
+                              {member.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {/* Skills not in slim DTO — display department when available */}
+                            {(data?.content ?? []).find(
+                              (m) => m.id === member.id,
+                            )?.departmentName ? (
+                              <Badge variant="secondary">
+                                {
+                                  (data?.content ?? []).find(
+                                    (m) => m.id === member.id,
+                                  )?.departmentName
+                                }
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                —
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="inline-flex items-center justify-end gap-2">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-primary hover:bg-primary/10"
+                                title={t.BTN_VIEW_EVALUATION}
+                                aria-label={t.BTN_VIEW_EVALUATION}
+                                onClick={() => {
+                                  setSelectedMember(member);
+                                  setSheetMode("view");
+                                }}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-primary hover:bg-primary/10"
+                                title={t.BTN_EVALUATE}
+                                aria-label={t.BTN_EVALUATE}
+                                onClick={() => {
+                                  setSelectedMember(member);
+                                  setSheetMode("edit");
+                                }}
+                              >
+                                <Star className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
 
               {/* Pagination */}
               <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">
                 <p className="text-sm text-muted-foreground">
-                  {t.PAGINATION_SHOW} <span className="font-medium text-foreground">1-4</span> {t.PAGINATION_IN} <span className="font-medium text-foreground">24</span> {t.PAGINATION_MEMBERS}
+                  {t.PAGINATION_SHOW}{" "}
+                  <span className="font-medium text-foreground">
+                    {totalElements === 0 ? 0 : page * PAGE_SIZE + 1}–
+                    {Math.min((page + 1) * PAGE_SIZE, totalElements)}
+                  </span>{" "}
+                  {t.PAGINATION_IN}{" "}
+                  <span className="font-medium text-foreground">
+                    {totalElements}
+                  </span>{" "}
+                  {t.PAGINATION_MEMBERS}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" disabled>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <Button size="icon" className="bg-[#e41b21] hover:bg-[#c9181d] text-white w-8 h-8">1</Button>
-                  <Button variant="ghost" size="icon" className="w-8 h-8">2</Button>
-                  <Button variant="ghost" size="icon" className="w-8 h-8">3</Button>
-                  <Button variant="outline" size="icon">
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <Button
+                      key={i}
+                      size="icon"
+                      variant={i === page ? "default" : "ghost"}
+                      className={`w-8 h-8 ${i === page ? "bg-[#e41b21] hover:bg-[#c9181d] text-white" : ""}`}
+                      onClick={() => setPage(i)}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={page >= totalPages - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
+                  >
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -197,16 +303,15 @@ export default function MemberList() {
           mode={sheetMode}
           onOpenChange={(open) => {
             if (!open) {
-              setSelectedMember(null)
-              setSheetMode("view")
+              setSelectedMember(null);
+              setSheetMode("view");
             }
           }}
-          onSubmit={(data) => {
-            console.log("Đã gửi đánh giá", data)
-            setSelectedMember(null)
+          onSubmit={() => {
+            setSelectedMember(null);
           }}
         />
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

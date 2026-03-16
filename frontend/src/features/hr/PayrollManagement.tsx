@@ -1,18 +1,26 @@
-import { useMemo, useState } from "react"
-import { Search, ChevronLeft, ChevronRight, Eye, Filter, X, SlidersHorizontal, Building } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Filter, SlidersHorizontal, Building, X } from "lucide-react"
+import { useMemo, useState } from "react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Filter,
+  X,
+  SlidersHorizontal,
+  Building,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableHeader,
@@ -20,26 +28,29 @@ import {
   TableHead,
   TableBody,
   TableCell,
-} from "@/components/ui/table"
-import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { SalarySlipSheet, type SalarySlip } from "../employee/components/SalarySlipSheet"
-import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges"
+} from "@/components/ui/table";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import {
+  SalarySlipSheet,
+  type SalarySlip,
+} from "../employee/components/SalarySlipSheet";
+import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges";
 
 type PayrollRow = {
-  id: number
-  name: string
-  employeeId: string
-  department: string
-  role: string
-  baseSalary: string
-  bonus: Array<{ label: string; amount: string }>
-  allowance: Array<{ label: string; amount: string }>
-  deduction: Array<{ label: string; amount: string }>
-  netSalary: string
-  status: "PROCESSED" | "PENDING" | "REVIEW"
-  paymentMethod?: string
-  paymentReference?: string
-}
+  id: number;
+  name: string;
+  employeeId: string;
+  department: string;
+  role: string;
+  baseSalary: string;
+  bonus: Array<{ label: string; amount: string }>;
+  allowance: Array<{ label: string; amount: string }>;
+  deduction: Array<{ label: string; amount: string }>;
+  netSalary: string;
+  status: "PROCESSED" | "PENDING" | "REVIEW";
+  paymentMethod?: string;
+  paymentReference?: string;
+};
 
 const MOCK_PAYROLL: PayrollRow[] = [
   {
@@ -102,23 +113,23 @@ const MOCK_PAYROLL: PayrollRow[] = [
     paymentReference: "REF-2155",
     status: "REVIEW",
   },
-]
+];
 
 export default function PayrollManagement() {
-  const t = SYSTEM_MESSAGES.PAYROLL
-  const [payrollRows, setPayrollRows] = useState<PayrollRow[]>(MOCK_PAYROLL)
-  const [selectedSlip, setSelectedSlip] = useState<SalarySlip | null>(null)
-  const [period, setPeriod] = useState("October 2023")
-  const [department, setDepartment] = useState("All Departments")
-  const [employee, setEmployee] = useState("")
-  const [status, setStatus] = useState("All Status")
+  const t = SYSTEM_MESSAGES.PAYROLL;
+  const [payrollRows, setPayrollRows] = useState<PayrollRow[]>(MOCK_PAYROLL);
+  const [selectedSlip, setSelectedSlip] = useState<SalarySlip | null>(null);
+  const [period, setPeriod] = useState("October 2023");
+  const [department, setDepartment] = useState("All Departments");
+  const [employee, setEmployee] = useState("");
+  const [status, setStatus] = useState("All Status");
 
   const calculateTotal = (items: Array<{ amount: string }>) => {
     return items.reduce((acc, cur) => {
-      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
-      return acc + (Number.isNaN(parsed) ? 0 : parsed)
-    }, 0)
-  }
+      const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""));
+      return acc + (Number.isNaN(parsed) ? 0 : parsed);
+    }, 0);
+  };
 
   const handleSaveSlip = (updated: SalarySlip) => {
     setPayrollRows((prev) =>
@@ -134,12 +145,12 @@ export default function PayrollManagement() {
               paymentMethod: updated.paymentMethod,
               paymentReference: updated.paymentReference,
             }
-          : row
-      )
-    )
+          : row,
+      ),
+    );
 
-    setSelectedSlip(updated)
-  }
+    setSelectedSlip(updated);
+  };
 
   const handleOpenSlip = (row: PayrollRow) => {
     setSelectedSlip({
@@ -160,31 +171,35 @@ export default function PayrollManagement() {
       role: row.role,
       paymentMethod: row.paymentMethod,
       paymentReference: row.paymentReference,
-    })
-  }
+    });
+  };
 
   const filtered = useMemo(() => {
-    const q = employee.trim().toLowerCase()
+    const q = employee.trim().toLowerCase();
     return payrollRows.filter((row) => {
-      const matchesEmployee = !q || row.name.toLowerCase().includes(q) || row.employeeId.toLowerCase().includes(q)
-      const matchesDept = department === "All Departments" || row.department === department
-      const matchesStatus = status === "All Status" || row.status === status
-      return matchesEmployee && matchesDept && matchesStatus
-    })
-  }, [employee, department, status, payrollRows])
+      const matchesEmployee =
+        !q ||
+        row.name.toLowerCase().includes(q) ||
+        row.employeeId.toLowerCase().includes(q);
+      const matchesDept =
+        department === "All Departments" || row.department === department;
+      const matchesStatus = status === "All Status" || row.status === status;
+      return matchesEmployee && matchesDept && matchesStatus;
+    });
+  }, [employee, department, status, payrollRows]);
 
   const hasFilter =
     employee.trim() !== "" ||
     department !== "All Departments" ||
     status !== "All Status" ||
-    period !== "October 2023"
+    period !== "October 2023";
 
   const clearAllFilters = () => {
-    setEmployee("")
-    setDepartment("All Departments")
-    setStatus("All Status")
-    setPeriod("October 2023")
-  }
+    setEmployee("");
+    setDepartment("All Departments");
+    setStatus("All Status");
+    setPeriod("October 2023");
+  };
 
   return (
     <SidebarProvider>
@@ -241,7 +256,11 @@ export default function PayrollManagement() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 text-sm"
+                  >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
                     {t.FILTER_PERIOD}
                     {period !== "October 2023" && (
@@ -256,19 +275,28 @@ export default function PayrollManagement() {
                 <DropdownMenuContent align="start" className="w-44">
                   <DropdownMenuItem
                     onClick={() => setPeriod("October 2023")}
-                    className={cn("cursor-pointer text-sm", period === "October 2023" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      period === "October 2023" && "font-bold text-primary",
+                    )}
                   >
                     October 2023
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setPeriod("September 2023")}
-                    className={cn("cursor-pointer text-sm", period === "September 2023" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      period === "September 2023" && "font-bold text-primary",
+                    )}
                   >
                     September 2023
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setPeriod("August 2023")}
-                    className={cn("cursor-pointer text-sm", period === "August 2023" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      period === "August 2023" && "font-bold text-primary",
+                    )}
                   >
                     August 2023
                   </DropdownMenuItem>
@@ -277,7 +305,11 @@ export default function PayrollManagement() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 text-sm"
+                  >
                     <Building className="w-3.5 h-3.5" />
                     {t.FILTER_DEPARTMENT}
                     {department !== "All Departments" && (
@@ -292,25 +324,38 @@ export default function PayrollManagement() {
                 <DropdownMenuContent align="start" className="w-44">
                   <DropdownMenuItem
                     onClick={() => setDepartment("All Departments")}
-                    className={cn("cursor-pointer text-sm", department === "All Departments" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      department === "All Departments" &&
+                        "font-bold text-primary",
+                    )}
                   >
                     All Departments
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setDepartment("Engineering")}
-                    className={cn("cursor-pointer text-sm", department === "Engineering" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      department === "Engineering" && "font-bold text-primary",
+                    )}
                   >
                     Engineering
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setDepartment("Design")}
-                    className={cn("cursor-pointer text-sm", department === "Design" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      department === "Design" && "font-bold text-primary",
+                    )}
                   >
                     Design
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setDepartment("Marketing")}
-                    className={cn("cursor-pointer text-sm", department === "Marketing" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      department === "Marketing" && "font-bold text-primary",
+                    )}
                   >
                     Marketing
                   </DropdownMenuItem>
@@ -319,7 +364,11 @@ export default function PayrollManagement() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 text-sm"
+                  >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
                     {t.FILTER_STATUS}
                     {status !== "All Status" && (
@@ -334,25 +383,37 @@ export default function PayrollManagement() {
                 <DropdownMenuContent align="start" className="w-44">
                   <DropdownMenuItem
                     onClick={() => setStatus("All Status")}
-                    className={cn("cursor-pointer text-sm", status === "All Status" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      status === "All Status" && "font-bold text-primary",
+                    )}
                   >
                     All Status
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setStatus("PROCESSED")}
-                    className={cn("cursor-pointer text-sm", status === "PROCESSED" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      status === "PROCESSED" && "font-bold text-primary",
+                    )}
                   >
                     Processed
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setStatus("PENDING")}
-                    className={cn("cursor-pointer text-sm", status === "PENDING" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      status === "PENDING" && "font-bold text-primary",
+                    )}
                   >
                     Pending
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setStatus("REVIEW")}
-                    className={cn("cursor-pointer text-sm", status === "REVIEW" && "font-bold text-primary")}
+                    className={cn(
+                      "cursor-pointer text-sm",
+                      status === "REVIEW" && "font-bold text-primary",
+                    )}
                   >
                     Review
                   </DropdownMenuItem>
@@ -369,15 +430,33 @@ export default function PayrollManagement() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                  <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">{t.TABLE_EMPLOYEE}</TableHead>
-                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider">{t.TABLE_DEPARTMENT}</TableHead>
-                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right">{t.TABLE_BASE_SALARY}</TableHead>
-                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right">{t.TABLE_ALLOWANCE}</TableHead>
-                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right text-green-600">{t.TABLE_BONUS}</TableHead>
-                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right text-red-500">{t.TABLE_DEDUCTION}</TableHead>
-                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right">{t.TABLE_NET}</TableHead>
-                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-center">{t.TABLE_STATUS}</TableHead>
-                  <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">{t.TABLE_ACTIONS}</TableHead>
+                  <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">
+                    {t.TABLE_EMPLOYEE}
+                  </TableHead>
+                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider">
+                    {t.TABLE_DEPARTMENT}
+                  </TableHead>
+                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right">
+                    {t.TABLE_BASE_SALARY}
+                  </TableHead>
+                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right">
+                    {t.TABLE_ALLOWANCE}
+                  </TableHead>
+                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right text-green-600">
+                    {t.TABLE_BONUS}
+                  </TableHead>
+                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right text-red-500">
+                    {t.TABLE_DEDUCTION}
+                  </TableHead>
+                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-right">
+                    {t.TABLE_NET}
+                  </TableHead>
+                  <TableHead className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-center">
+                    {t.TABLE_STATUS}
+                  </TableHead>
+                  <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">
+                    {t.TABLE_ACTIONS}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -398,27 +477,42 @@ export default function PayrollManagement() {
                         </div>
                         <div>
                           <p className="text-sm font-semibold">{row.name}</p>
-                          <p className="text-[10px] text-muted-foreground">ID: {row.employeeId}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            ID: {row.employeeId}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <p className="text-sm font-medium">{row.department}</p>
-                      <p className="text-xs text-muted-foreground">{row.role}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {row.role}
+                      </p>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-right">{row.baseSalary}</TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-right">{calculateTotal(row.allowance).toLocaleString("vi-VN")} đ</TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-right text-green-600 font-medium">{calculateTotal(row.bonus).toLocaleString("vi-VN")} đ</TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-right text-red-500 font-medium">{calculateTotal(row.deduction).toLocaleString("vi-VN")} đ</TableCell>
-                    <TableCell className="px-4 py-4 text-sm font-bold text-right">{row.netSalary}</TableCell>
+                    <TableCell className="px-4 py-4 text-sm text-right">
+                      {row.baseSalary}
+                    </TableCell>
+                    <TableCell className="px-4 py-4 text-sm text-right">
+                      {calculateTotal(row.allowance).toLocaleString("vi-VN")} đ
+                    </TableCell>
+                    <TableCell className="px-4 py-4 text-sm text-right text-green-600 font-medium">
+                      {calculateTotal(row.bonus).toLocaleString("vi-VN")} đ
+                    </TableCell>
+                    <TableCell className="px-4 py-4 text-sm text-right text-red-500 font-medium">
+                      {calculateTotal(row.deduction).toLocaleString("vi-VN")} đ
+                    </TableCell>
+                    <TableCell className="px-4 py-4 text-sm font-bold text-right">
+                      {row.netSalary}
+                    </TableCell>
                     <TableCell className="px-4 py-4 text-center">
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold ${row.status === "PROCESSED"
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold ${
+                          row.status === "PROCESSED"
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                             : row.status === "PENDING"
                               ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                               : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                          }`}
+                        }`}
                       >
                         {row.status}
                       </span>
@@ -430,13 +524,12 @@ export default function PayrollManagement() {
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            handleOpenSlip(row)
+                            e.stopPropagation();
+                            handleOpenSlip(row);
                           }}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                       
                       </div>
                     </TableCell>
                   </TableRow>
@@ -446,17 +539,27 @@ export default function PayrollManagement() {
 
             <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                {t.PAGINATION_TEXT.replace("{{from}}", "1").replace("{{to}}", String(filtered.length)).replace("{{total}}", "48")}
+                {t.PAGINATION_TEXT.replace("{{from}}", "1")
+                  .replace("{{to}}", String(filtered.length))
+                  .replace("{{total}}", "48")}
               </p>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" disabled>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <Button className="size-8 flex items-center justify-center bg-primary text-white text-xs font-bold rounded-md">1</Button>
-                <Button variant="ghost" className="size-8 flex items-center justify-center text-xs font-bold rounded-md">
+                <Button className="size-8 flex items-center justify-center bg-primary text-white text-xs font-bold rounded-md">
+                  1
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="size-8 flex items-center justify-center text-xs font-bold rounded-md"
+                >
                   2
                 </Button>
-                <Button variant="ghost" className="size-8 flex items-center justify-center text-xs font-bold rounded-md">
+                <Button
+                  variant="ghost"
+                  className="size-8 flex items-center justify-center text-xs font-bold rounded-md"
+                >
                   3
                 </Button>
                 <Button variant="outline" size="icon">
@@ -472,10 +575,10 @@ export default function PayrollManagement() {
         slip={selectedSlip}
         open={!!selectedSlip}
         onOpenChange={(open) => {
-          if (!open) setSelectedSlip(null)
+          if (!open) setSelectedSlip(null);
         }}
         onSave={handleSaveSlip}
       />
     </SidebarProvider>
-  )
+  );
 }

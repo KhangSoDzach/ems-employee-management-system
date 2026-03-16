@@ -39,9 +39,13 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
     public PerformanceReviewDto.Response saveReview(PerformanceReviewDto.CreateRequest req) {
         String reviewerUsername = currentUsername();
 
-        Employee reviewee = employeeRepo.findById(req.getRevieweeId())
+        Long revieweeId = req.getRevieweeId();
+        if (revieweeId == null) {
+            throw new AppException(ErrorCode.VALID_PARAM_MISSING, "Reviewee ID is required");
+        }
+        Employee reviewee = employeeRepo.findById(revieweeId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
-                        messages.get(MessageCode.REVIEW_EMPLOYEE_NOT_FOUND, req.getRevieweeId())));
+                        messages.get(MessageCode.REVIEW_EMPLOYEE_NOT_FOUND, revieweeId)));
 
         Long reviewerId = resolveReviewerId(reviewerUsername);
         String reviewerDisplayName = reviewerUsername;
