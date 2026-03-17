@@ -65,6 +65,19 @@ public class LeaveController {
     }
 
     /**
+     * Get current user's own leave requests (always self-scoped)
+     * GET /api/v1/leaves/me
+     */
+    @GetMapping("/me")
+    @PreAuthorize("hasPermission(null, 'LEAVE_VIEW')")
+    public ResponseEntity<ApiResponse<PageResponse<LeaveResponse>>> getMyLeaves(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageResponse<LeaveResponse> response = leaveService.getMyLeaves(page, size);
+        return ResponseEntity.ok(ApiResponse.success("success", response));
+    }
+
+    /**
      * Get leave request by ID
      * GET /api/v1/leaves/{id}
      */

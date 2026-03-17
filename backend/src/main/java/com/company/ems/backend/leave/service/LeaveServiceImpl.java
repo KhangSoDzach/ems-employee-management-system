@@ -78,6 +78,30 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<LeaveResponse> getMyLeaves(int page, int size) {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+        PageRequest pageable = PageRequest.of(page, size);
+
+        Employee self = employeeRepository.findByUserId(principal.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
+
+        Page<Leave> leaves = leaveRepository.findByEmployeeId(self.getId(), pageable);
+
+        List<LeaveResponse> content = leaves.getContent().stream()
+                .map(this::mapToResponse)
+                .toList();
+
+        return PageResponse.<LeaveResponse>builder()
+                .content(content)
+                .page(page).size(size)
+                .totalElements(leaves.getTotalElements())
+                .totalPages(leaves.getTotalPages())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<LeaveResponse> getAllLeaves(int page, int size, Long employeeId,
                                                     String status, String leaveType,
                                                     LocalDate startDate, LocalDate endDate) {
