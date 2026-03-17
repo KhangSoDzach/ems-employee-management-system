@@ -1,8 +1,8 @@
 import * as React from "react"
-import { 
-    ShieldCheck, 
-    Copy, 
-    CheckCircle2, 
+import {
+    ShieldCheck,
+    Copy,
+    CheckCircle2,
     QrCode,
     AlertTriangle,
     Bell,
@@ -21,9 +21,9 @@ import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { 
-    Avatar, 
-    AvatarFallback, 
+import {
+    Avatar,
+    AvatarFallback,
 } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/contexts/AuthContext"
@@ -58,7 +58,7 @@ export default function SidebarSettings() {
     const [disablePassword, setDisablePassword] = React.useState("")
 
     const recoveryCodes = [
-        "ABCD-1234", "EFGH-5678", "IJKL-9012", 
+        "ABCD-1234", "EFGH-5678", "IJKL-9012",
         "MNOP-3456", "QRST-7890", "UVWX-1234"
     ]
 
@@ -73,8 +73,10 @@ export default function SidebarSettings() {
     }
 
     const handleVerifyOTP = async () => {
-        if (otpValue.length !== 6) return
-        
+        if (otpValue.length !== 6) {
+            return
+        }
+
         // Mock verify
         await new Promise(resolve => setTimeout(resolve, 800))
         setIs2faEnabled(true)
@@ -84,8 +86,10 @@ export default function SidebarSettings() {
     }
 
     const handleConfirmDisable = async () => {
-        if (!disablePassword) return
-        
+        if (!disablePassword) {
+            return
+        }
+
         // Mock verify password
         await new Promise(resolve => setTimeout(resolve, 800))
         setIs2faEnabled(false)
@@ -122,8 +126,8 @@ export default function SidebarSettings() {
                         <p className="text-xs font-bold">{TEXT.TWO_FACTOR.LABEL_2FA_TOGGLE}</p>
                         <p className="text-[10px] text-muted-foreground">{is2faEnabled ? "Đã bật" : "Đang tắt"}</p>
                     </div>
-                    <Switch 
-                        checked={is2faEnabled} 
+                    <Switch
+                        checked={is2faEnabled}
                         onCheckedChange={handleToggle2FA}
                         className="data-[state=checked]:bg-green-500 scale-90"
                     />
@@ -153,7 +157,7 @@ export default function SidebarSettings() {
             <div className="w-72 p-5 space-y-5">
                 <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{TEXT.SIDEBAR_SETTINGS.ACCOUNT_SETTINGS}</h3>
                 <div className="space-y-2">
-                    <button 
+                    <button
                         className="flex items-center justify-between w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-left"
                         onClick={() => navigate("/profile")}
                     >
@@ -219,7 +223,7 @@ export default function SidebarSettings() {
     }
 
     return (
-        <div className="w-72 bg-white dark:bg-slate-950 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="w-72 bg-white dark:bg-slate-950 overflow-y-auto max-h-[calc(100vh-100px)] animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="p-4 pb-2">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">{TEXT.SIDEBAR_SETTINGS.TITLE}</h2>
@@ -247,7 +251,7 @@ export default function SidebarSettings() {
             {/* Preferences */}
             <div className="p-4 space-y-4">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{TEXT.SIDEBAR_SETTINGS.PREFERENCES}</p>
-                
+
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="text-slate-500"><Bell size={18} /></div>
@@ -281,7 +285,7 @@ export default function SidebarSettings() {
                             <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
                         </button>
                     </PopoverTrigger>
-                    <PopoverContent side="right" align="start" sideOffset={24} alignOffset={-14} className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950">
+                    <PopoverContent side="right" align="center" sideOffset={24} className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950">
                         <PopoverArrow className="fill-white dark:fill-slate-950" width={12} height={6} />
                         {renderAccountContent()}
                     </PopoverContent>
@@ -297,7 +301,7 @@ export default function SidebarSettings() {
                             <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
                         </button>
                     </PopoverTrigger>
-                    <PopoverContent side="right" align="start" sideOffset={24} alignOffset={-14} className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950">
+                    <PopoverContent side="right" align="center" sideOffset={24} className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950">
                         <PopoverArrow className="fill-white dark:fill-slate-950" width={12} height={6} />
                         {render2FAContent()}
                     </PopoverContent>
@@ -313,7 +317,7 @@ export default function SidebarSettings() {
                             <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
                         </button>
                     </PopoverTrigger>
-                    <PopoverContent side="right" align="start" sideOffset={24} alignOffset={-14} className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950">
+                    <PopoverContent side="right" align="center" sideOffset={24} className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950">
                         <PopoverArrow className="fill-white dark:fill-slate-950" width={12} height={6} />
                         {renderPrivacyContent()}
                     </PopoverContent>
@@ -324,8 +328,8 @@ export default function SidebarSettings() {
 
             {/* Logout */}
             <div className="p-4">
-                <Button 
-                    variant="outline" 
+                <Button
+                    variant="outline"
                     className="w-full h-10 rounded-xl justify-center gap-2 font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all"
                     onClick={handleLogout}
                 >
@@ -368,7 +372,7 @@ export default function SidebarSettings() {
                                     <div className="flex justify-center">
                                         <div className="flex gap-1.5">
                                             {[...Array(6)].map((_, i) => (
-                                                <input 
+                                                <input
                                                     key={i}
                                                     type="text"
                                                     maxLength={1}
@@ -423,9 +427,9 @@ export default function SidebarSettings() {
                     </DialogHeader>
 
                     <div className="p-8 pt-6 space-y-6">
-                        <Input 
-                            type="password" 
-                            value={disablePassword} 
+                        <Input
+                            type="password"
+                            value={disablePassword}
                             onChange={(e) => setDisablePassword(e.target.value)}
                             placeholder={TEXT.SIDEBAR_SETTINGS.CONFIRM_PWD_PLACEHOLDER}
                             className="h-11 rounded-xl"
