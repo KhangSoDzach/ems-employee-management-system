@@ -37,7 +37,7 @@ const PAGE_SIZE = 10;
 export default function AssetManagementPage() {
   const effectiveRole = useEffectiveRole();
   const [assets, setAssets] = useState<AssetSummary[]>([]);
-  const [totalElements, setTotal] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,7 @@ export default function AssetManagementPage() {
   const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<AssetDetail | null>(null);
 
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string; status: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const resolveAssetIdentifier = useCallback((summary: AssetSummary): number | string | null => {
@@ -106,6 +106,7 @@ export default function AssetManagementPage() {
         status: statusFilter || undefined,
         keyword: searchDebounced || undefined,
       });
+
       if (signal?.aborted) return;
       setAssets(res.content);
       setTotal(res.totalElements);
@@ -127,8 +128,8 @@ export default function AssetManagementPage() {
     return () => controller.abort();
   }, [fetchList]);
 
-  const handleDelete = (id: number | string, name: string) => {
-    setDeleteTarget({ id, name });
+  const handleDelete = (id: number | string, name: string, status: string) => {
+    setDeleteTarget({ id, name, status });
   };
 
   const confirmDelete = async () => {
@@ -155,13 +156,13 @@ export default function AssetManagementPage() {
         status: statusFilter || undefined,
         keyword: searchDebounced || undefined,
       });
-      const url = window.URL.createObjectURL(blob);
+      const url = globalThis.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `danh-sach-tai-san-${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      globalThis.URL.revokeObjectURL(url);
       a.remove();
       toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
     } catch {
@@ -298,7 +299,7 @@ export default function AssetManagementPage() {
                                 toast.error(SYSTEM_MESSAGES.ERROR);
                                 return;
                               }
-                              handleDelete(identifier, asset.name);
+                              handleDelete(identifier, asset.name, asset.status?.toUpperCase() ?? "");
                             }}
                           />
                         </div>
@@ -378,13 +379,33 @@ export default function AssetManagementPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-red-600">
                 <AlertTriangle className="w-5 h-5" />
-                Xác nhận xóa tài sản
+                {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? "Không thể xóa tài sản" : "Xác nhận xóa tài sản"}
               </DialogTitle>
-              <DialogDescription className="pt-2">
-                Bạn có chắc muốn xóa tài sản{" "}
-                <span className="font-semibold text-gray-900">"{deleteTarget?.name}"</span>?
-                <br />
-                Hành động này không thể hoàn tác.
+              <DialogDescription className="pt-2" asChild>
+                <div>
+                  {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
+                    // ASSIGNED: show guidance to return first
+                    <div className="space-y-3">
+                      <p>
+                        Tài sản{" "}
+                        <span className="font-semibold text-gray-900">"{deleteTarget?.name}"</span>{" "}
+                        đang được cấp phát. Phải <span className="font-semibold text-orange-600">thu hồi trước</span> khi xóa.
+                      </p>
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
+                        <p className="font-semibold mb-1">Cách thực hiện:</p>
+                        <p>Mở chi tiết tài sản → bấm <span className="font-bold">Thu hồi</span> → quay lại và xóa.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    // AVAILABLE / RETIRED: normal confirm
+                    <p>
+                      Bạn có chắc muốn xóa tài sản{" "}
+                      <span className="font-semibold text-gray-900">"{deleteTarget?.name}"</span>?
+                      <br />
+                      Hành động này không thể hoàn tác.
+                    </p>
+                  )}
+                </div>
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 pt-2">
@@ -393,16 +414,35 @@ export default function AssetManagementPage() {
                 disabled={deleting}
                 className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
               >
-                Hủy
+                Đóng
               </button>
-              <button
-                onClick={confirmDelete}
-                disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition flex items-center gap-2"
-              >
-                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {deleting ? "Đang xóa..." : "Xóa tài sản"}
-              </button>
+              {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
+                // Guide to open detail modal for return
+                <button
+                  onClick={() => {
+                    const asset = assets.find(a => {
+                      const id = resolveAssetIdentifier(a);
+                      return id === deleteTarget?.id;
+                    });
+                    if (asset) {
+                      setDeleteTarget(null);
+                      handleOpenDetail(asset);
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition flex items-center gap-2"
+                >
+                  Mở chi tiết để thu hồi
+                </button>
+              ) : (
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition flex items-center gap-2"
+                >
+                  {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {deleting ? "Đang xóa..." : "Xóa tài sản"}
+                </button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
