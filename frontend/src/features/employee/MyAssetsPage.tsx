@@ -39,8 +39,8 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 const INCIDENT_TYPES = [
-    { value: "DAMAGED", label: "Hư hỏng / Lỗi thiết bị (Damaged)" },
-        { value: "LOST",    label: "Mất mát / Thất lạc (Lost/Stolen)" },
+    { value: "DAMAGED", label: "Hư hỏng / Lỗi thiết bị" },
+        { value: "LOST",    label: "Mất mát / Thất lạc" },
 ]
 
 /* ─────────────── ASSET CARD ─────────────── */

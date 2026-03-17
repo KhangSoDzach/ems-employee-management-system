@@ -34,8 +34,6 @@ const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
 
 const PAGE_SIZE = 10;
 
-/* ================= PAGE ================= */
-
 export default function AssetManagementPage() {
   const effectiveRole = useEffectiveRole();
   const [assets, setAssets] = useState<AssetSummary[]>([]);
@@ -54,7 +52,6 @@ export default function AssetManagementPage() {
   const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<AssetDetail | null>(null);
 
-  // FIX: Delete confirmation state (replaces window.confirm)
   const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -93,16 +90,14 @@ export default function AssetManagementPage() {
     }
   }, [resolveAssetIdentifier]);
 
-  // Debounce search
   useEffect(() => {
     const t = setTimeout(() => setSearchDebounced(search), 400);
     return () => clearTimeout(t);
   }, [search]);
 
-  // Reset to first page when filter/search changes
   useEffect(() => { setPage(0); }, [statusFilter, searchDebounced]);
 
-  const fetchList = useCallback(async () => {
+  const fetchList = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const res = await assetService.listAssets({
@@ -111,34 +106,43 @@ export default function AssetManagementPage() {
         status: statusFilter || undefined,
         keyword: searchDebounced || undefined,
       });
+      if (signal?.aborted) return;
       setAssets(res.content);
       setTotal(res.totalElements);
       setTotalPages(res.totalPages);
-    } catch {
-      toast.error(SYSTEM_MESSAGES.API_ERROR);
+    } catch (err: unknown) {
+      if (signal?.aborted) return;
+      const name = (err as { name?: string })?.name;
+      if (name !== 'AbortError' && name !== 'CanceledError') {
+        toast.error(SYSTEM_MESSAGES.API_ERROR);
+      }
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, [page, statusFilter, searchDebounced]);
 
-  useEffect(() => { fetchList(); }, [fetchList]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchList(controller.signal);
+    return () => controller.abort();
+  }, [fetchList]);
 
-  // FIX: Step 1 — just open confirm dialog (was: window.confirm)
   const handleDelete = (id: number | string, name: string) => {
     setDeleteTarget({ id, name });
   };
 
-  // FIX: Step 2 — actual delete after user confirms
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
       await assetService.deleteAsset(deleteTarget.id);
-      toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
+      toast.success("Đã xóa tài sản thành công.");
       setDeleteTarget(null);
       fetchList();
-    } catch {
-      toast.error(SYSTEM_MESSAGES.ERROR);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      toast.error(msg ?? "Không thể xóa tài sản. Vui lòng thử lại.");
     } finally {
       setDeleting(false);
     }
