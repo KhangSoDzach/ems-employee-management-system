@@ -6,6 +6,7 @@ import java.util.Map;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import com.company.ems.backend.employee.dto.MemberResponse;
 import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
 
 public interface EmployeeService {
@@ -32,4 +33,15 @@ public interface EmployeeService {
      * Trả danh sách nhân viên giữ vị trí manager (level >= 3) để chọn Người quản lý
      */
     List<Map<String, Object>> getManagers();
+
+    /**
+     * Trả danh sách thành viên trong team của manager đang đăng nhập.
+     * Dùng DataScope TEAM: chỉ trả nhân viên có reportingManager = manager đó.
+     * Dành cho trang /members của role MANAGER.
+     *
+     * @param page   0-based page number
+     * @param size   page size
+     * @param search optional keyword filter on name/email
+     */
+    PageResponse<MemberResponse> getTeamMembers(int page, int size, String search);
 }

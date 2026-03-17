@@ -8,6 +8,7 @@ A full-stack employee management system built with Spring Boot and React.
 ## 🚀 Quick Start
 
 ### With Docker (Recommended)
+
 ```bash
 # Clone repository
 git clone https://github.com/YOUR_USERNAME/ems-employee-management-system.git
@@ -21,6 +22,7 @@ docker-compose up -d
 ```
 
 ### With Docker (Development / Hot-Reload)
+
 Sử dụng `docker-compose.override.yml` để kích hoạt hot-reload cho cả Frontend (Vite) và Backend (Spring Boot). Tránh việc phải build lại file JAR mỗi khi thay đổi code.
 
 ```bash
@@ -36,17 +38,34 @@ docker compose logs -f backend
 ```
 
 **Lưu ý (Đặc tính & Rủi ro):**
+
 - **WSL2/Windows**: Bind-mount có thể chậm trên Windows I/O. Frontend đã cấu hình anonymous volume cho `/app/node_modules` giúp tăng tốc Vite và tránh xung đột quyền/hệ điều hành.
 - **Môi trường**: Việc chạy source code qua wrapper `./mvnw` trong container có thể đem lại khác biệt nhỏ với file JAR được build từ GitHub Actions/Production. Maven dependency có cache qua volume dùng chung.
 - Hãy dùng `.env` dev với biến môi trường hợp lệ (`VITE_API_URL`, database mock...).
 
 ### Access Application
+
 Mở trình duyệt:
-- **Frontend** (React/Vite)  : http://localhost:5173
-- **Backend** (Spring Boot)  : http://localhost:8080
-- **Swagger Documentation**  : http://localhost:8080/swagger-ui.html
+
+- **Frontend** (React/Vite) : http://localhost:5173
+- **Backend** (Spring Boot) : http://localhost:8080
+- **Swagger Documentation** : http://localhost:8080/swagger-ui.html
+
+### Local 2FA End-to-End Test
+
+Để test xác thực 2 lớp trên local (FE + BE API thật):
+
+1. Đăng nhập vào hệ thống.
+2. Mở **Settings → Security (2FA)** và bật 2FA.
+3. Quét QR code bằng ứng dụng Authenticator (Google Authenticator/Authy) hoặc nhập secret key thủ công.
+4. Nhập mã 6 số để xác nhận bật 2FA và lưu recovery codes.
+5. Đăng xuất, sau đó đăng nhập lại bằng tài khoản vừa bật 2FA.
+6. Hệ thống sẽ yêu cầu mã OTP 2FA trước khi hoàn tất đăng nhập.
+
+> Lưu ý: frontend gọi backend qua `VITE_API_URL` (mặc định `http://localhost:8080/api/v1`).
 
 ### Without Docker
+
 ```bash
 # Backend
 cd backend
@@ -63,6 +82,7 @@ npm run dev
 ## Tech Stack
 
 **Backend:**
+
 - Java 21
 - Spring Boot 3.5.10
 - Spring Security (JWT Authentication)
@@ -73,6 +93,7 @@ npm run dev
 - Maven
 
 **Frontend:**
+
 - React 19
 - TypeScript
 - Vite
@@ -80,4 +101,3 @@ npm run dev
 - React Router
 - Radix UI Components
 - Tailwind CSS
-
