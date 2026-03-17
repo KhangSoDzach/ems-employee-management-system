@@ -3,8 +3,6 @@ package com.company.ems.backend.auth.service;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
-import com.company.ems.backend.common.message.MessageCode;
-import com.company.ems.backend.common.message.MessageService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -12,21 +10,24 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.company.ems.backend.auth.config.JwtProperties;
-import com.company.ems.backend.auth.dto.AuthResponse;
-import com.company.ems.backend.auth.dto.LoginRequest;
-import com.company.ems.backend.auth.entity.RefreshToken;
-import com.company.ems.backend.auth.security.JwtTokenUtil;
 import com.company.ems.backend.auditlog.dto.RequestContext;
 import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
+import com.company.ems.backend.auth.config.JwtProperties;
+import com.company.ems.backend.auth.dto.AuthResponse;
+import com.company.ems.backend.auth.dto.ChangePasswordRequest;
+import com.company.ems.backend.auth.dto.LoginRequest;
+import com.company.ems.backend.auth.entity.RefreshToken;
+import com.company.ems.backend.auth.security.JwtTokenUtil;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.security.service.TwoFactorAuthService;
 import com.company.ems.backend.user.entity.User;
 import com.company.ems.backend.user.repository.UserRepository;
-import com.company.ems.backend.auth.dto.ChangePasswordRequest;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class AuthenticationService {
     private final JwtProperties jwtProperties;
     private final AuditLogService auditLogService;
     private final PasswordEncoder passwordEncoder;
+    private final TwoFactorAuthService twoFactorAuthService;
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCK_DURATION_MINUTES = 15;
@@ -81,6 +83,21 @@ public class AuthenticationService {
             if (user.getFailedLoginAttempts() > 0) {
                 user.resetFailedAttempts();
                 userRepository.save(user);
+            }
+
+            if (Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+                String twoFactorCode = request.getTwoFactorCode();
+                if (twoFactorCode == null || twoFactorCode.isBlank()) {
+                    log.info("2FA required for user: {}", request.getUsername());
+                    return AuthResponse.builder()
+                            .twoFactorRequired(true)
+                            .build();
+                }
+
+                if (!twoFactorAuthService.verifyCodeForLogin(user.getUsername(), twoFactorCode)) {
+                    log.warn("Invalid 2FA code for user: {}", request.getUsername());
+                    throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
+                }
             }
 
             user.setLastLogin(LocalDateTime.now());
@@ -238,6 +255,7 @@ public class AuthenticationService {
 
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
         return AuthResponse.builder()
+                .twoFactorRequired(false)
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
