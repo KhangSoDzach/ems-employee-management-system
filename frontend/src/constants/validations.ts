@@ -26,8 +26,14 @@ export const FORM_VALIDATION_MESSAGES = {
     MIN_LENGTH: (min: number) => `Vui lòng nhập tối thiểu ${min} ký tự`,
     MAX_LENGTH: (max: number) => `Độ dài không vượt quá ${max} ký tự`,
     // Password & OTP
+    PASSWORD_REQUIRED: "Vui lòng nhập mật khẩu mới",
     PASSWORD_MIN: "Mật khẩu phải có ít nhất 8 ký tự",
+    PASSWORD_COMPLEX: "Mật khẩu phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+    CONFIRM_PASSWORD_REQUIRED: "Vui lòng xác nhận mật khẩu mới",
+    CURRENT_PASSWORD_REQUIRED: "Vui lòng nhập mật khẩu hiện tại",
+    CURRENT_PASSWORD_INVALID: "Mật khẩu hiện tại không chính xác",
     PASSWORD_MISMATCH: "Mật khẩu xác nhận không khớp",
+    OTP_REQUIRED: "Vui lòng nhập mã OTP",
     OTP_LENGTH: "Mã OTP phải có đúng 6 chữ số",
     OTP_NUMERIC: "Mã OTP chỉ được chứa số",
 };
