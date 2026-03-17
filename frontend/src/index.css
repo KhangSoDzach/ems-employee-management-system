@@ -78,7 +78,6 @@
    BASE STYLES + 🔥 FIX ROOT HEIGHT
    ========================================= */
 @layer base {
-
   html,
   body,
   #root {
@@ -208,7 +207,6 @@
   }
 }
 
-
 @theme inline {
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -231,7 +229,6 @@
 }
 
 @layer components {
-
   /* =========================================
      Shared UI utilities
      ========================================= */
@@ -933,5 +930,44 @@
     fill: rgba(228, 27, 33, 0.2);
     stroke: #e41b21;
     stroke-width: 2;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .print\:block,
+  .print\:block *,
+  .print\:fixed,
+  .print\:fixed * {
+    visibility: visible !important;
+  }
+  .print\:fixed {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    z-index: 9999 !important;
+  }
+  /* Hide UI elements that shouldn't be in PDF */
+  .print\:hidden {
+    display: none !important;
+  }
+  /* Reset some shadcn/ui defaults for print */
+  [role="dialog"] {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  /* Force color printing */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }

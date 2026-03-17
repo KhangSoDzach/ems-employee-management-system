@@ -15,12 +15,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.company.ems.backend.common.constant.AppRole;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import com.company.ems.backend.employee.dto.MemberResponse;
 import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
 import com.company.ems.backend.employee.service.EmployeeService;
 
@@ -68,6 +70,23 @@ public class EmployeeController {
     public ResponseEntity<ApiResponse<PublicEmployeeResponse>> getMyProfile() {
         return ResponseEntity
                 .ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getMyProfile()));
+    }
+
+    @GetMapping("/team")
+    @PreAuthorize(AppRole.HAS_MANAGER_OR_ABOVE)
+    @Operation(
+        summary = "Get team members",
+        description = "Returns a paginated, searchable list of employees under the current Manager's team. " +
+                      "Managers see only their direct reports (DataScope=TEAM); HR/Admin see all employees. " +
+                      "Response is a slim projection — no sensitive fields (salary, bank, tax)."
+    )
+    public ResponseEntity<ApiResponse<PageResponse<MemberResponse>>> getTeamMembers(
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Search keyword (name/email)") @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(ApiResponse.success(
+                messages.get(MessageCode.COMMON_SUCCESS),
+                employeeService.getTeamMembers(page, size, search)));
     }
 
     @GetMapping("/managers")

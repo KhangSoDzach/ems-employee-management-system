@@ -1,32 +1,44 @@
 package com.company.ems.backend.auth.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
-import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.company.ems.backend.auditlog.dto.RequestContext;
 import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.auth.config.JwtProperties;
+import com.company.ems.backend.auth.dto.AuthResponse;
 import com.company.ems.backend.auth.dto.ChangePasswordRequest;
+import com.company.ems.backend.auth.dto.LoginRequest;
 import com.company.ems.backend.auth.security.JwtTokenUtil;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.security.service.TwoFactorAuthService;
 import com.company.ems.backend.user.entity.User;
 import com.company.ems.backend.user.repository.UserRepository;
 
@@ -59,6 +71,9 @@ class AuthenticationServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private TwoFactorAuthService twoFactorAuthService;
 
     @InjectMocks
     private AuthenticationService authenticationService;
@@ -154,5 +169,61 @@ class AuthenticationServiceTest {
         );
 
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void login_ReturnsTwoFactorRequired_WhenEnabledAndCodeMissing() {
+        user.setTwoFactorEnabled(true);
+
+        LoginRequest loginRequest = LoginRequest.builder()
+                .username("testuser")
+                .password("old_password")
+                .build();
+
+        Authentication authentication = mock(Authentication.class);
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+
+        AuthResponse response = authenticationService.login(loginRequest, requestContext);
+
+        assertTrue(Boolean.TRUE.equals(response.getTwoFactorRequired()));
+        assertNull(response.getAccessToken());
+        verify(twoFactorAuthService, never()).verifyCodeForLogin(anyString(), anyString());
+        verify(refreshTokenService, never()).createRefreshToken(any(), anyString());
+    }
+
+    @Test
+    void login_Success_WhenEnabledAndValidTwoFactorCode() {
+        user.setTwoFactorEnabled(true);
+
+        LoginRequest loginRequest = LoginRequest.builder()
+                .username("testuser")
+                .password("old_password")
+                .twoFactorCode("123456")
+                .build();
+
+        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                "testuser",
+                "encoded_old_password",
+                java.util.List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        when(twoFactorAuthService.verifyCodeForLogin("testuser", "123456")).thenReturn(true);
+        when(jwtTokenUtil.generateAccessToken(userDetails)).thenReturn("access-token");
+        when(refreshTokenService.createRefreshToken(eq(user), anyString())).thenReturn("refresh-token");
+        when(jwtProperties.getExpirationMs()).thenReturn(3_600_000L);
+
+        AuthResponse response = authenticationService.login(loginRequest, requestContext);
+
+        assertFalse(Boolean.TRUE.equals(response.getTwoFactorRequired()));
+        assertEquals("access-token", response.getAccessToken());
+        assertEquals("refresh-token", response.getRefreshToken());
+        verify(twoFactorAuthService).verifyCodeForLogin("testuser", "123456");
     }
 }

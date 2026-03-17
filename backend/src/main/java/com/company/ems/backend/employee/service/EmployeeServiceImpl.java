@@ -20,6 +20,7 @@ import com.company.ems.backend.department.entity.Department;
 import com.company.ems.backend.department.repository.DepartmentRepository;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import com.company.ems.backend.employee.dto.MemberResponse;
 import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
@@ -387,6 +388,47 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .collect(java.util.stream.Collectors.toList());
         }
 
+        @Override
+        @Transactional(readOnly = true)
+        public PageResponse<MemberResponse> getTeamMembers(int page, int size, String search) {
+                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+                PageRequest pageable = PageRequest.of(page, size);
+
+                Page<Employee> employees;
+
+                if (principal.hasDataScope(DataScope.ALL)) {
+                        // HR / Admin: có thể thấy tất cả nhân viên
+                        employees = employeeRepository.searchEmployees(
+                                        search, null, null, null, pageable);
+
+                } else if (principal.hasDataScope(DataScope.TEAM)) {
+                        // Manager: chỉ thấy nhân viên trong team của mình
+                        Employee managerEmployee = employeeRepository.findByUserId(principal.getUserId())
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Employee record không tồn tại cho userId: "
+                                                                        + principal.getUserId()));
+
+                        employees = employeeRepository.searchEmployeesByManager(
+                                        managerEmployee.getId(), search, null, null, null, pageable);
+
+                } else {
+                        // SELF scope không được dùng endpoint này
+                        throw new ForbiddenException();
+                }
+
+                List<MemberResponse> content = employees.getContent().stream()
+                                .map(this::mapToMemberResponse)
+                                .toList();
+
+                return PageResponse.<MemberResponse>builder()
+                                .content(content)
+                                .page(page)
+                                .size(size)
+                                .totalElements(employees.getTotalElements())
+                                .totalPages(employees.getTotalPages())
+                                .build();
+        }
+
         private PublicEmployeeResponse mapToPublicResponse(Employee employee) {
                 if (employee == null)
                         return null;
@@ -477,6 +519,23 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .status(employee.getStatus() != null ? employee.getStatus().name() : null)
                                 .createdAt(employee.getCreatedAt())
                                 .updatedAt(employee.getUpdatedAt())
+                                .build();
+        }
+
+        /**
+         * Maps an Employee to a slim MemberResponse (no sensitive fields).
+         */
+        private MemberResponse mapToMemberResponse(Employee employee) {
+                if (employee == null) return null;
+                return MemberResponse.builder()
+                                .id(employee.getId())
+                                .employeeCode(employee.getEmployeeCode())
+                                .fullName(employee.getFullName())
+                                .email(employee.getEmail())
+                                .avatarUrl(employee.getAvatarUrl())
+                                .positionTitle(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
+                                .departmentName(employee.getDepartment() != null ? employee.getDepartment().getName() : null)
+                                .status(employee.getStatus() != null ? employee.getStatus().name() : null)
                                 .build();
         }
 
