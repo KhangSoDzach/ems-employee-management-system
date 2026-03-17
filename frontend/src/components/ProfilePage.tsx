@@ -434,7 +434,7 @@ export default function ProfilePage() {
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
-                                                </FormItem>
+                                                </FormItem> 
                                             )}
                                         />
 
