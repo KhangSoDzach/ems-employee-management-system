@@ -212,7 +212,7 @@ export function MemberEvaluationSheet({
         if (!v) onOpenChange(false);
       }}
     >
-      <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-w-none print:w-full print:fixed print:inset-0 print:z-[9999] print:bg-white">
+      <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-w-none print:w-full print:fixed print:inset-0 print:z-9999 print:bg-white">
         <div className="px-5 py-4 border-b bg-muted/10 relative overflow-hidden print:bg-white print:border-b-2">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 

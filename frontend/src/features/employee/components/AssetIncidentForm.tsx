@@ -127,19 +127,12 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
         toast.dismiss();
 
         // Thực hiện API call thực tế
-        const promise = () => new Promise(async (resolve, reject) => {
-            try {
-                const res = await assetService.submitReport(Number(values.assetId.replace(/\D/g, '')), {
-                    description: values.description,
-                    incidentType: values.incidentType as 'DAMAGED' | 'LOST',
-                });
-                resolve(res);
-            } catch (err) {
-                reject(err);
-            }
+        const apiPromise = assetService.submitReport(Number(values.assetId.replace(/\D/g, '')), {
+            description: values.description,
+            incidentType: values.incidentType as 'DAMAGED' | 'LOST',
         });
 
-        toast.promise(promise(), {
+        toast.promise(apiPromise, {
             loading: TEXT.TOAST_LOADING,
             success: () => {
                 form.reset();

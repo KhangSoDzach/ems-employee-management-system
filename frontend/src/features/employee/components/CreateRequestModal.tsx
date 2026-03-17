@@ -1,4 +1,4 @@
-import { useForm, FieldErrors } from "react-hook-form"
+import { useForm, FieldErrors, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { CalendarIcon, Clock } from "lucide-react"
@@ -95,7 +95,10 @@ export const CreateRequestModal = ({ open, onClose, onSubmit }: CreateRequestMod
         mode: "onChange",
     })
 
-    const watchType = form.watch("type")
+    const watchType = useWatch({
+        control: form.control,
+        name: "type"
+    })
     const showTimeIn = watchType === "CHECK_IN" || watchType === "BOTH"
     const showTimeOut = watchType === "CHECK_OUT" || watchType === "BOTH"
 
