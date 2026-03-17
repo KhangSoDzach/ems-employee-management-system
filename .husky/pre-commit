@@ -2,3 +2,8 @@
 
 npm run -s check:conflicts
 npx --no-install lint-staged
+
+if git diff --cached --name-only | grep -q '^backend/'; then
+  echo "Running lightweight backend check..."
+  (cd backend && ./mvnw -q -DskipTests compile) || exit 1
+fi
