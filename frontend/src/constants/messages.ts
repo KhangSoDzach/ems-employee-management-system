@@ -50,7 +50,7 @@ export const SYSTEM_MESSAGES = {
         MENU_GROUP_ASSET: "Tài sản nhóm",
         MENU_CHECKIN: "Chấm công",
         MENU_REQUEST: "Tạo đơn nghỉ phép",
-        
+
         MENU_MY_ASSETS: "Tài sản của tôi",
         MENU_MEMBERS: "Thành viên nhóm",
         MENU_KPI: "Thiết lập KPI/OKR",
@@ -62,11 +62,11 @@ export const SYSTEM_MESSAGES = {
         HEADER_TITLE: "Menu",
         QUICK_CREATE: "Tạo nhanh",
         INBOX: "Hộp thư",
-        DOCUMENTS: "Tài liệu",
+        DOCUMENTS: "HRMS",
         MORE: "Thêm",
         OPEN: "Mở",
         SHARE: "Chia sẻ",
-        DOCUMENTATION: "Tài liệu",
+        HRMS: "HRMS",
         VERSION_PREFIX: "v",
     },
 

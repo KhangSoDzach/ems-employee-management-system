@@ -539,8 +539,8 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
     const onSubmitReset = async (data: ResetFormValues) => {
         try {
             await resetMutation.mutateAsync(data);
-        } catch (error) {
-            console.error("Password change error:", error);
+        } catch {
+            // Error is handled by resetMutation's onError callback
         }
     };
 

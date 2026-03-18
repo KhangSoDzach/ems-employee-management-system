@@ -109,7 +109,7 @@ export default function AssetManagementPage() {
 
       if (signal?.aborted) return;
       setAssets(res.content);
-      setTotal(res.totalElements);
+      setTotalElements(res.totalElements);
       setTotalPages(res.totalPages);
     } catch (err: unknown) {
       if (signal?.aborted) return;

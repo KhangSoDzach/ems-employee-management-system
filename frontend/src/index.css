@@ -78,6 +78,7 @@
    BASE STYLES + 🔥 FIX ROOT HEIGHT
    ========================================= */
 @layer base {
+
   html,
   body,
   #root {
@@ -229,6 +230,7 @@
 }
 
 @layer components {
+
   /* =========================================
      Shared UI utilities
      ========================================= */
@@ -937,12 +939,14 @@
   body * {
     visibility: hidden !important;
   }
+
   .print\:block,
   .print\:block *,
   .print\:fixed,
   .print\:fixed * {
     visibility: visible !important;
   }
+
   .print\:fixed {
     position: fixed !important;
     top: 0 !important;
@@ -955,16 +959,19 @@
     background: white !important;
     z-index: 9999 !important;
   }
+
   /* Hide UI elements that shouldn't be in PDF */
   .print\:hidden {
     display: none !important;
   }
+
   /* Reset some shadcn/ui defaults for print */
   [role="dialog"] {
     position: static !important;
     box-shadow: none !important;
     border: none !important;
   }
+
   /* Force color printing */
   * {
     -webkit-print-color-adjust: exact !important;

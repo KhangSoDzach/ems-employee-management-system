@@ -21,17 +21,23 @@ import { CHECKIN_STATUS } from "@/constants/options"
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function fmtTime(iso: string | null) {
-    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (!iso) {
+        return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    }
     return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
 }
 
 function fmtDate(iso: string | null) {
-    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (!iso) {
+        return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    }
     return format(new Date(iso), "dd/MM/yyyy")
 }
 
 function fmtWorkHours(minutes: number | null) {
-    if (minutes == null) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (minutes == null) {
+        return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    }
     const h = Math.floor(minutes / 60)
     const m = minutes % 60
     return `${h}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${m.toString().padStart(2, "0")}m`
@@ -51,7 +57,9 @@ function statusLabel(s: AttendanceRecord["status"]) {
 type CheckStatus = "unchecked" | "checked_in" | "checked_out"
 
 function dateKeyFromRecord(record: AttendanceRecord | null): string | null {
-    if (!record) return null
+    if (!record) {
+        return null
+    }
 
     if (typeof record.date === "string" && record.date.length >= 10) {
         return record.date.slice(0, 10)
@@ -69,7 +77,9 @@ function dateKeyFromRecord(record: AttendanceRecord | null): string | null {
 
 function upsertHistoryRecord(history: AttendanceRecord[], record: AttendanceRecord): AttendanceRecord[] {
     const key = dateKeyFromRecord(record)
-    if (!key) return history
+    if (!key) {
+        return history
+    }
 
     const existingIdx = history.findIndex((item) => dateKeyFromRecord(item) === key)
     if (existingIdx >= 0) {
@@ -136,7 +146,9 @@ export default function CheckinPage() {
 
             const todayRec = records.find((r) => dateKeyFromRecord(r) === today) ?? null
             setTodayRecord((prev) => {
-                if (todayRec) return todayRec
+                if (todayRec) {
+                    return todayRec
+                }
                 return dateKeyFromRecord(prev) === today ? prev : null
             })
         }
@@ -158,7 +170,9 @@ export default function CheckinPage() {
 
     // ── Camera capture complete ───────────────────────────────────────────────
     const handleCapture = async (result: { photoBase64: string; latitude: number; longitude: number; locationLabel: string }) => {
-        if (!pendingAction) return
+        if (!pendingAction) {
+            return
+        }
         setActionLoading(true)
         try {
             if (pendingAction === "checkIn") {
@@ -223,8 +237,12 @@ export default function CheckinPage() {
     }
 
     const getGreetingMessage = () => {
-        if (status === "unchecked") return SYSTEM_MESSAGES.CHECKIN.MSG_MORNING
-        if (status === "checked_in") return SYSTEM_MESSAGES.CHECKIN.MSG_WORKING
+        if (status === "unchecked") {
+            return SYSTEM_MESSAGES.CHECKIN.MSG_MORNING
+        }
+        if (status === "checked_in") {
+            return SYSTEM_MESSAGES.CHECKIN.MSG_WORKING
+        }
         return SYSTEM_MESSAGES.CHECKIN.MSG_DONE
     }
 

@@ -17,10 +17,6 @@ import {
 } from "@/components/ui/sidebar"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 
-// This is sample data.
-const data = {
-  versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"]
-}
 
 export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" | "manager" | "hr" }) {
   const location = useLocation()
@@ -138,7 +134,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                   url: "/assets",
                 },
                 {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST ,
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
                   url: "/request",
                 },
                 {
@@ -173,7 +169,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
                   url: "/request",
                 },
-                
+
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                   url: "/my-assets",
@@ -185,10 +181,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
   return (
     <Sidebar {...props} className="w-55">
       <SidebarHeader className="h-12 border-b px-2 justify-center">
-        <VersionSwitcher
-          versions={data.versions}
-          defaultVersion={data.versions[0] as string}
-        />
+        <VersionSwitcher />
       </SidebarHeader>
       <SidebarContent>
         {/* We create a SidebarGroup for each parent. */}
