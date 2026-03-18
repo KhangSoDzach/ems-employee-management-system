@@ -4,6 +4,9 @@ FROM maven:3.9-eclipse-temurin-21-alpine AS build
 
 WORKDIR /app
 
+# Ensure CA certificates are available so Maven can download plugins over HTTPS
+RUN apk add --no-cache ca-certificates && update-ca-certificates
+
 # Copy Maven files for dependency caching
 COPY pom.xml .
 COPY src ./src
