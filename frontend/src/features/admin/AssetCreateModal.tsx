@@ -31,6 +31,166 @@ const CONDITION_OPTIONS: { value: AssetCondition; label: string }[] = [
   { value: "DISPOSED", label: ASSET_CONDITION_LABELS.DISPOSED },
 ];
 
+/** --- Internal components for reducing complexity --- */
+const ImageUploadSection = ({
+  imagePreview,
+  imageUrl,
+  onImageUpload,
+  onUrlChange
+}: {
+  imagePreview: string | null;
+  imageUrl: string;
+  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onUrlChange: (val: string) => void;
+}) => (
+  <div className="bg-gray-50 rounded-xl border p-4">
+    <label className="text-sm font-semibold text-gray-700 block mb-3">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_IMAGE}</label>
+    <div className="w-full aspect-video bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative">
+      {imagePreview ? (
+        <img src={imagePreview} alt="preview" className="object-cover w-full h-full" />
+      ) : (
+        <div className="text-center text-gray-400">
+          <UploadCloud className="w-8 h-8 mx-auto mb-2" />
+          <p className="text-xs">{SYSTEM_MESSAGES.ASSET_CREATE.UPLOAD_IMAGE}</p>
+        </div>
+      )}
+      <input type="file" accept="image/*" onChange={onImageUpload}
+        className="absolute inset-0 opacity-0 cursor-pointer" />
+    </div>
+    <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_IMAGE_URL} value={imageUrl}
+      onChange={(e) => onUrlChange(e.target.value)}
+      className="mt-2 w-full border border-gray-200 rounded-md px-3 py-2 text-xs" />
+  </div>
+);
+
+const AdditionalInfoSection = ({
+  form,
+  set
+}: {
+  form: AssetCreatePayload;
+  set: (field: keyof AssetCreatePayload, value: unknown) => void;
+}) => (
+  <div className="bg-gray-50 rounded-xl border p-4 space-y-4">
+    <h3 className="text-sm font-semibold text-gray-800">{SYSTEM_MESSAGES.ASSET_CREATE.SECTION_ADDITIONAL}</h3>
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_WARRANTY}</label>
+      <input type="date" value={form.warrantyUntil ?? ""}
+        onChange={(e) => set("warrantyUntil", e.target.value)}
+        className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
+    </div>
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_SUPPLIER}</label>
+      <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_SUPPLIER} value={form.supplierName ?? ""}
+        onChange={(e) => set("supplierName", e.target.value)}
+        className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
+    </div>
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_NUM}</label>
+      <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_CONTRACT_NUM} value={form.contractNumber ?? ""}
+        onChange={(e) => set("contractNumber", e.target.value)}
+        className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
+    </div>
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_UNTIL}</label>
+      <input type="date" value={form.contractUntil ?? ""}
+        onChange={(e) => set("contractUntil", e.target.value)}
+        className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
+    </div>
+  </div>
+);
+
+const EmployeeSearchSelector = ({
+  keyword,
+  setKeyword,
+  dropdownOpen,
+  setDropdownOpen,
+  loading,
+  options,
+  onSelect,
+  error
+}: {
+  keyword: string;
+  setKeyword: (v: string) => void;
+  dropdownOpen: boolean;
+  setDropdownOpen: (v: boolean) => void;
+  loading: boolean;
+  options: EmployeeOption[];
+  onSelect: (e: EmployeeOption) => void;
+  error?: string;
+}) => (
+  <div className="space-y-1 md:col-span-2">
+    <label className="text-sm font-medium text-gray-700">
+      {/* eslint-disable-next-line react/jsx-no-literals */}
+      {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_USER_ONLY} <span className="text-red-500">*</span>
+    </label>
+    <div className="relative">
+      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <input
+        placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_USER_SEARCH}
+        value={keyword}
+        onFocus={() => setDropdownOpen(true)}
+        onChange={(e) => setKeyword(e.target.value)}
+        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary ${error ? "border-red-500" : "border-gray-200"}`}
+      />
+
+      {dropdownOpen && (
+        <div className="absolute z-20 mt-2 w-full max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
+          {loading ? (
+            <div className="px-3 py-3 text-sm text-gray-500 flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {SYSTEM_MESSAGES.LOADING}
+            </div>
+          ) : options.length === 0 ? (
+            <div className="px-3 py-3 text-sm text-gray-500">{SYSTEM_MESSAGES.NO_DATA}</div>
+          ) : (
+            options.map((employee) => {
+              const fullName = `${employee.firstName ?? ""} ${employee.lastName ?? ""}`.trim();
+              return (
+                <button
+                  key={employee.id}
+                  type="button"
+                  onClick={() => onSelect(employee)}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                >
+                  <div className="font-medium text-gray-800">{fullName}</div>
+                  <div className="text-xs text-gray-500">{employee.department ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</div>
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+  </div>
+);
+
+const ConditionGroup = ({
+  currentValue,
+  onChange
+}: {
+  currentValue: AssetCondition;
+  onChange: (val: AssetCondition) => void;
+}) => (
+  <div className="space-y-3">
+    <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONDITION_ONLY}</label>
+    <div className="grid grid-cols-5 gap-3">
+      {CONDITION_OPTIONS.map((item) => (
+        <label key={item.value} className="cursor-pointer">
+          <input type="radio" name="condition" value={item.value}
+            checked={currentValue === item.value}
+            onChange={() => onChange(item.value as AssetCondition)}
+            className="peer hidden" />
+          <div className="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-200 bg-white text-gray-500 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary">
+            <span className="text-xs font-semibold">{item.label}</span>
+          </div>
+        </label>
+      ))}
+    </div>
+  </div>
+);
+
+
 export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   const [saving, setSaving] = useState(false);
   const [nextCode, setNextCode] = useState("—");
@@ -60,7 +220,9 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     assetService.getNextCode().then(setNextCode).catch(() => setNextCode("—"));
     setForm({
       assetName: "", assetType: "", assetValue: undefined,
@@ -77,7 +239,9 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   }, [open]);
 
   useEffect(() => {
-    if (!open || !openEmployeeDropdown) return;
+    if (!open || !openEmployeeDropdown) {
+      return;
+    }
     const timer = setTimeout(() => {
       setEmployeeLoading(true);
       assetService.searchEmployees(employeeKeyword)
@@ -88,7 +252,9 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
     return () => clearTimeout(timer);
   }, [open, openEmployeeDropdown, employeeKeyword]);
 
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
 
   const set = (field: keyof AssetCreatePayload, value: unknown) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -103,14 +269,22 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setImagePreview(URL.createObjectURL(file));
+    if (file) {
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
-    if (!form.assetName.trim()) newErrors.assetName = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
-    if (!form.assetType?.trim()) newErrors.assetType = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
-    if (!selectedEmployee || !form.location?.trim()) newErrors.location = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+    if (!form.assetName.trim()) {
+      newErrors.assetName = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
+    }
+    if (!form.assetType?.trim()) {
+      newErrors.assetType = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
+    }
+    if (!selectedEmployee || !form.location?.trim()) {
+      newErrors.location = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -150,54 +324,13 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8 min-h-0">
             {/* LEFT COLUMN */}
             <div className="lg:col-span-1 space-y-6">
-              {/* IMAGE UPLOAD */}
-              <div className="bg-gray-50 rounded-xl border p-4">
-                <label className="text-sm font-semibold text-gray-700 block mb-3">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_IMAGE}</label>
-                <div className="w-full aspect-video bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="preview" className="object-cover w-full h-full" />
-                  ) : (
-                    <div className="text-center text-gray-400">
-                      <UploadCloud className="w-8 h-8 mx-auto mb-2" />
-                      <p className="text-xs">{SYSTEM_MESSAGES.ASSET_CREATE.UPLOAD_IMAGE}</p>
-                    </div>
-                  )}
-                  <input type="file" accept="image/*" onChange={handleImageUpload}
-                    className="absolute inset-0 opacity-0 cursor-pointer" />
-                </div>
-                <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_IMAGE_URL} value={form.imageUrl ?? ""}
-                  onChange={(e) => set("imageUrl", e.target.value)}
-                  className="mt-2 w-full border border-gray-200 rounded-md px-3 py-2 text-xs" />
-              </div>
-
-              {/* THÔNG TIN PHỤ */}
-              <div className="bg-gray-50 rounded-xl border p-4 space-y-4">
-                <h3 className="text-sm font-semibold text-gray-800">{SYSTEM_MESSAGES.ASSET_CREATE.SECTION_ADDITIONAL}</h3>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_WARRANTY}</label>
-                  <input type="date" value={form.warrantyUntil ?? ""}
-                    onChange={(e) => set("warrantyUntil", e.target.value)}
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_SUPPLIER}</label>
-                  <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_SUPPLIER} value={form.supplierName ?? ""}
-                    onChange={(e) => set("supplierName", e.target.value)}
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_NUM}</label>
-                  <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_CONTRACT_NUM} value={form.contractNumber ?? ""}
-                    onChange={(e) => set("contractNumber", e.target.value)}
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_UNTIL}</label>
-                  <input type="date" value={form.contractUntil ?? ""}
-                    onChange={(e) => set("contractUntil", e.target.value)}
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm" />
-                </div>
-              </div>
+              <ImageUploadSection
+                imagePreview={imagePreview}
+                imageUrl={form.imageUrl ?? ""}
+                onImageUpload={handleImageUpload}
+                onUrlChange={(val) => set("imageUrl", val)}
+              />
+              <AdditionalInfoSection form={form} set={set} />
             </div>
 
             {/* RIGHT COLUMN */}
@@ -263,79 +396,34 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
                 </div>
 
                 {/* Người sử dụng */}
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_USER_ONLY} <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_USER_SEARCH}
-                      value={employeeKeyword}
-                      onFocus={() => setOpenEmployeeDropdown(true)}
-                      onChange={(e) => {
-                        setEmployeeKeyword(e.target.value);
-                        setSelectedEmployee(null);
-                        set("location", "");
-                        setOpenEmployeeDropdown(true);
-                      }}
-                      className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary ${errors.location ? "border-red-500" : "border-gray-200"}`}
-                    />
-
-                    {openEmployeeDropdown && (
-                      <div className="absolute z-20 mt-2 w-full max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
-                        {employeeLoading ? (
-                          <div className="px-3 py-3 text-sm text-gray-500 flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            {SYSTEM_MESSAGES.LOADING}
-                          </div>
-                        ) : employeeOptions.length === 0 ? (
-                          <div className="px-3 py-3 text-sm text-gray-500">{SYSTEM_MESSAGES.NO_DATA}</div>
-                        ) : (
-                          employeeOptions.map((employee) => {
-                            const fullName = `${employee.firstName ?? ""} ${employee.lastName ?? ""}`.trim();
-                            return (
-                              <button
-                                key={employee.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedEmployee(employee);
-                                  set("location", fullName);
-                                  setEmployeeKeyword(fullName);
-                                  setOpenEmployeeDropdown(false);
-                                }}
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                              >
-                                <div className="font-medium text-gray-800">{fullName}</div>
-                                <div className="text-xs text-gray-500">{employee.department ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</div>
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
-                </div>
+                <EmployeeSearchSelector
+                  keyword={employeeKeyword}
+                  setKeyword={(val) => {
+                    setEmployeeKeyword(val);
+                    setSelectedEmployee(null);
+                    set("location", "");
+                    setOpenEmployeeDropdown(true);
+                  }}
+                  dropdownOpen={openEmployeeDropdown}
+                  setDropdownOpen={setOpenEmployeeDropdown}
+                  loading={employeeLoading}
+                  options={employeeOptions}
+                  onSelect={(emp) => {
+                    const fullName = `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim();
+                    setSelectedEmployee(emp);
+                    set("location", fullName);
+                    setEmployeeKeyword(fullName);
+                    setOpenEmployeeDropdown(false);
+                  }}
+                  error={errors.location}
+                />
               </div>
 
               {/* Tình trạng */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700">{SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONDITION_ONLY}</label>
-                <div className="grid grid-cols-5 gap-3">
-                  {CONDITION_OPTIONS.map((item) => (
-                    <label key={item.value} className="cursor-pointer">
-                      <input type="radio" name="condition" value={item.value}
-                        checked={form.condition === item.value}
-                        onChange={() => set("condition", item.value)}
-                        className="peer hidden" />
-                      <div className="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-200 bg-white text-gray-500 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary">
-                        <span className="text-xs font-semibold">{item.label}</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <ConditionGroup
+                currentValue={form.condition as AssetCondition}
+                onChange={(val) => set("condition", val)}
+              />
 
               {/* Ghi chú */}
               <div className="space-y-1">

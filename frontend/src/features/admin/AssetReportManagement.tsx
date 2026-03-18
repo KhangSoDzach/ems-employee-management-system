@@ -86,7 +86,9 @@ export default function AssetReportManagement() {
     }
 
     const handleProcess = async (type: 'APPROVE' | 'REJECT') => {
-        if (!selectedReport) return
+        if (!selectedReport) {
+            return
+        }
         setProcessing(true)
         try {
             if (type === 'APPROVE') {

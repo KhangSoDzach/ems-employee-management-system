@@ -12,10 +12,21 @@ export function useEffectiveRole(
 ): EffectiveRole {
     const { user } = useAuth()
 
-    if (sidebarRole) return sidebarRole
+    if (sidebarRole) {
+        return sidebarRole
+    }
 
-    if (user?.roles.includes("ROLE_ADMIN")) return "admin"
-    if (user?.roles.includes("ROLE_HR")) return "hr"
-    if (user?.roles.includes("ROLE_MANAGER")) return "manager"
+    const roles = user?.roles || []
+
+    if (roles.includes("ROLE_ADMIN")) {
+        return "admin"
+    }
+    if (roles.includes("ROLE_HR")) {
+        return "hr"
+    }
+    if (roles.includes("ROLE_MANAGER")) {
+        return "manager"
+    }
+
     return "employee"
 }

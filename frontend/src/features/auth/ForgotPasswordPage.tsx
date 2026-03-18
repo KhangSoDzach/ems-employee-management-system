@@ -21,15 +21,7 @@ import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
-const TEXT = {
-    ...SYSTEM_MESSAGES.FORGOT_PASSWORD,
-    TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại các thông tin nhập liệu",
-    LOADING_SEND_OTP: "Đang gửi mã OTP...",
-    LOADING_RESET: "Đang cập nhật mật khẩu...",
-    SUCCESS_RESET: "Đổi mật khẩu thành công!",
-    LABEL_CURRENT_PASSWORD: "Mật khẩu hiện tại",
-    PLACEHOLDER_CURRENT_PASSWORD: "Nhập mật khẩu hiện tại",
-};
+const TEXT = SYSTEM_MESSAGES.FORGOT_PASSWORD;
 
 interface ForgotPasswordPageProps {
     isProfileMode?: boolean;
@@ -63,23 +55,16 @@ const otpAndPasswordSchema = z.object({
     path: ["confirmPassword"],
 });
 
-const profileChangePasswordSchema = z
-    .object({
-        currentPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.CURRENT_PASSWORD_REQUIRED),
-        newPassword: z
-            .string()
-            .min(1, FORM_VALIDATION_MESSAGES.PASSWORD_REQUIRED)
-            .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN)
-            .regex(
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                FORM_VALIDATION_MESSAGES.PASSWORD_COMPLEX,
-            ),
-        confirmPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
-    })
-    .refine((d) => d.newPassword === d.confirmPassword, {
-        message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
-        path: ["confirmPassword"],
-    });
+const profileChangePasswordSchema = z.object({
+    currentPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
+    newPassword: z
+        .string()
+        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
+    confirmPassword: z.string(),
+}).refine((d) => d.newPassword === d.confirmPassword, {
+    message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
+    path: ["confirmPassword"],
+});
 
 type EmailFormValues = z.infer<typeof emailSchema>;
 type OtpPasswordFormValues = z.infer<typeof otpAndPasswordSchema>;
@@ -408,56 +393,22 @@ const OtpResetPasswordForm = ({
     </form>
 );
 
-const SuccessState = ({
-    isProfileMode,
-    onClose,
-    navigate,
-}: {
-    isProfileMode: boolean;
-    onClose?: () => void;
-    navigate: (p: string) => void;
-}) => (
-    <div className="flex flex-col items-center py-6 animate-in fade-in zoom-in-95 duration-700">
-        <div className="relative mb-8">
-            {/* Soft background glow */}
-            <div className="absolute inset-0 bg-green-400/20 blur-3xl rounded-full scale-150 animate-pulse" />
-
-            <div className="relative w-28 h-28 rounded-3xl bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/40 dark:to-green-800/20 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-2xl overflow-hidden rotate-3 hover:rotate-0 transition-transform duration-500">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--tw-gradient-from)_0%,transparent_70%)] from-white/60" />
-                <CheckCircle2 className="w-14 h-14 text-green-500 relative z-10 animate-in zoom-in-50 duration-700 delay-200" />
-            </div>
-
-            {/* Decractive particles */}
-            <div className="absolute -top-4 -left-4 w-4 h-4 bg-green-400/30 rounded-full animate-ping" />
-            <div className="absolute -bottom-2 -right-6 w-3 h-3 bg-green-500/20 rounded-full animate-bounce delay-500" />
-        </div>
-
-        <div className="text-center space-y-3 mb-10 px-4">
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                {TEXT.SUCCESS_TITLE}
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed max-w-[280px] mx-auto">
-                {isProfileMode
-                    ? "Tài khoản của bạn đã được cập nhật mật khẩu mới thành công. Hãy ghi nhớ mật khẩu này cho các lần truy cập tiếp theo."
-                    : TEXT.SUCCESS_DESC}
+const SuccessState = ({ isProfileMode, onClose, navigate }: { isProfileMode: boolean; onClose?: () => void; navigate: (p: string) => void }) => (
+    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-500 py-4">
+        <CheckCircle2 className="w-20 h-20 text-green-500" />
+        <div className="text-center space-y-2 px-2">
+            <h3 className="text-xl font-bold">{TEXT.SUCCESS_TITLE}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+                {TEXT.SUCCESS_DESC}
             </p>
         </div>
 
-        <Button
-            className="w-full font-bold h-14 rounded-2xl shadow-[0_8px_20px_-6px_rgba(234,88,12,0.3)] bg-primary hover:bg-primary/90 text-primary-foreground border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1 transition-all group overflow-hidden relative"
-            size="lg"
-            onClick={() =>
-                isProfileMode
-                    ? onClose
-                        ? onClose()
-                        : window.location.reload()
-                    : navigate("/login")
-            }
+        <Button 
+            className="w-full font-bold h-12 rounded-xl text-base shadow-lg hover:shadow-xl transition-all" 
+            size="lg" 
+            onClick={() => isProfileMode ? (onClose ? onClose() : window.location.reload()) : navigate("/login")}
         >
-            <span className="relative z-10 flex items-center gap-2">
-                {isProfileMode ? SYSTEM_MESSAGES.BTN_CLOSE : TEXT.BTN_GO_LOGIN}
-                <ArrowLeft className={cn("w-4 h-4 rotate-180 transition-transform group-hover:translate-x-1", !isProfileMode && "block")} />
-            </span>
+            {isProfileMode ? SYSTEM_MESSAGES.BTN_CLOSE : TEXT.BTN_GO_LOGIN}
         </Button>
     </div>
 );
@@ -552,10 +503,10 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
         });
 
         toast.promise(promise, {
-            loading: TEXT.LOADING_SEND_OTP,
-            success: TEXT.TOAST_OTP_SENT,
+            loading: "Đang gửi mã OTP...",
+            success: "Mã OTP đã được gửi đến email của bạn.",
             error: (err: unknown) => {
-                return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? TEXT.TOAST_SEND_ERROR;
+                return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Không thể gửi mã. Vui lòng thử lại.";
             },
         });
     };
@@ -567,37 +518,31 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
                 : resetPassword(savedEmail, data.otp, data.newPassword),
         onMutate: () => {
             toast.dismiss();
-            toast.loading(TEXT.LOADING_RESET);
+            toast.loading("Đang cập nhật mật khẩu...");
         },
         onSuccess: () => {
             toast.dismiss();
-            toast.success(TEXT.SUCCESS_RESET);
+            toast.success("Đặt lại mật khẩu thành công!");
             setStep(3);
         },
         onError: (err: unknown) => {
             toast.dismiss();
-            const rawMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-            let message = rawMessage ?? (isProfileMode ? FORM_VALIDATION_MESSAGES.CURRENT_PASSWORD_INVALID : TEXT.TOAST_OTP_INVALID);
-
-            if (isProfileMode && (rawMessage === "Invalid username or password" || rawMessage === "Bad credentials")) {
-                message = FORM_VALIDATION_MESSAGES.CURRENT_PASSWORD_INVALID;
-            }
-
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Mã OTP không hợp lệ hoặc đã hết hạn.";
             toast.error(message);
             if (isProfileMode) {
-                setFormError("currentPassword", { message });
+                setFormError("currentPassword", { message: "Mật khẩu hiện tại không chính xác" });
             } else if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
-                setFormError("otp" as keyof ResetFormValues, { message: TEXT.TOAST_OTP_INVALID });
+                setFormError("otp" as keyof ResetFormValues, { message: "Mã xác thực đã hết hạn" });
             } else {
-                setFormError("otp" as keyof ResetFormValues, { message });
+                setFormError("otp" as keyof ResetFormValues, { message: "Mã xác thực không hợp lệ" });
             }
         },
     });
     const onSubmitReset = async (data: ResetFormValues) => {
         try {
             await resetMutation.mutateAsync(data);
-        } catch (error) {
-            console.error("Password change error:", error);
+        } catch {
+            // Error is handled by resetMutation's onError callback
         }
     };
     const handleResend = async () => {
@@ -614,17 +559,13 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
         });
 
         toast.promise(promise, {
-            loading: TEXT.LOADING_SEND_OTP,
-            success: TEXT.TOAST_OTP_RESENT,
-            error: TEXT.TOAST_RESEND_ERROR,
+            loading: "Đang gửi lại mã OTP...",
+            success: "Đã gửi lại mã OTP mới.",
+            error: "Không thể gửi lại mã. Vui lòng thử lại.",
         });
     };
-    const onError = (errors: FieldErrors<ResetFormValues>) => {
-        toast.dismiss();
-        if (Object.keys(errors).length > 0) {
-            toast.error(TEXT.TOAST_VALIDATION_ERROR);
-        }
-    };
+
+
     // ─── Render ───────────────────────────────────────────────────────────────
     const renderContent = () => (
         <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">

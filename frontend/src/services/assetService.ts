@@ -22,11 +22,11 @@ export interface EmployeeOption {
     department: string | null; position: string | null; avatarUrl: string | null;
 }
 export interface AssetSummary {
-    id: string; name: string; desc: string | null; type: string | null;
+    dbId: number; id: string; name: string; desc: string | null; type: string | null;
     status: string; statusColor: string; user: string | null;
 }
 export interface AssetDetail {
-    name: string; code: string; type: string | null; value: string | null;
+    id: number; name: string; code: string; type: string | null; value: string | null;
     purchaseDate: string | null; status: AssetStatus; condition: AssetCondition;
     warranty: string | null; supplier: string | null; contract: string | null;
     location: string | null; description: string | null; imageUrl: string | null;
@@ -87,7 +87,9 @@ export const assetService = {
     submitReport: (assetId: number, data: { incidentType: string; description: string }, attachment?: File): Promise<IncidentReportDetail> => {
         const formData = new FormData();
         formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
-        if (attachment) formData.append('attachment', attachment);
+        if (attachment) {
+            formData.append('attachment', attachment);
+        }
         return wrap<ApiResponse<IncidentReportDetail>>(
             api.post(`/assets/${assetId}/report`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
         ).then(res => res.data);

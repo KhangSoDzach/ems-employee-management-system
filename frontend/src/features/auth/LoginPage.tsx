@@ -3,7 +3,6 @@ import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  User,
   Lock,
   Mail,
   Eye,
@@ -134,7 +133,7 @@ export const LoginPage = () => {
       const apiErr = err as { response?: { data?: { message?: string } } };
       toast.error(
         apiErr.response?.data?.message ||
-          SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID,
+        SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID,
       );
     }
   };
@@ -213,8 +212,8 @@ export const LoginPage = () => {
       />
       <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
         <CardHeader className="text-center space-y-2 pb-6">
-          <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
-            <User className="text-primary w-8 h-8" />
+          <div className="flex aspect-square size-16 mx-auto items-center justify-center rounded-lg bg-sidebar-primary/50 text-sidebar-primary-foreground overflow-hidden mb-2 shadow-sm border border-primary/20">
+            <img src="/icon.png" className="size-full object-cover" alt="Logo" />
           </div>
           <CardTitle className="text-2xl font-bold">{TEXT.TITLE}</CardTitle>
           <CardDescription>{TEXT.DESC}</CardDescription>
