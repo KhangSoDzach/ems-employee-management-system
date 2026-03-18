@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.leave.dto.ApproveLeaveRequest;
+import com.company.ems.backend.leave.dto.LeaveActionRequest;
 import com.company.ems.backend.leave.dto.LeaveRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
 import com.company.ems.backend.leave.service.LeaveService;
@@ -31,6 +32,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LeaveController {
     private final LeaveService leaveService;
+
+    private static final String MESSAGE_SUCCESS = "success";
+    private static final String MESSAGE_LEAVE_SUBMITTED = "Leave request submitted successfully";
+    private static final String MESSAGE_LEAVE_PROCESSED = "Leave request processed successfully";
+    private static final String MESSAGE_LEAVE_CANCELLED = "Hủy yêu cầu nghỉ phép thành công";
+
+    private static final String ACTION_APPROVE = "APPROVE";
+    private static final String ACTION_REJECT = "REJECT";
+    private static final String ACTION_SEND_BACK = "SEND_BACK";
     /**
      * Submit a leave request
      * POST /api/v1/leaves
@@ -39,10 +49,9 @@ public class LeaveController {
     @PreAuthorize("hasPermission(null, 'LEAVE_CREATE')")
     public ResponseEntity<ApiResponse<LeaveResponse>> createLeaveRequest(
             @Valid @RequestBody LeaveRequest request) {
-        // TODO: Implement leave request service
         LeaveResponse response = leaveService.createLeaveRequest(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Leave request submitted successfully",response));
+            .body(ApiResponse.success(MESSAGE_LEAVE_SUBMITTED, response));
     }
 
     /**
@@ -61,7 +70,7 @@ public class LeaveController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         PageResponse<LeaveResponse> response =
             leaveService.getAllLeaves(page, size, employeeId, status, leaveType, startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success("success", response));
+        return ResponseEntity.ok(ApiResponse.success(MESSAGE_SUCCESS, response));
     }
 
     /**
@@ -74,7 +83,7 @@ public class LeaveController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         PageResponse<LeaveResponse> response = leaveService.getMyLeaves(page, size);
-        return ResponseEntity.ok(ApiResponse.success("success", response));
+        return ResponseEntity.ok(ApiResponse.success(MESSAGE_SUCCESS, response));
     }
 
     /**
@@ -85,7 +94,7 @@ public class LeaveController {
     @PreAuthorize("hasPermission(null, 'LEAVE_VIEW')")
     public ResponseEntity<ApiResponse<LeaveResponse>> getLeaveById(@PathVariable Long id) {
         LeaveResponse response = leaveService.getLeaveById(id);
-        return ResponseEntity.ok(ApiResponse.success("success", response));
+        return ResponseEntity.ok(ApiResponse.success(MESSAGE_SUCCESS, response));
     }
 
     /**
@@ -98,7 +107,7 @@ public class LeaveController {
             @PathVariable Long id,
             @Valid @RequestBody ApproveLeaveRequest request) {
         LeaveResponse response = leaveService.approveLeave(id, request);
-        return ResponseEntity.ok(ApiResponse.success("Leave request processed successfully",response));
+        return ResponseEntity.ok(ApiResponse.success(MESSAGE_LEAVE_PROCESSED, response));
     }
 
     /**
@@ -109,18 +118,17 @@ public class LeaveController {
     @PreAuthorize("hasPermission(null, 'LEAVE_APPROVE')")
     public ResponseEntity<ApiResponse<LeaveResponse>> processAction(
             @PathVariable Long id,
-            @Valid @RequestBody com.company.ems.backend.leave.dto.LeaveActionRequest actionRequest) {
+            @Valid @RequestBody LeaveActionRequest actionRequest) {
         String action = actionRequest.getAction() != null ? actionRequest.getAction().trim().toUpperCase() : null;
-        String status;
-        if ("APPROVE".equals(action)) {
-            status = "APPROVED";
-        } else if ("REJECT".equals(action)) {
-            status = "REJECTED";
-        } else if ("SEND_BACK".equals(action)) {
-            status = "RETURNED_TO_EMPLOYEE";
-        } else {
-            throw new IllegalArgumentException("Unsupported action: " + action);
+        if (action == null) {
+            throw new IllegalArgumentException("Unsupported action: null");
         }
+        String status = switch (action) {
+            case ACTION_APPROVE -> "APPROVED";
+            case ACTION_REJECT -> "REJECTED";
+            case ACTION_SEND_BACK -> "RETURNED_TO_EMPLOYEE";
+            default -> throw new IllegalArgumentException("Unsupported action: " + action);
+        };
 
         ApproveLeaveRequest req = ApproveLeaveRequest.builder()
                 .status(status)
@@ -128,7 +136,7 @@ public class LeaveController {
                 .build();
 
         LeaveResponse response = leaveService.approveLeave(id, req);
-        return ResponseEntity.ok(ApiResponse.success("Leave request processed successfully", response));
+        return ResponseEntity.ok(ApiResponse.success(MESSAGE_LEAVE_PROCESSED, response));
     }
 
     /**
@@ -138,6 +146,6 @@ public class LeaveController {
     @PreAuthorize("hasPermission(null, 'LEAVE_CANCEL')")
     public ResponseEntity<ApiResponse<Void>> cancelLeave(@PathVariable Long id) {
         leaveService.cancelLeave(id);
-        return ResponseEntity.ok(ApiResponse.success("Hủy yêu cầu nghỉ phép thành công", null));
+        return ResponseEntity.ok(ApiResponse.success(MESSAGE_LEAVE_CANCELLED, null));
     }
 }

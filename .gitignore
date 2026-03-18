@@ -18,3 +18,4 @@ CI_SETUP_COMPLETE.md
 /node_modules
 /docs/postman
 /node_modules
+/backend/uploads

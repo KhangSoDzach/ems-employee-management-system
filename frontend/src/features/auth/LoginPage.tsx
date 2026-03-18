@@ -50,18 +50,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 /** Trả về route home tương ứng với role của user */
-function getRedirectByRole(roles: string[]): string {
-  if (roles.includes("ROLE_ADMIN")) {
-    return "/profile";
-  }
-  if (roles.includes("ROLE_HR")) {
-    return "/profile";
-  }
-  if (roles.includes("ROLE_MANAGER")) {
-    return "/profile";
-  }
-  return "/profile"; // ROLE_EMPLOYEE
-}
+const DEFAULT_AUTH_REDIRECT_PATH = "/profile";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -90,7 +79,7 @@ export const LoginPage = () => {
   // Redirect nếu đã đăng nhập và không đang trong quá trình submit
   useEffect(() => {
     if (isAuthenticated && !isSubmitting && user) {
-      navigate(getRedirectByRole(user.roles), { replace: true });
+      navigate(DEFAULT_AUTH_REDIRECT_PATH, { replace: true });
     }
   }, [isAuthenticated, isSubmitting, navigate, user]);
 
@@ -128,7 +117,7 @@ export const LoginPage = () => {
 
       toast.dismiss(loadingId);
       toast.success(TEXT.SUCCESS);
-      navigate(getRedirectByRole(result.user.roles), { replace: true });
+      navigate(DEFAULT_AUTH_REDIRECT_PATH, { replace: true });
     } catch (err: unknown) {
       toast.dismiss(loadingId);
       const apiErr = err as { response?: { data?: { message?: string } } };
@@ -167,7 +156,7 @@ export const LoginPage = () => {
       setOtpValue("");
       setPendingLoginData(null);
       toast.success(TEXT.SUCCESS);
-      navigate(getRedirectByRole(result.user.roles), { replace: true });
+      navigate(DEFAULT_AUTH_REDIRECT_PATH, { replace: true });
     } catch {
       toast.error(SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.TOAST_INVALID);
     } finally {
@@ -292,9 +281,9 @@ export const LoginPage = () => {
                   onCheckedChange={(checked) =>
                     setValue("remember", checked as boolean)
                   }
-                  defaultChecked={
-                    localStorage.getItem("rememberedEmail") ? true : false
-                  }
+                  defaultChecked={Boolean(
+                    localStorage.getItem("rememberedEmail"),
+                  )}
                 />
                 <Label
                   htmlFor="remember"
@@ -354,15 +343,15 @@ export const LoginPage = () => {
               </label>
 
               <div className="flex justify-center gap-3">
-                {[...Array(6)].map((_, i) => (
+                {new Array(6).fill(null).map((_, i) => (
                   <input
-                    key={i}
+                    key={`otp-${i}`}
                     type="text"
                     maxLength={1}
                     className="w-12 h-14 text-center border-2 border-slate-100 rounded-2xl font-bold text-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none bg-slate-50/50"
                     value={otpValue[i] || ""}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, "");
+                      const val = e.target.value.replace(/\D/g, "");
                       if (val) {
                         const newOtp = otpValue.split("");
                         newOtp[i] = val;

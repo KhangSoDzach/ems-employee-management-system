@@ -39,6 +39,8 @@ public class AuditLogService {
 
         private static final String ENTITY_TYPE_AUTH = "AUTHENTICATION";
 
+        public record AuditValues(String oldValue, String newValue) {}
+
         private final AuditLogRepository auditLogRepository;
 
         // ─────────────────────────────────────────────────────────────
@@ -73,8 +75,8 @@ public class AuditLogService {
 
                 try {
                         String newValue = buildNewValue(loginMethod, result);
-                        logEvent(ENTITY_TYPE_AUTH, actionType, actor, entityId, identifierAttempted, null, newValue,
-                                        ctx);
+                        writeAuditEvent(ENTITY_TYPE_AUTH, actionType, actor, entityId, identifierAttempted,
+                                        new AuditValues(null, newValue), ctx);
                 } catch (Exception ex) {
                         log.warn("Failed to write audit log [action={}]: {}", actionType, ex.getMessage());
                 }
@@ -90,26 +92,38 @@ public class AuditLogService {
                         String actor,
                         String entityId,
                         String identifierAttempted,
-                        String oldValue,
-                        String newValue,
+                        AuditValues values,
+                        RequestContext ctx) {
+
+                writeAuditEvent(entityType, actionType, actor, entityId, identifierAttempted, values, ctx);
+        }
+
+        @SuppressWarnings("null")
+        private void writeAuditEvent(
+                        String entityType,
+                        AuthActionType actionType,
+                        String actor,
+                        String entityId,
+                        String identifierAttempted,
+                        AuditValues values,
                         RequestContext ctx) {
 
                 try {
-                        AuditLog record = AuditLog.builder()
+                        AuditLog auditLog = AuditLog.builder()
                                         .entityType(entityType)
                                         .entityId(entityId)
                                         .actionType(actionType)
                                         .actor(actor != null ? actor : "ANONYMOUS")
                                         .identifierAttempted(identifierAttempted)
-                                        .oldValue(oldValue)
-                                        .newValue(newValue)
+                                        .oldValue(values != null ? values.oldValue() : null)
+                                        .newValue(values != null ? values.newValue() : null)
                                         .ipAddress(ctx != null ? ctx.getIpAddress() : null)
                                         .userAgent(ctx != null ? ctx.getUserAgent() : null)
                                         .clientType(ctx != null ? ctx.getClientType() : "WEB")
                                         .correlationId(ctx != null ? ctx.getCorrelationId() : null)
                                         .build();
 
-                        auditLogRepository.save(record);
+                        auditLogRepository.save(auditLog);
                         log.debug("Audit record saved: type={} action={} actor={}", entityType, actionType, actor);
                 } catch (Exception ex) {
                         log.warn("Failed to save audit record: {}", ex.getMessage());

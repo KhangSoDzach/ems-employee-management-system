@@ -65,6 +65,10 @@ export function AppSidebar({
                 url: "/announcements",
               },
               {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
+                url: "/payroll",
+              },
+              {
                 title: "Tạo thông báo",
                 url: "/announcements/manage",
               },
@@ -152,10 +156,6 @@ export function AppSidebar({
                   {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
                     url: "/hr-employees",
-                  },
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
-                    url: "/payroll",
                   },
                   {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
