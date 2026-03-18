@@ -60,7 +60,9 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     assetService.getNextCode().then(setNextCode).catch(() => setNextCode("—"));
     setForm({
       assetName: "", assetType: "", assetValue: undefined,
@@ -77,7 +79,9 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   }, [open]);
 
   useEffect(() => {
-    if (!open || !openEmployeeDropdown) return;
+    if (!open || !openEmployeeDropdown) {
+      return;
+    }
     const timer = setTimeout(() => {
       setEmployeeLoading(true);
       assetService.searchEmployees(employeeKeyword)
@@ -88,7 +92,9 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
     return () => clearTimeout(timer);
   }, [open, openEmployeeDropdown, employeeKeyword]);
 
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
 
   const set = (field: keyof AssetCreatePayload, value: unknown) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -103,14 +109,22 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setImagePreview(URL.createObjectURL(file));
+    if (file) {
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
-    if (!form.assetName.trim()) newErrors.assetName = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
-    if (!form.assetType?.trim()) newErrors.assetType = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
-    if (!selectedEmployee || !form.location?.trim()) newErrors.location = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+    if (!form.assetName.trim()) {
+      newErrors.assetName = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
+    }
+    if (!form.assetType?.trim()) {
+      newErrors.assetType = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
+    }
+    if (!selectedEmployee || !form.location?.trim()) {
+      newErrors.location = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);

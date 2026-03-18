@@ -56,14 +56,18 @@ export default function AssetManagementPage() {
   const [deleting, setDeleting] = useState(false);
 
   const resolveAssetIdentifier = useCallback((summary: AssetSummary): number | string | null => {
-    if (summary.dbId != null) return summary.dbId;
-    if (summary.id && summary.id.trim().length > 0) return summary.id;
+    if (summary.dbId !== null) {
+      return summary.dbId;
+    }
+    if (summary.id && summary.id.trim().length > 0) {
+      return summary.id;
+    }
     return null;
   }, []);
 
   const handleOpenDetail = useCallback(async (summary: AssetSummary) => {
     const identifier = resolveAssetIdentifier(summary);
-    if (identifier == null) {
+    if (identifier === null) {
       toast.error(SYSTEM_MESSAGES.ERROR);
       return;
     }
@@ -73,7 +77,7 @@ export default function AssetManagementPage() {
 
   const handleOpenEdit = useCallback(async (summary: AssetSummary) => {
     const identifier = resolveAssetIdentifier(summary);
-    if (identifier == null) {
+    if (identifier === null) {
       toast.error(SYSTEM_MESSAGES.ERROR);
       return;
     }
@@ -107,18 +111,24 @@ export default function AssetManagementPage() {
         keyword: searchDebounced || undefined,
       });
 
-      if (signal?.aborted) return;
+      if (signal?.aborted) {
+        return;
+      }
       setAssets(res.content);
       setTotalElements(res.totalElements);
       setTotalPages(res.totalPages);
     } catch (err: unknown) {
-      if (signal?.aborted) return;
+      if (signal?.aborted) {
+        return;
+      }
       const name = (err as { name?: string })?.name;
       if (name !== 'AbortError' && name !== 'CanceledError') {
         toast.error(SYSTEM_MESSAGES.API_ERROR);
       }
     } finally {
-      if (!signal?.aborted) setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   }, [page, statusFilter, searchDebounced]);
 
@@ -133,7 +143,9 @@ export default function AssetManagementPage() {
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget) {
+      return;
+    }
     setDeleting(true);
     try {
       await assetService.deleteAsset(deleteTarget.id);
@@ -295,7 +307,7 @@ export default function AssetManagementPage() {
                             className="cursor-pointer hover:text-red-500"
                             onClick={() => {
                               const identifier = resolveAssetIdentifier(asset);
-                              if (identifier == null) {
+                              if (identifier === null) {
                                 toast.error(SYSTEM_MESSAGES.ERROR);
                                 return;
                               }
@@ -327,7 +339,7 @@ export default function AssetManagementPage() {
                 </button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   const pg = totalPages <= 5 ? i : Math.max(0, page - 2) + i;
-                  if (pg >= totalPages) return null;
+                  if (pg >= totalPages) { return null; }
                   return (
                     <button
                       key={pg}
@@ -373,7 +385,7 @@ export default function AssetManagementPage() {
         {/* ===== DELETE CONFIRMATION DIALOG ===== */}
         <Dialog
           open={!!deleteTarget}
-          onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}
+          onOpenChange={(open) => { if (!open && !deleting) { setDeleteTarget(null); } }}
         >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -387,22 +399,24 @@ export default function AssetManagementPage() {
                     // ASSIGNED: show guidance to return first
                     <div className="space-y-3">
                       <p>
-                        Tài sản{" "}
-                        <span className="font-semibold text-gray-900">"{deleteTarget?.name}"</span>{" "}
-                        đang được cấp phát. Phải <span className="font-semibold text-orange-600">thu hồi trước</span> khi xóa.
+                        {"Tài sản "}
+                        <span className="font-semibold text-gray-900">{"\""}{deleteTarget?.name}{"\""}</span>
+                        {" đang được cấp phát. Phải "}
+                        <span className="font-semibold text-orange-600">{"thu hồi trước"}</span>
+                        {" khi xóa."}
                       </p>
                       <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
-                        <p className="font-semibold mb-1">Cách thực hiện:</p>
-                        <p>Mở chi tiết tài sản → bấm <span className="font-bold">Thu hồi</span> → quay lại và xóa.</p>
+                        <p className="font-semibold mb-1">{"Cách thực hiện:"}</p>
+                        <p>{"Mở chi tiết tài sản → bấm "}<span className="font-bold">{"Thu hồi"}</span>{" → quay lại và xóa."}</p>
                       </div>
                     </div>
                   ) : (
                     // AVAILABLE / RETIRED: normal confirm
                     <p>
-                      Bạn có chắc muốn xóa tài sản{" "}
-                      <span className="font-semibold text-gray-900">"{deleteTarget?.name}"</span>?
+                      {"Bạn có chắc muốn xóa tài sản "}
+                      <span className="font-semibold text-gray-900">{"\""}{deleteTarget?.name}{"\""}</span>{"?"}
                       <br />
-                      Hành động này không thể hoàn tác.
+                      {"Hành động này không thể hoàn tác."}
                     </p>
                   )}
                 </div>
@@ -414,7 +428,7 @@ export default function AssetManagementPage() {
                 disabled={deleting}
                 className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
               >
-                Đóng
+                {"Đóng"}
               </button>
               {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
                 // Guide to open detail modal for return
@@ -431,7 +445,7 @@ export default function AssetManagementPage() {
                   }}
                   className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition flex items-center gap-2"
                 >
-                  Mở chi tiết để thu hồi
+                  {"Mở chi tiết để thu hồi"}
                 </button>
               ) : (
                 <button
