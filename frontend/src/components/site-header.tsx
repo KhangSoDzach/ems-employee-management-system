@@ -18,6 +18,7 @@ import {
 } from "@/features/announcement/hooks/useAnnouncements";
 import type { AnnouncementResponse } from "@/features/announcement/announcement.types";
 import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
 
 const formatTime = (value: string) => {
   const date = new Date(value);
@@ -101,7 +102,7 @@ export function SiteHeader() {
               )}
 
               {!isLoading &&
-                topAnnouncements.map((announcement) => (
+                topAnnouncements.map((announcement: AnnouncementResponse) => (
                   <button
                     key={announcement.id}
                     type="button"

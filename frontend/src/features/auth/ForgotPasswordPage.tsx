@@ -578,7 +578,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
                         register={registerForm}
                         errors={formErrors}
                         isSubmitting={isFormSubmitting}
-                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues), onError)}
+                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))}
                         showCurrent={showCurrent}
                         setShowCurrent={setShowCurrent}
                         showPassword={showPassword}
@@ -592,7 +592,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
                         register={registerEmail}
                         errors={emailErrors}
                         isSubmitting={isEmailSubmitting}
-                        onSubmit={handleSubmitEmail(onSendCode, onError as unknown as (errors: FieldErrors<EmailFormValues>) => void)}
+                        onSubmit={handleSubmitEmail(onSendCode)}
                     />
                 )}
                 {!isProfileMode && step === 2 && (
@@ -600,7 +600,7 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
                         register={registerForm}
                         errors={formErrors}
                         isSubmitting={isFormSubmitting}
-                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues), onError)}
+                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))}
                         timeLeft={timeLeft}
                         formatTime={formatTime}
                         handleResend={handleResend}
