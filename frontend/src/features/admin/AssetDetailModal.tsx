@@ -215,7 +215,6 @@ export default function AssetDetailModal({ open, assetId, onClose, onChanged }: 
                     {asset.recentHistory?.length ? asset.recentHistory.map(h => (
                       <div key={h.id} className="border-l-2 border-primary pl-4">
                         <p className="font-semibold">{h.action}</p>
-                        {/* eslint-disable-next-line react/jsx-no-literals */}
                         <p className="text-slate-500 text-xs">{h.date} · {h.user}</p>
                         <p className="text-slate-600">{h.description}</p>
                       </div>
@@ -257,7 +256,6 @@ export default function AssetDetailModal({ open, assetId, onClose, onChanged }: 
                       </div>
                       <div>
                         <p className="text-sm font-medium">{e.firstName} {e.lastName}</p>
-                        {/* eslint-disable-next-line react/jsx-no-literals */}
                         <p className="text-xs text-gray-500">{e.department ?? ""} · {e.position ?? ""}</p>
                       </div>
                     </div>

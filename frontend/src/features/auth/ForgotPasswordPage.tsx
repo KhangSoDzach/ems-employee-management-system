@@ -40,31 +40,46 @@ interface ForgotPasswordPageProps {
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const emailSchema = z.object({
-    email: z.string().email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
+    email: z.string().min(1, FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED).email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
 });
 
 const otpAndPasswordSchema = z.object({
     otp: z
         .string()
+        .min(1, FORM_VALIDATION_MESSAGES.OTP_REQUIRED)
         .length(6, FORM_VALIDATION_MESSAGES.OTP_LENGTH)
         .regex(/^\d+$/, FORM_VALIDATION_MESSAGES.OTP_NUMERIC),
     newPassword: z
         .string()
-        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
-    confirmPassword: z.string(),
+        .min(1, FORM_VALIDATION_MESSAGES.PASSWORD_REQUIRED)
+        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN)
+        .regex(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+            FORM_VALIDATION_MESSAGES.PASSWORD_COMPLEX,
+        ),
+    confirmPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
 }).refine((d) => d.newPassword === d.confirmPassword, {
     message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
     path: ["confirmPassword"],
 });
 
-const profileChangePasswordSchema = z.object({
-    currentPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
-    newPassword: z.string().min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
-    confirmPassword: z.string(),
-}).refine((d) => d.newPassword === d.confirmPassword, {
-    message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
-    path: ["confirmPassword"],
-});
+const profileChangePasswordSchema = z
+    .object({
+        currentPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.CURRENT_PASSWORD_REQUIRED),
+        newPassword: z
+            .string()
+            .min(1, FORM_VALIDATION_MESSAGES.PASSWORD_REQUIRED)
+            .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN)
+            .regex(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                FORM_VALIDATION_MESSAGES.PASSWORD_COMPLEX,
+            ),
+        confirmPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
+    })
+    .refine((d) => d.newPassword === d.confirmPassword, {
+        message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
+        path: ["confirmPassword"],
+    });
 
 type EmailFormValues = z.infer<typeof emailSchema>;
 type OtpPasswordFormValues = z.infer<typeof otpAndPasswordSchema>;
@@ -77,15 +92,12 @@ const StepIcon = ({ step }: { step: 1 | 2 | 3 }) => (
     <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
         {step === 1 && <User className="text-primary w-8 h-8" />}
         {step === 2 && <KeyRound className="text-primary w-8 h-8" />}
-        {step === 3 && <CheckCircle2 className="text-green-500 w-8 h-8" />}
+        {step === 3 && <div className="hidden" />}
     </div>
 );
 
-const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolean; step: 1 | 2 | 3; savedEmail: string }) => {
+const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolean; step: 1 | 2; savedEmail: string }) => {
     const getTitle = () => {
-        if (step === 3) {
-            return TEXT.SUCCESS_TITLE;
-        }
         if (isProfileMode) {
             return SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_TITLE;
         }
@@ -96,9 +108,6 @@ const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolea
     };
 
     const getDesc = () => {
-        if (step === 3) {
-            return TEXT.SUCCESS_DESC;
-        }
         if (isProfileMode) {
             return SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_DESC;
         }
@@ -399,13 +408,56 @@ const OtpResetPasswordForm = ({
     </form>
 );
 
-const SuccessState = ({ isProfileMode, onClose, navigate }: { isProfileMode: boolean; onClose?: () => void; navigate: (p: string) => void }) => (
-    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-300">
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle2 className="w-10 h-10 text-green-500" />
+const SuccessState = ({
+    isProfileMode,
+    onClose,
+    navigate,
+}: {
+    isProfileMode: boolean;
+    onClose?: () => void;
+    navigate: (p: string) => void;
+}) => (
+    <div className="flex flex-col items-center py-6 animate-in fade-in zoom-in-95 duration-700">
+        <div className="relative mb-8">
+            {/* Soft background glow */}
+            <div className="absolute inset-0 bg-green-400/20 blur-3xl rounded-full scale-150 animate-pulse" />
+
+            <div className="relative w-28 h-28 rounded-3xl bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/40 dark:to-green-800/20 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-2xl overflow-hidden rotate-3 hover:rotate-0 transition-transform duration-500">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--tw-gradient-from)_0%,transparent_70%)] from-white/60" />
+                <CheckCircle2 className="w-14 h-14 text-green-500 relative z-10 animate-in zoom-in-50 duration-700 delay-200" />
+            </div>
+
+            {/* Decractive particles */}
+            <div className="absolute -top-4 -left-4 w-4 h-4 bg-green-400/30 rounded-full animate-ping" />
+            <div className="absolute -bottom-2 -right-6 w-3 h-3 bg-green-500/20 rounded-full animate-bounce delay-500" />
         </div>
-        <Button className="w-full font-bold" size="lg" onClick={() => isProfileMode ? (onClose ? onClose() : window.location.reload()) : navigate("/login")}>
-            {isProfileMode ? SYSTEM_MESSAGES.BTN_CLOSE : TEXT.BTN_GO_LOGIN}
+
+        <div className="text-center space-y-3 mb-10 px-4">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                {TEXT.SUCCESS_TITLE}
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed max-w-[280px] mx-auto">
+                {isProfileMode
+                    ? "Tài khoản của bạn đã được cập nhật mật khẩu mới thành công. Hãy ghi nhớ mật khẩu này cho các lần truy cập tiếp theo."
+                    : TEXT.SUCCESS_DESC}
+            </p>
+        </div>
+
+        <Button
+            className="w-full font-bold h-14 rounded-2xl shadow-[0_8px_20px_-6px_rgba(234,88,12,0.3)] bg-primary hover:bg-primary/90 text-primary-foreground border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1 transition-all group overflow-hidden relative"
+            size="lg"
+            onClick={() =>
+                isProfileMode
+                    ? onClose
+                        ? onClose()
+                        : window.location.reload()
+                    : navigate("/login")
+            }
+        >
+            <span className="relative z-10 flex items-center gap-2">
+                {isProfileMode ? SYSTEM_MESSAGES.BTN_CLOSE : TEXT.BTN_GO_LOGIN}
+                <ArrowLeft className={cn("w-4 h-4 rotate-180 transition-transform group-hover:translate-x-1", !isProfileMode && "block")} />
+            </span>
         </Button>
     </div>
 );
@@ -524,7 +576,13 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
         },
         onError: (err: unknown) => {
             toast.dismiss();
-            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? (isProfileMode ? "Mật khẩu hiện tại không chính xác" : TEXT.TOAST_OTP_INVALID);
+            const rawMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            let message = rawMessage ?? (isProfileMode ? FORM_VALIDATION_MESSAGES.CURRENT_PASSWORD_INVALID : TEXT.TOAST_OTP_INVALID);
+
+            if (isProfileMode && (rawMessage === "Invalid username or password" || rawMessage === "Bad credentials")) {
+                message = FORM_VALIDATION_MESSAGES.CURRENT_PASSWORD_INVALID;
+            }
+
             toast.error(message);
             if (isProfileMode) {
                 setFormError("currentPassword", { message });
@@ -533,9 +591,8 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
             } else {
                 setFormError("otp" as keyof ResetFormValues, { message });
             }
-        }
+        },
     });
-
     const onSubmitReset = async (data: ResetFormValues) => {
         try {
             await resetMutation.mutateAsync(data);
@@ -543,14 +600,12 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
             console.error("Password change error:", error);
         }
     };
-
     const handleResend = async () => {
         if (timeLeft > 0 || isResending) {
             return;
         }
         toast.dismiss();
         setIsResending(true);
-
         const promise = forgotPassword(savedEmail).then(() => {
             setTimeLeft(300);
             setIsTimerRunning(true);
@@ -564,32 +619,25 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
             error: TEXT.TOAST_RESEND_ERROR,
         });
     };
-
-    const onError = (errors: FieldErrors<EmailFormValues | OtpPasswordFormValues>) => {
+    const onError = (errors: FieldErrors<ResetFormValues>) => {
         toast.dismiss();
         if (Object.keys(errors).length > 0) {
             toast.error(TEXT.TOAST_VALIDATION_ERROR);
         }
     };
-
-
     // ─── Render ───────────────────────────────────────────────────────────────
-
-
-
     const renderContent = () => (
         <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
             <CardHeader>
-                <StepHeader isProfileMode={isProfileMode} step={step} savedEmail={savedEmail} />
+                {step !== 3 && <StepHeader isProfileMode={isProfileMode} step={step as 1 | 2} savedEmail={savedEmail} />}
             </CardHeader>
-
             <CardContent className="space-y-6">
                 {isProfileMode && step === 2 && (
                     <ProfileChangePasswordForm
                         register={registerForm}
                         errors={formErrors}
                         isSubmitting={isFormSubmitting}
-                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))}
+                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues), onError)}
                         showCurrent={showCurrent}
                         setShowCurrent={setShowCurrent}
                         showPassword={showPassword}
@@ -598,22 +646,20 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
                         setShowConfirm={setShowConfirm}
                     />
                 )}
-
                 {step === 1 && (
                     <EmailStepForm
                         register={registerEmail}
                         errors={emailErrors}
                         isSubmitting={isEmailSubmitting}
-                        onSubmit={handleSubmitEmail(onSendCode, onError)}
+                        onSubmit={handleSubmitEmail(onSendCode, onError as unknown as (errors: FieldErrors<EmailFormValues>) => void)}
                     />
                 )}
-
                 {!isProfileMode && step === 2 && (
                     <OtpResetPasswordForm
                         register={registerForm}
                         errors={formErrors}
                         isSubmitting={isFormSubmitting}
-                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))}
+                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues), onError)}
                         timeLeft={timeLeft}
                         formatTime={formatTime}
                         handleResend={handleResend}

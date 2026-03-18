@@ -214,7 +214,6 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
                 {/* Tên tài sản */}
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-gray-700">
-                    {/* eslint-disable-next-line react/jsx-no-literals */}
                     {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NAME} <span className="text-red-500">*</span>
                   </label>
                   <input placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_NAME} value={form.assetName}
@@ -226,7 +225,6 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
                 {/* Loại */}
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-gray-700">
-                    {/* eslint-disable-next-line react/jsx-no-literals */}
                     {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE} <span className="text-red-500">*</span>
                   </label>
                   <input placeholder="VD: Laptop, Màn hình, Thẻ xe..." value={form.assetType ?? ""}
@@ -267,7 +265,6 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
                 {/* Người sử dụng */}
                 <div className="space-y-1 md:col-span-2">
                   <label className="text-sm font-medium text-gray-700">
-                    {/* eslint-disable-next-line react/jsx-no-literals */}
                     {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_USER_ONLY} <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">

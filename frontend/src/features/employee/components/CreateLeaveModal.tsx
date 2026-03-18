@@ -1,6 +1,6 @@
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
-import { useForm, FieldErrors } from "react-hook-form"
+import { useForm, useWatch, FieldErrors } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 
@@ -89,7 +89,10 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
         mode: "onChange",
     })
 
-    const watchType = form.watch("leaveType")
+    const watchType = useWatch({
+        control: form.control,
+        name: "leaveType"
+    })
 
     const handleClose = () => {
         form.reset()
