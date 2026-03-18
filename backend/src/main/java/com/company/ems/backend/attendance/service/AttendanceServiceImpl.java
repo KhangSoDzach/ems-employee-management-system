@@ -248,18 +248,26 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         /**
-         * For EMPLOYEE role, always return their own employee ID.
-         * For MANAGER/HR/ADMIN roles, honour the provided {@code employeeId} param.
+         * Default behavior is always self-scoped (current user).
+         *
+         * <p>
+         * Managers/HR/Admin may query another employee only when explicitly passing
+         * {@code employeeId}. This keeps personal pages (e.g. check-in/check-out) correct
+         * for elevated roles that also need their own attendance timeline.
          */
         private Long resolveEmployeeIdForQuery(Long requestedEmployeeId, CustomUserPrincipal principal) {
-                boolean isEmployee = principal.getAuthorities().stream()
-                                .anyMatch(a -> a.getAuthority().equals("ROLE_ROLE_EMPLOYEE")
-                                                || a.getAuthority().equals("ROLE_EMPLOYEE"));
-                if (isEmployee) {
-                        Employee e = resolveEmployee(principal);
-                        return e.getId();
+                boolean canViewOtherEmployees = principal.getAuthorities().stream()
+                                .map(a -> a.getAuthority())
+                                .anyMatch(authority -> authority.equals("ROLE_ADMIN")
+                                                || authority.equals("ROLE_HR")
+                                                || authority.equals("ROLE_MANAGER"));
+
+                if (requestedEmployeeId != null && canViewOtherEmployees) {
+                        return requestedEmployeeId;
                 }
-                return requestedEmployeeId; // null means "all" for managers
+
+                Employee employee = resolveEmployee(principal);
+                return employee.getId();
         }
 
         private String safeCode(Employee employee) {

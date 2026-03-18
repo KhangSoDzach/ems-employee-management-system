@@ -32,18 +32,24 @@ interface ForgotPasswordPageProps {
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const emailSchema = z.object({
-    email: z.string().email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
+    email: z.string().min(1, FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED).email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
 });
 
 const otpAndPasswordSchema = z.object({
     otp: z
         .string()
+        .min(1, FORM_VALIDATION_MESSAGES.OTP_REQUIRED)
         .length(6, FORM_VALIDATION_MESSAGES.OTP_LENGTH)
         .regex(/^\d+$/, FORM_VALIDATION_MESSAGES.OTP_NUMERIC),
     newPassword: z
         .string()
-        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
-    confirmPassword: z.string(),
+        .min(1, FORM_VALIDATION_MESSAGES.PASSWORD_REQUIRED)
+        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN)
+        .regex(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+            FORM_VALIDATION_MESSAGES.PASSWORD_COMPLEX,
+        ),
+    confirmPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
 }).refine((d) => d.newPassword === d.confirmPassword, {
     message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
     path: ["confirmPassword"],
@@ -71,15 +77,12 @@ const StepIcon = ({ step }: { step: 1 | 2 | 3 }) => (
     <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
         {step === 1 && <User className="text-primary w-8 h-8" />}
         {step === 2 && <KeyRound className="text-primary w-8 h-8" />}
-        {step === 3 && <CheckCircle2 className="text-green-500 w-8 h-8" />}
+        {step === 3 && <div className="hidden" />}
     </div>
 );
 
-const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolean; step: 1 | 2 | 3; savedEmail: string }) => {
+const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolean; step: 1 | 2; savedEmail: string }) => {
     const getTitle = () => {
-        if (step === 3) {
-            return TEXT.SUCCESS_TITLE;
-        }
         if (isProfileMode) {
             return SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_TITLE;
         }
@@ -90,9 +93,6 @@ const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolea
     };
 
     const getDesc = () => {
-        if (step === 3) {
-            return TEXT.SUCCESS_DESC;
-        }
         if (isProfileMode) {
             return SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_DESC;
         }
@@ -536,9 +536,8 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
             } else {
                 setFormError("otp" as keyof ResetFormValues, { message: "Mã xác thực không hợp lệ" });
             }
-        }
+        },
     });
-
     const onSubmitReset = async (data: ResetFormValues) => {
         try {
             await resetMutation.mutateAsync(data);
@@ -546,14 +545,12 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
             // Error is handled by resetMutation's onError callback
         }
     };
-
     const handleResend = async () => {
         if (timeLeft > 0 || isResending) {
             return;
         }
         toast.dismiss();
         setIsResending(true);
-
         const promise = forgotPassword(savedEmail).then(() => {
             setTimeLeft(300);
             setIsTimerRunning(true);
@@ -570,22 +567,18 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
 
 
     // ─── Render ───────────────────────────────────────────────────────────────
-
-
-
     const renderContent = () => (
         <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
             <CardHeader>
-                <StepHeader isProfileMode={isProfileMode} step={step} savedEmail={savedEmail} />
+                {step !== 3 && <StepHeader isProfileMode={isProfileMode} step={step as 1 | 2} savedEmail={savedEmail} />}
             </CardHeader>
-
             <CardContent className="space-y-6">
                 {isProfileMode && step === 2 && (
                     <ProfileChangePasswordForm
                         register={registerForm}
                         errors={formErrors}
                         isSubmitting={isFormSubmitting}
-                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))}
+                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues), onError)}
                         showCurrent={showCurrent}
                         setShowCurrent={setShowCurrent}
                         showPassword={showPassword}
@@ -594,22 +587,20 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
                         setShowConfirm={setShowConfirm}
                     />
                 )}
-
                 {step === 1 && (
                     <EmailStepForm
                         register={registerEmail}
                         errors={emailErrors}
                         isSubmitting={isEmailSubmitting}
-                        onSubmit={handleSubmitEmail(onSendCode)}
+                        onSubmit={handleSubmitEmail(onSendCode, onError as unknown as (errors: FieldErrors<EmailFormValues>) => void)}
                     />
                 )}
-
                 {!isProfileMode && step === 2 && (
                     <OtpResetPasswordForm
                         register={registerForm}
                         errors={formErrors}
                         isSubmitting={isFormSubmitting}
-                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues))}
+                        onSubmit={handleSubmitForm((data) => onSubmitReset(data as unknown as ResetFormValues), onError)}
                         timeLeft={timeLeft}
                         formatTime={formatTime}
                         handleResend={handleResend}

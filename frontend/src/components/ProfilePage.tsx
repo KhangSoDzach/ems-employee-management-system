@@ -217,7 +217,6 @@ export default function ProfilePage() {
                                     </span>
                                 </div>
                                 <p className="text-muted-foreground font-medium">
-                                    {/* eslint-disable-next-line react/jsx-no-literals */}
                                     {form.watch("jobRole")} &bull; {SYSTEM_MESSAGES.PROFILE.DEPARTMENT_PREFIX}{form.watch("department")}
                                 </p>
                                 <div className="flex items-center justify-center md:justify-start gap-4 mt-3 text-sm text-muted-foreground">
@@ -434,7 +433,7 @@ export default function ProfilePage() {
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
-                                                </FormItem> 
+                                                </FormItem>
                                             )}
                                         />
 
@@ -499,13 +498,11 @@ export default function ProfilePage() {
                                                                     <SelectValue placeholder={SYSTEM_MESSAGES.SELECT_PLACEHOLDER} />
                                                                 </SelectTrigger>
                                                             </FormControl>
-                                                            {/* eslint-disable react/jsx-no-literals */}
                                                             <SelectContent>
                                                                 <SelectItem value="Michael Scott">Trần Anh Tuấn</SelectItem>
                                                                 <SelectItem value="Dwight Schrute">Lê Hoàng Long</SelectItem>
                                                                 <SelectItem value="Jim Halpert">Nguyễn Nhật Minh</SelectItem>
                                                             </SelectContent>
-                                                            {/* eslint-enable react/jsx-no-literals */}
                                                         </Select>
                                                         <FormMessage />
                                                     </FormItem>
@@ -613,7 +610,6 @@ export default function ProfilePage() {
                                                     )}
                                                     <div className="truncate">
                                                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{doc.name}</p>
-                                                        {/* eslint-disable-next-line react/jsx-no-literals */}
                                                         <p className="text-xs text-muted-foreground">{doc.status} • {doc.date}</p>
                                                     </div>
                                                 </div>
@@ -649,9 +645,9 @@ export default function ProfilePage() {
 
                     <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
                         <DialogContent className="sm:max-w-md p-0 gap-0 rounded-xl overflow-hidden border-none shadow-2xl max-h-[90vh] overflow-y-auto">
-                            <ForgotPasswordPage 
-                                isProfileMode={true} 
-                                userEmail={userEmail} 
+                            <ForgotPasswordPage
+                                isProfileMode={true}
+                                userEmail={userEmail}
                                 onClose={() => setResetPasswordOpen(false)}
                             />
                         </DialogContent>

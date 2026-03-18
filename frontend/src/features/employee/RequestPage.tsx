@@ -43,7 +43,6 @@ import type {
 } from "./leave-request.constants";
 import {
   ALL_LABEL,
-  CURRENT_USER,
   DATE_FORMAT,
   LEAVE_STATUS_CONFIG,
   LEAVE_STATUS_OPTIONS,
@@ -294,31 +293,18 @@ export default function RequestPage() {
     adjStatus !== "ALL" || adjType !== "ALL" || adjSearch !== "";
 
   const handleCreateLeave = async (data: LeaveFormValues) => {
-    const dto = await leaveService.createLeave({
-      employeeId: employeeId ?? 1,
+    if (employeeId == null) {
+      throw new Error("Không lấy được thông tin nhân viên hiện tại");
+    }
+
+    await leaveService.createLeave({
+      employeeId,
       leaveType: data.leaveType.toUpperCase(),
       startDate: format(data.startDate, "yyyy-MM-dd"),
       endDate: format(data.endDate, "yyyy-MM-dd"),
       reason: data.reason,
     });
-    const newReq: LeaveRequest = {
-      id: String(dto.id),
-      dateCreated: new Date(dto.createdAt),
-      startDate: new Date(dto.startDate + "T00:00:00"),
-      endDate: new Date(dto.endDate + "T00:00:00"),
-      type: dto.leaveType.toLowerCase() as LeaveType,
-      status: mapBackendStatus(dto.status),
-      reason: dto.reason,
-      auditTrail: [
-        {
-          id: "a1",
-          action: "CREATED",
-          actor: CURRENT_USER.name,
-          timestamp: new Date(),
-        },
-      ],
-    };
-    setLeaveRequests((prev) => [newReq, ...prev]);
+    await fetchLeaves();
   };
 
   const handleCancelLeave = async (id: string) => {
@@ -334,7 +320,9 @@ export default function RequestPage() {
   const handleCreateAdjustment = async (data: AdjustmentFormValues) => {
     const payload = buildAdjustmentPayload(data);
     await attendanceService.submitAdjustment(payload);
+    setAdjPage(0);
     await fetchAdjustments();
+    setActiveTab("adjustment");
   };
 
   const handleEditAdjustment = async (
@@ -343,7 +331,9 @@ export default function RequestPage() {
   ) => {
     const payload = buildAdjustmentPayload(data);
     await attendanceService.resubmitAdjustment(Number(id), payload);
+    setAdjPage(0);
     await fetchAdjustments();
+    setActiveTab("adjustment");
   };
 
   return (
