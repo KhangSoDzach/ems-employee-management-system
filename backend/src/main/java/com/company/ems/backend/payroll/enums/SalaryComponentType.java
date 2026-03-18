@@ -4,5 +4,7 @@ public enum SalaryComponentType {
     BASE,
     ALLOWANCE,
     COMMISSION,
-    BONUS
+    BONUS,
+    DEDUCTION,
+    INSURANCE
 }

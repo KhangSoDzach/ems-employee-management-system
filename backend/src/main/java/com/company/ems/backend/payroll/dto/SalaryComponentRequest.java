@@ -2,6 +2,7 @@ package com.company.ems.backend.payroll.dto;
 
 import java.math.BigDecimal;
 
+import com.company.ems.backend.payroll.enums.SalaryComponentNature;
 import com.company.ems.backend.payroll.enums.SalaryComponentStatus;
 import com.company.ems.backend.payroll.enums.SalaryComponentType;
 
@@ -41,6 +42,11 @@ public class SalaryComponentRequest {
 
     @DecimalMin(value = "0.0", inclusive = true, message = "Amount must be greater than or equal to 0")
     private BigDecimal amount;
+
+    @DecimalMin(value = "0.0", inclusive = true, message = "Rate percent must be greater than or equal to 0")
+    private BigDecimal ratePercent;
+
+    private SalaryComponentNature nature;
 
     @NotNull(message = "Status is required")
     private SalaryComponentStatus status;

@@ -41,6 +41,13 @@ const SALARY_COMPONENT_TYPE_LABELS: Record<string, string> = {
   ALLOWANCE: "Phụ cấp",
   COMMISSION: "Hoa hồng",
   BONUS: "Thưởng",
+  DEDUCTION: "Khấu trừ",
+  INSURANCE: "Bảo hiểm",
+};
+
+const SALARY_COMPONENT_NATURE_LABELS: Record<string, string> = {
+  INCOME: "Thu nhập",
+  DEDUCTION: "Khấu trừ",
 };
 
 const SALARY_COMPONENT_STATUS_LABELS: Record<string, string> = {
@@ -168,7 +175,9 @@ export function SalaryComponentList() {
                   <TableHead>Loại</TableHead>
                   <TableHead>Chịu thuế</TableHead>
                   <TableHead>Đóng BHXH</TableHead>
+                  <TableHead>Tính chất</TableHead>
                   <TableHead>Số tiền</TableHead>
+                  <TableHead>Hệ số (%)</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className="text-right">Hành động</TableHead>
                 </TableRow>
@@ -178,7 +187,7 @@ export function SalaryComponentList() {
                 {salaryComponentsQuery.isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={10}
                       className="text-center text-sm text-muted-foreground"
                     >
                       Đang tải dữ liệu...
@@ -187,7 +196,7 @@ export function SalaryComponentList() {
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={10}
                       className="text-center text-sm text-muted-foreground"
                     >
                       Chưa có thành phần lương nào.
@@ -204,9 +213,18 @@ export function SalaryComponentList() {
                       <TableCell>{row.isTaxable ? "Có" : "Không"}</TableCell>
                       <TableCell>{row.isInsurable ? "Có" : "Không"}</TableCell>
                       <TableCell>
+                        {SALARY_COMPONENT_NATURE_LABELS[row.nature] ??
+                          row.nature}
+                      </TableCell>
+                      <TableCell>
                         {row.amount == null
                           ? "-"
                           : Number(row.amount).toLocaleString("vi-VN")}
+                      </TableCell>
+                      <TableCell>
+                        {row.ratePercent == null
+                          ? "-"
+                          : `${Number(row.ratePercent).toLocaleString("vi-VN")}%`}
                       </TableCell>
                       <TableCell>
                         {SALARY_COMPONENT_STATUS_LABELS[row.status] ??

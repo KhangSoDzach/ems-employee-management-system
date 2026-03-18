@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -29,6 +30,7 @@ import com.company.ems.backend.payroll.entity.AuditLog;
 import com.company.ems.backend.payroll.dto.SalaryComponentRequest;
 import com.company.ems.backend.payroll.dto.SalaryComponentResponse;
 import com.company.ems.backend.payroll.entity.SalaryComponent;
+import com.company.ems.backend.payroll.enums.SalaryComponentNature;
 import com.company.ems.backend.payroll.enums.SalaryComponentStatus;
 import com.company.ems.backend.payroll.enums.SalaryComponentType;
 import com.company.ems.backend.payroll.repository.PayrollAuditLogRepository;
@@ -163,4 +165,49 @@ class SalaryComponentServiceImplTest {
         assertEquals(BASIC_NAME, result.getName());
         verify(payrollAuditLogRepository).save(org.mockito.ArgumentMatchers.<AuditLog>any());
     }
+
+        @Test
+        @SuppressWarnings("null")
+        void createComponentShouldForceInsuranceAsDeductionAndDisableFlags() {
+                SalaryComponentRequest insuranceRequest = SalaryComponentRequest.builder()
+                                .code("BHXH")
+                                .name("Bảo hiểm xã hội")
+                                .type(SalaryComponentType.INSURANCE)
+                                .nature(SalaryComponentNature.INCOME)
+                                .isTaxable(true)
+                                .isInsurable(true)
+                                .ratePercent(new BigDecimal("8"))
+                                .status(SalaryComponentStatus.ACTIVE)
+                                .build();
+
+                SalaryComponent saved = SalaryComponent.builder()
+                                .code("BHXH")
+                                .name("Bảo hiểm xã hội")
+                                .type(SalaryComponentType.INSURANCE)
+                                .nature(SalaryComponentNature.DEDUCTION)
+                                .isTaxable(false)
+                                .isInsurable(false)
+                                .ratePercent(new BigDecimal("8"))
+                                .status(SalaryComponentStatus.ACTIVE)
+                                .build();
+                saved.setId(2L);
+
+                when(salaryComponentRepository.existsByCodeIgnoreCaseAndIsDeletedFalse("BHXH")).thenReturn(false);
+                when(salaryComponentRepository.existsByNameIgnoreCaseAndIsDeletedFalse("Bảo hiểm xã hội")).thenReturn(false);
+                when(salaryComponentRepository.save(org.mockito.ArgumentMatchers.<SalaryComponent>any())).thenReturn(saved);
+
+                SalaryComponentResponse response = salaryComponentService.createComponent(insuranceRequest);
+
+                ArgumentCaptor<SalaryComponent> componentCaptor = ArgumentCaptor.forClass(SalaryComponent.class);
+                verify(salaryComponentRepository).save(componentCaptor.capture());
+
+                SalaryComponent persisted = componentCaptor.getValue();
+                assertEquals(SalaryComponentNature.DEDUCTION, persisted.getNature());
+                assertEquals(false, persisted.getIsTaxable());
+                assertEquals(false, persisted.getIsInsurable());
+
+                assertEquals(SalaryComponentNature.DEDUCTION, response.getNature());
+                assertEquals(false, response.getIsTaxable());
+                assertEquals(false, response.getIsInsurable());
+        }
 }

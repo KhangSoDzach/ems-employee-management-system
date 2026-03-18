@@ -3,6 +3,7 @@ package com.company.ems.backend.payroll.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.company.ems.backend.payroll.enums.SalaryComponentNature;
 import com.company.ems.backend.payroll.enums.SalaryComponentStatus;
 import com.company.ems.backend.payroll.enums.SalaryComponentType;
 
@@ -25,6 +26,8 @@ public class SalaryComponentResponse {
     private Boolean isTaxable;
     private Boolean isInsurable;
     private BigDecimal amount;
+    private BigDecimal ratePercent;
+    private SalaryComponentNature nature;
     private SalaryComponentStatus status;
     private String createdBy;
     private LocalDateTime createdAt;

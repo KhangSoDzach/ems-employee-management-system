@@ -7,7 +7,14 @@ type ApiResponse<T> = {
   data: T;
 };
 
-export type SalaryComponentType = "BASE" | "ALLOWANCE" | "COMMISSION" | "BONUS";
+export type SalaryComponentType =
+  | "BASE"
+  | "ALLOWANCE"
+  | "COMMISSION"
+  | "BONUS"
+  | "DEDUCTION"
+  | "INSURANCE";
+export type SalaryComponentNature = "INCOME" | "DEDUCTION";
 export type SalaryComponentStatus = "ACTIVE" | "INACTIVE";
 
 export interface SalaryComponentPayload {
@@ -17,6 +24,8 @@ export interface SalaryComponentPayload {
   isTaxable: boolean;
   isInsurable: boolean;
   amount: number | null;
+  ratePercent: number | null;
+  nature: SalaryComponentNature;
   status: SalaryComponentStatus;
 }
 

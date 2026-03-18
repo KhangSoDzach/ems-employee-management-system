@@ -3,6 +3,7 @@ package com.company.ems.backend.payroll.entity;
 import java.math.BigDecimal;
 
 import com.company.ems.backend.common.entity.BaseEntity;
+import com.company.ems.backend.payroll.enums.SalaryComponentNature;
 import com.company.ems.backend.payroll.enums.SalaryComponentStatus;
 import com.company.ems.backend.payroll.enums.SalaryComponentType;
 
@@ -49,6 +50,13 @@ public class SalaryComponent extends BaseEntity {
 
     @Column(precision = 15, scale = 2)
     private BigDecimal amount;
+
+    @Column(name = "rate_percent", precision = 7, scale = 4)
+    private BigDecimal ratePercent;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private SalaryComponentNature nature;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

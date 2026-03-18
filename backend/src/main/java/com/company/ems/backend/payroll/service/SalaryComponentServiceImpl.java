@@ -1,5 +1,6 @@
 package com.company.ems.backend.payroll.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,6 +18,8 @@ import com.company.ems.backend.payroll.dto.SalaryComponentResponse;
 import com.company.ems.backend.payroll.entity.AuditLog;
 import com.company.ems.backend.payroll.entity.SalaryComponent;
 import com.company.ems.backend.payroll.enums.SalaryComponentAuditAction;
+import com.company.ems.backend.payroll.enums.SalaryComponentNature;
+import com.company.ems.backend.payroll.enums.SalaryComponentType;
 import com.company.ems.backend.payroll.repository.PayrollAuditLogRepository;
 import com.company.ems.backend.payroll.repository.SalaryComponentRepository;
 
@@ -28,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 public class SalaryComponentServiceImpl implements SalaryComponentService {
 
     private static final String ENTITY_TYPE_SALARY_COMPONENT = "SALARY_COMPONENT";
+    private static final String SYSTEM_ACTOR = "SYSTEM";
+    private static final BigDecimal MAX_RATE_PERCENT = new BigDecimal("100");
 
     private final SalaryComponentRepository salaryComponentRepository;
     private final PayrollAuditLogRepository payrollAuditLogRepository;
@@ -47,6 +52,10 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
     public SalaryComponentResponse createComponent(SalaryComponentRequest request) {
         String normalizedCode = normalizeCode(request.getCode());
         String normalizedName = normalizeText(request.getName());
+        SalaryComponentType type = request.getType();
+        SalaryComponentNature nature = resolveNature(request.getNature(), type);
+        BigDecimal amount = sanitizeAmount(request.getAmount());
+        BigDecimal ratePercent = sanitizeRatePercent(request.getRatePercent());
 
         if (salaryComponentRepository.existsByCodeIgnoreCaseAndIsDeletedFalse(normalizedCode)) {
             throw new ConflictException(messages.get(MessageCode.SALARY_COMPONENT_DUPLICATE_CODE, normalizedCode));
@@ -55,13 +64,17 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
             throw new ConflictException(messages.get(MessageCode.SALARY_COMPONENT_DUPLICATE_NAME, normalizedName));
         }
 
+        validateCalculationInput(amount, ratePercent);
+
         SalaryComponent component = SalaryComponent.builder()
                 .code(normalizedCode)
                 .name(normalizedName)
-                .type(request.getType())
-                .isTaxable(request.getIsTaxable())
-                .isInsurable(request.getIsInsurable())
-                .amount(request.getAmount())
+                .type(type)
+                .isTaxable(resolveTaxable(request.getIsTaxable(), type))
+                .isInsurable(resolveInsurable(request.getIsInsurable(), type))
+                .amount(amount)
+                .ratePercent(ratePercent)
+                .nature(nature)
                 .status(request.getStatus())
                 .build();
 
@@ -79,6 +92,10 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
 
         String normalizedCode = normalizeCode(request.getCode());
         String normalizedName = normalizeText(request.getName());
+        SalaryComponentType type = request.getType();
+        SalaryComponentNature nature = resolveNature(request.getNature(), type);
+        BigDecimal amount = sanitizeAmount(request.getAmount());
+        BigDecimal ratePercent = sanitizeRatePercent(request.getRatePercent());
 
         if (salaryComponentRepository.existsByCodeIgnoreCaseAndIdNotAndIsDeletedFalse(normalizedCode, id)) {
             throw new ConflictException(messages.get(MessageCode.SALARY_COMPONENT_DUPLICATE_CODE, normalizedCode));
@@ -87,14 +104,18 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
             throw new ConflictException(messages.get(MessageCode.SALARY_COMPONENT_DUPLICATE_NAME, normalizedName));
         }
 
+        validateCalculationInput(amount, ratePercent);
+
         String oldValue = toAuditValue(component);
 
         component.setCode(normalizedCode);
         component.setName(normalizedName);
-        component.setType(request.getType());
-        component.setIsTaxable(request.getIsTaxable());
-        component.setIsInsurable(request.getIsInsurable());
-        component.setAmount(request.getAmount());
+        component.setType(type);
+        component.setIsTaxable(resolveTaxable(request.getIsTaxable(), type));
+        component.setIsInsurable(resolveInsurable(request.getIsInsurable(), type));
+        component.setAmount(amount);
+        component.setRatePercent(ratePercent);
+        component.setNature(nature);
         component.setStatus(request.getStatus());
 
         SalaryComponent saved = Objects.requireNonNull(salaryComponentRepository.save(component));
@@ -119,9 +140,58 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
     private String resolveActor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
-            return "SYSTEM";
+            return SYSTEM_ACTOR;
         }
         return authentication.getName();
+    }
+
+    private Boolean resolveTaxable(Boolean isTaxable, SalaryComponentType type) {
+        if (type == SalaryComponentType.INSURANCE) {
+            return false;
+        }
+        return Boolean.TRUE.equals(isTaxable);
+    }
+
+    private Boolean resolveInsurable(Boolean isInsurable, SalaryComponentType type) {
+        if (type == SalaryComponentType.INSURANCE) {
+            return false;
+        }
+        return Boolean.TRUE.equals(isInsurable);
+    }
+
+    private SalaryComponentNature resolveNature(SalaryComponentNature nature, SalaryComponentType type) {
+        if (type == SalaryComponentType.INSURANCE) {
+            return SalaryComponentNature.DEDUCTION;
+        }
+        if (nature != null) {
+            return nature;
+        }
+        return type == SalaryComponentType.DEDUCTION
+                ? SalaryComponentNature.DEDUCTION
+                : SalaryComponentNature.INCOME;
+    }
+
+    private BigDecimal sanitizeAmount(BigDecimal amount) {
+        if (amount == null) {
+            return null;
+        }
+        return amount.stripTrailingZeros();
+    }
+
+    private BigDecimal sanitizeRatePercent(BigDecimal ratePercent) {
+        if (ratePercent == null) {
+            return null;
+        }
+        return ratePercent.stripTrailingZeros();
+    }
+
+    private void validateCalculationInput(BigDecimal amount, BigDecimal ratePercent) {
+        if (amount == null && ratePercent == null) {
+            throw new IllegalArgumentException("Either amount or ratePercent must be provided.");
+        }
+        if (ratePercent != null && ratePercent.compareTo(MAX_RATE_PERCENT) > 0) {
+            throw new IllegalArgumentException("Rate percent must be less than or equal to 100.");
+        }
     }
 
     private String normalizeCode(String code) {
@@ -141,6 +211,8 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
                 .isTaxable(component.getIsTaxable())
                 .isInsurable(component.getIsInsurable())
                 .amount(component.getAmount())
+                .ratePercent(component.getRatePercent())
+                .nature(component.getNature())
                 .status(component.getStatus())
                 .createdBy(component.getCreatedBy())
                 .createdAt(component.getCreatedAt())
@@ -151,13 +223,15 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
 
     private String toAuditValue(SalaryComponent component) {
         return String.format(
-                "{\"code\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"isTaxable\":%s,\"isInsurable\":%s,\"amount\":%s,\"status\":\"%s\"}",
+            "{\"code\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"isTaxable\":%s,\"isInsurable\":%s,\"amount\":%s,\"ratePercent\":%s,\"nature\":\"%s\",\"status\":\"%s\"}",
                 safe(component.getCode()),
                 safe(component.getName()),
                 component.getType(),
                 component.getIsTaxable(),
                 component.getIsInsurable(),
                 component.getAmount() == null ? "null" : component.getAmount().toPlainString(),
+                component.getRatePercent() == null ? "null" : component.getRatePercent().toPlainString(),
+                component.getNature(),
                 component.getStatus());
     }
 
