@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+
 export type AssetStatus    = 'AVAILABLE' | 'ASSIGNED' | 'RETIRED';
 export type AssetCondition = 'NEW' | 'GOOD' | 'DAMAGED' | 'LOST' | 'DISPOSED';
 
