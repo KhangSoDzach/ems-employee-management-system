@@ -937,6 +937,7 @@ export const SYSTEM_MESSAGES = {
         PLACEHOLDER_OTP: "000000",
         PLACEHOLDER_PASSWORD: "Tối thiểu 8 ký tự",
         PLACEHOLDER_CONFIRM: "Nhập lại mật khẩu mới",
+        PLACEHOLDER_CURRENT_PASSWORD: "Nhập mật khẩu hiện tại",
         BTN_SEND: "Gửi mã xác thực",
         BTN_SENDING: "Đang gửi...",
         BTN_VERIFY: "Xác nhận & Đặt mật khẩu",
@@ -949,6 +950,7 @@ export const SYSTEM_MESSAGES = {
         LABEL_OTP: "Mã OTP",
         LABEL_PASSWORD: "Mật khẩu mới",
         LABEL_CONFIRM: "Xác nhận mật khẩu",
+        LABEL_CURRENT_PASSWORD: "Mật khẩu hiện tại",
         OTP_VALID_SUFFIX: "Mã hết hạn sau ",
         OTP_EXPIRED: "Mã đã hết hạn",
         LINK_BACK_LOGIN: "Quay lại đăng nhập",
@@ -1069,6 +1071,9 @@ export const SYSTEM_MESSAGES = {
         PAGINATION_SHOW: "Hiển thị",
         PAGINATION_IN: "trong số",
         PAGINATION_MEMBERS: "thành viên",
+        LOADING_LIST: "Đang tải danh sách thành viên…",
+        ERROR_FETCH: "Không thể tải danh sách. Vui lòng thử lại.",
+        EMPTY_LIST: "Không tìm thấy thành viên nào.",
 
         // Evaluation sheet
         SHEET_TITLE: "Chi tiết đánh giá",
