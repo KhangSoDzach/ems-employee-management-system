@@ -3,6 +3,7 @@ package com.company.ems.backend.attendance.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Objects;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -67,6 +68,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         // ─── Check-in ─────────────────────────────────────────────────────────────
 
         @Override
+        @SuppressWarnings("null")
         public AttendanceResponse checkIn(CheckInRequest request, CustomUserPrincipal principal) {
                 Employee employee = resolveEmployee(principal);
 
@@ -110,7 +112,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                                 .userAgent(request.getUserAgent())
                                 .build();
 
-                Attendance saved = attendanceRepository.save(attendance);
+                Attendance saved = Objects.requireNonNull(attendanceRepository.save(attendance));
                 log.info("Employee [{}] checked in at {} (lat={}, lon={})",
                                 employee.getEmployeeCode(), checkInTime,
                                 request.getLatitude(), request.getLongitude());
@@ -203,7 +205,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                         CustomUserPrincipal principal) {
 
                 Long resolvedEmployeeId = resolveEmployeeIdForQuery(employeeId, principal);
-                Employee employee = employeeRepository.findById(resolvedEmployeeId)
+                Employee employee = employeeRepository.findById(Objects.requireNonNull(resolvedEmployeeId))
                                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", resolvedEmployeeId));
 
                 LocalDate from = startDate != null ? startDate : LocalDate.now().withDayOfMonth(1);
@@ -218,7 +220,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 long halfDay = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
                                 employee, AttendanceStatus.HALF_DAY, from, to);
 
-                long totalDays = from.until(to).getDays() + 1;
+                long totalDays = from.until(to).getDays() + 1L;
                 double percentage = totalDays > 0
                                 ? ((present + late + halfDay) / (double) totalDays) * 100.0
                                 : 0.0;

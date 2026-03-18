@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/sonner";
+import { AUTH_ROLES, ROUTE_ROLE_GROUPS } from "@/constants/roles";
 
 const LoginPage = lazy(() =>
   import("@/features/auth/LoginPage").then((module) => ({
@@ -40,7 +41,7 @@ const KpiOkrManagement = lazy(
   () => import("./features/manager/KpiOkrManagement"),
 );
 const MemberList = lazy(() => import("./features/manager/MemberList"));
-const PayrollManagement = lazy(() => import("./features/hr/PayrollManagement"));
+const PayrollManagement = lazy(() => import("@/features/hr/PayrollManagement"));
 const AssetReportManagement = lazy(
   () => import("./features/admin/AssetReportManagement"),
 );
@@ -84,7 +85,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={["ROLE_ADMIN", "ROLE_HR", "ROLE_MANAGER"]}
+                  allowedRoles={ROUTE_ROLE_GROUPS.ADMIN_HR_MANAGER}
                 />
               }
             >
@@ -97,19 +98,13 @@ function App() {
                 element={<AssetReportManagement />}
               />
               <Route path="/hr-employees" element={<EmployeeManagement />} />
-              <Route path="/payroll" element={<PayrollManagement />} />
             </Route>
 
             {/* Announcements: all authenticated roles */}
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={[
-                    "ROLE_ADMIN",
-                    "ROLE_HR",
-                    "ROLE_MANAGER",
-                    "ROLE_EMPLOYEE",
-                  ]}
+                  allowedRoles={ROUTE_ROLE_GROUPS.ALL_AUTHENTICATED}
                 />
               }
             >
@@ -117,8 +112,11 @@ function App() {
             </Route>
 
             {/* Admin only */}
-            <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN"]} />}>
+            <Route
+              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}
+            >
               <Route path="/assets" element={<AssetManagementPage />} />
+              <Route path="/payroll" element={<PayrollManagement />} />
               <Route
                 path="/announcements/manage"
                 element={<AnnouncementManagementPage />}
@@ -129,12 +127,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={[
-                    "ROLE_ADMIN",
-                    "ROLE_HR",
-                    "ROLE_MANAGER",
-                    "ROLE_EMPLOYEE",
-                  ]}
+                  allowedRoles={ROUTE_ROLE_GROUPS.ALL_AUTHENTICATED}
                 />
               }
             >
@@ -146,7 +139,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={["ROLE_EMPLOYEE", "ROLE_HR", "ROLE_MANAGER"]}
+                  allowedRoles={ROUTE_ROLE_GROUPS.EMPLOYEE_HR_MANAGER}
                 />
               }
             >
@@ -158,14 +151,16 @@ function App() {
 
             {/* Employee only */}
             <Route
-              element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE"]} />}
+              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.EMPLOYEE]} />}
             >
               <Route path="/employee" element={<EmployeeDashboard />} />
               <Route path="/salary-history" element={<SalaryHistoryPage />} />
             </Route>
 
             {/* Manager only */}
-            <Route element={<ProtectedRoute allowedRoles={["ROLE_MANAGER"]} />}>
+            <Route
+              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}
+            >
               <Route path="/members" element={<MemberList />} />
               <Route path="/kpi-okr" element={<KpiOkrManagement />} />
               <Route path="/approve" element={<ApproveLeaveRequest />} />
@@ -180,7 +175,7 @@ function App() {
             </Route>
 
             {/* HR only */}
-            <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
+            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}>
               <Route path="/hr/employees" element={<Dashboard />} />
             </Route>
           </Routes>

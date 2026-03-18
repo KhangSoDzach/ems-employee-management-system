@@ -1,14 +1,21 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { AUTH_ROLES } from "@/constants/roles";
 
 interface ProtectedRouteProps {
   allowedRoles?: string[];
 }
 
 function getRedirectByRole(roles: string[]): string {
-  if (roles.includes("ROLE_ADMIN")) return "/assets";
-  if (roles.includes("ROLE_HR")) return "/payroll";
-  if (roles.includes("ROLE_MANAGER")) return "/members";
+  if (roles.includes(AUTH_ROLES.ADMIN)) {
+    return "/assets";
+  }
+  if (roles.includes(AUTH_ROLES.HR)) {
+    return "/hr-employees";
+  }
+  if (roles.includes(AUTH_ROLES.MANAGER)) {
+    return "/members";
+  }
   return "/employee";
 }
 
