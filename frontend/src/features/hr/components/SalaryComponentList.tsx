@@ -36,6 +36,18 @@ const INITIAL_MODAL_STATE: ModalState = {
   selected: null,
 };
 
+const SALARY_COMPONENT_TYPE_LABELS: Record<string, string> = {
+  BASE: "Lương cơ bản",
+  ALLOWANCE: "Phụ cấp",
+  COMMISSION: "Hoa hồng",
+  BONUS: "Thưởng",
+};
+
+const SALARY_COMPONENT_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Đang áp dụng",
+  INACTIVE: "Ngừng áp dụng",
+};
+
 function getApiErrorMessage(error: unknown): string {
   const fallback = "Không thể xử lý yêu cầu. Vui lòng thử lại.";
   if (!error || typeof error !== "object") {
@@ -137,7 +149,8 @@ export function SalaryComponentList() {
             <div>
               <h1 className="page-heading">Cấu hình chính sách lương</h1>
               <p className="text-sm text-muted-foreground">
-                Quản lý danh sách thành phần lương để phục vụ Payroll Engine.
+                Quản lý danh sách thành phần lương để phục vụ hệ thống tính
+                lương.
               </p>
             </div>
             <Button onClick={openCreate} className="gap-2">
@@ -155,7 +168,7 @@ export function SalaryComponentList() {
                   <TableHead>Loại</TableHead>
                   <TableHead>Chịu thuế</TableHead>
                   <TableHead>Đóng BHXH</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Số tiền</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className="text-right">Hành động</TableHead>
                 </TableRow>
@@ -185,7 +198,9 @@ export function SalaryComponentList() {
                     <TableRow key={row.id}>
                       <TableCell className="font-medium">{row.code}</TableCell>
                       <TableCell>{row.name}</TableCell>
-                      <TableCell>{row.type}</TableCell>
+                      <TableCell>
+                        {SALARY_COMPONENT_TYPE_LABELS[row.type] ?? row.type}
+                      </TableCell>
                       <TableCell>{row.isTaxable ? "Có" : "Không"}</TableCell>
                       <TableCell>{row.isInsurable ? "Có" : "Không"}</TableCell>
                       <TableCell>
@@ -193,13 +208,16 @@ export function SalaryComponentList() {
                           ? "-"
                           : Number(row.amount).toLocaleString("vi-VN")}
                       </TableCell>
-                      <TableCell>{row.status}</TableCell>
+                      <TableCell>
+                        {SALARY_COMPONENT_STATUS_LABELS[row.status] ??
+                          row.status}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => openEdit(row)}
-                          aria-label={`Edit ${row.code}`}
+                          aria-label={`Chỉnh sửa ${row.code}`}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>

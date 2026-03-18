@@ -11,8 +11,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.company.ems.backend.announcement.dto.AnnouncementResponse;
@@ -27,19 +27,23 @@ class AnnouncementControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private AnnouncementService announcementService;
 
-    @MockBean
+    @MockitoBean
+    @SuppressWarnings("unused")
     private com.company.ems.backend.auth.security.JwtTokenUtil jwtTokenUtil;
 
-    @MockBean
+    @MockitoBean
+    @SuppressWarnings("unused")
     private com.company.ems.backend.auth.service.CustomUserDetailsService customUserDetailsService;
 
-    @MockBean
+    @MockitoBean
+    @SuppressWarnings("unused")
     private com.company.ems.backend.common.message.MessageService messageService;
 
-    @MockBean
+    @MockitoBean
+    @SuppressWarnings("unused")
     private com.company.ems.backend.common.audit.SecurityAuditService securityAuditService;
 
     @Test

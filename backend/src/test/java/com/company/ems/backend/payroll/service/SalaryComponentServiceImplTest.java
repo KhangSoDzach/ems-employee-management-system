@@ -3,7 +3,6 @@ package com.company.ems.backend.payroll.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,6 +25,7 @@ import com.company.ems.backend.common.exception.ConflictException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.payroll.entity.AuditLog;
 import com.company.ems.backend.payroll.dto.SalaryComponentRequest;
 import com.company.ems.backend.payroll.dto.SalaryComponentResponse;
 import com.company.ems.backend.payroll.entity.SalaryComponent;
@@ -36,6 +36,12 @@ import com.company.ems.backend.payroll.repository.SalaryComponentRepository;
 
 @ExtendWith(MockitoExtension.class)
 class SalaryComponentServiceImplTest {
+
+    private static final String BASIC_CODE = "BASIC";
+    private static final String BASIC_NAME = "Basic Salary";
+    private static final BigDecimal BASIC_AMOUNT = new BigDecimal("1000.00");
+    private static final Long COMPONENT_ID = 10L;
+    private static final Long MISSING_COMPONENT_ID = 99L;
 
     @Mock
     private SalaryComponentRepository salaryComponentRepository;
@@ -52,14 +58,15 @@ class SalaryComponentServiceImplTest {
     private SalaryComponentRequest request;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         request = SalaryComponentRequest.builder()
-                .code("BASIC")
-                .name("Basic Salary")
+                .code(BASIC_CODE)
+                .name(BASIC_NAME)
                 .type(SalaryComponentType.BASE)
                 .isTaxable(true)
                 .isInsurable(true)
-                .amount(new BigDecimal("1000.00"))
+                .amount(BASIC_AMOUNT)
                 .status(SalaryComponentStatus.ACTIVE)
                 .build();
 
@@ -68,54 +75,61 @@ class SalaryComponentServiceImplTest {
     }
 
     @Test
-    void createComponent_shouldSaveAndReturn_whenRequestIsValid() {
+    void createComponentShouldSaveAndReturnWhenRequestIsValid() {
         SalaryComponent saved = SalaryComponent.builder()
-                .code("BASIC")
-                .name("Basic Salary")
+                .code(BASIC_CODE)
+                .name(BASIC_NAME)
                 .type(SalaryComponentType.BASE)
                 .isTaxable(true)
                 .isInsurable(true)
-                .amount(new BigDecimal("1000.00"))
+                .amount(BASIC_AMOUNT)
                 .status(SalaryComponentStatus.ACTIVE)
                 .build();
         saved.setId(1L);
         saved.setCreatedAt(LocalDateTime.now());
         saved.setUpdatedAt(LocalDateTime.now());
 
-        when(salaryComponentRepository.existsByCodeIgnoreCaseAndIsDeletedFalse("BASIC")).thenReturn(false);
-        when(salaryComponentRepository.existsByNameIgnoreCaseAndIsDeletedFalse("Basic Salary")).thenReturn(false);
-        when(salaryComponentRepository.save(any(SalaryComponent.class))).thenReturn(saved);
+        when(salaryComponentRepository.existsByCodeIgnoreCaseAndIsDeletedFalse(BASIC_CODE)).thenReturn(false);
+        when(salaryComponentRepository.existsByNameIgnoreCaseAndIsDeletedFalse(BASIC_NAME)).thenReturn(false);
+        when(salaryComponentRepository.save(org.mockito.ArgumentMatchers.<SalaryComponent>any())).thenReturn(saved);
 
         SalaryComponentResponse result = salaryComponentService.createComponent(request);
 
-        assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertEquals("BASIC", result.getCode());
-        verify(payrollAuditLogRepository).save(any());
+        assertEquals(BASIC_CODE, result.getCode());
+        verify(payrollAuditLogRepository).save(org.mockito.ArgumentMatchers.<AuditLog>any());
     }
 
     @Test
-    void createComponent_shouldThrowConflict_whenCodeDuplicated() {
-        when(salaryComponentRepository.existsByCodeIgnoreCaseAndIsDeletedFalse("BASIC")).thenReturn(true);
-        when(messages.get(eq(MessageCode.SALARY_COMPONENT_DUPLICATE_CODE), eq("BASIC")))
+    void createComponentShouldThrowConflictWhenCodeDuplicated() {
+        when(salaryComponentRepository.existsByCodeIgnoreCaseAndIsDeletedFalse(BASIC_CODE)).thenReturn(true);
+        when(messages.get(eq(MessageCode.SALARY_COMPONENT_DUPLICATE_CODE), eq(BASIC_CODE)))
                 .thenReturn("duplicate code");
 
-        assertThrows(ConflictException.class, () -> salaryComponentService.createComponent(request));
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> salaryComponentService.createComponent(request)
+        );
+        assertNotNull(exception.getMessage());
 
-        verify(salaryComponentRepository, never()).save(any());
-        verify(payrollAuditLogRepository, never()).save(any());
+        verify(salaryComponentRepository, never()).save(org.mockito.ArgumentMatchers.<SalaryComponent>any());
+        verify(payrollAuditLogRepository, never()).save(org.mockito.ArgumentMatchers.<AuditLog>any());
     }
 
     @Test
-    void updateComponent_shouldThrowNotFound_whenComponentMissing() {
-        when(salaryComponentRepository.findByIdAndIsDeletedFalse(99L)).thenReturn(Optional.empty());
+    void updateComponentShouldThrowNotFoundWhenComponentMissing() {
+        when(salaryComponentRepository.findByIdAndIsDeletedFalse(MISSING_COMPONENT_ID)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> salaryComponentService.updateComponent(99L, request));
-        verify(payrollAuditLogRepository, never()).save(any());
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> salaryComponentService.updateComponent(MISSING_COMPONENT_ID, request)
+        );
+        assertNotNull(exception.getMessage());
+        verify(payrollAuditLogRepository, never()).save(org.mockito.ArgumentMatchers.<AuditLog>any());
     }
 
     @Test
-    void updateComponent_shouldPersistAndAudit_whenValid() {
+    void updateComponentShouldPersistAndAuditWhenValid() {
         SalaryComponent existing = SalaryComponent.builder()
                 .code("OLD_CODE")
                 .name("Old Name")
@@ -125,28 +139,28 @@ class SalaryComponentServiceImplTest {
                 .amount(new BigDecimal("250.00"))
                 .status(SalaryComponentStatus.INACTIVE)
                 .build();
-        existing.setId(10L);
+        existing.setId(COMPONENT_ID);
 
         SalaryComponent saved = SalaryComponent.builder()
-                .code("BASIC")
-                .name("Basic Salary")
+                .code(BASIC_CODE)
+                .name(BASIC_NAME)
                 .type(SalaryComponentType.BASE)
                 .isTaxable(true)
                 .isInsurable(true)
-                .amount(new BigDecimal("1000.00"))
+                .amount(BASIC_AMOUNT)
                 .status(SalaryComponentStatus.ACTIVE)
                 .build();
-        saved.setId(10L);
+        saved.setId(COMPONENT_ID);
 
-        when(salaryComponentRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(existing));
-        when(salaryComponentRepository.existsByCodeIgnoreCaseAndIdNotAndIsDeletedFalse("BASIC", 10L)).thenReturn(false);
-        when(salaryComponentRepository.existsByNameIgnoreCaseAndIdNotAndIsDeletedFalse("Basic Salary", 10L)).thenReturn(false);
-        when(salaryComponentRepository.save(any(SalaryComponent.class))).thenReturn(saved);
+        when(salaryComponentRepository.findByIdAndIsDeletedFalse(COMPONENT_ID)).thenReturn(Optional.of(existing));
+        when(salaryComponentRepository.existsByCodeIgnoreCaseAndIdNotAndIsDeletedFalse(BASIC_CODE, COMPONENT_ID)).thenReturn(false);
+        when(salaryComponentRepository.existsByNameIgnoreCaseAndIdNotAndIsDeletedFalse(BASIC_NAME, COMPONENT_ID)).thenReturn(false);
+        when(salaryComponentRepository.save(org.mockito.ArgumentMatchers.<SalaryComponent>any())).thenReturn(saved);
 
-        SalaryComponentResponse result = salaryComponentService.updateComponent(10L, request);
+        SalaryComponentResponse result = salaryComponentService.updateComponent(COMPONENT_ID, request);
 
-        assertEquals("BASIC", result.getCode());
-        assertEquals("Basic Salary", result.getName());
-        verify(payrollAuditLogRepository).save(any());
+        assertEquals(BASIC_CODE, result.getCode());
+        assertEquals(BASIC_NAME, result.getName());
+        verify(payrollAuditLogRepository).save(org.mockito.ArgumentMatchers.<AuditLog>any());
     }
 }

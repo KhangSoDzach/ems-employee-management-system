@@ -94,7 +94,7 @@ export function SalaryComponentForm({
     if (form.amount.trim()) {
       const parsed = Number(form.amount);
       if (Number.isNaN(parsed) || parsed < 0) {
-        newErrors.amount = "Giá trị amount phải lớn hơn hoặc bằng 0";
+        newErrors.amount = "Số tiền phải lớn hơn hoặc bằng 0";
       }
     }
 
@@ -152,11 +152,11 @@ export function SalaryComponentForm({
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium">Code</label>
+              <label className="mb-1 block text-sm font-medium">Mã</label>
               <Input
                 value={form.code}
                 onChange={(e) => updateField("code", e.target.value)}
-                placeholder="BASIC"
+                placeholder="VD: LUONG_CO_BAN"
                 disabled={submitting}
               />
               {errors.code && (
@@ -165,11 +165,11 @@ export function SalaryComponentForm({
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">Name</label>
+              <label className="mb-1 block text-sm font-medium">Tên</label>
               <Input
                 value={form.name}
                 onChange={(e) => updateField("name", e.target.value)}
-                placeholder="Basic Salary"
+                placeholder="VD: Lương cơ bản"
                 disabled={submitting}
               />
               {errors.name && (
@@ -178,7 +178,7 @@ export function SalaryComponentForm({
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">Type</label>
+              <label className="mb-1 block text-sm font-medium">Loại</label>
               <select
                 value={form.type}
                 onChange={(e) =>
@@ -190,15 +190,17 @@ export function SalaryComponentForm({
                 className="h-10 w-full rounded-md border px-3 text-sm"
                 disabled={submitting}
               >
-                <option value="BASE">BASE</option>
-                <option value="ALLOWANCE">ALLOWANCE</option>
-                <option value="COMMISSION">COMMISSION</option>
-                <option value="BONUS">BONUS</option>
+                <option value="BASE">Lương cơ bản (BASE)</option>
+                <option value="ALLOWANCE">Phụ cấp (ALLOWANCE)</option>
+                <option value="COMMISSION">Hoa hồng (COMMISSION)</option>
+                <option value="BONUS">Thưởng (BONUS)</option>
               </select>
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">Status</label>
+              <label className="mb-1 block text-sm font-medium">
+                Trạng thái
+              </label>
               <select
                 value={form.status}
                 onChange={(e) =>
@@ -210,14 +212,14 @@ export function SalaryComponentForm({
                 className="h-10 w-full rounded-md border px-3 text-sm"
                 disabled={submitting}
               >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
+                <option value="ACTIVE">Đang áp dụng (ACTIVE)</option>
+                <option value="INACTIVE">Ngừng áp dụng (INACTIVE)</option>
               </select>
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-medium">
-                Amount (optional)
+                Số tiền (không bắt buộc)
               </label>
               <Input
                 type="number"
@@ -242,7 +244,7 @@ export function SalaryComponentForm({
                 onChange={(e) => updateField("isTaxable", e.target.checked)}
                 disabled={submitting}
               />
-              Is Taxable
+              Tính thuế
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -251,7 +253,7 @@ export function SalaryComponentForm({
                 onChange={(e) => updateField("isInsurable", e.target.checked)}
                 disabled={submitting}
               />
-              Is Insurable
+              Tính bảo hiểm
             </label>
           </div>
 

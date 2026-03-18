@@ -2,13 +2,13 @@ package com.company.ems.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import com.company.ems.backend.attendance.service.OfficeConfigService;
 
 @SpringBootTest
 class EmsBackendApplicationTests {
 
-	@MockBean
+	@MockitoBean
 	private OfficeConfigService officeConfigService;
 
 	@Test
