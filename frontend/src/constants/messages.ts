@@ -184,6 +184,7 @@ export const SYSTEM_MESSAGES = {
         STATUS_HALF: "Nửa ngày",
         STATUS_ON_LEAVE: "Nghỉ phép",
         DONE_CHECKOUT: "Đã hoàn thành Check-out",
+        CHECKIN_POLICY_DETAIL: "Điểm danh qua camera sẽ ghi nhận vị trí và ảnh khuôn mặt để xác thực. Vui lòng đảm bảo bạn đang ở văn phòng và khuôn mặt rõ ràng khi điểm danh.",
     },
 
     // Manager - Approve Adjustments

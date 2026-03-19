@@ -1,4 +1,11 @@
-import { Play, Square, Coffee, CalendarClock, Loader2 } from "lucide-react";
+import {
+  Play,
+  Square,
+  Coffee,
+  CalendarClock,
+  Loader2,
+  Info,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, subDays } from "date-fns";
@@ -12,7 +19,12 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   attendanceService,
   AttendanceRecord,
@@ -35,13 +47,6 @@ function fmtTime(iso: string | null) {
 function fmtDate(iso: string | null) {
   if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
   return format(new Date(iso), "dd/MM/yyyy");
-}
-
-function fmtWorkHours(minutes: number | null) {
-  if (minutes == null) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${m.toString().padStart(2, "0")}m`;
 }
 
 function statusLabel(s: AttendanceRecord["status"]) {
@@ -114,7 +119,7 @@ function upsertHistoryRecord(
 function parseTimeToMinutes(iso: string | null) {
   if (!iso) return null;
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return null;
+  if (Number.isNaN(d.getTime())) return null;
   return d.getHours() * 60 + d.getMinutes();
 }
 
@@ -382,6 +387,16 @@ export default function CheckinPage() {
 
                 <h1 className="text-5xl font-extrabold text-foreground">
                   {currentTime}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="w-4 h-4 cursor-pointer" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>{SYSTEM_MESSAGES.CHECKIN.CHECKIN_POLICY_DETAIL}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </h1>
 
                 <p className="text-muted-foreground text-lg">
