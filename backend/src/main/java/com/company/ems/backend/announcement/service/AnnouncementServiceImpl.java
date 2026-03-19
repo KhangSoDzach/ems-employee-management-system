@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +25,6 @@ import com.company.ems.backend.announcement.repository.AnnouncementReadRepositor
 import com.company.ems.backend.announcement.repository.AnnouncementRepository;
 import com.company.ems.backend.announcement.repository.AnnouncementTargetRepository;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
-import com.company.ems.backend.common.constant.AppRole;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.exception.ForbiddenException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
@@ -200,7 +200,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         if (currentUserId.equals(requestedUserId)) {
             return;
         }
-        if (!hasAnyRole(AppRole.ADMIN, AppRole.HR)) {
+        if (!hasAnyRole(RoleAuthorization.HAS_ADMIN_ONLY, RoleAuthorization.HAS_HR_ONLY)) {
             throw new ForbiddenException("Access denied to another user's announcements");
         }
     }
