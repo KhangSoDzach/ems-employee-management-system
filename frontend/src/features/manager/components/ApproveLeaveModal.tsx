@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { leaveService } from "@/services/leaveService"
 import type { LeaveRequest } from "../ApproveLeaveRequest"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
 
 /* ================= TYPES ================= */
 
@@ -31,25 +32,38 @@ export default function ApproveLeaveDialog({
   const [comment, setComment] = useState("")
   const [loading, setLoading] = useState(false)
 
-  if (!request) return null
+  if (!request) {
+    return null
+  }
 
   const fmt = (d: string) => format(new Date(d + "T00:00:00"), "dd/MM/yyyy")
 
   const doAction = async (action: "APPROVE" | "REJECT" | "SEND_BACK") => {
     if ((action === "REJECT" || action === "SEND_BACK") && !comment.trim()) {
-      toast.error("Vui lòng nhập lý do")
+      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT)
       return
     }
     setLoading(true)
     try {
       const updated = await leaveService.processAction(request.id, { action, comments: comment || undefined })
       onUpdateStatus?.(request.id, updated.status)
-      const msg = action === "APPROVE" ? "Đã phê duyệt đơn nghỉ phép" : action === "REJECT" ? "Đã từ chối đơn nghỉ phép" : "Đã trả đơn về cho nhân viên"
+
+      let msg = ""
+      if (action === "APPROVE") {
+        msg = SYSTEM_MESSAGES.APPROVE.TOAST_APPROVED
+      }
+      if (action === "REJECT") {
+        msg = SYSTEM_MESSAGES.APPROVE.TOAST_REJECTED
+      }
+      if (action === "SEND_BACK") {
+        msg = SYSTEM_MESSAGES.APPROVE.TOAST_RETURNED
+      }
+
       toast.success(msg)
       onOpenChange(false)
       setComment("")
     } catch {
-      toast.error("Thao tác thất bại. Vui lòng thử lại.")
+      toast.error(SYSTEM_MESSAGES.API_ERROR)
     } finally {
       setLoading(false)
     }
@@ -60,18 +74,32 @@ export default function ApproveLeaveDialog({
   const handleSendBack = () => doAction("SEND_BACK")
 
   const getStatusLabel = () => {
-    if (request.status === "APPROVED") return "Đã duyệt"
-    if (request.status === "REJECTED") return "Từ chối"
-    if (request.status === "RETURNED_TO_EMPLOYEE") return "Trả về"
-    if (request.status.startsWith("PENDING")) return "Chờ duyệt"
+    if (request.status === "APPROVED") {
+      return SYSTEM_MESSAGES.STATUS.APPROVED
+    }
+    if (request.status === "REJECTED") {
+      return SYSTEM_MESSAGES.STATUS.REJECTED
+    }
+    if (request.status === "RETURNED_TO_EMPLOYEE") {
+      return SYSTEM_MESSAGES.STATUS.RETURNED
+    }
+    if (request.status.startsWith("PENDING")) {
+      return SYSTEM_MESSAGES.STATUS.PENDING
+    }
     return request.status
   }
 
   const getStatusColor = () => {
-    if (request.status === "APPROVED") return "bg-green-100 text-green-600"
-    if (request.status === "REJECTED") return "bg-red-100 text-red-600"
-    if (request.status === "RETURNED_TO_EMPLOYEE") return "bg-orange-100 text-orange-600"
-    return "bg-yellow-100 text-yellow-600"
+    if (request.status === "APPROVED") {
+      return "badge-success"
+    }
+    if (request.status === "REJECTED") {
+      return "badge-error"
+    }
+    if (request.status === "RETURNED_TO_EMPLOYEE") {
+      return "badge-warning"
+    }
+    return "badge-gray"
   }
 
   return (
@@ -201,26 +229,26 @@ export default function ApproveLeaveDialog({
             variant="secondary"
             disabled={loading}
             onClick={handleReject}
-            className="flex-1 rounded-xl text-red-500 bg-muted hover:bg-muted/70 flex items-center justify-center gap-2"
+            className="btn-reject"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <XCircle size={18} />}
             {SYSTEM_MESSAGES.APPROVE.STATUS_REJECTED}
           </Button>
-
+ 
           <Button
             variant="outline"
             disabled={loading}
             onClick={handleSendBack}
-            className="flex-1 rounded-xl text-orange-500 border-orange-200 hover:bg-orange-50 flex items-center justify-center gap-2"
+            className="btn-request-more"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <RotateCcw size={18} />}
             {SYSTEM_MESSAGES.STATUS.RETURNED}
           </Button>
-
+ 
           <Button
             disabled={loading}
             onClick={handleApprove}
-            className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2"
+            className="btn-approve"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
             {SYSTEM_MESSAGES.APPROVE.BTN_APPROVE}

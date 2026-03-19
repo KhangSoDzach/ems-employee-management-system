@@ -1,6 +1,7 @@
 // src/constants/validations.ts
 
 export const FORM_VALIDATION_MESSAGES = {
+    MISSING_CONTENT: "Vui lòng điền đầy đủ nội dung",
     REQUIRED: "Trường này là bắt buộc",
     NAME_MIN: "Họ tên phải từ 2 ký tự",
     NAME_MAX: "Họ tên không quá 255 ký tự",

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { X } from "lucide-react"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
 import api from "@/lib/axios"
 import { toast } from "sonner"
 
@@ -30,24 +31,24 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
   const [loading,     setLoading]     = useState(false)
   const [errors,      setErrors]      = useState<Record<string, string>>({})
 
-  if (!open) return null
+  if (!open) {return null}
 
   const validate = (): boolean => {
     const e: Record<string, string> = {}
-    if (!name.trim())                                                        e.name        = "Tên mục tiêu không được để trống"
-    if (!targetValue || Number(targetValue) <= 0)                            e.targetValue = "Giá trị mục tiêu phải lớn hơn 0"
-    if (!weight || Number(weight) <= 0 || Number(weight) > 100)              e.weight      = "Trọng số phải từ 0.01 đến 100"
-    if (!periodStart)                                                        e.periodStart = "Chọn ngày bắt đầu"
-    if (!periodEnd)                                                          e.periodEnd   = "Chọn ngày kết thúc"
-    if (periodStart && periodEnd && periodStart >= periodEnd)                e.periodEnd   = "Ngày kết thúc phải sau ngày bắt đầu"
-    if ((scopeType === "DEPARTMENT" || scopeType === "EMPLOYEE") && !scopeId) e.scopeId    = "Bắt buộc khi chọn Phòng ban / Nhân viên"
+    if (!name.trim()) {e.name = "Tên mục tiêu không được để trống"}
+    if (!targetValue || Number(targetValue) <= 0) {e.targetValue = "Giá trị mục tiêu phải lớn hơn 0"}
+    if (!weight || Number(weight) <= 0 || Number(weight) > 100) {e.weight = "Trọng số phải từ 0.01 đến 100"}
+    if (!periodStart) {e.periodStart = "Chọn ngày bắt đầu"}
+    if (!periodEnd) {e.periodEnd = "Chọn ngày kết thúc"}
+    if (periodStart && periodEnd && periodStart >= periodEnd) {e.periodEnd = "Ngày kết thúc phải sau ngày bắt đầu"}
+    if ((scopeType === "DEPARTMENT" || scopeType === "EMPLOYEE") && !scopeId) {e.scopeId = "Bắt buộc khi chọn Phòng ban / Nhân viên"}
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
   const handleSubmit = async () => {
     if (!validate()) {
-      toast.error("Vui lòng kiểm tra lại các trường bắt buộc")
+      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT)
       return
     }
     const payload = {
@@ -68,8 +69,8 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string; errors?: Record<string, string> } } }
       const data = axiosError?.response?.data
-      if (data?.errors) setErrors(data.errors)
-      else toast.error(data?.message || "Có lỗi xảy ra, vui lòng thử lại")
+      if (data?.errors) {setErrors(data.errors)}
+      else {toast.error(data?.message || "Có lỗi xảy ra, vui lòng thử lại")}
     } finally {
       setLoading(false)
     }

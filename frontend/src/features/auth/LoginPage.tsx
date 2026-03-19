@@ -3,7 +3,6 @@ import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  User,
   Lock,
   Mail,
   Eye,
@@ -33,13 +32,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
-const TEXT = {
-  ...SYSTEM_MESSAGES.LOGIN,
-  TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại thông tin đăng nhập",
-  LOADING: "Đang xác thực...",
-  SUCCESS: "Đăng nhập thành công!",
-};
 
 const loginSchema = z.object({
   email: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.EMAIL_REQUIRED),
@@ -49,19 +43,10 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-/** Trả về route home tương ứng với role của user */
-function getRedirectByRole(roles: string[]): string {
-  if (roles.includes("ROLE_ADMIN")) {
-    return "/profile";
-  }
-  if (roles.includes("ROLE_HR")) {
-    return "/profile";
-  }
-  if (roles.includes("ROLE_MANAGER")) {
-    return "/profile";
-  }
-  return "/profile"; // ROLE_EMPLOYEE
+function getRedirectByRole(): string {
+  return "/profile";
 }
+
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -90,7 +75,7 @@ export const LoginPage = () => {
   // Redirect nếu đã đăng nhập và không đang trong quá trình submit
   useEffect(() => {
     if (isAuthenticated && !isSubmitting && user) {
-      navigate(getRedirectByRole(user.roles), { replace: true });
+      navigate(getRedirectByRole(), { replace: true });
     }
   }, [isAuthenticated, isSubmitting, navigate, user]);
 
@@ -105,7 +90,7 @@ export const LoginPage = () => {
   const onSubmit = async (data: LoginFormValues) => {
     toast.dismiss();
 
-    const loadingId = toast.loading(TEXT.LOADING);
+    const loadingId = toast.loading(SYSTEM_MESSAGES.LOGIN.LOADING);
     try {
       const result = await login(data.email, data.password);
 
@@ -127,8 +112,8 @@ export const LoginPage = () => {
       }
 
       toast.dismiss(loadingId);
-      toast.success(TEXT.SUCCESS);
-      navigate(getRedirectByRole(result.user.roles), { replace: true });
+      toast.success(SYSTEM_MESSAGES.LOGIN.SUCCESS);
+      navigate(getRedirectByRole(), { replace: true });
     } catch (err: unknown) {
       toast.dismiss(loadingId);
       const apiErr = err as { response?: { data?: { message?: string } } };
@@ -166,8 +151,8 @@ export const LoginPage = () => {
       setShow2faDialog(false);
       setOtpValue("");
       setPendingLoginData(null);
-      toast.success(TEXT.SUCCESS);
-      navigate(getRedirectByRole(result.user.roles), { replace: true });
+      toast.success(SYSTEM_MESSAGES.LOGIN.SUCCESS);
+      navigate(getRedirectByRole(), { replace: true });
     } catch {
       toast.error(SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.TOAST_INVALID);
     } finally {
@@ -181,7 +166,7 @@ export const LoginPage = () => {
       errors,
     )[0] as keyof FieldErrors<LoginFormValues>;
     if (firstErrorPath) {
-      toast.error(TEXT.TOAST_VALIDATION_ERROR);
+      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
     }
   };
 
@@ -213,11 +198,15 @@ export const LoginPage = () => {
       />
       <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
         <CardHeader className="text-center space-y-2 pb-6">
-          <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
-            <User className="text-primary w-8 h-8" />
+          <div className="flex aspect-square size-16 mx-auto items-center justify-center rounded-lg bg-sidebar-primary/50 text-sidebar-primary-foreground overflow-hidden mb-2 shadow-sm border border-primary/20">
+            <img
+              src="/icon.png"
+              className="size-full object-cover"
+              alt="Logo"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold">{TEXT.TITLE}</CardTitle>
-          <CardDescription>{TEXT.DESC}</CardDescription>
+          <CardTitle className="text-2xl font-bold">{SYSTEM_MESSAGES.LOGIN.TITLE}</CardTitle>
+          <CardDescription>{SYSTEM_MESSAGES.LOGIN.DESC}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -230,13 +219,13 @@ export const LoginPage = () => {
                 htmlFor="email"
                 className={errors.email ? "text-destructive" : ""}
               >
-                {TEXT.LABEL_EMAIL}
+                {SYSTEM_MESSAGES.LOGIN.LABEL_EMAIL}
               </RequiredLabel>
               <div className="relative">
                 <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                 <Input
                   id="email"
-                  placeholder={TEXT.PLACEHOLDER_EMAIL}
+                  placeholder={SYSTEM_MESSAGES.LOGIN.PLACEHOLDER_EMAIL}
                   className={`pl-9 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                   {...register("email")}
                 />
@@ -253,7 +242,7 @@ export const LoginPage = () => {
                 htmlFor="password"
                 className={errors.password ? "text-destructive" : ""}
               >
-                {TEXT.LABEL_PASSWORD}
+                {SYSTEM_MESSAGES.LOGIN.LABEL_PASSWORD}
               </RequiredLabel>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
@@ -261,7 +250,7 @@ export const LoginPage = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder={TEXT.PLACEHOLDER_PASSWORD}
+                  placeholder={SYSTEM_MESSAGES.LOGIN.PLACEHOLDER_PASSWORD}
                   className={`pl-9 pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                   {...register("password")}
                 />
@@ -292,15 +281,15 @@ export const LoginPage = () => {
                   onCheckedChange={(checked) =>
                     setValue("remember", checked as boolean)
                   }
-                  defaultChecked={
-                    localStorage.getItem("rememberedEmail") ? true : false
-                  }
+                  defaultChecked={Boolean(
+                    localStorage.getItem("rememberedEmail"),
+                  )}
                 />
                 <Label
                   htmlFor="remember"
                   className="text-sm font-medium leading-none cursor-pointer"
                 >
-                  {TEXT.LABEL_REMEMBER}
+                  {SYSTEM_MESSAGES.LOGIN.LABEL_REMEMBER}
                 </Label>
               </div>
               <button
@@ -308,7 +297,7 @@ export const LoginPage = () => {
                 onClick={() => navigate("/forgot-password")}
                 className="text-sm text-primary hover:underline font-medium"
               >
-                {TEXT.LINK_FORGOT}
+                {SYSTEM_MESSAGES.LOGIN.LINK_FORGOT}
               </button>
             </div>
 
@@ -320,10 +309,10 @@ export const LoginPage = () => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-                  {TEXT.BTN_PROCESSING}
+                  {SYSTEM_MESSAGES.LOGIN.BTN_PROCESSING}
                 </>
               ) : (
-                TEXT.BTN_LOGIN
+                SYSTEM_MESSAGES.LOGIN.BTN_LOGIN
               )}
             </Button>
           </form>
@@ -354,15 +343,15 @@ export const LoginPage = () => {
               </label>
 
               <div className="flex justify-center gap-3">
-                {[...Array(6)].map((_, i) => (
+                {new Array(6).fill(null).map((_, i) => (
                   <input
-                    key={i}
+                    key={`otp-${i}`}
                     type="text"
                     maxLength={1}
                     className="w-12 h-14 text-center border-2 border-slate-100 rounded-2xl font-bold text-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none bg-slate-50/50"
                     value={otpValue[i] || ""}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, "");
+                      const val = e.target.value.replace(/\D/g, "");
                       if (val) {
                         const newOtp = otpValue.split("");
                         newOtp[i] = val;
@@ -401,7 +390,7 @@ export const LoginPage = () => {
                 {isVerifying2fa ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
-                    {TEXT.BTN_PROCESSING}
+                    {SYSTEM_MESSAGES.LOGIN.BTN_PROCESSING}
                   </>
                 ) : (
                   SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.BTN_VERIFY

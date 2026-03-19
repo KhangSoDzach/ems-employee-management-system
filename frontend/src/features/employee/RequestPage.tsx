@@ -100,19 +100,19 @@ interface UnifiedRequest {
 }
 
 function mapBackendStatus(status: string): LeaveStatus {
-  if (status.startsWith("PENDING")) return "PENDING";
-  if (status === "RETURNED_TO_EMPLOYEE") return "RETURNED";
+  if (status.startsWith("PENDING")) {return "PENDING";}
+  if (status === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
   if (status === "APPROVED" || status === "REJECTED")
-    return status as LeaveStatus;
+    {return status as LeaveStatus;}
   return "PENDING";
 }
 
 function mapAdjustmentStatus(
   s: AdjustmentRequestSummary["status"],
 ): AdjustmentStatus {
-  if (s === "APPROVED") return "APPROVED";
-  if (s === "REJECTED") return "REJECTED";
-  if (s === "RETURNED_TO_EMPLOYEE") return "RETURNED";
+  if (s === "APPROVED") {return "APPROVED";}
+  if (s === "REJECTED") {return "REJECTED";}
+  if (s === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
   return "PENDING";
 }
 
@@ -120,8 +120,8 @@ function deriveAdjustmentType(
   inTime: string | null,
   outTime: string | null,
 ): AdjustmentType {
-  if (inTime && outTime) return "BOTH";
-  if (inTime) return "CHECK_IN";
+  if (inTime && outTime) {return "BOTH";}
+  if (inTime) {return "CHECK_IN";}
   return "CHECK_OUT";
 }
 
@@ -161,8 +161,8 @@ function mapAdjustmentToFrontend(
 }
 
 function typeToReason(type: AdjustmentType): AdjustmentReason {
-  if (type === "CHECK_IN") return "FORGOT_CHECKIN";
-  if (type === "CHECK_OUT") return "FORGOT_CHECKOUT";
+  if (type === "CHECK_IN") {return "FORGOT_CHECKIN";}
+  if (type === "CHECK_OUT") {return "FORGOT_CHECKOUT";}
   return "OTHER";
 }
 

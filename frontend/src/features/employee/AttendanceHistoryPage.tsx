@@ -33,17 +33,17 @@ import { ATTENDANCE_STATUS } from "@/constants/options"
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 function fmtTime(iso: string | null) {
-    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (!iso) {return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
     return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
 }
 
 function fmtDate(iso: string | null) {
-    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (!iso) {return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
     return format(new Date(iso), "dd/MM/yyyy")
 }
 
 function fmtWorkHours(minutes: number | null) {
-    if (minutes == null) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (minutes == null) {return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
     const h = Math.floor(minutes / 60)
     const m = minutes % 60
     return `${h}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${m.toString().padStart(2, "0")}m`
@@ -196,7 +196,7 @@ export default function AttendanceHistoryPage() {
 
     // ── Client-side search (on current page) ──────────────────────────────────
     const filtered = records.filter(r => {
-        if (!search) return true
+        if (!search) {return true}
         const d = fmtDate(r.date).toLowerCase()
         const s = statusInfo(r.status).label.toLowerCase()
         const q = search.toLowerCase()
