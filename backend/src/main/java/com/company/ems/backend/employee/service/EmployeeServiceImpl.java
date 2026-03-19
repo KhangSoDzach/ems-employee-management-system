@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
+import com.company.ems.backend.employee.mapper.EmployeeMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,6 +47,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         private static final DateTimeFormatter DOB_PASSWORD_FORMATTER = DateTimeFormatter.ofPattern("ddMMyy");
 
         private final EmployeeRepository employeeRepository;
+        private final EmployeeMapper employeeMapper;
         private final DepartmentRepository departmentRepository;
         private final PositionRepository positionRepository;
         private final DataScopeService dataScopeService;
@@ -166,7 +168,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                                         saved.getEmployeeCode());
                 }
 
-                return mapToResponse(saved);
+                return employeeMapper.toResponse(saved);
         }
 
         @Override
@@ -227,13 +229,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                                                                         + principal.getUserId()));
                         // Wrap single result as page
                         return PageResponse.<EmployeeResponse>builder()
-                                        .content(List.of(mapToResponse(self)))
+                                        .content(List.of(employeeMapper.toResponse(self)))
                                         .page(0).size(1).totalElements(1L).totalPages(1)
                                         .build();
                 }
 
                 List<EmployeeResponse> content = employees.getContent().stream()
-                                .map(this::mapToResponse)
+                                .map(employeeMapper::toResponse)
                                 .toList();
 
                 return PageResponse.<EmployeeResponse>builder().content(content).page(page).size(size)
@@ -255,7 +257,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 log.debug("User [{}] accessed employee [{}] - DataScopes: {}",
                                 principal.getUsername(), id, principal.getDataScopes());
 
-                return mapToResponse(employee);
+                return employeeMapper.toResponse(employee);
         }
 
         @Override
@@ -337,7 +339,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 Employee updated = employeeRepository.save(employee);
                 log.info("User [{}] updated employee [{}]", principal.getUsername(), id);
 
-                return mapToResponse(updated);
+                return employeeMapper.toResponse(updated);
         }
 
         @Override
@@ -368,7 +370,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 log.info("User [{}] accessed own profile [employeeId={}]",
                                 principal.getUsername(), employee.getId());
 
-                return mapToPublicResponse(employee);
+                return employeeMapper.toPublicResponse(employee);
         }
 
         @Override
@@ -426,99 +428,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .size(size)
                                 .totalElements(employees.getTotalElements())
                                 .totalPages(employees.getTotalPages())
-                                .build();
-        }
-
-        private PublicEmployeeResponse mapToPublicResponse(Employee employee) {
-                if (employee == null)
-                        return null;
-                return PublicEmployeeResponse.builder()
-                                .id(employee.getId())
-                                .firstName(employee.getFirstName())
-                                .lastName(employee.getLastName())
-                                .email(employee.getEmail())
-                                .phone(employee.getPhone())
-                                .dateOfBirth(employee.getDateOfBirth())
-                                .hireDate(employee.getHireDate())
-                                .position(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
-                                .department(employee.getDepartment() != null ? employee.getDepartment().getName()
-                                                : null)
-                                .address(employee.getAddress())
-                                .city(employee.getCity())
-                                .state(employee.getState())
-                                .country(employee.getCountry())
-                                .status(employee.getStatus() != null ? employee.getStatus().name() : null)
-                                .avatarUrl(employee.getAvatarUrl())
-                                .createdAt(employee.getCreatedAt())
-                                .updatedAt(employee.getUpdatedAt())
-                                .build();
-        }
-
-        private EmployeeResponse mapToResponse(Employee employee) {
-                if (employee == null)
-                        return null;
-                return EmployeeResponse.builder()
-                                .id(employee.getId())
-                                .firstName(employee.getFirstName())
-                                .lastName(employee.getLastName())
-                                .email(employee.getEmail())
-                                .phone(employee.getPhone())
-                                .dateOfBirth(employee.getDateOfBirth())
-                                .hireDate(employee.getHireDate())
-                                .position(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
-                                .positionId(employee.getPosition() != null ? employee.getPosition().getId() : null)
-                                .department(employee.getDepartment() != null ? employee.getDepartment().getName()
-                                                : null)
-                                .departmentId(employee.getDepartment() != null ? employee.getDepartment().getId()
-                                                : null)
-                                .salary(employee.getSalary())
-
-                                .address(employee.getAddress())
-                                .city(employee.getCity())
-                                .state(employee.getState())
-                                .zipCode(employee.getZipCode())
-                                .country(employee.getCountry())
-
-                                .emergencyContactName(employee.getEmergencyContactName())
-                                .emergencyContactPhone(employee.getEmergencyContactPhone())
-                                .emergencyContactRelation(employee.getEmergencyContactRelation())
-
-                                .taxId(employee.getTaxId())
-                                .socialSecurityNumber(employee.getSocialSecurityNumber())
-                                .nationalId(employee.getNationalId())
-
-                                .bankAccountNumber(employee.getBankAccountNumber())
-                                .bankName(employee.getBankName())
-                                .bankBranch(employee.getBankBranch())
-
-                                .reportingManagerId(employee.getReportingManager() != null
-                                                ? employee.getReportingManager().getId()
-                                                : null)
-                                .reportingManagerName(employee.getReportingManager() != null
-                                                ? employee.getReportingManager().getFullName()
-                                                : null)
-
-                                .contractType(employee.getContractType() != null ? employee.getContractType().name()
-                                                : null)
-                                .probationEndDate(employee.getProbationEndDate())
-                                .contractEndDate(employee.getContractEndDate())
-                                .workLocation(employee.getWorkLocation())
-
-                                .nationality(employee.getNationality())
-                                .bloodGroup(employee.getBloodGroup())
-                                .gender(employee.getGender() != null ? employee.getGender().name() : null)
-
-                                .annualLeaveBalance(employee.getAnnualLeaveBalance())
-                                .sickLeaveBalance(employee.getSickLeaveBalance())
-
-                                .avatarUrl(employee.getAvatarUrl())
-                                .employeeCode(employee.getEmployeeCode())
-                                .terminationDate(employee.getTerminationDate())
-                                .notes(employee.getNotes())
-
-                                .status(employee.getStatus() != null ? employee.getStatus().name() : null)
-                                .createdAt(employee.getCreatedAt())
-                                .updatedAt(employee.getUpdatedAt())
                                 .build();
         }
 

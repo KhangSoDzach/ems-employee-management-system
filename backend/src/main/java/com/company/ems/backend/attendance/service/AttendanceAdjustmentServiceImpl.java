@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.company.ems.backend.attendance.mapper.AttendanceMapper;
 import com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestCreateDto;
 import com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestResponse;
 import com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestSummaryResponse;
@@ -64,6 +65,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentService {
 
     private final AttendanceAdjustmentRequestRepository requestRepository;
+    private final AttendanceMapper attendanceMapper;
     private final MessageService       messages;
     private final AttendanceAdjustmentHistoryRepository historyRepository;
     private final AttendanceRepository                  attendanceRepository;
@@ -135,7 +137,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
 
         log.info("Employee [{}] submitted adjustment request [{}] for date {}",
                 employee.getEmployeeCode(), saved.getId(), dto.getRequestDate());
-        return mapToDetailResponse(saved, null);
+        return toDetailWithHistory(saved, null);
     }
 
     @Override
@@ -185,7 +187,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
 
         log.info("Employee [{}] resubmitted adjustment request [{}]",
                 request.getEmployee().getEmployeeCode(), requestId);
-        return mapToDetailResponse(request, null);
+        return toDetailWithHistory(request, null);
     }
 
     // ─── Approver actions ─────────────────────────────────────────────────────
@@ -230,7 +232,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                     requestId, request.getCurrentApprovalLevel(), principal.getUsername());
         }
 
-        return mapToDetailResponse(request, null);
+        return toDetailWithHistory(request, null);
     }
 
     @Override
@@ -258,7 +260,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
 
         log.info("Adjustment request [{}] REJECTED by user [{}] — reason: {}",
                 requestId, principal.getUsername(), dto.getReason());
-        return mapToDetailResponse(request, null);
+        return toDetailWithHistory(request, null);
     }
 
     @Override
@@ -286,7 +288,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
 
         log.info("Adjustment request [{}] RETURNED_TO_EMPLOYEE by user [{}] — reason: {}",
                 requestId, principal.getUsername(), dto.getReason());
-        return mapToDetailResponse(request, null);
+        return toDetailWithHistory(request, null);
     }
 
     // ─── Query methods ────────────────────────────────────────────────────────
@@ -299,7 +301,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
         Page<AttendanceAdjustmentRequest> pageResult = requestRepository
                 .findByEmployeeId(employee.getId(),
                         PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
-        return PageResponse.of(pageResult.map(this::mapToSummaryResponse));
+        return PageResponse.of(pageResult.map(attendanceMapper::toSummaryResponse));
     }
 
     @Override
@@ -335,7 +337,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                 pendingStatuses, approverRole, myEmployeeId,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt")));
 
-        return PageResponse.of(pageResult.map(this::mapToSummaryResponse));
+        return PageResponse.of(pageResult.map(attendanceMapper::toSummaryResponse));
     }
 
     @Override
@@ -358,7 +360,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
 
         List<AttendanceAdjustmentHistory> history =
                 historyRepository.findByAdjustmentRequestIdOrderByActionAtAsc(requestId);
-        return mapToDetailResponse(request, history);
+        return toDetailWithHistory(request, history);
     }
 
     // ─── Private: domain helpers ──────────────────────────────────────────────
@@ -502,83 +504,20 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
 
     // ─── Private: mappers ──────────────────────────────────────────────────────
 
-    private AdjustmentRequestSummaryResponse mapToSummaryResponse(
-            AttendanceAdjustmentRequest r) {
-        String empName = null, empCode = null;
-        if (r.getEmployee() != null) {
-            empName = r.getEmployee().getFirstName() + " " + r.getEmployee().getLastName();
-            empCode = r.getEmployee().getEmployeeCode();
-        }
-        return AdjustmentRequestSummaryResponse.builder()
-                .id(r.getId())
-                .employeeName(empName)
-                .employeeCode(empCode)
-                .requestDate(r.getRequestDate())
-                .proposedCheckInTime(r.getProposedCheckInTime())
-                .proposedCheckOutTime(r.getProposedCheckOutTime())
-                .reasonType(r.getReasonType() != null ? r.getReasonType().name() : null)
-                .reasonText(r.getReasonText())
-                .status(r.getStatus() != null ? r.getStatus().name() : null)
-                .currentApprovalLevel(r.getCurrentApprovalLevel())
-                .maxApprovalLevel(r.getMaxApprovalLevel())
-                .requiresManualReview(r.isRequiresManualReview())
-                .createdAt(r.getCreatedAt())
-                .updatedAt(r.getUpdatedAt())
-                .build();
-    }
 
-    private AdjustmentRequestResponse mapToDetailResponse(
+    /**
+     * Thin wrapper: delegates field mapping to AttendanceMapper, then attaches history.
+     */
+    private AdjustmentRequestResponse toDetailWithHistory(
             AttendanceAdjustmentRequest r,
             List<AttendanceAdjustmentHistory> historyList) {
 
-        String empName = null, empCode = null;
-        if (r.getEmployee() != null) {
-            empName = r.getEmployee().getFirstName() + " " + r.getEmployee().getLastName();
-            empCode = r.getEmployee().getEmployeeCode();
-        }
-
-        List<AttendanceAdjustmentHistoryResponse> historyDtos = null;
+        AdjustmentRequestResponse dto = attendanceMapper.toDetailResponse(r);
         if (historyList != null) {
-            historyDtos = historyList.stream()
-                    .map(h -> AttendanceAdjustmentHistoryResponse.builder()
-                            .id(h.getId())
-                            .actionByName(h.getActionBy() != null ? h.getActionBy().getUsername() : "System")
-                            .actionByUserId(h.getActionBy() != null ? h.getActionBy().getId() : null)
-                            .action(h.getAction() != null ? h.getAction().name() : null)
-                            .levelActedOn(h.getLevelActedOn())
-                            .comment(h.getComment())
-                            .actionAt(h.getActionAt())
-                            .statusBefore(h.getStatusBefore() != null ? h.getStatusBefore().name() : null)
-                            .statusAfter(h.getStatusAfter() != null ? h.getStatusAfter().name() : null)
-                            .build())
-                    .collect(Collectors.toList());
+            dto.setHistory(historyList.stream()
+                    .map(attendanceMapper::toHistoryResponse)
+                    .collect(Collectors.toList()));
         }
-
-        return AdjustmentRequestResponse.builder()
-                .id(r.getId())
-                .employeeId(r.getEmployee() != null ? r.getEmployee().getId() : null)
-                .employeeName(empName)
-                .employeeCode(empCode)
-                .attendanceId(r.getAttendance() != null ? r.getAttendance().getId() : null)
-                .requestDate(r.getRequestDate())
-                .proposedCheckInTime(r.getProposedCheckInTime())
-                .proposedCheckOutTime(r.getProposedCheckOutTime())
-                .reasonType(r.getReasonType() != null ? r.getReasonType().name() : null)
-                .reasonText(r.getReasonText())
-                .status(r.getStatus() != null ? r.getStatus().name() : null)
-                .currentApprovalLevel(r.getCurrentApprovalLevel())
-                .maxApprovalLevel(r.getMaxApprovalLevel())
-                .requiresManualReview(r.isRequiresManualReview())
-                .incidentIpAddress(r.getIncidentIpAddress())
-                .incidentDeviceInfo(r.getIncidentDeviceInfo())
-                .incidentUserAgent(r.getIncidentUserAgent())
-                .incidentGeoLog(r.getIncidentGeoLog())
-                .incidentPhotoUrl(r.getIncidentPhotoUrl())
-                .resolvedAt(r.getResolvedAt())
-                .resolvedByName(r.getResolvedBy() != null ? r.getResolvedBy().getUsername() : null)
-                .createdAt(r.getCreatedAt())
-                .updatedAt(r.getUpdatedAt())
-                .history(historyDtos)
-                .build();
+        return dto;
     }
 }
