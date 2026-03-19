@@ -46,6 +46,14 @@ export function AppSidebar({
                 url: "/profile",
               },
               {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
+                url: "/employees",
+              },
+              {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE_SETTINGS,
+                url: "/attendance-settings",
+              },
+              {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
                 url: "/assets",
               },

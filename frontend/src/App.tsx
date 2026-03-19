@@ -31,6 +31,9 @@ const AttendanceHistoryPage = lazy(
 const AssetManagementPage = lazy(
   () => import("./features/admin/Asset-Management"),
 );
+const AttendanceSettings = lazy(
+  () => import("./features/admin/AttendanceSettings"),
+);
 const AssetIncidentManagementPage = lazy(
   () => import("./features/admin/AssetIncidentManagementPage"),
 );
@@ -125,6 +128,10 @@ function App() {
                 path="/announcements/manage"
                 element={<AnnouncementManagementPage />}
               />
+              <Route
+                path="/attendance-settings"
+                element={<AttendanceSettings />}
+              />
             </Route>
 
             {/* Profile + My Assets: tất cả 4 roles */}
@@ -167,24 +174,29 @@ function App() {
             </Route>
 
             {/* Manager only */}
-            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}>
-              <Route path="/members" element={<MemberList />} />
-              <Route path="/kpi-okr" element={<KpiOkrManagement />} />
-              <Route path="/approve" element={<ApproveLeaveRequest />} />
+            <Route
+              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}
+            >
               <Route
-                path="/approve-adjustments"
-                element={<ApproveAdjustmentRequest />}
-              />
-              <Route
-                path="/view-group-asset"
-                element={<AssetGroupManagement />}
-              />
-            </Route>
+                element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}
+              >
+                <Route path="/members" element={<MemberList />} />
+                <Route path="/kpi-okr" element={<KpiOkrManagement />} />
+                <Route path="/approve" element={<ApproveLeaveRequest />} />
+                <Route
+                  path="/approve-adjustments"
+                  element={<ApproveAdjustmentRequest />}
+                />
+                <Route
+                  path="/view-group-asset"
+                  element={<AssetGroupManagement />}
+                />
+              </Route>
 
-            {/* HR only */}
-            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}>
-              <Route path="/hr/employees" element={<Dashboard />} />
-            </Route>
+              {/* HR only */}
+              <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}>
+                <Route path="/hr/employees" element={<Dashboard />} />
+              </Route>
           </Routes>
         </Suspense>
       </BrowserRouter>
