@@ -50,7 +50,6 @@ export const SYSTEM_MESSAGES = {
         MENU_GROUP_ASSET: "Tài sản nhóm",
         MENU_CHECKIN: "Chấm công",
         MENU_REQUEST: "Tạo đơn nghỉ phép",
-        MENU_ATTENDANCE_SETTINGS: "Cấu hình chấm công",
         
         MENU_MY_ASSETS: "Tài sản của tôi",
         MENU_MEMBERS: "Thành viên nhóm",
@@ -69,8 +68,6 @@ export const SYSTEM_MESSAGES = {
         SHARE: "Chia sẻ",
         DOCUMENTATION: "Tài liệu",
         VERSION_PREFIX: "v",
-
-
     },
 
     // Profile Page
