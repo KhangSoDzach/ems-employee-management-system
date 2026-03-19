@@ -133,18 +133,18 @@ export function CreateAnnouncementForm() {
 
   const filteredTargets = useMemo(() => {
     const keyword = targetSearch.trim().toLowerCase();
-    if (!keyword) return availableTargets;
+    if (!keyword) {return availableTargets;}
     return availableTargets.filter((item) =>
       item.label.toLowerCase().includes(keyword),
     );
   }, [availableTargets, targetSearch]);
 
   const selectedTargetLabels = useMemo(() => {
-    if (selectedTargetIds.length === 0) return "Chọn đối tượng";
+    if (selectedTargetIds.length === 0) {return "Chọn đối tượng";}
     const labels = availableTargets
       .filter((item) => selectedTargetIds.includes(item.id))
       .map((item) => item.label);
-    if (labels.length <= 2) return labels.join(", ");
+    if (labels.length <= 2) {return labels.join(", ");}
     return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
   }, [availableTargets, selectedTargetIds]);
 

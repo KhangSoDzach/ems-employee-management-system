@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/sonner";
-import { AUTH_ROLES, ROUTE_ROLE_GROUPS } from "@/constants/roles";
+import { COMMON_TEXT } from "./constants/ui-texts";
+import { AUTH_ROLES } from "./constants/auth";
 
 const LoginPage = lazy(() =>
   import("@/features/auth/LoginPage").then((module) => ({
@@ -29,6 +30,9 @@ const AttendanceHistoryPage = lazy(
 );
 const AssetManagementPage = lazy(
   () => import("./features/admin/Asset-Management"),
+);
+const AttendanceSettings = lazy(
+  () => import("./features/admin/AttendanceSettings"),
 );
 const AssetIncidentManagementPage = lazy(
   () => import("./features/admin/AssetIncidentManagementPage"),
@@ -65,7 +69,7 @@ const AnnouncementManagementPage = lazy(
 function RouteFallback() {
   return (
     <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">
-      Loading...
+      {COMMON_TEXT.LOADING}
     </div>
   );
 }
@@ -85,7 +89,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={ROUTE_ROLE_GROUPS.ADMIN_HR_MANAGER}
+                  allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR, AUTH_ROLES.MANAGER]}
                 />
               }
             >
@@ -104,7 +108,12 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={ROUTE_ROLE_GROUPS.ALL_AUTHENTICATED}
+                  allowedRoles={[
+                    AUTH_ROLES.ADMIN,
+                    AUTH_ROLES.HR,
+                    AUTH_ROLES.MANAGER,
+                    AUTH_ROLES.EMPLOYEE,
+                  ]}
                 />
               }
             >
@@ -112,14 +121,16 @@ function App() {
             </Route>
 
             {/* Admin only */}
-            <Route
-              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}
-            >
+            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}>
               <Route path="/assets" element={<AssetManagementPage />} />
               <Route path="/payroll" element={<PayrollManagement />} />
               <Route
                 path="/announcements/manage"
                 element={<AnnouncementManagementPage />}
+              />
+              <Route
+                path="/attendance-settings"
+                element={<AttendanceSettings />}
               />
             </Route>
 
@@ -127,7 +138,12 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={ROUTE_ROLE_GROUPS.ALL_AUTHENTICATED}
+                  allowedRoles={[
+                    AUTH_ROLES.ADMIN,
+                    AUTH_ROLES.HR,
+                    AUTH_ROLES.MANAGER,
+                    AUTH_ROLES.EMPLOYEE,
+                  ]}
                 />
               }
             >
@@ -139,7 +155,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={ROUTE_ROLE_GROUPS.EMPLOYEE_HR_MANAGER}
+                  allowedRoles={[AUTH_ROLES.EMPLOYEE, AUTH_ROLES.HR, AUTH_ROLES.MANAGER]}
                 />
               }
             >
@@ -181,7 +197,7 @@ function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" visibleToasts={1} closeButton />
     </AuthProvider>
   );
 }

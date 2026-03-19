@@ -1,159 +1,101 @@
-import React, { useState, useEffect } from "react";
-import { X, UploadCloud, Loader2, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   assetService,
-  AssetDetail,
   AssetUpdatePayload,
-  AssetCondition,
-  EmployeeOption,
-  ASSET_CONDITION_LABELS,
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+import { AssetForm, AssetFormData } from "./components/AssetForm";
 
 interface Props {
   open: boolean;
-  asset: AssetDetail | null;
-  assetId: string | number | null;
   onClose: () => void;
-  onSave: (updated: AssetDetail) => void;
+  assetId: number | null;
+  onUpdated: () => void;
 }
 
-const CONDITION_OPTIONS: { value: AssetCondition; label: string }[] = [
-  { value: "NEW", label: ASSET_CONDITION_LABELS.NEW },
-  { value: "GOOD", label: ASSET_CONDITION_LABELS.GOOD },
-  { value: "DAMAGED", label: ASSET_CONDITION_LABELS.DAMAGED },
-  { value: "LOST", label: ASSET_CONDITION_LABELS.LOST },
-  { value: "DISPOSED", label: ASSET_CONDITION_LABELS.DISPOSED },
-];
-
-export default function AssetEditModal({
-  open,
-  asset,
-  assetId,
-  onClose,
-  onSave,
-}: Props) {
+export default function AssetEditModal({ open, onClose, assetId, onUpdated }: Props) {
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [initialData, setInitialData] = useState<Partial<AssetFormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [employeeKeyword, setEmployeeKeyword] = useState("");
-  const [employeeOptions, setEmployeeOptions] = useState<EmployeeOption[]>([]);
-  const [employeeLoading, setEmployeeLoading] = useState(false);
-  const [openEmployeeDropdown, setOpenEmployeeDropdown] = useState(false);
-
-  const [form, setForm] = useState<AssetUpdatePayload>({
-    name: "",
-    type: "",
-    value: undefined,
-    purchaseDate: "",
-    condition: "NEW",
-    locationOrUser: "",
-    warrantyDate: "",
-    supplier: "",
-    contractDate: "",
-    contractNumber: "",
-    note: "",
-    description: "",
-    image: "",
-  });
+  const [assetCode, setAssetCode] = useState("");
 
   useEffect(() => {
-    if (!open || !asset) {
-      return;
-    }
-    setForm({
-      name: asset.name,
-      type: asset.type ?? "",
-      value: asset.value
-        ? Number(asset.value.replace(/[^0-9]/g, ""))
-        : undefined,
-      purchaseDate: asset.purchaseDate ?? "",
-      condition: asset.condition,
-      locationOrUser: asset.location ?? "",
-      warrantyDate: asset.warranty ?? "",
-      supplier: asset.supplier ?? "",
-      contractDate: asset.contract ?? "",
-      contractNumber: "",
-      note: "",
-      description: asset.description ?? "",
-      image: asset.imageUrl ?? "",
-    });
-    setImagePreview(asset.imageUrl ?? null);
-    setErrors({});
-    setEmployeeKeyword(asset.location ?? "");
-    setEmployeeOptions([]);
-    setOpenEmployeeDropdown(false);
-  }, [open, asset]);
-
-  useEffect(() => {
-    if (!open || !openEmployeeDropdown) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      setEmployeeLoading(true);
+    if (open && assetId) {
+      setLoading(true);
+      setErrors({});
       assetService
-        .searchEmployees(employeeKeyword)
-        .then((res) => setEmployeeOptions(res.content))
-        .catch(() => setEmployeeOptions([]))
-        .finally(() => setEmployeeLoading(false));
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [open, openEmployeeDropdown, employeeKeyword]);
+        .getAssetById(assetId)
+        .then((res) => {
+          setAssetCode(res.code);
+          setInitialData({
+            name: res.name,
+            type: res.type || "",
+            value: res.value ? parseInt(res.value) : undefined,
+            purchaseDate: res.purchaseDate || "",
+            condition: res.condition,
+            locationOrUser: res.location || "",
+            warrantyDate: res.warranty || "",
+            supplier: res.supplier || "",
+            contractDate: res.contract || "",
+            description: res.description || "",
+            image: res.imageUrl || "",
+          });
+        })
+        .catch(() => toast.error(SYSTEM_MESSAGES.ERROR))
+        .finally(() => setLoading(false));
+    }
+  }, [open, assetId]);
 
-  if (!open || !asset || !assetId) {
+  if (!open) {
     return null;
   }
 
-  const setField = (field: keyof AssetUpdatePayload, value: unknown) => {
-    setForm((f) => ({ ...f, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
+  const handleFormSubmit = async (formData: AssetFormData) => {
+    if (!assetId) {
+      return;
     }
-  };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
-    if (!form.name?.trim()) {
+    if (!formData.name.trim()) {
       newErrors.name = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
     }
-    if (!form.type?.trim()) {
+    if (!formData.type.trim()) {
       newErrors.type = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
     }
-    if (!form.locationOrUser?.trim()) {
-      newErrors.locationOrUser =
-        SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+    if (!formData.locationOrUser.trim()) {
+      newErrors.locationOrUser = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error(Object.values(newErrors)[0]);
+      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
       return;
     }
 
     setSaving(true);
     try {
       const payload: AssetUpdatePayload = {
-        ...form,
-        purchaseDate: form.purchaseDate || undefined,
-        warrantyDate: form.warrantyDate || undefined,
-        contractDate: form.contractDate || undefined,
-        value: form.value || undefined,
+        name: formData.name,
+        type: formData.type,
+        value: formData.value,
+        purchaseDate: formData.purchaseDate || undefined,
+        condition: formData.condition,
+        locationOrUser: formData.locationOrUser,
+        description: formData.description,
+        warrantyDate: formData.warrantyDate || undefined,
+        supplier: formData.supplier,
+        contractDate: formData.contractDate || undefined,
+        contractNumber: formData.contractNumber,
+        image: formData.image,
       };
-      const updated = await assetService.updateAsset(assetId, payload);
+      await assetService.updateAsset(assetId, payload);
       toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
-      onSave(updated);
+      onUpdated();
+      onClose();
     } catch {
       toast.error(SYSTEM_MESSAGES.ERROR);
     } finally {
@@ -162,344 +104,35 @@ export default function AssetEditModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
-      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* HEADER */}
-        <div className="flex items-center justify-between px-8 py-5 border-b flex-none">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_EDIT}
-            {SYSTEM_MESSAGES.ASSET_CREATE.TXT_CODE_BRACKET_START}
-            {asset.code}
-            {SYSTEM_MESSAGES.ASSET_CREATE.TXT_CODE_BRACKET_END}
+    <div className="modal-overlay">
+      <div className="dialog-content-base">
+        <div className="modal-header">
+          <h2 className="modal-title">
+            {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_EDIT} 
+            <span className="text-primary ml-2 font-mono">{"#"}{assetCode}</span>
           </h2>
-          <button onClick={onClose}>
-            <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-          </button>
+          <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8 min-h-0">
-            {/* LEFT COLUMN */}
-            <div className="lg:col-span-1 space-y-6">
-              <ImageSection 
-                imagePreview={imagePreview} 
-                formImage={form.image} 
-                onImageUpload={handleImageUpload} 
-                setField={setField} 
-              />
-              <AdditionalInfoSection form={form} setField={setField} />
-            </div>
-
-            {/* RIGHT COLUMN */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <MainFieldsSection form={form} errors={errors} setField={setField} />
-                <EmployeeSearchSection 
-                  employeeKeyword={employeeKeyword}
-                  setEmployeeKeyword={setEmployeeKeyword}
-                  openEmployeeDropdown={openEmployeeDropdown}
-                  setOpenEmployeeDropdown={setOpenEmployeeDropdown}
-                  employeeLoading={employeeLoading}
-                  employeeOptions={employeeOptions}
-                  setField={setField}
-                  error={errors.locationOrUser}
-                />
-              </div>
-
-              <ConditionPickerSection condition={form.condition ?? "NEW"} setField={setField} />
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NOTES}
-                </label>
-                <textarea
-                  rows={3}
-                  value={form.description ?? ""}
-                  onChange={(e) => setField("description", e.target.value)}
-                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm resize-none"
-                />
-              </div>
-            </div>
+        {loading ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-20 text-slate-500">
+            <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+            <p className="font-medium">{SYSTEM_MESSAGES.LOADING}</p>
           </div>
-
-          <div className="flex justify-end gap-3 px-8 py-5 border-t bg-gray-50 flex-none">
-            <button
-              onClick={onClose}
-              className="px-5 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-white"
-            >
-              {SYSTEM_MESSAGES.BTN_CANCEL}
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={saving}
-              className="px-5 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 shadow flex items-center gap-2 disabled:opacity-60"
-            >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}{" "}
-              {SYSTEM_MESSAGES.BTN_SAVE}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface ImageSectionProps {
-  imagePreview: string | null;
-  formImage: string | undefined;
-  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  setField: (field: keyof AssetUpdatePayload, value: unknown) => void;
-}
-
-function ImageSection({ imagePreview, formImage, onImageUpload, setField }: ImageSectionProps) {
-  return (
-    <div className="bg-gray-50 rounded-xl border p-4">
-      <label className="text-sm font-semibold text-gray-700 block mb-3">
-        {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_IMAGE}
-      </label>
-      <div className="w-full aspect-video bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative text-gray-400">
-        {imagePreview ? (
-          <img
-            src={imagePreview}
-            alt="preview"
-            className="object-cover w-full h-full"
-          />
         ) : (
-          <div className="text-center">
-            <UploadCloud className="w-8 h-8 mx-auto mb-2" />
-            <p className="text-xs">
-              {SYSTEM_MESSAGES.ASSET_CREATE.UPLOAD_IMAGE}
-            </p>
-          </div>
-        )}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={onImageUpload}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-        />
-      </div>
-      <input
-        placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_IMAGE_URL}
-        value={formImage ?? ""}
-        onChange={(e) => setField("image", e.target.value)}
-        className="mt-2 w-full border border-gray-200 rounded-md px-3 py-2 text-xs"
-      />
-    </div>
-  );
-}
-
-interface AdditionalInfoSectionProps {
-  form: AssetUpdatePayload;
-  setField: (field: keyof AssetUpdatePayload, value: unknown) => void;
-}
-
-function AdditionalInfoSection({ form, setField }: AdditionalInfoSectionProps) {
-  return (
-    <div className="bg-gray-50 rounded-xl border p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-gray-800">
-        {SYSTEM_MESSAGES.ASSET_CREATE.SECTION_ADDITIONAL}
-      </h3>
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-gray-600">
-          {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_WARRANTY}
-        </label>
-        <input
-          type="date"
-          value={form.warrantyDate ?? ""}
-          onChange={(e) => setField("warrantyDate", e.target.value)}
-          className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
-        />
-      </div>
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-gray-600">
-          {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_SUPPLIER}
-        </label>
-        <input
-          value={form.supplier ?? ""}
-          onChange={(e) => setField("supplier", e.target.value)}
-          className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
-        />
-      </div>
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-gray-600">
-          {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_UNTIL}
-        </label>
-        <input
-          type="date"
-          value={form.contractDate ?? ""}
-          onChange={(e) => setField("contractDate", e.target.value)}
-          className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
-        />
-      </div>
-    </div>
-  );
-}
-
-interface MainFieldsSectionProps {
-  form: AssetUpdatePayload;
-  errors: Record<string, string>;
-  setField: (field: keyof AssetUpdatePayload, value: unknown) => void;
-}
-
-function MainFieldsSection({ form, errors, setField }: MainFieldsSectionProps) {
-  return (
-    <>
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">
-          {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_NAME} <span className="text-red-500">{"*"}</span>
-        </label>
-        <input
-          value={form.name ?? ""}
-          onChange={(e) => setField("name", e.target.value)}
-          className={`w-full border rounded-md px-3 py-2 text-sm ${errors.name ? "border-red-500" : "border-gray-200"}`}
-        />
-        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">
-          {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE} <span className="text-red-500">{"*"}</span>
-        </label>
-        <input
-          value={form.type ?? ""}
-          onChange={(e) => setField("type", e.target.value)}
-          className={`w-full border rounded-md px-3 py-2 text-sm ${errors.type ? "border-red-500" : "border-gray-200"}`}
-        />
-        {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">
-          {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_VALUE}
-        </label>
-        <input
-          type="number"
-          value={form.value ?? ""}
-          onChange={(e) => setField("value", e.target.value ? Number(e.target.value) : undefined)}
-          className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
-        />
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">
-          {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_PURCHASE_DATE}
-        </label>
-        <input
-          type="date"
-          value={form.purchaseDate ?? ""}
-          onChange={(e) => setField("purchaseDate", e.target.value)}
-          className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
-        />
-      </div>
-    </>
-  );
-}
-
-interface EmployeeSearchSectionProps {
-  employeeKeyword: string;
-  setEmployeeKeyword: (val: string) => void;
-  openEmployeeDropdown: boolean;
-  setOpenEmployeeDropdown: (val: boolean) => void;
-  employeeLoading: boolean;
-  employeeOptions: EmployeeOption[];
-  setField: (field: keyof AssetUpdatePayload, value: unknown) => void;
-  error?: string;
-}
-
-function EmployeeSearchSection({ 
-  employeeKeyword, 
-  setEmployeeKeyword, 
-  openEmployeeDropdown, 
-  setOpenEmployeeDropdown, 
-  employeeLoading, 
-  employeeOptions, 
-  setField, 
-  error 
-}: EmployeeSearchSectionProps) {
-  return (
-    <div className="space-y-1 group relative md:col-span-2">
-      <label className="text-sm font-medium text-gray-700">
-        {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_USER_ONLY} <span className="text-red-500">{"*"}</span>
-      </label>
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_USER_SEARCH}
-          value={employeeKeyword}
-          onFocus={() => setOpenEmployeeDropdown(true)}
-          onChange={(e) => {
-            setEmployeeKeyword(e.target.value);
-            setField("locationOrUser", "");
-            setOpenEmployeeDropdown(true);
-          }}
-          className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm ${error ? "border-red-500" : "border-gray-200"}`}
-        />
-
-        {openEmployeeDropdown && (
-          <div className="absolute z-20 mt-2 w-full max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
-            {employeeLoading ? (
-              <div className="px-3 py-3 text-sm text-gray-500 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                {SYSTEM_MESSAGES.LOADING}
-              </div>
-            ) : employeeOptions.length === 0 ? (
-              <div className="px-3 py-3 text-sm text-gray-500">{SYSTEM_MESSAGES.NO_DATA}</div>
-            ) : (
-              employeeOptions.map((employee: EmployeeOption) => {
-                const fullName = `${employee.firstName ?? ""} ${employee.lastName ?? ""}`.trim();
-                return (
-                  <button
-                    key={employee.id}
-                    type="button"
-                    onClick={() => {
-                      setField("locationOrUser", fullName);
-                      setEmployeeKeyword(fullName);
-                      setOpenEmployeeDropdown(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                  >
-                    <div className="font-medium text-gray-800">{fullName}</div>
-                    <div className="text-xs text-gray-500">
-                      {employee.department ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        )}
-      </div>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-    </div>
-  );
-}
-
-interface ConditionPickerSectionProps {
-  condition: AssetCondition;
-  setField: (field: keyof AssetUpdatePayload, value: unknown) => void;
-}
-
-function ConditionPickerSection({ condition, setField }: ConditionPickerSectionProps) {
-  return (
-    <div className="space-y-3">
-      <label className="text-sm font-medium text-gray-700">
-        {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONDITION_ONLY}
-      </label>
-      <div className="grid grid-cols-5 gap-3">
-        {CONDITION_OPTIONS.map((item) => (
-          <label key={item.value} className="cursor-pointer">
-            <input
-              type="radio"
-              value={item.value}
-              checked={condition === item.value}
-              onChange={() => setField("condition", item.value)}
-              className="peer hidden"
+          <div className="flex-1 overflow-y-auto">
+            <AssetForm 
+              initialData={initialData}
+              isEdit={true}
+              onSubmit={handleFormSubmit}
+              onCancel={onClose}
+              loading={saving}
+              errors={errors}
+              setErrors={setErrors}
             />
-            <div className="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-200 bg-white text-gray-500 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary">
-              <span className="text-xs font-semibold">{item.label}</span>
-            </div>
-          </label>
-        ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
