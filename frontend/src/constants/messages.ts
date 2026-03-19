@@ -409,6 +409,7 @@ export const SYSTEM_MESSAGES = {
     EMPLOYEE: {
         TITLE: "Danh sách nhân viên",
         DESC_MGMT: "Quản lý thông tin hồ sơ và trạng thái làm việc của nhân viên",
+        SYSTEM_HR: "Hệ thống Nhân sự",
         BTN_ADD: "Thêm nhân viên",
         BTN_CLEAR_FILTER: "Xóa lọc",
         LABEL_TOTAL: "Tổng số:",
@@ -421,6 +422,8 @@ export const SYSTEM_MESSAGES = {
         SECTION_FINANCE_NOTES: "Tài chính & Ghi chú",
         SECTION_CURRENT_JOB: "Công việc hiện tại",
         LABEL_AVATAR: "Ảnh đại diện",
+        LABEL_AVATAR_DESC: "Nhấp để tải lên hoặc kéo thả ảnh chân dung chuyên nghiệp (JPG, PNG).",
+        BTN_UPLOAD: "Chọn tệp",
         LABEL_STATUS: "Trạng thái",
         LABEL_EMP_CODE: "Mã nhân viên",
         LABEL_NAME: "Họ và tên",
@@ -524,8 +527,29 @@ export const SYSTEM_MESSAGES = {
         STATUS_INACTIVE_CAP: "NGHỈ VIỆC",
         DEFAULT_WORK_LOCATION: "Văn phòng chính",
         DEFAULT_NATIONALITY: "Việt Nam",
+<<<<<<< Updated upstream
         INFO_EMP_CODE: "Mã nhân viên sẽ được hệ thống tự động tạo.",
         SYSTEM_HR: "Hệ thống Nhân sự",
+=======
+        LABEL_CITY: "Thành phố",
+        LABEL_BANK_NAME: "Ngân hàng",
+        LABEL_EMERGENCY_PHONE: "SĐT khẩn cấp",
+        INFO_EMP_CODE: "Hệ thống sẽ tự động tạo Mã nhân viên dựa trên phòng ban.",
+        LABEL_CURRENCY_VND: "VNĐ",
+        HINT_SELECT_DEPT: "Chọn phòng ban để xem danh sách vị trí",
+        HINT_CHOOSE_POSITION: "(chọn vị trí trước)",
+        MSG_NO_MANAGERS: "Chưa có trưởng phòng nào trong hệ thống",
+        PLACEHOLDER_LAST_NAME: "VD: Nguyễn Văn",
+        PLACEHOLDER_FIRST_NAME: "VD: A",
+        PLACEHOLDER_EMAIL: "email@company.com",
+        PLACEHOLDER_PHONE: "091xxxxxxx",
+        PLACEHOLDER_NATIONAL_ID: "12 số",
+        PLACEHOLDER_ADDRESS: "Số nhà, tên đường...",
+        PLACEHOLDER_CITY: "VD: Hà Nội",
+        PLACEHOLDER_EMERGENCY_NAME: "Tên người thân",
+        PLACEHOLDER_EMERGENCY_PHONE: "Số điện thoại",
+        PLACEHOLDER_BANK_NAME: "VD: Vietcombank",
+>>>>>>> Stashed changes
     },
 
     // Common Toast Messages
