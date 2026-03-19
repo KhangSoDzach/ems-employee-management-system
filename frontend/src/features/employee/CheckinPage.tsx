@@ -124,7 +124,7 @@ export default function CheckinPage() {
     const [pendingAction, setPendingAction] = useState<"checkIn" | "checkOut" | null>(null)
 
     // ── Derive status ─────────────────────────────────────────────────────────
-    const status: CheckStatus = todayRecord == null
+    const status: CheckStatus = todayRecord === null
         ? "unchecked"
         : todayRecord.checkOutTime
             ? "checked_out"

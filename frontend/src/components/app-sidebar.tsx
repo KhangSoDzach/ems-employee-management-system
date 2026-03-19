@@ -37,8 +37,47 @@ export function AppSidebar({
   const navMain: SidebarNavGroup[] =
     role === "admin"
       ? [
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.ADMIN_SECTION,
+          url: "#",
+          items: [
+            {
+              title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
+              url: "/profile",
+            },
+            {
+              title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE_SETTINGS,
+              url: "/attendance-settings",
+            },
+            {
+              title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
+              url: "/assets",
+            },
+            {
+              title:
+                SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT ||
+                "Quản lý sự cố tài sản",
+              url: "/asset-incidents",
+            },
+            {
+              title: "Thông báo nội bộ",
+              url: "/announcements",
+            },
+            {
+              title: "Tạo thông báo",
+              url: "/announcements/manage",
+            },
+            {
+              title: "Duyệt báo cáo sự cố",
+              url: "/asset-reports",
+            },
+          ],
+        },
+      ]
+      : role === "manager"
+        ? [
           {
-            title: SYSTEM_MESSAGES.SIDEBAR.ADMIN_SECTION,
+            title: SYSTEM_MESSAGES.SIDEBAR.MANAGER_SECTION,
             url: "#",
             items: [
               {
@@ -46,16 +85,37 @@ export function AppSidebar({
                 url: "/profile",
               },
               {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
-                url: "/employees",
+                title: "Chấm công",
+                url: "/checkin",
               },
               {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE_SETTINGS,
-                url: "/attendance-settings",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS,
+                url: "/members",
+              },
+
+              {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_KPI,
+                url: "/kpi-okr",
               },
               {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
-                url: "/assets",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_LEAVE,
+                url: "/approve",
+              },
+              {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ADJ,
+                url: "/approve-adjustments",
+              },
+              {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
+                url: "/request",
+              },
+              {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_GROUP_ASSET,
+                url: "/view-group-asset",
+              },
+              {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
+                url: "/my-assets",
               },
               {
                 title:
@@ -68,6 +128,10 @@ export function AppSidebar({
                 url: "/announcements",
               },
               {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
+                url: "/payroll",
+              },
+              {
                 title: "Tạo thông báo",
                 url: "/announcements/manage",
               },
@@ -78,10 +142,10 @@ export function AppSidebar({
             ],
           },
         ]
-      : role === "manager"
-        ? [
+        : role === "hr"
+          ? [
             {
-              title: SYSTEM_MESSAGES.SIDEBAR.MANAGER_SECTION,
+              title: SYSTEM_MESSAGES.SIDEBAR.HR_SECTION,
               url: "#",
               items: [
                 {
@@ -93,33 +157,24 @@ export function AppSidebar({
                   url: "/checkin",
                 },
                 {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS,
-                  url: "/members",
-                },
-
-                {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_KPI,
-                  url: "/kpi-okr",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
+                  url: "/hr-employees",
                 },
                 {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_LEAVE,
-                  url: "/approve",
-                },
-                {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ADJ,
-                  url: "/approve-adjustments",
-                },
-                {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
-                  url: "/request",
-                },
-                {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_GROUP_ASSET,
-                  url: "/view-group-asset",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
+                  url: "/payroll",
                 },
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                   url: "/my-assets",
+                },
+                {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
+                  url: "/assets",
+                },
+                {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
+                  url: "/request",
                 },
                 {
                   title:
@@ -132,104 +187,45 @@ export function AppSidebar({
                   url: "/announcements",
                 },
                 {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
-                  url: "/payroll",
-                },
-                {
-                  title: "Tạo thông báo",
-                  url: "/announcements/manage",
-                },
-                {
                   title: "Duyệt báo cáo sự cố",
                   url: "/asset-reports",
                 },
               ],
             },
           ]
-        : role === "hr"
-          ? [
-              {
-                title: SYSTEM_MESSAGES.SIDEBAR.HR_SECTION,
-                url: "#",
-                items: [
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
-                    url: "/profile",
-                  },
-                  {
-                    title: "Chấm công",
-                    url: "/checkin",
-                  },
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
-                    url: "/hr-employees",
-                  },
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
-                    url: "/payroll",
-                  },
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
-                    url: "/my-assets",
-                  },
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
-                    url: "/assets",
-                  },
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
-                    url: "/request",
-                  },
-                  {
-                    title:
-                      SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT ||
-                      "Quản lý sự cố tài sản",
-                    url: "/asset-incidents",
-                  },
-                  {
-                    title: "Thông báo nội bộ",
-                    url: "/announcements",
-                  },
-                  {
-                    title: "Duyệt báo cáo sự cố",
-                    url: "/asset-reports",
-                  },
-                ],
-              },
-            ]
           : [
-              {
-                title: SYSTEM_MESSAGES.SIDEBAR.EMPLOYEE_SECTION,
-                url: "#",
-                items: [
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
-                    url: "/profile",
-                  },
-                  {
-                    title: "Lịch sử lương",
-                    url: "/salary-history",
-                  },
-                  {
-                    title: "Chấm công",
-                    url: "/checkin",
-                  },
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
-                    url: "/request",
-                  },
+            {
+              title: SYSTEM_MESSAGES.SIDEBAR.EMPLOYEE_SECTION,
+              url: "#",
+              items: [
+                {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
+                  url: "/profile",
+                },
+                {
+                  title: "Lịch sử lương",
+                  url: "/salary-history",
+                },
+                {
+                  title: "Chấm công",
+                  url: "/checkin",
+                },
+                {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
+                  url: "/request",
+                },
 
-                  {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
-                    url: "/my-assets",
-                  },
-                  {
-                    title: "Thông báo nội bộ",
-                    url: "/announcements",
-                  },
-                ],
-              },
-            ];
+                {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
+                  url: "/my-assets",
+                },
+                {
+                  title: "Thông báo nội bộ",
+                  url: "/announcements",
+                },
+              ],
+            },
+          ];
 
   return (
     <Sidebar {...props} className="w-55">
