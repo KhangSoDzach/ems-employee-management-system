@@ -2,6 +2,7 @@ package com.company.ems.backend.payroll.controller;
 
 import java.util.List;
 
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,8 +13,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.company.ems.backend.common.constant.AppRole;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
@@ -38,7 +37,7 @@ public class SalaryComponentController {
     private final MessageService messages;
 
     @GetMapping
-    @PreAuthorize(AppRole.HAS_ADMIN_ONLY)
+    @PreAuthorize(RoleAuthorization.HAS_ADMIN_ONLY)
     @Operation(summary = "List salary components")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Salary components retrieved")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied")
@@ -49,7 +48,7 @@ public class SalaryComponentController {
     }
 
     @PostMapping
-    @PreAuthorize(AppRole.HAS_ADMIN_ONLY)
+    @PreAuthorize(RoleAuthorization.HAS_ADMIN_ONLY)
     @Operation(summary = "Create salary component")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Salary component created")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error")
@@ -64,7 +63,7 @@ public class SalaryComponentController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize(AppRole.HAS_ADMIN_ONLY)
+    @PreAuthorize(RoleAuthorization.HAS_ADMIN_ONLY)
     @Operation(summary = "Update salary component")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Salary component updated")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error")

@@ -14,7 +14,8 @@ public final class RoleAuthorization {
 
     public static final String HAS_ADMIN_ONLY =
             "hasRole('ADMIN')";
-
+    public static final String HAS_HR_ONLY =
+            "hasRole('HR')";
     public static final String HAS_PERM_ASSET_MANAGE             = "hasAuthority('ASSET_MANAGE')";
     public static final String HAS_PERM_SYSTEM_CONFIG_MANAGE     = "hasAuthority('SYSTEM_CONFIG_MANAGE')";
 
