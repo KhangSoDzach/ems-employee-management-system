@@ -219,8 +219,7 @@ export default function CheckinPage() {
   >(null);
 
   // ── Derive status ─────────────────────────────────────────────────────────
-  const status: CheckStatus =
-    todayRecord === null
+  const status: CheckStatus = todayRecord === null
       ? "unchecked"
       : todayRecord.checkOutTime
         ? "checked_out"
