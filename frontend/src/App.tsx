@@ -39,7 +39,10 @@ const AssetGroupManagement = lazy(() => import("./features/manager/AssetGroupMan
 const EmployeeManagement = lazy(() => import("./features/hr/EmployeeManagement"));
 const SalaryHistoryPage = lazy(() => import("./features/employee/SalaryHistoryPage"));
 const ProfilePage = lazy(() => import("./components/ProfilePage"));
-
+const AnnouncementsPage = lazy(() => import("./features/employee/AnnouncementsPage"));
+const AnnouncementManagementPage = lazy(
+  () => import("./features/hr/AnnouncementManagementPage"),
+);
 function RouteFallback() {
   return (
     <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">
