@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Objects;
 
+import com.company.ems.backend.attendance.mapper.AttendanceMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,24 +35,6 @@ import com.company.ems.backend.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Implementation of {@link AttendanceService}.
- *
- * <p>
- * <strong>Check-in flow:</strong>
- * <ol>
- * <li>Resolve employee from the JWT principal.
- * <li>Guard against duplicate check-in on the same calendar day.
- * <li>Run server-side Haversine distance validation.
- * <li>Decode and persist the photo to the local filesystem.
- * <li>Persist the {@link Attendance} record.
- * </ol>
- *
- * <p>
- * <strong>Check-out flow:</strong> mirrors the above but updates the existing
- * record,
- * sets {@code checkOutTime}, and auto-calculates work hours.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -59,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AttendanceServiceImpl implements AttendanceService {
 
         private final AttendanceRepository attendanceRepository;
+        private final AttendanceMapper attendanceMapper;
         private final EmployeeRepository employeeRepository;
         private final MessageService messages;
         private final GeolocationService geolocationService;
@@ -116,7 +100,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 log.info("Employee [{}] checked in at {} (lat={}, lon={})",
                                 employee.getEmployeeCode(), checkInTime,
                                 request.getLatitude(), request.getLongitude());
-                return mapToResponse(saved);
+                return attendanceMapper.toResponse(saved);
         }
 
         // ─── Check-out ────────────────────────────────────────────────────────────
@@ -167,7 +151,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 Attendance saved = attendanceRepository.save(attendance);
                 log.info("Employee [{}] checked out at {} (workHours={}min)",
                                 employee.getEmployeeCode(), checkOutTime, saved.getWorkHours());
-                return mapToResponse(saved);
+                return attendanceMapper.toResponse(saved);
         }
 
         // ─── Queries ──────────────────────────────────────────────────────────────
@@ -193,7 +177,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                                 resolvedEmployeeId, statusEnum, startDate, endDate,
                                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date")));
 
-                return PageResponse.of(pageResult.map(this::mapToResponse));
+                return PageResponse.of(pageResult.map(attendanceMapper::toResponse));
         }
 
         @Override
@@ -275,72 +259,5 @@ public class AttendanceServiceImpl implements AttendanceService {
         private String safeCode(Employee employee) {
                 return employee.getEmployeeCode() != null ? employee.getEmployeeCode()
                                 : String.valueOf(employee.getId());
-        }
-
-        private AttendanceResponse mapToResponse(Attendance a) {
-                if (a == null)
-                        return null;
-                String empName = null;
-                String empCode = null;
-                if (a.getEmployee() != null) {
-                        empName = a.getEmployee().getFirstName() + " " + a.getEmployee().getLastName();
-                        empCode = a.getEmployee().getEmployeeCode();
-                }
-                return AttendanceResponse.builder()
-                                .id(a.getId())
-                                .employeeId(a.getEmployee() != null ? a.getEmployee().getId() : null)
-                                .employeeName(empName)
-                                .employeeCode(empCode)
-                                .date(a.getDate())
-                                .checkInTime(a.getCheckInTime())
-                                .checkOutTime(a.getCheckOutTime())
-                                .status(a.getStatus() != null ? a.getStatus().name() : null)
-                                .checkInMethod(a.getCheckInMethod() != null ? a.getCheckInMethod().name() : null)
-                                .workHours(a.getWorkHours())
-                                .workHoursDecimal(a.getWorkHoursDecimal())
-                                .isLate(a.getIsLate())
-                                .isOvertime(a.getIsOvertime())
-                                .overtimeMinutes(a.getOvertimeMinutes())
-                                .checkInLatitude(a.getCheckInLatitude())
-                                .checkInLongitude(a.getCheckInLongitude())
-                                .checkInLocation(a.getCheckInLocation())
-                                .checkOutLatitude(a.getCheckOutLatitude())
-                                .checkOutLongitude(a.getCheckOutLongitude())
-                                .checkOutLocation(a.getCheckOutLocation())
-                                .checkInPhotoUrl(buildPhotoUrl(a.getCheckInPhotoUrl()))
-                                .checkOutPhotoUrl(buildPhotoUrl(a.getCheckOutPhotoUrl()))
-                                .notes(a.getNotes())
-                                .isRemote(a.getIsRemote())
-                                .approvedByName(a.getApprovedBy() != null ? a.getApprovedBy().getUsername() : null)
-                                .approvedAt(a.getApprovedAt())
-                                .approvalNotes(a.getApprovalNotes())
-                                .build();
-        }
-
-        /**
-         * Converts a relative photo path (as stored in DB) to a full public HTTP URL.
-         *
-         * <p>
-         * If the stored value is already an absolute URL (starts with {@code http})
-         * it is returned as-is; otherwise the configured
-         * {@code storageProperties.baseUrl}
-         * is prepended.
-         *
-         * @param relativePath relative path returned by
-         *                     {@link PhotoStorageService#savePhoto}
-         * @return full HTTP URL, or {@code null} if input is blank
-         */
-        private String buildPhotoUrl(String relativePath) {
-                if (relativePath == null || relativePath.isBlank())
-                        return null;
-                if (relativePath.startsWith("http://") || relativePath.startsWith("https://")) {
-                        return relativePath; // already absolute
-                }
-                String base = storageProperties.getBaseUrl();
-                // Guard: strip trailing slash from base
-                if (base.endsWith("/")) {
-                        base = base.substring(0, base.length() - 1);
-                }
-                return base + "/" + relativePath;
         }
 }

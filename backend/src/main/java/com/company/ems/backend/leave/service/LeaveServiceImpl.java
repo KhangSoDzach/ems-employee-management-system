@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
+import com.company.ems.backend.leave.mapper.LeaveMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,7 @@ public class LeaveServiceImpl implements LeaveService {
         private static final String ERROR_LEAVE_ID_NULL = "leave id must not be null";
 
     private final LeaveRepository leaveRepository;
+    private final LeaveMapper leaveMapper;
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final DataScopeService dataScopeService;
@@ -78,7 +80,7 @@ public class LeaveServiceImpl implements LeaveService {
 
         Leave saved = leaveRepository.save(leave);
         log.info("User [{}] created leave request [{}]", principal.getUsername(), saved.getId());
-        return mapToResponse(saved);
+        return leaveMapper.toResponse(saved);
     }
 
     @Override
@@ -94,7 +96,7 @@ public class LeaveServiceImpl implements LeaveService {
         Page<Leave> leaves = leaveRepository.findByEmployeeId(self.getId(), pageable);
 
         List<LeaveResponse> content = leaves.getContent().stream()
-                .map(this::mapToResponse)
+                .map(leaveMapper::toResponse)
                 .toList();
 
         return PageResponse.<LeaveResponse>builder()
@@ -130,7 +132,7 @@ public class LeaveServiceImpl implements LeaveService {
         }
 
         List<LeaveResponse> content = leaves.getContent().stream()
-                .map(this::mapToResponse)
+                .map(leaveMapper::toResponse)
                 .toList();
 
         return PageResponse.<LeaveResponse>builder()
@@ -149,7 +151,7 @@ public class LeaveServiceImpl implements LeaveService {
                 Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
                 Leave leave = leaveRepository.findById(leaveId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
-        return mapToResponse(leave);
+        return leaveMapper.toResponse(leave);
     }
 
     @Override
@@ -192,7 +194,7 @@ public class LeaveServiceImpl implements LeaveService {
                 }
 
         Leave updated = leaveRepository.save(leave);
-        return mapToResponse(updated);
+        return leaveMapper.toResponse(updated);
     }
 
     @Override
@@ -217,27 +219,5 @@ public class LeaveServiceImpl implements LeaveService {
         leave.cancel();
         leaveRepository.save(leave);
         log.info("User [{}] cancelled leave [{}]", principal.getUsername(), id);
-    }
-
-    private LeaveResponse mapToResponse(Leave leave) {
-        if (leave == null) return null;
-        return LeaveResponse.builder()
-                .id(leave.getId())
-                .employeeId(leave.getEmployee() != null ? leave.getEmployee().getId() : null)
-                .employeeName(leave.getEmployee() != null && leave.getEmployee().getUser() != null
-                        ? leave.getEmployee().getFirstName() + " " + leave.getEmployee().getLastName()
-                        : null)
-                .leaveType(leave.getLeaveType() != null ? leave.getLeaveType().name() : null)
-                .startDate(leave.getStartDate())
-                .endDate(leave.getEndDate())
-                .duration(leave.getTotalDays())
-                .reason(leave.getReason())
-                .status(leave.getStatus() != null ? leave.getStatus().name() : null)
-                .attachmentUrl(leave.getAttachmentUrl())
-                .approvedBy(leave.getApprovedBy() != null ? leave.getApprovedBy().getId() : null)
-                .approvedAt(leave.getApprovedAt())
-                .approvalNotes(leave.getApprovalNotes())
-                .createdAt(leave.getCreatedAt())
-                .build();
     }
 }

@@ -9,6 +9,7 @@ import com.company.ems.backend.leave.dto.LeaveResponse;
 import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.leave.entity.LeaveApprovalHistory;
 import com.company.ems.backend.leave.enums.LeaveStatus;
+import com.company.ems.backend.leave.mapper.LeaveMapper;
 import com.company.ems.backend.leave.repository.LeaveApprovalHistoryRepository;
 import com.company.ems.backend.leave.repository.LeaveRepository;
 import com.company.ems.backend.user.entity.User;
@@ -53,6 +54,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
     private int longLeaveThresholdDays;
 
     private final LeaveRepository leaveRepository;
+    private final LeaveMapper leaveMapper;
     private final LeaveApprovalHistoryRepository historyRepository;
     private final UserRepository userRepository;
     private final LeaveBalanceService leaveBalanceService;
@@ -104,7 +106,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         Leave saved = leaveRepository.save(leave);
         log.info("Leave [{}] processed by user [{}]: action={}, status={} → {}",
                 leaveId, approver.getUsername(), request.getAction(), statusBefore, saved.getStatus());
-        return mapToResponse(saved);
+        return leaveMapper.toResponse(saved);
     }
 
     @Override
@@ -116,7 +118,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         }
         return historyRepository.findByLeaveIdOrderByActionAtAsc(leaveId)
                 .stream()
-                .map(this::toHistoryResponse)
+                .map(leaveMapper::toHistoryResponse)
                 .toList();
     }
 
@@ -252,46 +254,5 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
     private User findUser(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-    }
-
-    // ─── Mapping ──────────────────────────────────────────────────────────────
-
-    private LeaveResponse mapToResponse(Leave leave) {
-        return LeaveResponse.builder()
-                .id(leave.getId())
-                .employeeId(leave.getEmployee() != null ? leave.getEmployee().getId() : null)
-                .employeeName(leave.getEmployee() != null
-                        ? leave.getEmployee().getFirstName() + " " + leave.getEmployee().getLastName()
-                        : null)
-                .leaveType(leave.getLeaveType() != null ? leave.getLeaveType().name() : null)
-                .startDate(leave.getStartDate())
-                .endDate(leave.getEndDate())
-                .duration(leave.getTotalDays())
-                .reason(leave.getReason())
-                .status(leave.getStatus() != null ? leave.getStatus().name() : null)
-                .attachmentUrl(leave.getAttachmentUrl())
-                .approvedBy(leave.getApprovedBy() != null ? leave.getApprovedBy().getId() : null)
-                .approvedAt(leave.getApprovedAt())
-                .approvalNotes(leave.getApprovalNotes())
-                .currentApprovalLevel(leave.getCurrentApprovalLevel())
-                .maxApprovalLevel(leave.getMaxApprovalLevel())
-                .longLeaveHrRequired(Boolean.TRUE.equals(leave.getLongLeaveHrRequired()))
-                .createdAt(leave.getCreatedAt())
-                .build();
-    }
-
-    private LeaveApprovalHistoryResponse toHistoryResponse(LeaveApprovalHistory h) {
-        return LeaveApprovalHistoryResponse.builder()
-                .id(h.getId())
-                .leaveId(h.getLeaveId())
-                .approvalLevel(h.getApprovalLevel())
-                .approverUserId(h.getApproverUserId())
-                .approverName(h.getApproverName())
-                .action(h.getAction() != null ? h.getAction().name() : null)
-                .comments(h.getComments())
-                .actionAt(h.getActionAt())
-                .statusBefore(h.getStatusBefore() != null ? h.getStatusBefore().name() : null)
-                .statusAfter(h.getStatusAfter() != null ? h.getStatusAfter().name() : null)
-                .build();
     }
 }

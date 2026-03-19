@@ -1,8 +1,10 @@
 package com.company.ems.backend.leave.service;
 
 import com.company.ems.backend.leave.dto.LeaveBalanceResponse;
+import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.leave.entity.LeaveBalance;
 import com.company.ems.backend.leave.enums.LeaveType;
+import com.company.ems.backend.leave.mapper.LeaveMapper;
 import com.company.ems.backend.leave.repository.LeaveBalanceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ import java.util.Optional;
 public class LeaveBalanceServiceImpl implements LeaveBalanceService {
 
         private final LeaveBalanceRepository leaveBalanceRepository;
+        private final LeaveMapper leaveMapper;
 
         @Override
         @Transactional(readOnly = true)
@@ -40,7 +43,7 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
                 int currentYear = LocalDate.now().getYear();
                 return leaveBalanceRepository.findByEmployeeIdAndYear(employeeId, currentYear)
                                 .stream()
-                                .map(this::toResponse)
+                                .map(leaveMapper::toResponse)
                                 .toList();
         }
 
@@ -98,17 +101,4 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
         }
 
         // ─── Mapping ──────────────────────────────────────────────────────────────
-
-        private LeaveBalanceResponse toResponse(LeaveBalance b) {
-                return LeaveBalanceResponse.builder()
-                                .id(b.getId())
-                                .employeeId(b.getEmployee() != null ? b.getEmployee().getId() : null)
-                                .leaveType(b.getLeaveType() != null ? b.getLeaveType().name() : null)
-                                .year(b.getYear())
-                                .totalDays(b.getTotalDays())
-                                .usedDays(b.getUsedDays())
-                                .remainingDays(b.getRemainingDays())
-                                .carriedForwardDays(b.getCarriedForwardDays())
-                                .build();
-        }
 }
