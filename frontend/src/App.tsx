@@ -177,26 +177,23 @@ function App() {
             <Route
               element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}
             >
+              <Route path="/members" element={<MemberList />} />
+              <Route path="/kpi-okr" element={<KpiOkrManagement />} />
+              <Route path="/approve" element={<ApproveLeaveRequest />} />
               <Route
-                element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}
-              >
-                <Route path="/members" element={<MemberList />} />
-                <Route path="/kpi-okr" element={<KpiOkrManagement />} />
-                <Route path="/approve" element={<ApproveLeaveRequest />} />
-                <Route
-                  path="/approve-adjustments"
-                  element={<ApproveAdjustmentRequest />}
-                />
-                <Route
-                  path="/view-group-asset"
-                  element={<AssetGroupManagement />}
-                />
-              </Route>
+                path="/approve-adjustments"
+                element={<ApproveAdjustmentRequest />}
+              />
+              <Route
+                path="/view-group-asset"
+                element={<AssetGroupManagement />}
+              />
+            </Route>
 
-              {/* HR only */}
-              <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}>
-                <Route path="/hr/employees" element={<Dashboard />} />
-              </Route>
+            {/* HR only */}
+            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}>
+              <Route path="/hr/employees" element={<Dashboard />} />
+            </Route>
           </Routes>
         </Suspense>
       </BrowserRouter>
