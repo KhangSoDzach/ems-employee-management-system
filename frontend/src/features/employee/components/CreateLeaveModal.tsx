@@ -1,6 +1,6 @@
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
-import { useForm, useWatch } from "react-hook-form"
+import { useForm, FieldErrors } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 
@@ -40,10 +40,28 @@ import {
     LEAVE_TYPE_CONFIG,
     LEAVE_TYPE_OPTIONS,
 } from "../leave-request.constants"
-import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { SYSTEM_MESSAGES } from "@/constants/messages"
+
 /* ══════════════ CONSTANTS ══════════════ */
 
-import { CREATE_LEAVE_TEXT as TEXT } from "@/constants/ui-texts";
+const TEXT = {
+    TITLE: SYSTEM_MESSAGES.LEAVE.CREATE_TITLE,
+    DESC: SYSTEM_MESSAGES.LEAVE.CREATE_DESC,
+    LABEL_TYPE: SYSTEM_MESSAGES.LEAVE.CREATE_TYPE,
+    PLACEHOLDER_TYPE: SYSTEM_MESSAGES.LEAVE.CREATE_TYPE_PLACEHOLDER,
+    LABEL_DATE_START: SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START,
+    LABEL_DATE_END: SYSTEM_MESSAGES.LEAVE.CREATE_DATE_END,
+    PLACEHOLDER_DATE: SYSTEM_MESSAGES.LEAVE.CREATE_DATE_PLACEHOLDER,
+    LABEL_REASON: SYSTEM_MESSAGES.LEAVE.CREATE_REASON,
+    PLACEHOLDER_REASON: SYSTEM_MESSAGES.LEAVE.CREATE_REASON_PLACEHOLDER,
+    WARNING: SYSTEM_MESSAGES.LEAVE.CREATE_WARNING,
+    BTN_CANCEL: SYSTEM_MESSAGES.LEAVE.CREATE_BTN_CANCEL,
+    BTN_SUBMIT: SYSTEM_MESSAGES.LEAVE.CREATE_BTN_SUBMIT,
+    TOAST_LOADING: "Đang gửi yêu cầu nghỉ phép...",
+    TOAST_SUCCESS: "Gửi yêu cầu thành công!",
+    TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại thông tin nghỉ phép.",
+    ASTERISK: "*",
+} as const;
 
 /* ══════════════ COMPONENTS ══════════════ */
 
@@ -71,10 +89,7 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
         mode: "onChange",
     })
 
-    const watchType = useWatch({
-        control: form.control,
-        name: "leaveType"
-    })
+    const watchType = form.watch("leaveType")
 
     const handleClose = () => {
         form.reset()
@@ -100,13 +115,14 @@ export const CreateLeaveModal = ({ open, onClose, onSubmit }: CreateLeaveModalPr
         });
     }
 
-    const onError = () => {
+    const onError = (errors: FieldErrors<LeaveFormValues>) => {
+        console.log("Leave Form Errors:", errors);
         toast.dismiss();
         toast.error(TEXT.TOAST_VALIDATION_ERROR);
     }
 
     return (
-        <Dialog open={open} onOpenChange={(v) => { if (!v) { handleClose() } }}>
+        <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose() }}>
             <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden">
                 {/* ── Header ── */}
                 <div className="px-6 pt-6 pb-4 border-b bg-muted/30">

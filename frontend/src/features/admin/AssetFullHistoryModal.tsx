@@ -15,7 +15,7 @@ export default function AssetFullHistoryModal({ open, assetId, onClose }: Props)
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!open || !assetId) {return;}
+    if (!open || !assetId) return;
 
     const fetchHistory = async () => {
       setLoading(true);
@@ -32,7 +32,7 @@ export default function AssetFullHistoryModal({ open, assetId, onClose }: Props)
     void fetchHistory();
   }, [open, assetId]);
 
-  if (!open) {return null;}
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-70 flex items-center justify-center p-4">

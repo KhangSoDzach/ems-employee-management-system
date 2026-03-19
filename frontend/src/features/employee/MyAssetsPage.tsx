@@ -37,7 +37,6 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 /* ─────────────── CONSTANTS ─────────────── */
 
 import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
 
 const INCIDENT_TYPES = [
     { value: "DAMAGED", label: "Hư hỏng / Lỗi thiết bị (Damaged)" },
@@ -148,15 +147,15 @@ export default function MyAssetsPage() {
     }
 
     const handleSubmit = async () => {
-        if (!selectedAsset) {return}
+        if (!selectedAsset) return
 
         const newErrors: { incidentType?: string, description?: string } = {}
-        if (!incidentType) {newErrors.incidentType = SYSTEM_MESSAGES.MY_ASSETS.TOAST_SELECT_TYPE}
-        if (!description || description.trim().length < 10) {newErrors.description = SYSTEM_MESSAGES.MY_ASSETS.TOAST_DESC_MIN}
+        if (!incidentType) newErrors.incidentType = SYSTEM_MESSAGES.MY_ASSETS.TOAST_SELECT_TYPE
+        if (!description || description.trim().length < 10) newErrors.description = SYSTEM_MESSAGES.MY_ASSETS.TOAST_DESC_MIN
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors)
-            toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT)
+            toast.error("Vui lòng điền đầy đủ thông tin bắt buộc")
             return
         }
 

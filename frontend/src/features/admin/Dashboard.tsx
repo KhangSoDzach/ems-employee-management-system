@@ -9,6 +9,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { EMPLOYEE_STATUS_MAP } from "@/constants/options";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 /* ====================== */
@@ -81,11 +82,12 @@ export default function Page() {
         }
     }, [selectedEmployee, form]);
 
-    function onSubmit() {
-        // Param is required for signature but unused for now
+    function onSubmit(data: EmployeeFormValues) {
         if (selectedEmployee) {
+            console.log("Updated employee:", data);
             alert(SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_SUCCESS);
         } else {
+            console.log("Created employee:", data);
             alert(SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_SUCCESS);
         }
 
@@ -128,12 +130,86 @@ export default function Page() {
                                     <th className="data-table-header-cell text-right">{SYSTEM_MESSAGES.LABEL_ACTION || "Thao tác"}</th>
                                 </tr>
                             </thead>
-                            <tbody>                                 {/* Actual data would go here */}
-                                 {(window as unknown as { _employees: Employee[] })._employees?.map((emp) => (
-                                     <tr key={emp.id} className="data-table-row">
-                                         {/* ... render row ... */}
-                                     </tr>
-                                 ))}
+                            <tbody>
+                                {/* Mock Row 1 */}
+                                <tr className="data-table-row">
+                                    <td className="data-table-cell">
+                                        <div className="flex items-center gap-3">
+                                            <div className="avatar-small bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                                {SYSTEM_MESSAGES.EMPLOYEE.MGR_A.charAt(0)}
+                                            </div>
+                                            <span className="font-medium text-gray-900 dark:text-gray-100">{SYSTEM_MESSAGES.EMPLOYEE.MGR_A}</span>
+                                        </div>
+                                    </td>
+                                    <td className="data-table-cell font-mono text-xs text-primary">{"NV001"}</td>
+                                    <td className="data-table-cell">
+                                        <span className={`status-badge-pill ${EMPLOYEE_STATUS_MAP['Hoạt động'].className}`}>
+                                            {SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE}
+                                        </span>
+                                    </td>
+                                    <td className="data-table-cell text-gray-600">{"123456789012"}</td>
+                                    <td className="data-table-cell text-gray-600 truncate max-w-[150px]">{"an.nguyen@company.vn"}</td>
+                                    <td className="data-table-cell text-gray-600">{"0912345678"}</td>
+                                    <td className="data-table-cell text-right">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedEmployee({
+                                                    name: SYSTEM_MESSAGES.EMPLOYEE.MGR_A,
+                                                    code: "NV001",
+                                                    status: SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE,
+                                                    statusColor: EMPLOYEE_STATUS_MAP['Hoạt động'].className,
+                                                    id: "123456789012",
+                                                    email: "an.nguyen@company.vn",
+                                                    phone: "0912345678",
+                                                });
+                                                setOpen(true);
+                                            }}
+                                            className="text-primary hover:underline font-medium text-xs"
+                                        >
+                                            {SYSTEM_MESSAGES.BTN_EDIT}
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                {/* Mock Row 2 */}
+                                <tr className="data-table-row">
+                                    <td className="data-table-cell">
+                                        <div className="flex items-center gap-3">
+                                            <div className="avatar-small bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                                                {SYSTEM_MESSAGES.EMPLOYEE.MGR_B.charAt(0)}
+                                            </div>
+                                            <span className="font-medium text-gray-900 dark:text-gray-100">{SYSTEM_MESSAGES.EMPLOYEE.MGR_B}</span>
+                                        </div>
+                                    </td>
+                                    <td className="data-table-cell font-mono text-xs text-primary">{"NV002"}</td>
+                                    <td className="data-table-cell">
+                                        <span className="status-badge-pill bg-yellow-100 text-yellow-700">
+                                            {SYSTEM_MESSAGES.EMPLOYEE.STATUS_PENDING}
+                                        </span>
+                                    </td>
+                                    <td className="data-table-cell text-gray-600">{"987654321098"}</td>
+                                    <td className="data-table-cell text-gray-600 truncate max-w-[150px]">{"binh.le@company.vn"}</td>
+                                    <td className="data-table-cell text-gray-600">{"0987654321"}</td>
+                                    <td className="data-table-cell text-right">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedEmployee({
+                                                    name: SYSTEM_MESSAGES.EMPLOYEE.MGR_B,
+                                                    code: "NV002",
+                                                    status: SYSTEM_MESSAGES.EMPLOYEE.STATUS_PENDING,
+                                                    statusColor: "bg-yellow-100 text-yellow-700",
+                                                    id: "987654321098",
+                                                    email: "binh.le@company.vn",
+                                                    phone: "0987654321",
+                                                });
+                                                setOpen(true);
+                                            }}
+                                            className="text-primary hover:underline font-medium text-xs"
+                                        >
+                                            {SYSTEM_MESSAGES.BTN_EDIT}
+                                        </button>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

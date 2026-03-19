@@ -1,9 +1,5 @@
 {
   "java.compile.nullAnalysis.mode": "automatic",
   "java.configuration.updateBuildConfiguration": "automatic",
-  "java.debug.settings.onBuildFailureProceed": true,
-  "css.lint.unknownAtRules": "ignore",
-  "tailwindCSS.includeLanguages": {
-    "css": "css"
-  }
+  "java.debug.settings.onBuildFailureProceed": true
 }

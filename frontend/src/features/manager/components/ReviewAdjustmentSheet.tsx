@@ -36,9 +36,9 @@ export function ReviewAdjustmentSheet({
     const [submitting, setSubmitting] = useState<"approve" | "reject" | "return" | null>(null)
 
     const handleAction = async (action: "approve" | "reject" | "return") => {
-        if (!request) {return}
+        if (!request) return
         const handler = action === "approve" ? onApprove : action === "reject" ? onReject : onReturn
-        if (!handler) {return}
+        if (!handler) return
         setSubmitting(action)
         try {
             await handler(request.id, note)
@@ -145,10 +145,10 @@ export function ReviewAdjustmentSheet({
                                         const isOrange = Config.iconClass.includes('text-orange');
 
                                         let ringColor = 'border-slate-300';
-                                        if (isGreen) {ringColor = 'border-emerald-500';}
-                                        else if (isBlue) {ringColor = 'border-blue-500';}
-                                        else if (isRed) {ringColor = 'border-rose-500';}
-                                        else if (isOrange) {ringColor = 'border-orange-500';}
+                                        if (isGreen) ringColor = 'border-emerald-500';
+                                        else if (isBlue) ringColor = 'border-blue-500';
+                                        else if (isRed) ringColor = 'border-rose-500';
+                                        else if (isOrange) ringColor = 'border-orange-500';
 
                                         return (
                                             <div key={audit.id} className="relative pl-6">

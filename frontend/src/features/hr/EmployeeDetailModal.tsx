@@ -22,7 +22,7 @@ export default function EmployeeDetailModal({ open, employeeId, onClose }: Props
         }
     }, [open, employeeId]);
 
-    if (!open) {return null;}
+    if (!open) return null;
 
     return (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4">

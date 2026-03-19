@@ -575,7 +575,7 @@ export default function PayrollManagement() {
         slip={selectedSlip}
         open={!!selectedSlip}
         onOpenChange={(open) => {
-          if (!open) {setSelectedSlip(null);}
+          if (!open) setSelectedSlip(null);
         }}
         onSave={handleSaveSlip}
       />
