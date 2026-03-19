@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/sonner";
+import { COMMON_TEXT } from "./constants/ui-texts";
+import { AUTH_ROLES } from "./constants/auth";
 
 const LoginPage = lazy(() =>
   import("@/features/auth/LoginPage").then((module) => ({
@@ -64,7 +66,7 @@ const AnnouncementManagementPage = lazy(
 function RouteFallback() {
   return (
     <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">
-      Loading...
+      {COMMON_TEXT.LOADING}
     </div>
   );
 }
@@ -84,7 +86,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={["ROLE_ADMIN", "ROLE_HR", "ROLE_MANAGER"]}
+                  allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR, AUTH_ROLES.MANAGER]}
                 />
               }
             >
@@ -105,10 +107,10 @@ function App() {
               element={
                 <ProtectedRoute
                   allowedRoles={[
-                    "ROLE_ADMIN",
-                    "ROLE_HR",
-                    "ROLE_MANAGER",
-                    "ROLE_EMPLOYEE",
+                    AUTH_ROLES.ADMIN,
+                    AUTH_ROLES.HR,
+                    AUTH_ROLES.MANAGER,
+                    AUTH_ROLES.EMPLOYEE,
                   ]}
                 />
               }
@@ -117,7 +119,7 @@ function App() {
             </Route>
 
             {/* Admin only */}
-            <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN"]} />}>
+            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}>
               <Route path="/assets" element={<AssetManagementPage />} />
               <Route
                 path="/announcements/manage"
@@ -130,10 +132,10 @@ function App() {
               element={
                 <ProtectedRoute
                   allowedRoles={[
-                    "ROLE_ADMIN",
-                    "ROLE_HR",
-                    "ROLE_MANAGER",
-                    "ROLE_EMPLOYEE",
+                    AUTH_ROLES.ADMIN,
+                    AUTH_ROLES.HR,
+                    AUTH_ROLES.MANAGER,
+                    AUTH_ROLES.EMPLOYEE,
                   ]}
                 />
               }
@@ -146,7 +148,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={["ROLE_EMPLOYEE", "ROLE_HR", "ROLE_MANAGER"]}
+                  allowedRoles={[AUTH_ROLES.EMPLOYEE, AUTH_ROLES.HR, AUTH_ROLES.MANAGER]}
                 />
               }
             >
@@ -158,14 +160,14 @@ function App() {
 
             {/* Employee only */}
             <Route
-              element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE"]} />}
+              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.EMPLOYEE]} />}
             >
               <Route path="/employee" element={<EmployeeDashboard />} />
               <Route path="/salary-history" element={<SalaryHistoryPage />} />
             </Route>
 
             {/* Manager only */}
-            <Route element={<ProtectedRoute allowedRoles={["ROLE_MANAGER"]} />}>
+            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}>
               <Route path="/members" element={<MemberList />} />
               <Route path="/kpi-okr" element={<KpiOkrManagement />} />
               <Route path="/approve" element={<ApproveLeaveRequest />} />
@@ -180,13 +182,13 @@ function App() {
             </Route>
 
             {/* HR only */}
-            <Route element={<ProtectedRoute allowedRoles={["ROLE_HR"]} />}>
+            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}>
               <Route path="/hr/employees" element={<Dashboard />} />
             </Route>
           </Routes>
         </Suspense>
       </BrowserRouter>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" visibleToasts={1} closeButton />
     </AuthProvider>
   );
 }

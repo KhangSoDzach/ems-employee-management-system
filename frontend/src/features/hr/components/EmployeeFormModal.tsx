@@ -88,7 +88,7 @@ export default function EmployeeFormModal({ open, mode, employeeId, employee, on
             setErrors((prev) => ({ ...prev, ...normalized }));
             const firstFieldError = Object.values(normalized)[0];
             if (firstFieldError) {
-                toast.error(firstFieldError);
+                toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
             }
             return true;
         }
@@ -167,7 +167,7 @@ export default function EmployeeFormModal({ open, mode, employeeId, employee, on
 
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) {
-            toast.error(Object.values(newErrors)[0] ?? SYSTEM_MESSAGES.EMPLOYEE.MSG_VALIDATION_ERROR);
+            toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
         }
         return Object.keys(newErrors).length === 0;
     };
@@ -299,9 +299,9 @@ export default function EmployeeFormModal({ open, mode, employeeId, employee, on
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (mode === "edit" && !employeeId) return;
+        if (mode === "edit" && !employeeId) {return;}
 
-        if (!validateForm()) return;
+        if (!validateForm()) {return;}
 
         const payload: EmployeeRequest = {
             ...formData,
@@ -337,7 +337,7 @@ export default function EmployeeFormModal({ open, mode, employeeId, employee, on
             onSuccess();
         } catch (error: unknown) {
             console.error(error);
-            if (applyServerValidationErrors(error)) return;
+            if (applyServerValidationErrors(error)) {return;}
 
             const rawMessage = (error as ApiError)?.response?.data?.message;
             const errMsg = mode === "create" ? SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_ERROR : SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_ERROR;
@@ -350,7 +350,7 @@ export default function EmployeeFormModal({ open, mode, employeeId, employee, on
         }
     };
 
-    if (!open) return null;
+    if (!open) {return null;}
 
     const title = mode === "create" ? SYSTEM_MESSAGES.EMPLOYEE.MODAL_CREATE_TITLE : SYSTEM_MESSAGES.EMPLOYEE.MODAL_UPDATE_TITLE;
     const submitBtnText = mode === "create" ? SYSTEM_MESSAGES.EMPLOYEE.BTN_CREATE : SYSTEM_MESSAGES.EMPLOYEE.BTN_SAVE_PROFILE;

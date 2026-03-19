@@ -100,6 +100,8 @@ export const SYSTEM_MESSAGES = {
         EMAIL_PLACEHOLDER: "email@company.com",
         ID_PLACEHOLDER: "012345678912",
         PHONE_PLACEHOLDER: "0912345678",
+        LOADING: "Đang xác thực...",
+        SUCCESS: "Đăng nhập thành công!",
     },
 
     // Attendance History
@@ -289,6 +291,7 @@ export const SYSTEM_MESSAGES = {
         TYPE_UNPAID: "Nghỉ không lương",
         TYPE_PERSONAL: "Việc riêng",
         EMPTY_PENDING: "Không có yêu cầu nghỉ phép nào đang chờ duyệt.",
+        MSG_SUBMIT_SUCCESS: "Đơn xin nghỉ phép đã được gửi thành công!",
     },
 
     // File Uploads
@@ -495,7 +498,7 @@ export const SYSTEM_MESSAGES = {
         MSG_CREATE_ERROR: "Không thể tạo nhân viên.",
         MSG_UPDATE_ERROR: "Không thể cập nhật nhân viên.",
         MSG_DELETE_ERROR: "Không thể xóa nhân viên.",
-        MSG_VALIDATION_ERROR: "Vui lòng kiểm tra lại các trường bắt buộc.",
+        MSG_VALIDATION_ERROR: "Vui lòng điền đầy đủ nội dung",
         MSG_DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa nhân viên này?",
         MSG_FETCH_ERROR: "Không thể tải danh sách nhân viên.",
         INFO_NOTE: "Các thay đổi về chức danh và phòng ban sẽ cần sự phê duyệt của trưởng bộ phận.",
@@ -918,6 +921,8 @@ export const SYSTEM_MESSAGES = {
         BTN_LOGIN: "Đăng nhập",
         BTN_PROCESSING: "Đang xử lý...",
         LINK_FORGOT: "Quên mật khẩu?",
+        LOADING: "Đang xác thực...",
+        SUCCESS: "Đăng nhập thành công!",
     },
 
     // Two Factor Login
@@ -1134,6 +1139,11 @@ export const SYSTEM_MESSAGES = {
         SHEET_COMMENT_PLACEHOLDER: "Nhập ý kiến đóng góp cho nhân viên tại đây...",
         SHEET_COMMENT_HELPER: "Mọi phản hồi của bạn sẽ được bảo mật và sử dụng cho mục đích cải thiện năng lực đội ngũ.",
         SHEET_SUBMIT: "Gửi đánh giá",
+        SHEET_SUBMITTING: "Đang gửi...",
+        SHEET_SUBMIT_SUCCESS: "Đã gửi đánh giá thành công!",
+        SHEET_SUBMIT_ERROR: "Gửi đánh giá thất bại. Vui lòng thử lại.",
+        SHEET_EXPORT_SUCCESS: "Xuất báo cáo thành công!",
+        SHEET_EXPORT_POPUP_ERROR: "Vui lòng cho phép mở popup để xuất PDF",
         SHEET_CANCEL: "Hủy",
     },
 

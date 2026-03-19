@@ -114,7 +114,7 @@ export default function SidebarSettings() {
     };
 
     const handleVerifyOTP = async () => {
-        if (otpValue.length !== 6) return;
+        if (otpValue.length !== 6) {return;}
 
         try {
             const payload = await verifyMutation.mutateAsync(otpValue);
@@ -133,7 +133,7 @@ export default function SidebarSettings() {
     };
 
     const handleConfirmDisable = async () => {
-        if (!disablePassword) return;
+        if (!disablePassword) {return;}
 
         try {
             await disableMutation.mutateAsync(disablePassword);
