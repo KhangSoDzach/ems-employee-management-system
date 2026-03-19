@@ -15,36 +15,42 @@ import { SYSTEM_MESSAGES } from "@/constants/messages"
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
 
 export type Member = {
-  id: number
-  name: string
-  email: string
-  role: string
-  roleColor: string
-  skills: string[]
-  avatar: string
-}
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  roleColor: string;
+  skills: string[];
+  avatar: string;
+};
 
 type EvaluationCriterion = {
-  key: string
-  label: string
-  description: string
-  score: number
-  rating: string
-  ratingClass: string
-  icon: React.ReactNode
-}
+  key: string;
+  label: string;
+  description: string;
+  score: number;
+  rating: string;
+  ratingClass: string;
+  icon: React.ReactNode;
+};
 
 type MemberEvaluationSheetProps = {
-  member: Member | null
-  open: boolean
-  mode?: "view" | "edit"
-  onOpenChange: (open: boolean) => void
-  onSubmit?: (data: { scores: Record<string, number>; comment: string }) => void
-}
+  member: Member | null;
+  open: boolean;
+  mode?: "view" | "edit";
+  onOpenChange: (open: boolean) => void;
+  onSubmit?: (data: {
+    scores: Record<string, number>;
+    comment: string;
+  }) => void;
+};
 
-function getEvaluationForMember(member: Member, t: typeof SYSTEM_MESSAGES.MEMBER_LIST) {
+function getEvaluationForMember(
+  member: Member,
+  t: typeof SYSTEM_MESSAGES.MEMBER_LIST,
+) {
   // Mocked evaluation data per member (based on id to vary slightly)
-  const base = 80 + (member.id % 3) * 3
+  const base = 80 + (member.id % 3) * 3;
 
   const criteria: EvaluationCriterion[] = [
     {
@@ -53,7 +59,10 @@ function getEvaluationForMember(member: Member, t: typeof SYSTEM_MESSAGES.MEMBER
       description: t.SHEET_CRITERIA_DESC_EXPERTISE,
       score: base + 5,
       rating: base + 5 >= 90 ? t.SHEET_RATING_EXCELLENT : t.SHEET_RATING_GOOD,
-      ratingClass: base + 5 >= 90 ? "bg-emerald-100 text-emerald-700" : "bg-primary/10 text-primary",
+      ratingClass:
+        base + 5 >= 90
+          ? "bg-emerald-100 text-emerald-700"
+          : "bg-primary/10 text-primary",
       icon: <Star className="w-4 h-4" />,
     },
     {
@@ -61,8 +70,12 @@ function getEvaluationForMember(member: Member, t: typeof SYSTEM_MESSAGES.MEMBER
       label: t.SHEET_CRITERIA_COMMUNICATION,
       description: t.SHEET_CRITERIA_DESC_COMMUNICATION,
       score: base,
-      rating: base >= 85 ? t.SHEET_RATING_GOOD : t.SHEET_RATING_NEEDS_IMPROVEMENT,
-      ratingClass: base >= 85 ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-700",
+      rating:
+        base >= 85 ? t.SHEET_RATING_GOOD : t.SHEET_RATING_NEEDS_IMPROVEMENT,
+      ratingClass:
+        base >= 85
+          ? "bg-primary/10 text-primary"
+          : "bg-amber-100 text-amber-700",
       icon: <MessageCircle className="w-4 h-4" />,
     },
     {
@@ -70,18 +83,31 @@ function getEvaluationForMember(member: Member, t: typeof SYSTEM_MESSAGES.MEMBER
       label: t.SHEET_CRITERIA_ATTITUDE,
       description: t.SHEET_CRITERIA_DESC_ATTITUDE,
       score: base + 2,
-      rating: base + 2 >= 85 ? t.SHEET_RATING_GOOD : t.SHEET_RATING_NEEDS_IMPROVEMENT,
-      ratingClass: base + 2 >= 85 ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-700",
+      rating:
+        base + 2 >= 85 ? t.SHEET_RATING_GOOD : t.SHEET_RATING_NEEDS_IMPROVEMENT,
+      ratingClass:
+        base + 2 >= 85
+          ? "bg-primary/10 text-primary"
+          : "bg-amber-100 text-amber-700",
       icon: <UserCheck className="w-4 h-4" />,
     },
-  ]
+  ];
 
-  const totalScore = Math.round((criteria.reduce((acc, cur) => acc + cur.score, 0) / (criteria.length * 100)) * 100)
-  const rank = totalScore >= 90 ? t.SHEET_RANK_A : totalScore >= 80 ? t.SHEET_RANK_B : t.SHEET_RANK_C
+  const totalScore = Math.round(
+    (criteria.reduce((acc, cur) => acc + cur.score, 0) /
+      (criteria.length * 100)) *
+      100,
+  );
+  const rank =
+    totalScore >= 90
+      ? t.SHEET_RANK_A
+      : totalScore >= 80
+        ? t.SHEET_RANK_B
+        : t.SHEET_RANK_C;
 
-  const radarPoints = "100,30 170,100 100,160 50,100"
+  const radarPoints = "100,30 170,100 100,160 50,100";
 
-  return { criteria, totalScore, rank, radarPoints }
+  return { criteria, totalScore, rank, radarPoints };
 }
 
 export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChange, onSubmit }: Readonly<MemberEvaluationSheetProps>) {
@@ -92,9 +118,9 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
   }, [member, t])
 
   const [scores, setScores] = useState<Record<string, number>>(() =>
-    Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score]))
-  )
-  const [comment, setComment] = useState<string>(t.SHEET_COMMENT_TEXT)
+    Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])),
+  );
+  const [comment, setComment] = useState<string>(t.SHEET_COMMENT_TEXT);
 
   useEffect(() => {
     setScores(Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])))
@@ -131,12 +157,14 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
   if (!member) { return null; }
 
   const handleSubmit = async () => {
-    const hasEmpty = Object.values(scores).some((s) => s === null || s === undefined || Number.isNaN(Number(s)))
+    const hasEmpty = Object.values(scores).some(
+      (s) => s === null || s === undefined || Number.isNaN(Number(s)),
+    );
     if (hasEmpty) {
       toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT)
       return
     }
-    setSubmitting(true)
+    setSubmitting(true);
     try {
       // Backend evaluation API not yet implemented — simulate success
       // When ready: await evaluationService.submit({ memberId: member.id, scores, comment })
@@ -147,9 +175,9 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
     } catch {
       toast.error(t.SHEET_SUBMIT_ERROR)
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleExportPDF = () => {
     if (!member) { return; }
@@ -191,7 +219,7 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
     toast.success(t.SHEET_EXPORT_SUCCESS)
   }
 
-  const canEdit = mode === "edit"
+  const canEdit = mode === "edit";
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) { onOpenChange(false); } }}>
@@ -218,7 +246,9 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
                 <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-base font-semibold text-foreground">{member.name}</p>
+                <p className="text-base font-semibold text-foreground">
+                  {member.name}
+                </p>
                 <p className="text-xs text-muted-foreground">{member.email}</p>
                 <p className="text-sm font-medium text-primary mt-1">{member.role}</p>
                 <p className="text-xs text-muted-foreground">{t.SHEET_EMP_CODE_LABEL}{":"} {member.id}</p>
@@ -229,13 +259,20 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
             <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-start gap-3">
               <Info className="text-primary text-xl" />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t.SHEET_ROLE_LABEL}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {t.SHEET_ROLE_LABEL}
+                </p>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                   {t.SHEET_ROLE_DESC}
                   <span className="font-bold text-primary">{member.role}</span>
                 </p>
               </div>
-              <Button variant="ghost" size="sm" className="text-primary" onClick={() => { }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-primary"
+                onClick={() => {}}
+              >
                 {t.SHEET_ROLE_CHANGE}
               </Button>
             </div>
@@ -296,9 +333,11 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
             {/* Criteria breakdown */}
             <div className="space-y-3">
               {baseline.criteria.map((criterion) => {
-                const score = scores[criterion.key] ?? criterion.score
-                const rating = canEdit ? getRating(score) : criterion.rating
-                const ratingClass = canEdit ? getRatingClass(score) : criterion.ratingClass
+                const score = scores[criterion.key] ?? criterion.score;
+                const rating = canEdit ? getRating(score) : criterion.rating;
+                const ratingClass = canEdit
+                  ? getRatingClass(score)
+                  : criterion.ratingClass;
 
                 return (
                   <div
@@ -327,8 +366,14 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
                             max={100}
                             value={score}
                             onChange={(e) => {
-                              const next = Math.min(100, Math.max(0, Number(e.target.value)))
-                              setScores((prev) => ({ ...prev, [criterion.key]: next }))
+                              const next = Math.min(
+                                100,
+                                Math.max(0, Number(e.target.value)),
+                              );
+                              setScores((prev) => ({
+                                ...prev,
+                                [criterion.key]: next,
+                              }));
                             }}
                             placeholder={t.SHEET_SCORE_PLACEHOLDER}
                             className="w-20 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-9 px-2 text-sm font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
@@ -340,19 +385,23 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
                           {criterion.score}{"/100"}
                         </p>
                       )}
-                      <span className={`inline-block px-2 py-0.5 rounded-md ${ratingClass} text-[10px] font-bold`}>
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-md ${ratingClass} text-[10px] font-bold`}
+                      >
                         {rating}
                       </span>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
 
             {/* Manager comment */}
             {canEdit ? (
               <div className="bg-white dark:bg-slate-900 p-3 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 space-y-3">
-                <label className="text-sm font-bold text-slate-800 dark:text-slate-200">{t.SHEET_COMMENT_TITLE}</label>
+                <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {t.SHEET_COMMENT_TITLE}
+                </label>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
@@ -360,7 +409,9 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
                   rows={4}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
                 />
-                <p className="text-[11px] text-slate-400 italic">{t.SHEET_COMMENT_HELPER}</p>
+                <p className="text-[11px] text-slate-400 italic">
+                  {t.SHEET_COMMENT_HELPER}
+                </p>
               </div>
             ) : (
               <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 italic relative">
@@ -427,5 +478,5 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

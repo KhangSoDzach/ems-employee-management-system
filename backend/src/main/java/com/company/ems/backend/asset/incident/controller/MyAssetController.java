@@ -3,7 +3,7 @@ package com.company.ems.backend.asset.incident.controller;
 import com.company.ems.backend.asset.incident.dto.IncidentDto;
 import com.company.ems.backend.asset.incident.service.IncidentService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
-import com.company.ems.backend.common.constant.AppRole;
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,7 +26,7 @@ public class MyAssetController {
     private final IncidentService incidentService;
 
     @GetMapping("/my/assets")
-    @PreAuthorize(AppRole.HAS_ANY)
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
     @Operation(summary = "Get assets assigned to me")
     public ResponseEntity<ApiResponse<PageResponse<IncidentDto.MyAsset>>> getMyAssets(
             @AuthenticationPrincipal CustomUserPrincipal principal) {
@@ -35,7 +35,7 @@ public class MyAssetController {
 
     @PostMapping(value = "/assets/{assetId}/report",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(AppRole.HAS_ANY)
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
     @Operation(summary = "Submit an asset incident report")
     public ResponseEntity<ApiResponse<IncidentDto.ReportDetail>> submitReport(
             @PathVariable Long assetId,
@@ -47,7 +47,7 @@ public class MyAssetController {
     }
 
     @GetMapping("/my/reports")
-    @PreAuthorize(AppRole.HAS_ANY)
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
     @Operation(summary = "Get my incident report history")
     public ResponseEntity<ApiResponse<PageResponse<IncidentDto.ReportRow>>> getMyReports(
             @RequestParam(defaultValue = "0")  int page,
@@ -58,7 +58,7 @@ public class MyAssetController {
     }
 
     @GetMapping("/my/reports/{id}")
-    @PreAuthorize(AppRole.HAS_ANY)
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
     @Operation(summary = "Get detail of my incident report")
     public ResponseEntity<ApiResponse<IncidentDto.ReportDetail>> getMyReportDetail(
             @PathVariable Long id,

@@ -132,6 +132,14 @@ export function AppSidebar({
                   url: "/announcements",
                 },
                 {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
+                  url: "/payroll",
+                },
+                {
+                  title: "Tạo thông báo",
+                  url: "/announcements/manage",
+                },
+                {
                   title: "Duyệt báo cáo sự cố",
                   url: "/asset-reports",
                 },

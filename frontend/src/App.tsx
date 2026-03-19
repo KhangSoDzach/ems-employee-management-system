@@ -45,7 +45,7 @@ const KpiOkrManagement = lazy(
   () => import("./features/manager/KpiOkrManagement"),
 );
 const MemberList = lazy(() => import("./features/manager/MemberList"));
-const PayrollManagement = lazy(() => import("./features/hr/PayrollManagement"));
+const PayrollManagement = lazy(() => import("@/features/hr/PayrollManagement"));
 const AssetReportManagement = lazy(
   () => import("./features/admin/AssetReportManagement"),
 );
@@ -102,7 +102,6 @@ function App() {
                 element={<AssetReportManagement />}
               />
               <Route path="/hr-employees" element={<EmployeeManagement />} />
-              <Route path="/payroll" element={<PayrollManagement />} />
             </Route>
 
             {/* Announcements: all authenticated roles */}
@@ -124,6 +123,7 @@ function App() {
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}>
               <Route path="/assets" element={<AssetManagementPage />} />
+              <Route path="/payroll" element={<PayrollManagement />} />
               <Route
                 path="/announcements/manage"
                 element={<AnnouncementManagementPage />}

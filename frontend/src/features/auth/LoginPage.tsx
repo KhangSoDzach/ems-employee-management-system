@@ -119,7 +119,7 @@ export const LoginPage = () => {
       const apiErr = err as { response?: { data?: { message?: string } } };
       toast.error(
         apiErr.response?.data?.message ||
-        SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID,
+          SYSTEM_MESSAGES.VALIDATION.EMAIL_PASSWORD_INVALID,
       );
     }
   };
@@ -199,7 +199,11 @@ export const LoginPage = () => {
       <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
         <CardHeader className="text-center space-y-2 pb-6">
           <div className="flex aspect-square size-16 mx-auto items-center justify-center rounded-lg bg-sidebar-primary/50 text-sidebar-primary-foreground overflow-hidden mb-2 shadow-sm border border-primary/20">
-            <img src="/icon.png" className="size-full object-cover" alt="Logo" />
+            <img
+              src="/icon.png"
+              className="size-full object-cover"
+              alt="Logo"
+            />
           </div>
           <CardTitle className="text-2xl font-bold">{SYSTEM_MESSAGES.LOGIN.TITLE}</CardTitle>
           <CardDescription>{SYSTEM_MESSAGES.LOGIN.DESC}</CardDescription>
@@ -277,9 +281,9 @@ export const LoginPage = () => {
                   onCheckedChange={(checked) =>
                     setValue("remember", checked as boolean)
                   }
-                  defaultChecked={
-                    localStorage.getItem("rememberedEmail") ? true : false
-                  }
+                  defaultChecked={Boolean(
+                    localStorage.getItem("rememberedEmail"),
+                  )}
                 />
                 <Label
                   htmlFor="remember"
@@ -339,15 +343,15 @@ export const LoginPage = () => {
               </label>
 
               <div className="flex justify-center gap-3">
-                {[...Array(6)].map((_, i) => (
+                {new Array(6).fill(null).map((_, i) => (
                   <input
-                    key={i}
+                    key={`otp-${i}`}
                     type="text"
                     maxLength={1}
                     className="w-12 h-14 text-center border-2 border-slate-100 rounded-2xl font-bold text-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none bg-slate-50/50"
                     value={otpValue[i] || ""}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, "");
+                      const val = e.target.value.replace(/\D/g, "");
                       if (val) {
                         const newOtp = otpValue.split("");
                         newOtp[i] = val;
