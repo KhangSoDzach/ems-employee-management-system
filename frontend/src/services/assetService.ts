@@ -124,8 +124,8 @@ export const assetService = {
             .then(res => res.data),
 
     // Asset Management
-    listAssets: (params: { page?: number; size?: number; status?: AssetStatus; type?: string; keyword?: string }): Promise<PageResponse<AssetSummary>> =>
-        wrap<ApiResponse<PageResponse<AssetSummary>>>(api.get('/assets', { params }))
+    listAssets: (params: { page?: number; size?: number; status?: AssetStatus; type?: string; keyword?: string }, signal?: AbortSignal): Promise<PageResponse<AssetSummary>> =>
+        wrap<ApiResponse<PageResponse<AssetSummary>>>(api.get('/assets', { params, signal }))
             .then(res => res.data),
 
     getNextCode: (): Promise<string> =>

@@ -2,16 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import {
-  Eye,
-  Pencil,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Download,
-  AlertTriangle,
-} from "lucide-react";
+import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2, Download, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import AssetDetailModal from "./AssetDetailModal";
 import AssetCreateModal from "./AssetCreateModal";
@@ -61,100 +52,75 @@ export default function AssetManagementPage() {
   const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<AssetDetail | null>(null);
 
-  const [deleteTarget, setDeleteTarget] = useState<{
-    id: number | string;
-    name: string;
-    status: string;
-  } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number | string; name: string; status: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const resolveAssetIdentifier = useCallback(
-    (summary: AssetSummary): number | string | null => {
-      if (summary.id && summary.id.trim().length > 0) {
-        return summary.id;
-      }
-      return null;
-    },
-    [],
-  );
+  const resolveAssetIdentifier = useCallback((summary: AssetSummary): number | string | null => {
+    if (summary.dbId != null) return summary.dbId;
+    if (summary.id && summary.id.trim().length > 0) return summary.id;
+    return null;
+  }, []);
 
-  const handleOpenDetail = useCallback(
-    async (summary: AssetSummary) => {
-      const identifier = resolveAssetIdentifier(summary);
-      if (identifier == null) {
-        toast.error(SYSTEM_MESSAGES.ERROR);
-        return;
-      }
-      setSelectedId(identifier);
-      setOpenDetail(true);
-    },
-    [resolveAssetIdentifier],
-  );
+  const handleOpenDetail = useCallback(async (summary: AssetSummary) => {
+    const identifier = resolveAssetIdentifier(summary);
+    if (identifier == null) {
+      toast.error(SYSTEM_MESSAGES.ERROR);
+      return;
+    }
+    setSelectedId(identifier);
+    setOpenDetail(true);
+  }, [resolveAssetIdentifier]);
 
-  const handleOpenEdit = useCallback(
-    async (summary: AssetSummary) => {
-      const identifier = resolveAssetIdentifier(summary);
-      if (identifier == null) {
-        toast.error(SYSTEM_MESSAGES.ERROR);
-        return;
-      }
-      setLoading(true);
-      try {
-        const full = await assetService.getAssetById(identifier);
-        setSelectedId(identifier);
-        setSelectedAsset(full);
-        setOpenEdit(true);
-      } catch {
-        toast.error(SYSTEM_MESSAGES.ERROR);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [resolveAssetIdentifier],
-  );
+  const handleOpenEdit = useCallback(async (summary: AssetSummary) => {
+    const identifier = resolveAssetIdentifier(summary);
+    if (identifier == null) {
+      toast.error(SYSTEM_MESSAGES.ERROR);
+      return;
+    }
+    setLoading(true);
+    try {
+      const full = await assetService.getAssetById(identifier);
+      setSelectedId(full.id ?? identifier);
+      setSelectedAsset(full);
+      setOpenEdit(true);
+    } catch {
+      toast.error(SYSTEM_MESSAGES.ERROR);
+    } finally {
+      setLoading(false);
+    }
+  }, [resolveAssetIdentifier]);
 
   useEffect(() => {
     const t = setTimeout(() => setSearchDebounced(search), 400);
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => {
-    setPage(0);
-  }, [statusFilter, searchDebounced]);
+  useEffect(() => { setPage(0); }, [statusFilter, searchDebounced]);
 
-  const fetchList = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      try {
-        const res = await assetService.listAssets({
-          page,
-          size: PAGE_SIZE,
-          status: statusFilter || undefined,
-          keyword: searchDebounced || undefined,
-        });
+  const fetchList = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    try {
+      const res = await assetService.listAssets({
+        page,
+        size: PAGE_SIZE,
+        status: statusFilter || undefined,
+        keyword: searchDebounced || undefined,
+      });
 
-        if (signal?.aborted) {
-          return;
-        }
-        setAssets(res.content);
-        setTotalElements(res.totalElements);
-        setTotalPages(res.totalPages);
-      } catch (err: unknown) {
-        if (signal?.aborted) {
-          return;
-        }
-        const name = (err as { name?: string })?.name;
-        if (name !== "AbortError" && name !== "CanceledError") {
-          toast.error(SYSTEM_MESSAGES.API_ERROR);
-        }
-      } finally {
-        if (!signal?.aborted) {
-          setLoading(false);
-        }
+      if (signal?.aborted) return;
+      setAssets(res.content);
+      setTotal(res.totalElements);
+      setTotalPages(res.totalPages);
+    } catch (err: unknown) {
+      if (signal?.aborted) return;
+      const name = (err as { name?: string })?.name;
+      if (name !== 'AbortError' && name !== 'CanceledError') {
+        toast.error(SYSTEM_MESSAGES.API_ERROR);
       }
-    },
-    [page, statusFilter, searchDebounced],
-  );
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  }, [page, statusFilter, searchDebounced]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -167,9 +133,7 @@ export default function AssetManagementPage() {
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) {
-      return;
-    }
+    if (!deleteTarget) return;
     setDeleting(true);
     try {
       await assetService.deleteAsset(deleteTarget.id);
@@ -236,11 +200,7 @@ export default function AssetManagementPage() {
                 className="px-5 py-2 flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition gap-2"
                 title="Tải về danh sách tài sản (CSV)"
               >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               </button>
               <button
                 onClick={() => setOpenCreate(true)}
@@ -257,11 +217,10 @@ export default function AssetManagementPage() {
               <button
                 key={tab.value}
                 onClick={() => setStatusFilter(tab.value)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                  statusFilter === tab.value
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${statusFilter === tab.value
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -273,24 +232,12 @@ export default function AssetManagementPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase text-xs">
                 <tr>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_ID}
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_NAME}
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_TYPE}
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_STATUS}
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_USER}
-                  </th>
-                  <th className="px-6 py-4 text-right">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_ACTIONS}
-                  </th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_ID}</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_NAME}</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_TYPE}</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_STATUS}</th>
+                  <th className="px-6 py-4 text-left">{SYSTEM_MESSAGES.ASSET.TABLE_USER}</th>
+                  <th className="px-6 py-4 text-right">{SYSTEM_MESSAGES.ASSET.TABLE_ACTIONS}</th>
                 </tr>
               </thead>
 
@@ -314,37 +261,22 @@ export default function AssetManagementPage() {
                       key={asset.id}
                       className="border-t hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                     >
-                      <td className="px-6 py-4 font-medium text-gray-700">
-                        {asset.id}
-                      </td>
+                      <td className="px-6 py-4 font-medium text-gray-700">{asset.id}</td>
 
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {asset.name}
-                        </div>
-                        {asset.desc && (
-                          <div className="text-xs text-gray-500">
-                            {asset.desc}
-                          </div>
-                        )}
+                        <div className="font-semibold text-gray-900 dark:text-white">{asset.name}</div>
+                        {asset.desc && <div className="text-xs text-gray-500">{asset.desc}</div>}
                       </td>
 
-                      <td className="px-6 py-4">
-                        {asset.type ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                      </td>
+                      <td className="px-6 py-4">{asset.type ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</td>
 
                       <td className="px-6 py-4">
-                        <span
-                          className={`text-xs font-bold px-3 py-1 rounded-full ${asset.statusColor}`}
-                        >
-                          {ASSET_STATUS_LABELS[asset.status as AssetStatus] ??
-                            asset.status}
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${asset.statusColor}`}>
+                          {ASSET_STATUS_LABELS[asset.status as AssetStatus] ?? asset.status}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600">
-                        {asset.user ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                      </td>
+                      <td className="px-6 py-4 text-gray-600">{asset.user ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</td>
 
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-3 text-gray-500">
@@ -363,15 +295,11 @@ export default function AssetManagementPage() {
                             className="cursor-pointer hover:text-red-500"
                             onClick={() => {
                               const identifier = resolveAssetIdentifier(asset);
-                              if (identifier === null) {
+                              if (identifier == null) {
                                 toast.error(SYSTEM_MESSAGES.ERROR);
                                 return;
                               }
-                              handleDelete(
-                                identifier,
-                                asset.name,
-                                asset.status?.toUpperCase() ?? "",
-                              );
+                              handleDelete(identifier, asset.name, asset.status?.toUpperCase() ?? "");
                             }}
                           />
                         </div>
@@ -399,18 +327,13 @@ export default function AssetManagementPage() {
                 </button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   const pg = totalPages <= 5 ? i : Math.max(0, page - 2) + i;
-                  if (pg >= totalPages) {
-                    return null;
-                  }
+                  if (pg >= totalPages) return null;
                   return (
                     <button
                       key={pg}
                       onClick={() => setPage(pg)}
-                      className={`w-8 h-8 rounded-full font-bold ${
-                        pg === page
-                          ? "bg-primary text-white"
-                          : "hover:bg-gray-200"
-                      }`}
+                      className={`w-8 h-8 rounded-full font-bold ${pg === page ? "bg-primary text-white" : "hover:bg-gray-200"
+                        }`}
                     >
                       {pg + 1}
                     </button>
@@ -431,10 +354,7 @@ export default function AssetManagementPage() {
         <AssetCreateModal
           open={openCreate}
           onClose={() => setOpenCreate(false)}
-          onCreated={() => {
-            fetchList();
-            setOpenCreate(false);
-          }}
+          onCreated={() => { fetchList(); setOpenCreate(false); }}
         />
         <AssetDetailModal
           open={openDetail}
@@ -447,28 +367,19 @@ export default function AssetManagementPage() {
           asset={selectedAsset}
           assetId={selectedId}
           onClose={() => setOpenEdit(false)}
-          onSave={() => {
-            fetchList();
-            setOpenEdit(false);
-          }}
+          onSave={() => { fetchList(); setOpenEdit(false); }}
         />
 
         {/* ===== DELETE CONFIRMATION DIALOG ===== */}
         <Dialog
           open={!!deleteTarget}
-          onOpenChange={(open) => {
-            if (!open && !deleting) {
-              setDeleteTarget(null);
-            }
-          }}
+          onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}
         >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-red-600">
                 <AlertTriangle className="w-5 h-5" />
-                {deleteTarget?.status?.toUpperCase() === "ASSIGNED"
-                  ? "Không thể xóa tài sản"
-                  : "Xác nhận xóa tài sản"}
+                {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? "Không thể xóa tài sản" : "Xác nhận xóa tài sản"}
               </DialogTitle>
               <DialogDescription className="pt-2" asChild>
                 <div>
@@ -477,34 +388,21 @@ export default function AssetManagementPage() {
                     <div className="space-y-3">
                       <p>
                         Tài sản{" "}
-                        <span className="font-semibold text-gray-900">
-                          "{deleteTarget?.name}"
-                        </span>{" "}
-                        đang được cấp phát. Phải{" "}
-                        <span className="font-semibold text-orange-600">
-                          thu hồi trước
-                        </span>{" "}
-                        khi xóa.
+                        <span className="font-semibold text-gray-900">"{deleteTarget?.name}"</span>{" "}
+                        đang được cấp phát. Phải <span className="font-semibold text-orange-600">thu hồi trước</span> khi xóa.
                       </p>
                       <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
                         <p className="font-semibold mb-1">Cách thực hiện:</p>
-                        <p>
-                          Mở chi tiết tài sản → bấm{" "}
-                          <span className="font-bold">Thu hồi</span> → quay lại
-                          và xóa.
-                        </p>
+                        <p>Mở chi tiết tài sản → bấm <span className="font-bold">Thu hồi</span> → quay lại và xóa.</p>
                       </div>
                     </div>
                   ) : (
                     // AVAILABLE / RETIRED: normal confirm
                     <p>
                       Bạn có chắc muốn xóa tài sản{" "}
-                      <span className="font-semibold text-gray-900">
-                        "{deleteTarget?.name}"
-                      </span>
-                      ?
+                      <span className="font-semibold text-gray-900">"{deleteTarget?.name}"</span>?
                       <br />
-                      {"Hành động này không thể hoàn tác."}
+                      Hành động này không thể hoàn tác.
                     </p>
                   )}
                 </div>
@@ -516,13 +414,13 @@ export default function AssetManagementPage() {
                 disabled={deleting}
                 className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
               >
-                {"Đóng"}
+                Đóng
               </button>
               {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
                 // Guide to open detail modal for return
                 <button
                   onClick={() => {
-                    const asset = assets.find((a) => {
+                    const asset = assets.find(a => {
                       const id = resolveAssetIdentifier(a);
                       return id === deleteTarget?.id;
                     });
@@ -533,7 +431,7 @@ export default function AssetManagementPage() {
                   }}
                   className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition flex items-center gap-2"
                 >
-                  {"Mở chi tiết để thu hồi"}
+                  Mở chi tiết để thu hồi
                 </button>
               ) : (
                 <button
@@ -548,6 +446,7 @@ export default function AssetManagementPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
       </SidebarInset>
     </SidebarProvider>
   );
