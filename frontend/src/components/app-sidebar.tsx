@@ -50,14 +50,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
               title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
               url: "/assets",
             },
-            {
-              title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
-              url: "/asset-incidents",
-            },
-            {
-              title: "Duyệt báo cáo sự cố",
-              url: "/asset-reports",
-            },
+            
           ],
         },
       ]
@@ -104,14 +97,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                 url: "/my-assets",
               },
-              {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
-                url: "/asset-incidents",
-              },
-              {
-                title: "Duyệt báo cáo sự cố",
-                url: "/asset-reports",
-              },
+             
             ],
           },
         ]
@@ -149,10 +135,7 @@ export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<ty
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST ,
                   url: "/request",
                 },
-                {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT || "Quản lý sự cố tài sản",
-                  url: "/asset-incidents",
-                },
+                
                 {
                   title: "Duyệt báo cáo sự cố",
                   url: "/asset-reports",

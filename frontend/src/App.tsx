@@ -42,7 +42,7 @@ function App() {
 
                         {/* Shared cross-roles: Admin + HR + Manager */}
                         <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_HR", "ROLE_MANAGER"]} />}>
-                            <Route path="/asset-incidents" element={<AssetIncidentManagementPage />} />
+                            {/* <Route path="/asset-incidents" element={<AssetIncidentManagementPage />} /> */}
                             <Route path="/asset-reports" element={<AssetReportManagement />} />
                             <Route path="/hr-employees" element={<EmployeeManagement />} />
                             <Route path="/payroll" element={<PayrollManagement />} />
@@ -57,20 +57,21 @@ function App() {
                         <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_HR", "ROLE_MANAGER", "ROLE_EMPLOYEE"]} />}>
                             <Route path="/profile" element={<ProfilePage />} />
                             <Route path="/my-assets" element={<MyAssetsPage />} />
+                             <Route path="/request" element={<RequestPage />} />
                         </Route>
 
                         {/* Check-in / Attendance / Adjustment shared: Employee, HR, Manager */}
                         <Route element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE", "ROLE_HR", "ROLE_MANAGER"]} />}>
                             <Route path="/checkin" element={<CheckinPage />} />
                             <Route path="/attendance" element={<AttendanceHistoryPage />} />
-                            <Route path="/adjustment-requests" element={<RequestPage />} />
+                            
                         </Route>
 
                         {/* Employee only */}
                         <Route element={<ProtectedRoute allowedRoles={["ROLE_EMPLOYEE"]} />}>
                             <Route path="/employee" element={<EmployeeDashboard />} />
                             <Route path="/salary-history" element={<SalaryHistoryPage />} />
-                            <Route path="/request" element={<RequestPage />} />
+                           
                         </Route>
 
                         {/* Manager only */}

@@ -248,19 +248,7 @@ export function MemberEvaluationSheet({
               </div>
             </div>
 
-            {/* Role indicator */}
-            <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-start gap-3">
-              <Info className="text-primary text-xl" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {t.SHEET_ROLE_LABEL}
-                </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  {t.SHEET_ROLE_DESC}
-                  <span className="font-bold text-primary">{member.role}</span>
-                </p>
-              </div>
-            </div>
+            
 
             {/* Loading state */}
             {reviewLoading ? (
