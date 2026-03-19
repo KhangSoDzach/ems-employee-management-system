@@ -1,5 +1,6 @@
 package com.company.ems.backend.workflow.controller;
 
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.workflow.dto.*;
 import com.company.ems.backend.workflow.service.WorkflowAdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,13 +25,10 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/workflow-templates")
 @RequiredArgsConstructor
 @Tag(name = "Workflow Templates (Admin)", description = "Manage approval workflow templates")
-@PreAuthorize("hasAuthority('ATTENDANCE_ADJUSTMENT_ADMIN')")
+@PreAuthorize(RoleAuthorization.HAS_PERM_ADJUSTMENT_ADMIN)
 public class WorkflowTemplateController {
 
     private final WorkflowAdminService workflowAdminService;
-
-    // ─── Template CRUD ────────────────────────────────────────────────────────
-
     @GetMapping
     @Operation(summary = "List all workflow templates")
     public ResponseEntity<List<WorkflowTemplateResponse>> getAll() {
@@ -70,8 +68,6 @@ public class WorkflowTemplateController {
         workflowAdminService.deleteTemplate(id);
         return ResponseEntity.noContent().build();
     }
-
-    // ─── Level management ─────────────────────────────────────────────────────
 
     @PostMapping("/{templateId}/levels")
     @ResponseStatus(HttpStatus.CREATED)

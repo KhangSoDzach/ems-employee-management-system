@@ -33,76 +33,20 @@ import { ATTENDANCE_STATUS } from "@/constants/options"
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 function fmtTime(iso: string | null) {
-    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (!iso) {return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
     return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
 }
 
 function fmtDate(iso: string | null) {
-    if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (!iso) {return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
     return format(new Date(iso), "dd/MM/yyyy")
 }
 
 function fmtWorkHours(minutes: number | null) {
-    if (minutes == null) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
+    if (minutes == null) {return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
     const h = Math.floor(minutes / 60)
     const m = minutes % 60
     return `${h}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${m.toString().padStart(2, "0")}m`
-}
-
-function parseTimeToMinutes(iso: string | null) {
-    if (!iso) return null
-
-    const d = new Date(iso)
-    if (isNaN(d.getTime())) return null
-
-    return d.getHours() * 60 + d.getMinutes()
-}
-
-function checkinClass(iso: string | null) {
-    const t = parseTimeToMinutes(iso)
-    if (t == null) return "text-muted-foreground"
-    return t > 8 * 60 ? "text-rose-600" : "text-emerald-600"
-}
-
-function checkoutClass(iso: string | null) {
-    const t = parseTimeToMinutes(iso)
-    if (t == null) return "text-muted-foreground"
-    return t < 17 * 60 ? "text-rose-600" : "text-emerald-600"
-}
-
-function workHoursStatus(minutes: number | null) {
-    if (minutes == null) {
-        return {
-            className: "text-muted-foreground",
-            lines: [SYSTEM_MESSAGES.COMMON.EMPTY_VALUE],
-        }
-    }
-
-    if (minutes < 8 * 60) {
-        return {
-            className: "text-rose-600",
-            lines: [`${Math.floor(minutes / 60)}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${(
-                minutes % 60
-            )
-                .toString()
-                .padStart(2, "0")}m`],
-        }
-    }
-
-    const base = 8 * 60
-    const overtime = minutes - base
-    const overtimeHours = Math.floor(overtime / 60)
-    const overtimeMinutes = overtime % 60
-
-    const overtimeLabel = overtimeMinutes === 0 ? `${overtimeHours} ${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}` : `${overtimeHours} ${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${overtimeMinutes.toString().padStart(2, "0")}m`
-
-    return {
-        className: "text-emerald-600",
-        lines:
-            overtime === 0
-                ? [`${Math.floor(minutes / 60)}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`]
-                : [`8 ${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`, `+${overtimeLabel} over time`],
-    }
 }
 
 type StatusKey = AttendanceRecord["status"]
@@ -159,13 +103,16 @@ export default function AttendanceHistoryPage() {
         setLoading(true)
         try {
             const status = filterStatus === "all" ? undefined : filterStatus
-            const histPage = await attendanceService.getAttendance({
-                page,
-                size: PAGE_SIZE,
-                startDate,
-                endDate,
-                status,
-            })
+            const page_ = page
+            const [histPage] = await Promise.all([
+                attendanceService.getAttendance({
+                    page: page_,
+                    size: PAGE_SIZE,
+                    startDate,
+                    endDate,
+                    status,
+                }),
+            ])
             setRecords(histPage.content)
             setTotalElements(histPage.totalElements)
             setTotalPages(histPage.totalPages)
@@ -196,7 +143,7 @@ export default function AttendanceHistoryPage() {
 
     // ── Client-side search (on current page) ──────────────────────────────────
     const filtered = records.filter(r => {
-        if (!search) return true
+        if (!search) {return true}
         const d = fmtDate(r.date).toLowerCase()
         const s = statusInfo(r.status).label.toLowerCase()
         const q = search.toLowerCase()
@@ -224,21 +171,21 @@ export default function AttendanceHistoryPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <SummaryCard
                             label={SYSTEM_MESSAGES.ATTENDANCE.STATS_PRESENT}
-                            value={summary ? String(summary.presentDays) : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                            value={summary ? `${summary.presentDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                             sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
                             color="text-emerald-600"
                             loading={summaryLoading}
                         />
                         <SummaryCard
                             label={SYSTEM_MESSAGES.ATTENDANCE.STATS_LATE}
-                            value={summary ? String(summary.lateDays) : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                            value={summary ? `${summary.lateDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                             sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
                             color="text-amber-600"
                             loading={summaryLoading}
                         />
                         <SummaryCard
                             label={SYSTEM_MESSAGES.ATTENDANCE.STATS_ABSENT}
-                            value={summary ? String(summary.absentDays) : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                            value={summary ? `${summary.absentDays}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                             sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
                             color="text-red-600"
                             loading={summaryLoading}
@@ -313,22 +260,12 @@ export default function AttendanceHistoryPage() {
                                     <TableBody>
                                         {filtered.map(row => {
                                             const { label, cls } = statusInfo(row.status)
-                                            const checkInCls = checkinClass(row.checkInTime)
-                                            const checkOutCls = checkoutClass(row.checkOutTime)
-                                            const workStatus = workHoursStatus(row.workHours)
-
                                             return (
                                                 <TableRow key={row.id} className="hover:bg-muted/30 transition-colors border-border">
                                                     <TableCell className="px-6 py-4 font-medium text-foreground">{fmtDate(row.date)}</TableCell>
-                                                    <TableCell className={`px-6 py-4 font-medium ${checkInCls}`}>{fmtTime(row.checkInTime)}</TableCell>
-                                                    <TableCell className={`px-6 py-4 font-medium ${checkOutCls}`}>{fmtTime(row.checkOutTime)}</TableCell>
-                                                    <TableCell className={`px-6 py-4 font-semibold ${workStatus.className}`}>
-                                                        {workStatus.lines.map((line, index) => (
-                                                            <div key={`${row.id}-work-${index}`} className={index === 0 ? "" : "text-xs text-muted-foreground"}>
-                                                                {line}
-                                                            </div>
-                                                        ))}
-                                                    </TableCell>
+                                                    <TableCell className="px-6 py-4 text-primary font-medium">{fmtTime(row.checkInTime)}</TableCell>
+                                                    <TableCell className="px-6 py-4 text-primary font-medium">{fmtTime(row.checkOutTime)}</TableCell>
+                                                    <TableCell className="px-6 py-4 font-semibold text-foreground">{fmtWorkHours(row.workHours)}</TableCell>
                                                     <TableCell className="px-6 py-4 text-xs text-muted-foreground">
                                                         {row.checkInMethod === "CAMERA_GEO" ? SYSTEM_MESSAGES.COMMON.METHOD_CAMERA_GPS : row.checkInMethod === "MANUAL" ? SYSTEM_MESSAGES.COMMON.METHOD_MANUAL : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                                                     </TableCell>
@@ -361,7 +298,7 @@ export default function AttendanceHistoryPage() {
                                         >
                                             <ChevronLeft className="w-4 h-4" />
                                         </Button>
-                                        <span>{page + 1} / {totalPages}</span>
+                                        <span>{page + 1}{SYSTEM_MESSAGES.SYMBOLS.SLASH}{totalPages}</span>
                                         <Button
                                             size="icon"
                                             variant="outline"

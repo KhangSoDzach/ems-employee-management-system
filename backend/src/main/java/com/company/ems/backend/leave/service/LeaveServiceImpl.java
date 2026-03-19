@@ -2,6 +2,7 @@ package com.company.ems.backend.leave.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +37,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Transactional
 public class LeaveServiceImpl implements LeaveService {
+
+        private static final String ENTITY_LEAVE = "Leave";
+        private static final String ENTITY_USER = "User";
+        private static final String ERROR_LEAVE_ID_NULL = "leave id must not be null";
 
     private final LeaveRepository leaveRepository;
     private final EmployeeRepository employeeRepository;
@@ -78,6 +83,30 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<LeaveResponse> getMyLeaves(int page, int size) {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+        PageRequest pageable = PageRequest.of(page, size);
+
+        Employee self = employeeRepository.findByUserId(principal.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
+
+        Page<Leave> leaves = leaveRepository.findByEmployeeId(self.getId(), pageable);
+
+        List<LeaveResponse> content = leaves.getContent().stream()
+                .map(this::mapToResponse)
+                .toList();
+
+        return PageResponse.<LeaveResponse>builder()
+                .content(content)
+                .page(page).size(size)
+                .totalElements(leaves.getTotalElements())
+                .totalPages(leaves.getTotalPages())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<LeaveResponse> getAllLeaves(int page, int size, Long employeeId,
                                                     String status, String leaveType,
                                                     LocalDate startDate, LocalDate endDate) {
@@ -88,7 +117,7 @@ public class LeaveServiceImpl implements LeaveService {
         if (principal.hasDataScope(DataScope.ALL)) {
             leaves = leaveRepository.findAll(pageable);
         } else if (principal.hasDataScope(DataScope.TEAM)) {
-            Employee manager = employeeRepository.findByUserId(principal.getUserId())
+                        employeeRepository.findByUserId(principal.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
             leaves = leaveRepository.findByReportingManagerUserId(principal.getUserId(), pageable);
@@ -117,8 +146,9 @@ public class LeaveServiceImpl implements LeaveService {
     public LeaveResponse getLeaveById(Long id) {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
         dataScopeService.assertCanAccessLeave(principal, id);
-        Leave leave = leaveRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Leave", "id", id));
+                Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
+                Leave leave = leaveRepository.findById(leaveId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
         return mapToResponse(leave);
     }
 
@@ -129,8 +159,9 @@ public class LeaveServiceImpl implements LeaveService {
         // DataScope check: chỉ TEAM hoặc ALL scope
         dataScopeService.assertCanApproveLeave(principal, id);
 
-        Leave leave = leaveRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Leave", "id", id));
+        Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
+        Leave leave = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
 
         if (!leave.isPending()) {
             throw new BusinessException(
@@ -142,20 +173,23 @@ public class LeaveServiceImpl implements LeaveService {
             throw new ForbiddenException();
         }
 
-        var approver = userRepository.findById(principal.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", principal.getUserId()));
+                Long approverUserId = Objects.requireNonNull(principal.getUserId(), "principal userId must not be null");
+                var approver = userRepository.findById(approverUserId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_USER, "id", approverUserId));
 
         String statusStr = request.getStatus().toUpperCase().trim();
-        if ("APPROVED".equals(statusStr)) {
-            leave.approve(approver, request.getNotes());
-            log.info("User [{}] APPROVED leave [{}]", principal.getUsername(), id);
-        } else if ("REJECTED".equals(statusStr)) {
-            leave.reject(approver, request.getNotes());
-            log.info("User [{}] REJECTED leave [{}]", principal.getUsername(), id);
-        } else {
-            throw new BusinessException(
-                    messages.get(MessageCode.INVALID_STATUS, leave.getStatus()));
-        }
+                switch (statusStr) {
+                        case "APPROVED" -> {
+                                leave.approve(approver, request.getNotes());
+                                log.info("User [{}] APPROVED leave [{}]", principal.getUsername(), id);
+                        }
+                        case "REJECTED" -> {
+                                leave.reject(approver, request.getNotes());
+                                log.info("User [{}] REJECTED leave [{}]", principal.getUsername(), id);
+                        }
+                        default -> throw new BusinessException(
+                                        messages.get(MessageCode.INVALID_STATUS, leave.getStatus()));
+                }
 
         Leave updated = leaveRepository.save(leave);
         return mapToResponse(updated);
@@ -165,8 +199,9 @@ public class LeaveServiceImpl implements LeaveService {
     public void cancelLeave(Long id) {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
 
-        Leave leave = leaveRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Leave", "id", id));
+        Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
+        Leave leave = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
         if (leave.getEmployee().getUser() == null
                 || !leave.getEmployee().getUser().getId().equals(principal.getUserId())) {
             log.warn("User [{}] attempted to cancel leave [{}] belonging to another employee",

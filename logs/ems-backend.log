@@ -1,0 +1,87 @@
+2026-03-19 13:50:12 [main] INFO  c.c.e.backend.EmsBackendApplication - Starting EmsBackendApplication using Java 21.0.10 with PID 9892 (D:\EMS\ems-employee-management-system\backend\target\classes started by DELL in D:\EMS\ems-employee-management-system)
+2026-03-19 13:50:12 [main] DEBUG c.c.e.backend.EmsBackendApplication - Running with Spring Boot v3.5.10, Spring v6.2.15
+2026-03-19 13:50:12 [main] INFO  c.c.e.backend.EmsBackendApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-19 13:50:22 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-19 13:50:22 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 211 ms. Found 24 JPA repository interfaces.
+2026-03-19 13:50:23 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-03-19 13:50:23 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-03-19 13:50:23 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.50]
+2026-03-19 13:50:23 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-03-19 13:50:23 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 10472 ms
+2026-03-19 13:50:24 [main] INFO  c.c.ems.backend.config.FlywayConfig - Flyway: Running repair() to clean up failed migrations and fix checksums...
+2026-03-19 13:50:24 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-03-19 13:50:24 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@df6f19b
+2026-03-19 13:50:24 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-03-19 13:50:24 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true (MySQL 5.5)
+2026-03-19 13:50:24 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Repair of failed migration in Schema History table `ems_db`.`flyway_schema_history` not necessary. No failed migration detected.
+2026-03-19 13:50:25 [main] INFO  o.f.core.internal.command.DbRepair - Successfully repaired schema history table `ems_db`.`flyway_schema_history` (execution time 00:00.527s).
+2026-03-19 13:50:25 [main] INFO  c.c.ems.backend.config.FlywayConfig - Flyway: repair() completed. Starting migrate()...
+2026-03-19 13:50:25 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema `ems_db`: 111
+2026-03-19 13:50:25 [main] INFO  o.f.core.internal.command.DbMigrate - Schema `ems_db` is up to date. No migration necessary.
+2026-03-19 13:50:25 [main] INFO  c.c.ems.backend.config.FlywayConfig - Flyway: migrate() completed successfully.
+2026-03-19 13:50:25 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-03-19 13:50:25 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.41.Final
+2026-03-19 13:50:25 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-03-19 13:50:25 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-19 13:50:25 [main] WARN  org.hibernate.dialect.Dialect - HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2026-03-19 13:50:25 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-19 13:50:25 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-19 13:50:28 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-19 13:50:28 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-19 13:50:28 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-19 13:50:29 [main] DEBUG c.c.e.b.a.s.JwtAuthenticationFilter - Filter 'jwtAuthenticationFilter' configured for use
+2026-03-19 13:50:29 [main] DEBUG c.c.e.b.a.s.RateLimitingFilter - Filter 'rateLimitingFilter' configured for use
+2026-03-19 13:50:30 [main] DEBUG org.hibernate.SQL - 
+    /* <criteria> */ select
+        sc1_0.id,
+        sc1_0.config_key,
+        sc1_0.config_value,
+        sc1_0.created_at,
+        sc1_0.description,
+        sc1_0.updated_at,
+        sc1_0.updated_by 
+    from
+        system_configs sc1_0 
+    where
+        sc1_0.config_key=?
+2026-03-19 13:50:30 [main] DEBUG org.hibernate.SQL - 
+    /* <criteria> */ select
+        sc1_0.id,
+        sc1_0.config_key,
+        sc1_0.config_value,
+        sc1_0.created_at,
+        sc1_0.description,
+        sc1_0.updated_at,
+        sc1_0.updated_by 
+    from
+        system_configs sc1_0 
+    where
+        sc1_0.config_key=?
+2026-03-19 13:50:30 [main] INFO  c.c.e.b.a.s.OfficeConfigServiceImpl - Office location loaded from DB → lat=10.80374375, lon=106.6896745
+2026-03-19 13:50:30 [main] DEBUG org.hibernate.SQL - 
+    /* <criteria> */ select
+        sc1_0.id,
+        sc1_0.config_key,
+        sc1_0.config_value,
+        sc1_0.created_at,
+        sc1_0.description,
+        sc1_0.updated_at,
+        sc1_0.updated_by 
+    from
+        system_configs sc1_0 
+    where
+        sc1_0.config_key=?
+2026-03-19 13:50:30 [main] INFO  c.c.e.b.a.s.OfficeConfigServiceImpl - Office radius loaded from DB → 200.0m
+2026-03-19 13:50:31 [main] INFO  c.c.e.b.c.s.PhotoStorageService - Photo storage root initialised at: D:\EMS\ems-employee-management-system\.\uploads\attendance-photos
+2026-03-19 13:50:31 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-03-19 13:50:32 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 2 endpoints beneath base path '/actuator'
+2026-03-19 13:50:32 [main] DEBUG o.s.s.web.DefaultSecurityFilterChain - Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, RateLimitingFilter, JwtAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-03-19 13:50:33 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2026-03-19 13:50:33 [main] INFO  c.c.e.backend.EmsBackendApplication - Started EmsBackendApplication in 21.546 seconds (process running for 29.636)

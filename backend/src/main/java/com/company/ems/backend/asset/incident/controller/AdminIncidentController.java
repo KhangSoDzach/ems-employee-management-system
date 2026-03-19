@@ -4,6 +4,7 @@ import com.company.ems.backend.asset.incident.dto.IncidentDto;
 import com.company.ems.backend.asset.incident.entity.ReportStatus;
 import com.company.ems.backend.asset.incident.service.IncidentService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/asset-reports")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ASSET_MANAGE')")
+@PreAuthorize(RoleAuthorization.HAS_PERM_ASSET_MANAGE)
 @Tag(name = "Asset Incident Reports (Admin/HR)", description = "Quản lý báo cáo sự cố tài sản")
 public class AdminIncidentController {
 

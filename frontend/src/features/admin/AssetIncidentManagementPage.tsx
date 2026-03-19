@@ -10,6 +10,7 @@ import AssetIncidentReviewModal from "./AssetIncidentReviewModal";
 import { assetService, AdminIncidentListItem } from "@/services/assetService";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useAuth } from "@/contexts/AuthContext";
+import { AUTH_ROLES } from "@/constants/auth";
 export interface IncidentItem {
     id: string;
     numericId: number;
@@ -55,12 +56,12 @@ export default function AssetIncidentManagementPage() {
     const { user }      = useAuth();
     const effectiveRole = useEffectiveRole();
 
-    const isManager  = effectiveRole === "manager"  || user?.roles.includes("ROLE_MANAGER");
+    const isManager  = effectiveRole === "manager"  || user?.roles.includes(AUTH_ROLES.MANAGER);
     const isEmployee = effectiveRole === "employee" ||
-        (user?.roles.includes("ROLE_EMPLOYEE") &&
-         !user?.roles.includes("ROLE_ADMIN") &&
-         !user?.roles.includes("ROLE_HR") &&
-         !user?.roles.includes("ROLE_MANAGER"));
+        (user?.roles.includes(AUTH_ROLES.EMPLOYEE) &&
+         !user?.roles.includes(AUTH_ROLES.ADMIN) &&
+         !user?.roles.includes(AUTH_ROLES.HR) &&
+         !user?.roles.includes(AUTH_ROLES.MANAGER));
     const canProcess = !isManager && !isEmployee;
 
     const fetchIncidents = useCallback(async () => {
@@ -91,14 +92,18 @@ export default function AssetIncidentManagementPage() {
             statusFilter === "All" || incident.status === statusFilter.toUpperCase();
         if (isEmployee) {
             const fullName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim();
-            if (incident.employeeName !== fullName) return false;
+            if (incident.employeeName !== fullName) {
+                return false;
+            }
         }
         return matchesSearch && matchesStatus;
     });
 
     const handleUpdate = async (id: string, newStatus: string, note?: string) => {
         const item = incidents.find(i => i.id === id);
-        if (!item) return;
+        if (!item) {
+            return;
+        }
         try {
             if (newStatus === "Resolved" || newStatus === "APPROVED") {
                 await assetService.approveReport(item.numericId, note);
@@ -172,16 +177,16 @@ export default function AssetIncidentManagementPage() {
                                     <tr>
                                         <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400">
                                             <div className="flex items-center justify-center gap-2">
-                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                                <span className="text-sm">Đang tải dữ liệu...</span>
+                                                 <Loader2 className="w-5 h-5 animate-spin" />
+                                                 <span className="text-sm">{"Đang tải dữ liệu..."}</span>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : filteredIncidents.length === 0 ? (
                                     <tr>
-                                        <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400 text-sm">
-                                            Không có sự cố nào.
-                                        </td>
+                                         <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400 text-sm">
+                                             {"Không có sự cố nào."}
+                                         </td>
                                     </tr>
                                 ) : filteredIncidents.map(incident => (
                                     <tr key={incident.id} className="data-table-row">

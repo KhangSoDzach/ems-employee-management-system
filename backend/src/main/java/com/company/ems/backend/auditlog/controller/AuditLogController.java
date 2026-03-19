@@ -2,6 +2,7 @@ package com.company.ems.backend.auditlog.controller;
 
 import java.time.LocalDateTime;
 
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,15 +26,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-/**
- * REST controller exposing read-only Audit Log endpoints.
- * <p>
- * Access control (AC-03): all endpoints require {@code AUDIT_LOG_VIEW}
- * permission.
- * Any user without that permission receives HTTP 403 Forbidden.
- * <p>
- * No write (POST/PUT/DELETE) endpoints are exposed – audit log is append-only.
- */
 @RestController
 @RequestMapping("/api/v1/audit-logs")
 @RequiredArgsConstructor
@@ -45,7 +37,7 @@ public class AuditLogController {
     private final MessageService messages;
 
     @GetMapping
-    @PreAuthorize("hasPermission(null, 'AUDIT_LOG_VIEW')")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_AUDIT_LOG_VIEW)
     @Operation(summary = "List audit logs", description = "Returns paginated audit logs. Requires AUDIT_LOG_VIEW permission.")
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getAuditLogs(
             @RequestParam(required = false) String entityType,
@@ -76,7 +68,7 @@ public class AuditLogController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasPermission(null, 'AUDIT_LOG_VIEW')")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_AUDIT_LOG_VIEW)
     @Operation(summary = "Get audit log by ID", description = "Returns a single audit log record. Requires AUDIT_LOG_VIEW permission.")
     public ResponseEntity<ApiResponse<AuditLogResponse>> getById(@PathVariable Long id) {
         AuditLogResponse response = auditLogService.getById(id);

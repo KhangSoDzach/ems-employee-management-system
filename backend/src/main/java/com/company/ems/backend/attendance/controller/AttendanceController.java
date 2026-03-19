@@ -6,6 +6,7 @@ import com.company.ems.backend.attendance.dto.CheckInRequest;
 import com.company.ems.backend.attendance.dto.CheckOutRequest;
 import com.company.ems.backend.attendance.service.AttendanceService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.rbac.service.DataScopeService;
@@ -41,17 +42,8 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
     private final DataScopeService dataScopeService;
 
-    // ─── Check-in ─────────────────────────────────────────────────────────────
-
-    /**
-     * POST /api/v1/attendance/check-in
-     *
-     * <p>
-     * Requires: ATTENDANCE_CHECKIN permission.
-     * Validates geolocation (≤30 m from office) and camera photo server-side.
-     */
     @PostMapping("/check-in")
-    @PreAuthorize("hasAuthority('ATTENDANCE_CHECKIN')")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_ATTENDANCE_CHECKIN)
     @Operation(summary = "Check in with camera & geolocation")
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkIn(
             @Valid @RequestBody CheckInRequest request,
@@ -68,16 +60,8 @@ public class AttendanceController {
                 .body(ApiResponse.success("Check-in thành công.", response));
     }
 
-    // ─── Check-out ────────────────────────────────────────────────────────────
-
-    /**
-     * POST /api/v1/attendance/check-out
-     *
-     * <p>
-     * Requires: ATTENDANCE_CHECKIN permission.
-     */
     @PostMapping("/check-out")
-    @PreAuthorize("hasAuthority('ATTENDANCE_CHECKIN')")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_ATTENDANCE_CHECKIN)
     @Operation(summary = "Check out with camera & geolocation")
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkOut(
             @Valid @RequestBody CheckOutRequest request,
@@ -92,17 +76,8 @@ public class AttendanceController {
         return ResponseEntity.ok(ApiResponse.success("Check-out thành công.", response));
     }
 
-    // ─── Queries──────────────────────────────────────────────────────────────
-
-    /**
-     * GET /api/v1/attendance
-     *
-     * <p>
-     * Employees see only their own records; Managers/HR/Admin can filter by
-     * {@code employeeId}.
-     */
     @GetMapping
-    @PreAuthorize("hasAuthority('ATTENDANCE_READ')")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_ATTENDANCE_READ)
     @Operation(summary = "List attendance records (paginated)")
     public ResponseEntity<ApiResponse<PageResponse<AttendanceResponse>>> getAttendance(
             @RequestParam(defaultValue = "0") int page,
@@ -122,7 +97,7 @@ public class AttendanceController {
      * GET /api/v1/attendance/summary
      */
     @GetMapping("/summary")
-    @PreAuthorize("hasAuthority('ATTENDANCE_READ')")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_ATTENDANCE_READ)
     @Operation(summary = "Get attendance summary for an employee")
     public ResponseEntity<ApiResponse<AttendanceSummaryResponse>> getAttendanceSummary(
             @RequestParam(required = false) Long employeeId,
