@@ -1,5 +1,5 @@
 import React from "react";
-import { useForm, FieldErrors } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/card";
 
 // Import constants to avoid hardcoding
-import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 /**
@@ -61,44 +60,7 @@ interface AssetIncidentFormProps {
 }
 
 // Centralized local constants to satisfy react/jsx-no-literals and avoid hardcoding
-const TEXT = {
-  CARD_TITLE: SYSTEM_MESSAGES.MY_ASSETS.REPORT_TITLE,
-  CARD_DESC:
-    "Cung cấp thông tin chi tiết về sự cố để đội ngũ kỹ thuật hỗ trợ bạn tốt nhất.",
-  LABEL_ASSET_ID: "Mã tài sản",
-  PLACEHOLDER_ASSET_ID: "VD: ASSET-2024-001",
-  LABEL_INCIDENT_TYPE: "Loại sự cố",
-  PLACEHOLDER_INCIDENT_TYPE: "Chọn loại sự cố",
-  LABEL_SEVERITY: "Mức độ nghiêm trọng",
-  PLACEHOLDER_SEVERITY: "Chọn mức độ",
-  LABEL_DESC: "Mô tả chi tiết sự cố",
-  PLACEHOLDER_DESC:
-    "Vui lòng mô tả chi tiết: Sự cố xảy ra khi nào? Bạn đã thực hiện thao tác gì?...",
-  DESC_HINT: "Tối thiểu 10 ký tự, tối đa 500 ký tự.",
-  BTN_DRAFT: "Lưu nháp",
-  BTN_SUBMIT: SYSTEM_MESSAGES.BTN_SUBMIT,
-  BTN_CANCEL: SYSTEM_MESSAGES.BTN_CANCEL,
-  FOOTER_NOTE:
-    "Thông tin của bạn sẽ được bảo mật và chuyển trực tiếp đến bộ phận IT/HR.",
-  TOAST_LOADING: "Đang xử lý dữ liệu...",
-  TOAST_SUCCESS: "Gửi báo cáo thành công!",
-  TOAST_ERROR_GENERIC: "Lỗi server, vui lòng thử lại.",
-  TOAST_VALIDATION_ERROR:
-    "Vui lòng kiểm tra lại các trường thông tin bị thiếu.",
-  TOAST_CANCEL_WARNING: "Bạn đã hủy thao tác nhập liệu.",
-  TOAST_DRAFT_INFO: "Đã lưu bản nháp",
-  TOAST_DRAFT_DESC: "Dữ liệu của bạn được lưu tạm thời trên trình duyệt.",
-  TOAST_UNDO_LABEL: "Hoàn tác",
-  TOAST_UNDO_SUCCESS: "Đã hoàn tác việc lưu nháp.",
-  OP_DAMAGED: "Báo hỏng",
-  OP_LOST: "Báo mất",
-  SEV_LOW: "Thấp - Vẫn làm việc được",
-  SEV_MEDIUM: "Trung bình - Ảnh hưởng một phần",
-  SEV_HIGH: "Cao - Không thể làm việc",
-  SEV_CRITICAL: "Khẩn cấp - Ảnh hưởng hệ thống",
-  SYSTEM_NAME: "Hệ thống EMS",
-  ASTERISK: "*",
-} as const;
+import { ASSET_INCIDENT_TEXT as TEXT } from "@/constants/ui-texts";
 
 /**
  * Component hiển thị Label kèm dấu sao đỏ cho các trường bắt buộc
@@ -143,20 +105,12 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
       },
     );
 
-    toast.promise(promise, {
-      loading: TEXT.TOAST_LOADING,
-      success: () => {
-        form.reset();
-        onSuccess?.();
-        return TEXT.TOAST_SUCCESS;
-      },
-      error: (err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : TEXT.TOAST_ERROR_GENERIC;
-        return message;
-      },
-    });
-  };
+    // 3. Xử lý lỗi validate (Validation Error Toast)
+    const onError = () => {
+        // Luôn dọn dẹp toast cũ để tránh ngập lụt màn hình
+        toast.dismiss();
+        toast.error(TEXT.TOAST_VALIDATION_ERROR);
+    };
 
   // 3. Xử lý lỗi validate (Validation Error Toast)
   const onError = (errors: FieldErrors<AssetIncidentValues>) => {

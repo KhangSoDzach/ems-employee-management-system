@@ -60,7 +60,7 @@ export function AnnouncementList({
   }, [focusedAnnouncement, isLoading]);
 
   const handleMarkRead = async (announcementId: number, isRead: boolean) => {
-    if (isRead || userId === null) return;
+    if (isRead || userId === null) {return;}
     try {
       await markReadMutation.mutateAsync(announcementId);
     } catch (error) {

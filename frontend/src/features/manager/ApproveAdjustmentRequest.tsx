@@ -56,15 +56,15 @@ import type { AdjustmentType } from "../employee/adjustment-request.constants";
 
 // ── Mapper ────────────────────────────────────────────────────────────────────
 function deriveType(inT: string | null, outT: string | null): AdjustmentType {
-  if (inT && outT) return "BOTH";
-  if (inT) return "CHECK_IN";
+  if (inT && outT) {return "BOTH";}
+  if (inT) {return "CHECK_IN";}
   return "CHECK_OUT";
 }
 
 function mapStatus(s: AdjustmentRequestSummary["status"]) {
-  if (s === "APPROVED") return "APPROVED" as const;
-  if (s === "REJECTED") return "REJECTED" as const;
-  if (s === "RETURNED_TO_EMPLOYEE") return "RETURNED" as const;
+  if (s === "APPROVED") {return "APPROVED" as const;}
+  if (s === "REJECTED") {return "REJECTED" as const;}
+  if (s === "RETURNED_TO_EMPLOYEE") {return "RETURNED" as const;}
   return "PENDING" as const;
 }
 
@@ -94,10 +94,10 @@ function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
 }
 
 function mapHistoryAction(action: string): AuditEntry["action"] {
-  if (action === "APPROVED") return "APPROVED";
-  if (action === "REJECTED") return "REJECTED";
-  if (action === "RETURNED_TO_EMPLOYEE") return "RETURNED";
-  if (action === "RESUBMITTED") return "EDITED";
+  if (action === "APPROVED") {return "APPROVED";}
+  if (action === "REJECTED") {return "REJECTED";}
+  if (action === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
+  if (action === "RESUBMITTED") {return "EDITED";}
   return "CREATED";
 }
 
@@ -141,7 +141,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
 
   // ── Fetch details when opening review sheet ──────────────────────────────
   useEffect(() => {
-    if (!detailRequest || detailRequest.auditTrail.length > 1) return; // already has more than initial
+    if (!detailRequest || detailRequest.auditTrail.length > 1) {return;} // already has more than initial
 
     const fetchDetail = async () => {
       try {
@@ -149,7 +149,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
           Number(detailRequest.id),
         );
         setDetailRequest((prev) => {
-          if (!prev || prev.id !== String(fullDetail.id)) return prev;
+          if (!prev || prev.id !== String(fullDetail.id)) {return prev;}
           return {
             ...prev,
             auditTrail: fullDetail.history.map((h) => ({

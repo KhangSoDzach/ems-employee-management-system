@@ -78,7 +78,6 @@
    BASE STYLES + 🔥 FIX ROOT HEIGHT
    ========================================= */
 @layer base {
-
   html,
   body,
   #root {
@@ -205,7 +204,6 @@
 }
 
 @layer components {
-
   /* =========================================
      Shared UI utilities
      ========================================= */
@@ -832,6 +830,85 @@
     fill: rgba(228, 27, 33, 0.2);
     stroke: #e41b21;
     stroke-width: 2;
+  }
+
+  .form-input-mono {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono focus:ring-primary focus:border-primary;
+  }
+
+  /* =========================================
+     ATTENDANCE SETTINGS
+     ========================================= */
+  .settings-card {
+    @apply bg-card rounded-xl border shadow-sm overflow-hidden;
+  }
+
+  .settings-card-header {
+    @apply px-6 py-5 border-b bg-muted/30;
+  }
+
+  .settings-card-title {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  .settings-card-desc {
+    @apply text-sm text-muted-foreground mt-1;
+  }
+
+  .settings-card-content {
+    @apply p-6;
+  }
+
+  .rule-card-wrapper {
+    @apply bg-card rounded-xl border shadow-sm overflow-hidden;
+  }
+
+  .setting-input-group {
+    @apply space-y-2;
+  }
+
+  .setting-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .setting-description {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .setting-input-row {
+    @apply flex items-center gap-2;
+  }
+
+  .setting-suffix {
+    @apply text-sm text-muted-foreground whitespace-nowrap;
+  }
+
+  .setting-toggle-row {
+    @apply flex items-center justify-between py-2;
+  }
+
+  .setting-toggle-info {
+    @apply flex flex-col;
+  }
+
+  .setting-toggle-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .setting-toggle-desc {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .settings-divider {
+    @apply border-t my-6;
+  }
+
+  .settings-actions {
+    @apply flex items-center justify-end gap-3 pt-4 border-t mt-6;
+  }
+
+  .settings-grid-coords {
+    @apply grid gap-4 sm:grid-cols-2;
   }
 }
 

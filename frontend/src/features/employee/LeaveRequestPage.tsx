@@ -84,9 +84,9 @@ export default function LeaveRequestPage() {
 
   /* ── Backend status → frontend union ── */
   const mapBackendStatus = (status: string): LeaveStatus => {
-    if (status.startsWith("PENDING")) return "PENDING"
-    if (status === "RETURNED_TO_EMPLOYEE") return "RETURNED"
-    if (status === "APPROVED" || status === "REJECTED") return status as LeaveStatus
+    if (status.startsWith("PENDING")) {return "PENDING"}
+    if (status === "RETURNED_TO_EMPLOYEE") {return "RETURNED"}
+    if (status === "APPROVED" || status === "REJECTED") {return status as LeaveStatus}
     return "PENDING"
   }
 
