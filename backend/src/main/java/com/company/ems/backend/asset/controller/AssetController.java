@@ -2,7 +2,6 @@ package com.company.ems.backend.asset.controller;
 
 import java.time.LocalDate;
 
-import com.company.ems.backend.common.constant.RoleAuthorization;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.company.ems.backend.asset.dto.AssetDto;
 import com.company.ems.backend.asset.enums.AssetStatus;
 import com.company.ems.backend.asset.service.AssetService;
+import com.company.ems.backend.common.constant.AppRole;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.message.MessageCode;
@@ -39,14 +39,14 @@ public class AssetController {
     private final MessageService messages;
 
     @GetMapping("/next-code")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.CodePreview>> nextCode() {
         return ResponseEntity.ok(ApiResponse.success(
                 messages.get(MessageCode.ASSET_CODE_PREVIEW), assetService.previewNextCode()));
     }
 
     @GetMapping
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<PageResponse<AssetDto.Summary>>> listAssets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
@@ -58,14 +58,14 @@ public class AssetController {
     }
 
     @GetMapping("/{idOrCode}")
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> getAsset(@PathVariable String idOrCode) {
         Long resolvedId = assetService.resolveAssetId(idOrCode);
         return ResponseEntity.ok(ApiResponse.success(assetService.getAssetById(resolvedId)));
     }
 
     @PostMapping
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> createAsset(
             @Valid @RequestBody AssetDto.CreateRequest request) {
 
@@ -75,7 +75,7 @@ public class AssetController {
     }
 
         @PutMapping("/{idOrCode}")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> updateAsset(
             @PathVariable String idOrCode,
             @Valid @RequestBody AssetDto.UpdateRequest request) {
@@ -86,7 +86,7 @@ public class AssetController {
     }
 
         @DeleteMapping("/{idOrCode}")
-        @PreAuthorize(RoleAuthorization.HAS_ADMIN_ONLY)
+    @PreAuthorize(AppRole.HAS_ADMIN_ONLY)
         public ResponseEntity<ApiResponse<Void>> deleteAsset(@PathVariable String idOrCode) {
         Long resolvedId = assetService.resolveAssetId(idOrCode);
         assetService.deleteAsset(resolvedId);
@@ -94,7 +94,7 @@ public class AssetController {
     }
 
         @PostMapping("/{idOrCode}/assign")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> assignAsset(
             @PathVariable String idOrCode,
             @Valid @RequestBody AssetDto.AssignRequest request) {
@@ -105,7 +105,7 @@ public class AssetController {
     }
 
         @PostMapping("/{idOrCode}/return")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> returnAsset(
             @PathVariable String idOrCode,
             @Valid @RequestBody AssetDto.ReturnRequest request) {
@@ -116,7 +116,7 @@ public class AssetController {
     }
 
         @GetMapping("/{idOrCode}/history")
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<PageResponse<AssetDto.HistoryItem>>> getHistory(
             @PathVariable String idOrCode,
             @RequestParam(defaultValue = "all") String historyType,
@@ -129,7 +129,7 @@ public class AssetController {
     }
 
     @GetMapping("/export")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<byte[]> exportAssets(
             @RequestParam(required = false) AssetStatus status,
             @RequestParam(required = false) String type,
@@ -147,7 +147,7 @@ public class AssetController {
     }
 
     @GetMapping("/{idOrCode}/history/export")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @PreAuthorize(AppRole.HAS_HR_OR_ADMIN)
     public ResponseEntity<byte[]> exportHistory(@PathVariable String idOrCode) {
         Long resolvedId = assetService.resolveAssetId(idOrCode);
         byte[] csv = assetService.exportHistoryCsv(resolvedId);

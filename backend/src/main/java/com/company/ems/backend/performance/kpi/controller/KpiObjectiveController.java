@@ -1,6 +1,6 @@
 package com.company.ems.backend.performance.kpi.controller;
 
-import com.company.ems.backend.common.constant.RoleAuthorization;
+import com.company.ems.backend.common.constant.AppRole;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.message.MessageCode;
@@ -29,7 +29,7 @@ public class KpiObjectiveController {
     private final MessageService      messages;
 
     @PostMapping
-    @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+    @PreAuthorize(AppRole.HAS_MANAGER_OR_ABOVE)
     public ResponseEntity<ApiResponse<KpiObjectiveDto.Response>> createObjective(
             @Valid @RequestBody KpiObjectiveDto.CreateRequest request) {
 
@@ -39,7 +39,7 @@ public class KpiObjectiveController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+    @PreAuthorize(AppRole.HAS_MANAGER_OR_ABOVE)
     public ResponseEntity<ApiResponse<KpiObjectiveDto.Response>> updateObjective(
             @PathVariable Long id,
             @Valid @RequestBody KpiObjectiveDto.UpdateRequest request) {
@@ -49,14 +49,14 @@ public class KpiObjectiveController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+    @PreAuthorize(AppRole.HAS_MANAGER_OR_ABOVE)
     public ResponseEntity<ApiResponse<Void>> deleteObjective(@PathVariable Long id) {
         kpiService.deleteObjective(id);
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.KPI_DELETED), null));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<KpiObjectiveDto.Response>> getObjective(
             @PathVariable Long id) {
 
@@ -64,7 +64,7 @@ public class KpiObjectiveController {
     }
 
     @GetMapping
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<PageResponse<KpiObjectiveDto.Summary>>> listObjectives(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size,
@@ -79,7 +79,7 @@ public class KpiObjectiveController {
     }
 
     @GetMapping("/summary")
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     public ResponseEntity<ApiResponse<KpiObjectiveDto.ScopeHeader>> getSummary(
             @RequestParam(required = false) ScopeType scopeType,
             @RequestParam(required = false) Long      scopeId,

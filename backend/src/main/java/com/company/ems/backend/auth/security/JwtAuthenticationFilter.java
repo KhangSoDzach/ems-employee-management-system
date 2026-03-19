@@ -8,7 +8,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.security.SignatureException;
+import io.jsonwebtoken.SignatureException;
 import org.springframework.lang.NonNull;
 import com.company.ems.backend.common.audit.SecurityAuditService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

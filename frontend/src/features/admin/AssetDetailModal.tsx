@@ -49,10 +49,7 @@ export default function AssetDetailModal({ open, assetId, onClose, onChanged }: 
   const [returning, setReturning] = useState(false);
 
   useEffect(() => {
-    if (!open || !assetId) {
-      setAsset(null);
-      return;
-    }
+    if (!open || !assetId) { setAsset(null); return; }
     setLoading(true);
     assetService.getAssetById(assetId)
       .then(setAsset)
@@ -61,9 +58,7 @@ export default function AssetDetailModal({ open, assetId, onClose, onChanged }: 
   }, [open, assetId]);
 
   useEffect(() => {
-    if (!showAssign) {
-      return;
-    }
+    if (!showAssign) return;
     const t = setTimeout(() => {
       setEmpLoading(true);
       assetService.searchEmployees(empSearch)
@@ -74,14 +69,10 @@ export default function AssetDetailModal({ open, assetId, onClose, onChanged }: 
     return () => clearTimeout(t);
   }, [empSearch, showAssign]);
 
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   const handleAssign = async () => {
-    if (!selectedEmp || !assetId) {
-      return;
-    }
+    if (!selectedEmp || !assetId) return;
     setAssigning(true);
     try {
       await assetService.assignAsset(assetId, {
@@ -101,9 +92,7 @@ export default function AssetDetailModal({ open, assetId, onClose, onChanged }: 
   };
 
   const handleReturn = async () => {
-    if (!assetId) {
-      return;
-    }
+    if (!assetId) return;
     setReturning(true);
     try {
       await assetService.returnAsset(assetId, {
@@ -226,6 +215,7 @@ export default function AssetDetailModal({ open, assetId, onClose, onChanged }: 
                     {asset.recentHistory?.length ? asset.recentHistory.map(h => (
                       <div key={h.id} className="border-l-2 border-primary pl-4">
                         <p className="font-semibold">{h.action}</p>
+                        {/* eslint-disable-next-line react/jsx-no-literals */}
                         <p className="text-slate-500 text-xs">{h.date} · {h.user}</p>
                         <p className="text-slate-600">{h.description}</p>
                       </div>
@@ -267,6 +257,7 @@ export default function AssetDetailModal({ open, assetId, onClose, onChanged }: 
                       </div>
                       <div>
                         <p className="text-sm font-medium">{e.firstName} {e.lastName}</p>
+                        {/* eslint-disable-next-line react/jsx-no-literals */}
                         <p className="text-xs text-gray-500">{e.department ?? ""} · {e.position ?? ""}</p>
                       </div>
                     </div>

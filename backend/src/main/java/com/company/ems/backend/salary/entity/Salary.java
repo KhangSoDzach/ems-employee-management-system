@@ -136,7 +136,6 @@ public class Salary extends BaseEntity {
 
     @PrePersist
     @PreUpdate
-    @SuppressWarnings("unused")
     private void beforeSave() {
         calculateNetSalary();
 

@@ -12,8 +12,8 @@ import com.company.ems.backend.employee.service.EmployeeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @org.springframework.context.annotation.Import({ com.company.ems.backend.config.StorageProperties.class })
@@ -23,22 +23,19 @@ public class EmployeeControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockBean
     private EmployeeService employeeService;
 
-    @MockitoBean
-    @SuppressWarnings("unused")
+    @MockBean
     private com.company.ems.backend.auth.security.JwtTokenUtil jwtTokenUtil;
 
-    @MockitoBean
-    @SuppressWarnings("unused")
+    @MockBean
     private com.company.ems.backend.auth.service.CustomUserDetailsService customUserDetailsService;
 
-    @MockitoBean
+    @MockBean
     private MessageService messages;
 
-    @MockitoBean
-    @SuppressWarnings("unused")
+    @MockBean
     private com.company.ems.backend.common.audit.SecurityAuditService securityAuditService;
 
     @Test

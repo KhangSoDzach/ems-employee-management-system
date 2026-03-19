@@ -38,6 +38,4 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
      */
     @Query("SELECT r FROM Role r JOIN r.permissions p WHERE p.name = :permissionName")
     java.util.List<Role> findAllByPermissionName(@Param("permissionName") String permissionName);
-
-    java.util.List<Role> findAllByIsDeletedFalse();
 }

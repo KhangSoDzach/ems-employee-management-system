@@ -30,29 +30,24 @@ function roleColor(positionTitle: string | null): string {
     title.includes("frontend") ||
     title.includes("react") ||
     title.includes("ui")
-  ) {
+  )
     return "bg-blue-100 text-blue-700 hover:bg-blue-100";
-  }
   if (
     title.includes("backend") ||
     title.includes("java") ||
     title.includes("server")
-  ) {
+  )
     return "bg-purple-100 text-purple-700 hover:bg-purple-100";
-  }
-  if (title.includes("manager") || title.includes("lead")) {
+  if (title.includes("manager") || title.includes("lead"))
     return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
-  }
-  if (title.includes("design") || title.includes("ux")) {
+  if (title.includes("design") || title.includes("ux"))
     return "bg-amber-100 text-amber-700 hover:bg-amber-100";
-  }
   if (
     title.includes("devops") ||
     title.includes("cloud") ||
     title.includes("infra")
-  ) {
+  )
     return "bg-orange-100 text-orange-700 hover:bg-orange-100";
-  }
   return "bg-gray-100 text-gray-700 hover:bg-gray-100";
 }
 
@@ -75,12 +70,12 @@ export default function MemberList() {
     clearTimeout(
       (
         window as Window &
-        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+          typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
       )._searchTimer,
     );
     (
       window as Window &
-      typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
     )._searchTimer = setTimeout(() => {
       setDebouncedSearch(value);
     }, 400);
@@ -138,11 +133,11 @@ export default function MemberList() {
             <div className="card-soft">
               {isLoading ? (
                 <div className="py-16 text-center text-sm text-muted-foreground">
-                  {t.LOADING_LIST}
+                  Đang tải danh sách thành viên…
                 </div>
               ) : isError ? (
                 <div className="py-16 text-center text-sm text-destructive">
-                  {t.ERROR_FETCH}
+                  Không thể tải danh sách. Vui lòng thử lại.
                 </div>
               ) : (
                 <Table>
@@ -163,7 +158,7 @@ export default function MemberList() {
                           colSpan={4}
                           className="py-12 text-center text-sm text-muted-foreground"
                         >
-                          {t.EMPTY_LIST}
+                          Không tìm thấy thành viên nào.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -212,7 +207,7 @@ export default function MemberList() {
                               </Badge>
                             ) : (
                               <span className="text-xs text-muted-foreground">
-                                {"—"}
+                                —
                               </span>
                             )}
                           </TableCell>
@@ -258,8 +253,7 @@ export default function MemberList() {
                 <p className="text-sm text-muted-foreground">
                   {t.PAGINATION_SHOW}{" "}
                   <span className="font-medium text-foreground">
-                    {totalElements === 0 ? 0 : page * PAGE_SIZE + 1}
-                    {"–"}
+                    {totalElements === 0 ? 0 : page * PAGE_SIZE + 1}–
                     {Math.min((page + 1) * PAGE_SIZE, totalElements)}
                   </span>{" "}
                   {t.PAGINATION_IN}{" "}

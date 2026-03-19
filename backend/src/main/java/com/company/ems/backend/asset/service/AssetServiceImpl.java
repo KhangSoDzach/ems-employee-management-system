@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,6 @@ import lombok.extern.slf4j.Slf4j;
 public class AssetServiceImpl implements AssetService {
 
     private static final DateTimeFormatter EXPORT_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        private static final String SORT_CREATED_AT = "createdAt";
     private static final Map<String, List<AssetActionType>> HISTORY_FILTER = Map.of(
             "assign", List.of(AssetActionType.ASSIGN_ASSET),
             "return", List.of(AssetActionType.RETURN_ASSET, AssetActionType.RETIRE_ASSET),
@@ -79,7 +77,7 @@ public class AssetServiceImpl implements AssetService {
                 }
 
                 try {
-                        return Long.valueOf(idOrCode);
+                        return Long.parseLong(idOrCode);
                 } catch (NumberFormatException ignored) {
                         return assetRepo.findActiveByAssetCode(idOrCode)
                                         .map(Asset::getId)
@@ -104,7 +102,7 @@ public class AssetServiceImpl implements AssetService {
     public PageResponse<AssetDto.Summary> listAssets(
             int page, int size, AssetStatus status, String type, String keyword) {
 
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, SORT_CREATED_AT));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Asset> assets = dataScopeService.listAssets(status, type, keyword, pageable);
 
         List<AssetDto.Summary> content = assets.getContent().stream()
@@ -125,7 +123,6 @@ public class AssetServiceImpl implements AssetService {
         return mapper.toDetail(asset, recent);
     }
     @Override
-        @SuppressWarnings("null")
     public AssetDto.Detail createAsset(AssetDto.CreateRequest req) {
         CustomUserPrincipal actor = currentPrincipal();
 
@@ -138,7 +135,7 @@ public class AssetServiceImpl implements AssetService {
         }
 
         String code = codeGenerator.nextCode();
-        User actorUser = userRepo.findById(Objects.requireNonNull(actor.getUserId())).orElse(null);
+        User actorUser = userRepo.findById(actor.getUserId()).orElse(null);
 
         Asset asset = Asset.builder()
                 .assetCode(code)
@@ -159,7 +156,7 @@ public class AssetServiceImpl implements AssetService {
                 .createdBy(actorUser)
                 .build();
 
-        asset = Objects.requireNonNull(assetRepo.save(asset));
+        asset = assetRepo.save(asset);
         appendHistory(asset, AssetActionType.CREATE_ASSET, actor,
                 messages.get(MessageCode.ASSET_HISTORY_CREATED, code));
 
@@ -173,14 +170,35 @@ public class AssetServiceImpl implements AssetService {
         CustomUserPrincipal actor = currentPrincipal();
         AssetCondition prevCond = asset.getCondition();
         String oldValue = snapshot(asset);
-                applyUpdateFields(asset, req);
+        if (req.getName()           != null) asset.setAssetName(req.getName());
+        if (req.getType()           != null) asset.setAssetType(req.getType());
+        if (req.getDescription()    != null) asset.setDescription(req.getDescription());
+        if (req.getValue()          != null) asset.setAssetValue(req.getValue());
+        if (req.getPurchaseDate()   != null) asset.setPurchaseDate(req.getPurchaseDate());
+        if (req.getLocationOrUser() != null) asset.setLocation(req.getLocationOrUser());
+        if (req.getAssignedEmployeeId() != null) {
+            Employee target = employeeRepo.findById(req.getAssignedEmployeeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", req.getAssignedEmployeeId()));
+            asset.setAssignedTo(target);
+            asset.setLocation(target.getFirstName() + " " + target.getLastName());
+        }
+        if (req.getCondition()      != null) asset.setCondition(req.getCondition());
+        if (req.getNote()           != null) asset.setNotes(req.getNote());
+        if (req.getImage()          != null) asset.setImageUrl(req.getImage());
+        if (req.getContractNumber() != null) asset.setContractNumber(req.getContractNumber());
+        // warrantyDate / contractDate: ISO string → LocalDate
+        if (req.getWarrantyDate()   != null && !req.getWarrantyDate().isBlank())
+            asset.setWarrantyUntil(java.time.LocalDate.parse(req.getWarrantyDate()));
+        if (req.getContractDate()   != null && !req.getContractDate().isBlank())
+            asset.setContractUntil(java.time.LocalDate.parse(req.getContractDate()));
+        if (req.getSupplier()       != null) asset.setSupplierName(req.getSupplier());
 
         assetRepo.save(asset);
         String newValue = snapshot(asset);
         appendHistory(asset, AssetActionType.UPDATE_ASSET, actor,
                 messages.get(MessageCode.ASSET_UPDATED), oldValue, newValue);
 
-        if (hasConditionChanged(prevCond, req.getCondition())) {
+        if (req.getCondition() != null && prevCond != req.getCondition()) {
             String detail = String.format("Tình trạng: %s → %s",
                     mapper.conditionLabel(prevCond),
                     mapper.conditionLabel(req.getCondition()));
@@ -219,8 +237,8 @@ public class AssetServiceImpl implements AssetService {
         }
 
         CustomUserPrincipal actor = currentPrincipal();
-        User actorUser = userRepo.findById(Objects.requireNonNull(actor.getUserId())).orElse(null);
-        Employee target = employeeRepo.findById(Objects.requireNonNull(req.getEmployeeId()))
+        User actorUser = userRepo.findById(actor.getUserId()).orElse(null);
+        Employee target = employeeRepo.findById(req.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", req.getEmployeeId()));
 
         String oldValue = snapshot(asset);
@@ -310,7 +328,7 @@ public class AssetServiceImpl implements AssetService {
             Long assetId, String historyType, int page, int size) {
 
         dataScopeService.requireAccessibleAsset(assetId);
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, SORT_CREATED_AT));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         List<AssetActionType> actionTypes = (historyType == null
                 || historyType.isBlank()
@@ -355,7 +373,7 @@ public class AssetServiceImpl implements AssetService {
     @Transactional(readOnly = true)
     public byte[] exportAssetsCsv(AssetStatus status, String type, String keyword) {
         PageRequest pageable = PageRequest.of(0, Integer.MAX_VALUE,
-                Sort.by(Sort.Direction.DESC, SORT_CREATED_AT));
+                Sort.by(Sort.Direction.DESC, "createdAt"));
         List<Asset> all = dataScopeService.listAssets(status, type, keyword, pageable).getContent();
 
         StringBuilder csv = new StringBuilder();
@@ -391,66 +409,6 @@ public class AssetServiceImpl implements AssetService {
         return assetRepo.findActiveById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Asset", "id", id));
     }
-
-        private void applyUpdateFields(Asset asset, AssetDto.UpdateRequest req) {
-                applyBasicUpdateFields(asset, req);
-                applyAssignmentAndDateFields(asset, req);
-        }
-
-        private void applyBasicUpdateFields(Asset asset, AssetDto.UpdateRequest req) {
-                if (req.getName() != null) {
-                        asset.setAssetName(req.getName());
-                }
-                if (req.getType() != null) {
-                        asset.setAssetType(req.getType());
-                }
-                if (req.getDescription() != null) {
-                        asset.setDescription(req.getDescription());
-                }
-                if (req.getValue() != null) {
-                        asset.setAssetValue(req.getValue());
-                }
-                if (req.getPurchaseDate() != null) {
-                        asset.setPurchaseDate(req.getPurchaseDate());
-                }
-                if (req.getLocationOrUser() != null) {
-                        asset.setLocation(req.getLocationOrUser());
-                }
-                if (req.getCondition() != null) {
-                        asset.setCondition(req.getCondition());
-                }
-                if (req.getNote() != null) {
-                        asset.setNotes(req.getNote());
-                }
-                if (req.getImage() != null) {
-                        asset.setImageUrl(req.getImage());
-                }
-                if (req.getContractNumber() != null) {
-                        asset.setContractNumber(req.getContractNumber());
-                }
-                if (req.getSupplier() != null) {
-                        asset.setSupplierName(req.getSupplier());
-                }
-        }
-
-        private void applyAssignmentAndDateFields(Asset asset, AssetDto.UpdateRequest req) {
-                if (req.getAssignedEmployeeId() != null) {
-                        Employee target = employeeRepo.findById(Objects.requireNonNull(req.getAssignedEmployeeId()))
-                                        .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", req.getAssignedEmployeeId()));
-                        asset.setAssignedTo(target);
-                        asset.setLocation(target.getFirstName() + " " + target.getLastName());
-                }
-                if (req.getWarrantyDate() != null && !req.getWarrantyDate().isBlank()) {
-                        asset.setWarrantyUntil(java.time.LocalDate.parse(req.getWarrantyDate()));
-                }
-                if (req.getContractDate() != null && !req.getContractDate().isBlank()) {
-                        asset.setContractUntil(java.time.LocalDate.parse(req.getContractDate()));
-                }
-        }
-
-        private boolean hasConditionChanged(AssetCondition previous, AssetCondition current) {
-                return current != null && previous != current;
-        }
 
     private CustomUserPrincipal currentPrincipal() {
         return (CustomUserPrincipal) SecurityContextHolder.getContext()

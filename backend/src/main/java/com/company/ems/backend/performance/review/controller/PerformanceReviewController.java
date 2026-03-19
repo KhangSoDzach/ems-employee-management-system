@@ -1,6 +1,6 @@
 package com.company.ems.backend.performance.review.controller;
 
-import com.company.ems.backend.common.constant.RoleAuthorization;
+import com.company.ems.backend.common.constant.AppRole;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.message.MessageCode;
@@ -27,7 +27,7 @@ public class PerformanceReviewController {
     private final MessageService           messages;
 
     @PostMapping
-    @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+    @PreAuthorize(AppRole.HAS_MANAGER_OR_ABOVE)
     @Operation(summary = "Save a new review", description = "Submits a performance evaluation for an employee. Managers can submit reviews for their team members.")
     public ResponseEntity<ApiResponse<PerformanceReviewDto.Response>> saveReview(
             @Valid @RequestBody PerformanceReviewDto.CreateRequest request) {
@@ -38,7 +38,7 @@ public class PerformanceReviewController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     @Operation(summary = "Get review by ID", description = "Retrieves a specific performance review record.")
     public ResponseEntity<ApiResponse<PerformanceReviewDto.Response>> getReview(
             @PathVariable Long id) {
@@ -48,7 +48,7 @@ public class PerformanceReviewController {
     }
 
     @GetMapping
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     @Operation(summary = "List reviews", description = "Returns a paginated list of performance reviews. Can be filtered by reviewee and period.")
     public ResponseEntity<ApiResponse<PageResponse<PerformanceReviewDto.Response>>> listReviews(
             @Parameter(description = "ID of the employee being reviewed") @RequestParam(required = false) Long   revieweeId,
@@ -62,7 +62,7 @@ public class PerformanceReviewController {
     }
 
     @GetMapping("/latest/{employeeId}")
-    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @PreAuthorize(AppRole.HAS_ANY)
     @Operation(summary = "Get latest review", description = "Retrieves the most recent performance review for a given employee.")
     public ResponseEntity<ApiResponse<PerformanceReviewDto.Response>> getLatest(
             @PathVariable Long employeeId) {

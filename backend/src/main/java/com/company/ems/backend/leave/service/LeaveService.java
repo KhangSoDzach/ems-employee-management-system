@@ -9,7 +9,6 @@ import java.time.LocalDate;
 
 public interface LeaveService {
     LeaveResponse createLeaveRequest(LeaveRequest request);
-    PageResponse<LeaveResponse> getMyLeaves(int page, int size);
     PageResponse<LeaveResponse> getAllLeaves(
             int page,
             int size,

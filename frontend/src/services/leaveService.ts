@@ -1,103 +1,84 @@
-import api from "@/lib/axios";
+import api from '@/lib/axios'
 
 // ─── Shared wrapper ───────────────────────────────────────────────────────────
 interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
+  success: boolean
+  message: string
+  data: T
 }
 
 interface PageResponse<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  first: boolean
+  last: boolean
 }
 
 // ─── DTOs matching backend LeaveRequest / LeaveResponse ──────────────────────
 export interface LeaveResponseDTO {
-  id: number;
-  employeeId: number;
-  employeeName: string | null;
-  leaveType: string; // "ANNUAL" | "SICK" | "PERSONAL" | "UNPAID"
-  startDate: string; // "YYYY-MM-DD"
-  endDate: string; // "YYYY-MM-DD"
-  duration: number | null;
-  reason: string;
-  status: string; // "PENDING_LEVEL_1" | "APPROVED" | "REJECTED" | "RETURNED_TO_EMPLOYEE" | ...
-  attachmentUrl: string | null;
-  createdAt: string; // ISO datetime e.g. "2026-03-01T08:30:00"
+  id: number
+  employeeId: number
+  employeeName: string | null
+  leaveType: string       // "ANNUAL" | "SICK" | "PERSONAL" | "UNPAID"
+  startDate: string       // "YYYY-MM-DD"
+  endDate: string         // "YYYY-MM-DD"
+  duration: number | null
+  reason: string
+  status: string          // "PENDING_LEVEL_1" | "APPROVED" | "REJECTED" | "RETURNED_TO_EMPLOYEE" | ...
+  attachmentUrl: string | null
+  createdAt: string       // ISO datetime e.g. "2026-03-01T08:30:00"
 }
 
 export interface CreateLeaveDTO {
-  employeeId: number;
-  leaveType: string; // uppercase "ANNUAL" | "SICK" | "PERSONAL" | "UNPAID"
-  startDate: string; // "YYYY-MM-DD"
-  endDate: string; // "YYYY-MM-DD"
-  reason: string;
+  employeeId: number
+  leaveType: string   // uppercase "ANNUAL" | "SICK" | "PERSONAL" | "UNPAID"
+  startDate: string   // "YYYY-MM-DD"
+  endDate: string     // "YYYY-MM-DD"
+  reason: string
 }
 
 export interface LeaveApprovalDTO {
-  action: "APPROVE" | "REJECT" | "SEND_BACK";
-  comments?: string;
+  action: 'APPROVE' | 'REJECT' | 'SEND_BACK'
+  comments?: string
 }
 
 export const leaveService = {
   /**
-   * GET /api/v1/leaves/me – always returns current authenticated user's own leaves.
+   * GET /api/v1/leaves – returns the current authenticated employee's leaves.
+   * Back-end scopes the result to the caller automatically via JWT.
    */
   getMyLeaves: (): Promise<PageResponse<LeaveResponseDTO>> =>
-    (
-      api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>(
-        "/leaves/me?size=100",
-      ) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
-    ).then((res) => res.data),
+    (api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>('/leaves?size=100') as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>)
+      .then((res) => res.data),
 
   /**
    * GET /api/v1/leaves?size=100 – for manager: backend scopes to team automatically.
    */
   getTeamLeaves: (): Promise<PageResponse<LeaveResponseDTO>> =>
-    (
-      api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>(
-        "/leaves?size=100",
-      ) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
-    ).then((res) => res.data),
+    (api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>('/leaves?size=100') as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>)
+      .then((res) => res.data),
 
   /**
    * POST /api/v1/leaves – submit a new leave request.
    */
   createLeave: (dto: CreateLeaveDTO): Promise<LeaveResponseDTO> =>
-    (
-      api.post<unknown, ApiResponse<LeaveResponseDTO>>(
-        "/leaves",
-        dto,
-      ) as Promise<ApiResponse<LeaveResponseDTO>>
-    ).then((res) => res.data),
+    (api.post<unknown, ApiResponse<LeaveResponseDTO>>('/leaves', dto) as Promise<ApiResponse<LeaveResponseDTO>>)
+      .then((res) => res.data),
 
   /**
    * PUT /api/v1/leaves/{id}/action – APPROVE / REJECT / SEND_BACK.
    */
-  processAction: (
-    id: number,
-    dto: LeaveApprovalDTO,
-  ): Promise<LeaveResponseDTO> =>
-    (
-      api.put<unknown, ApiResponse<LeaveResponseDTO>>(
-        `/leaves/${id}/action`,
-        dto,
-      ) as Promise<ApiResponse<LeaveResponseDTO>>
-    ).then((res) => res.data),
+  processAction: (id: number, dto: LeaveApprovalDTO): Promise<LeaveResponseDTO> =>
+    (api.put<unknown, ApiResponse<LeaveResponseDTO>>(`/leaves/${id}/action`, dto) as Promise<ApiResponse<LeaveResponseDTO>>)
+      .then((res) => res.data),
 
   /**
    * DELETE /api/v1/leaves/{id} – cancel own pending leave request.
    */
   cancelLeave: (id: number): Promise<void> =>
-    (
-      api.delete<unknown, ApiResponse<void>>(`/leaves/${id}`) as Promise<
-        ApiResponse<void>
-      >
-    ).then(() => undefined),
-};
+    (api.delete<unknown, ApiResponse<void>>(`/leaves/${id}`) as Promise<ApiResponse<void>>)
+      .then(() => undefined),
+}

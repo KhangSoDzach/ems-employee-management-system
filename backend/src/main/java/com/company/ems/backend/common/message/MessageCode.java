@@ -196,14 +196,7 @@ public enum MessageCode {
     REVIEW_DUPLICATE        ("review.duplicate"),
     REVIEW_SELF_ONLY        ("review.self_only"),
     REVIEW_INVALID_PERIOD   ("review.invalid_period"),
-    REVIEW_EMPLOYEE_NOT_FOUND("review.employee_not_found"),
-
-    // ── Payroll Configuration ────────────────────────────────────────────────
-    SALARY_COMPONENT_LIST("salary.component.list"),
-    SALARY_COMPONENT_CREATED("salary.component.created"),
-    SALARY_COMPONENT_UPDATED("salary.component.updated"),
-    SALARY_COMPONENT_DUPLICATE_CODE("salary.component.duplicate_code"),
-    SALARY_COMPONENT_DUPLICATE_NAME("salary.component.duplicate_name");
+    REVIEW_EMPLOYEE_NOT_FOUND("review.employee_not_found");
 
     private final String key;
 }

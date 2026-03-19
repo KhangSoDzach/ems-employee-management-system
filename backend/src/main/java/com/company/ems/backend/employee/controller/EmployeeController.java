@@ -1,6 +1,5 @@
 package com.company.ems.backend.employee.controller;
 
-import com.company.ems.backend.common.constant.RoleAuthorization;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.company.ems.backend.common.constant.AppRole;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.message.MessageCode;
@@ -41,7 +41,7 @@ public class EmployeeController {
     private final MessageService messages;
 
     @PostMapping
-    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_CREATE)
+    @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')") //enum
     @Operation(summary = "Create a new employee", description = "Creates a new employee record and returns the basic employee details")
     public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(
             @Valid @RequestBody EmployeeRequest request) {
@@ -51,7 +51,7 @@ public class EmployeeController {
     }
 
     @GetMapping
-    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_VIEW)
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
     @Operation(summary = "Get all employees", description = "Retrieves a paginated list of employees with optional filtering (subject to user's DataScope)")
     public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAllEmployees(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
@@ -73,7 +73,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/team")
-    @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+    @PreAuthorize(AppRole.HAS_MANAGER_OR_ABOVE)
     @Operation(
         summary = "Get team members",
         description = "Returns a paginated, searchable list of employees under the current Manager's team. " +
@@ -90,14 +90,14 @@ public class EmployeeController {
     }
 
     @GetMapping("/managers")
-    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_VIEW)
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
     @Operation(summary = "Get managers list", description = "Returns employees with manager-level positions (level >= 3) for use in reporting manager dropdown")
     public ResponseEntity<ApiResponse<java.util.List<java.util.Map<String, Object>>>> getManagers() {
         return ResponseEntity.ok(ApiResponse.success("Success", employeeService.getManagers()));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_VIEW)
+    @PreAuthorize("hasAuthority('EMPLOYEE_VIEW')")
     @Operation(summary = "Get employee by ID", description = "Retrieves complete employee details by ID")
     public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployeeById(@PathVariable Long id) {
         return ResponseEntity
@@ -105,7 +105,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_UPDATE)
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     @Operation(summary = "Update employee", description = "Updates an existing employee's details")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
             @PathVariable Long id,
@@ -115,7 +115,7 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_DELETE)
+    @PreAuthorize("hasAuthority('EMPLOYEE_DELETE')")
     @Operation(summary = "Delete employee", description = "Permanently deletes an employee record")
     public ResponseEntity<ApiResponse<Void>> deleteEmployee(@PathVariable Long id) {
         employeeService.deleteEmployee(id);
@@ -128,22 +128,25 @@ public class EmployeeController {
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String fileType) {
+        // TODO: Implement file upload service
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_FILE_UPLOADED), null));
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_IMPORT)
+    @PreAuthorize("hasAuthority('EMPLOYEE_IMPORT')")
     public ResponseEntity<ApiResponse<String>> importEmployees(
             @RequestParam("file") MultipartFile file) {
+        // TODO: Implement import service
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_IMPORTED), null));
     }
 
     @GetMapping("/export")
-    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_EXPORT)
+    @PreAuthorize("hasAuthority('EMPLOYEE_EXPORT')")
     public ResponseEntity<byte[]> exportEmployees(
             @RequestParam(defaultValue = "csv") String format,
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String position) {
+        // TODO: Implement export service
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment; filename=employees." + format)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)

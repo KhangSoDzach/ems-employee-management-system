@@ -15,10 +15,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.company.ems.backend.auth.security.JwtTokenUtil;
@@ -46,25 +46,25 @@ public class MemberEvaluationE2ETest {
     @Autowired
     private MockMvc mockMvc;
 
-        @MockitoBean
+    @MockBean
     private EmployeeService employeeService;
 
-        @MockitoBean
+    @MockBean
     private PerformanceReviewService reviewService;
 
-        @MockitoBean
+    @MockBean
     private JwtTokenUtil jwtTokenUtil;
 
-        @MockitoBean
+    @MockBean
     private CustomUserDetailsService customUserDetailsService;
 
-        @MockitoBean
+    @MockBean
     private MessageService messages;
 
-        @MockitoBean
+    @MockBean
     private SecurityAuditService securityAuditService;
 
-        @MockitoBean
+    @MockBean
     private CustomPermissionEvaluator customPermissionEvaluator;
 
     @Autowired
