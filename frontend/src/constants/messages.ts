@@ -188,6 +188,7 @@ export const SYSTEM_MESSAGES = {
     STATUS_HALF: "Nửa ngày",
     STATUS_ON_LEAVE: "Nghỉ phép",
     DONE_CHECKOUT: "Đã hoàn thành Check-out",
+    CHECKIN_POLICY_DETAIL: "Chi tiết chính sách chấm công",
   },
 
   // Manager - Approve Adjustments
@@ -295,7 +296,7 @@ export const SYSTEM_MESSAGES = {
     TYPE_PERSONAL: "Việc riêng",
     EMPTY_PENDING: "Không có yêu cầu nghỉ phép nào đang chờ duyệt.",
     MSG_SUBMIT_SUCCESS: "Đơn xin nghỉ phép đã được gửi thành công!",
-    MSG_SUBMIT_SUCCESS: "Đơn xin nghỉ phép đã được gửi thành công!",
+   
   },
 
   // File Uploads
@@ -932,8 +933,6 @@ export const SYSTEM_MESSAGES = {
     LINK_FORGOT: "Quên mật khẩu?",
     LOADING: "Đang xác thực...",
     SUCCESS: "Đăng nhập thành công!",
-    LOADING: "Đang xác thực...",
-    SUCCESS: "Đăng nhập thành công!",
   },
 
   // Two Factor Login
@@ -1154,11 +1153,6 @@ export const SYSTEM_MESSAGES = {
     SHEET_COMMENT_HELPER:
       "Mọi phản hồi của bạn sẽ được bảo mật và sử dụng cho mục đích cải thiện năng lực đội ngũ.",
     SHEET_SUBMIT: "Gửi đánh giá",
-    SHEET_SUBMITTING: "Đang gửi...",
-    SHEET_SUBMIT_SUCCESS: "Đã gửi đánh giá thành công!",
-    SHEET_SUBMIT_ERROR: "Gửi đánh giá thất bại. Vui lòng thử lại.",
-    SHEET_EXPORT_SUCCESS: "Xuất báo cáo thành công!",
-    SHEET_EXPORT_POPUP_ERROR: "Vui lòng cho phép mở popup để xuất PDF",
     SHEET_SUBMITTING: "Đang gửi...",
     SHEET_SUBMIT_SUCCESS: "Đã gửi đánh giá thành công!",
     SHEET_SUBMIT_ERROR: "Gửi đánh giá thất bại. Vui lòng thử lại.",
