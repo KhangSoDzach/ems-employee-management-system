@@ -153,7 +153,8 @@ public class GlobalExceptionHandler {
         public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
                 MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
                 String paramName  = ex.getName();
-                String paramValue = ex.getValue() != null ? ex.getValue().toString() : "null";
+                Object rawValue = ex.getValue();
+                String paramValue = rawValue != null ? rawValue.toString() : "null";
                 log.warn("[{}] Type mismatch param={} value={} path={}",
                         traceId(), paramName, paramValue, req.getRequestURI());
                 String message = messageService.get(ErrorCode.VALID_PARAM_INVALID, paramName, paramValue);

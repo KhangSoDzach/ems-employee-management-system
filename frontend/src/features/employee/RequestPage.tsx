@@ -41,7 +41,6 @@ import type {
 } from "./leave-request.constants";
 import {
   ALL_LABEL,
-  CURRENT_USER,
   DATE_FORMAT,
   LEAVE_STATUS_CONFIG,
   LEAVE_TYPE_CONFIG,
@@ -324,8 +323,12 @@ export default function RequestPage() {
     requestStatus !== "ALL" || requestType !== "ALL" || requestSearch !== "";
 
   const handleCreateLeave = async (data: LeaveFormValues) => {
-    const dto = await leaveService.createLeave({
-      employeeId: employeeId ?? 1,
+    if (employeeId == null) {
+      throw new Error("Không lấy được thông tin nhân viên hiện tại");
+    }
+
+    await leaveService.createLeave({
+      employeeId,
       leaveType: data.leaveType.toUpperCase(),
       startDate: format(data.startDate, "yyyy-MM-dd"),
       endDate: format(data.endDate, "yyyy-MM-dd"),
@@ -380,7 +383,9 @@ export default function RequestPage() {
     };
 
     await attendanceService.submitAdjustment(payload);
+    setAdjPage(0);
     await fetchAdjustments();
+    setActiveTab("adjustment");
   };
 
   const handleEditAdjustment = async (
@@ -404,6 +409,7 @@ export default function RequestPage() {
     await attendanceService.resubmitAdjustment(Number(id), payload);
     setEditRequest(null);
     await fetchAdjustments();
+    setActiveTab("adjustment");
   };
 
   const handleResubmitAdjustment = (req: UnifiedRequest) => {

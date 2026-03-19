@@ -34,11 +34,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -49,6 +52,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class IncidentServiceImpl implements IncidentService {
 
+    private static final String ENTITY_TYPE_ASSET_INCIDENT = "ASSET_INCIDENT";
     private final AssetIncidentReportRepository incidentRepo;
     private final AssetRepository assetRepo;
     private final AssetHistoryRepository historyRepo;
@@ -59,7 +63,7 @@ public class IncidentServiceImpl implements IncidentService {
     private final IncidentMapper mapper;
     private final MessageService messages;
     private static final String UPLOAD_DIR = "uploads/incidents/";
-    private static final long MAX_FILE_BYTES = 5 * 1024 * 1024;
+    private static final long MAX_FILE_BYTES = 5L * 1024 * 1024;
     private static final List<String> ALLOWED_TYPES = List.of(
             "image/jpeg", "image/png", "application/pdf");
 
@@ -111,24 +115,26 @@ public class IncidentServiceImpl implements IncidentService {
                 .attachmentUrl(attachmentUrl)
                 .status(ReportStatus.PENDING)
                 .reportedBy(emp)
-                .reportedAt(LocalDateTime.now())
-                .build();
+            .reportedAt(LocalDateTime.now())
+            .build();
 
-        incidentRepo.save(report);
+        @SuppressWarnings("null")
+        AssetIncidentReport savedReport = incidentRepo.save(report);
 
         auditLogService.logEvent(
-                "ASSET_INCIDENT",
+            ENTITY_TYPE_ASSET_INCIDENT,
                 AuthActionType.ASSET_REPORT_SUBMITTED,
                 emp.getUser().getUsername(),
-                report.getReportCode(),
+            savedReport.getReportCode(),
+            null,
+            new AuditLogService.AuditValues(
                 null,
-                null,
-                "{\"asset\":\"" + asset.getAssetCode() + "\", \"type\":\"" + report.getIncidentType() + "\"}",
+                "{\"asset\":\"" + asset.getAssetCode() + "\", \"type\":\"" + savedReport.getIncidentType() + "\"}"),
                 null);
 
-        log.info("Incident report created: {} by employee: {}", report.getReportCode(), emp.getId());
+        log.info("Incident report created: {} by employee: {}", savedReport.getReportCode(), emp.getId());
 
-        return ApiResponse.success(messages.get(MessageCode.INCIDENT_SUBMITTED), mapper.toDetail(report));
+        return ApiResponse.success(messages.get(MessageCode.INCIDENT_SUBMITTED), mapper.toDetail(savedReport));
     }
 
     @Override
@@ -182,6 +188,7 @@ public class IncidentServiceImpl implements IncidentService {
 
     @Override
     @Transactional
+    @SuppressWarnings("null")
     public ApiResponse<IncidentDto.ReportDetail> approveReport(
             Long id,
             IncidentDto.ProcessRequest request,
@@ -199,32 +206,29 @@ public class IncidentServiceImpl implements IncidentService {
         AssetCondition oldCondition = asset.getCondition();
         AssetCondition newCondition = resolveConditionOnApprove(report.getIncidentType());
         asset.setCondition(newCondition);
-        // persist asset condition change
         assetRepo.save(asset);
-        // append asset history record for audit / traceability
+
         historyRepo.save(AssetHistory.builder()
                 .asset(asset)
                 .actionType(AssetActionType.CHANGE_CONDITION)
                 .id(processor.getId())
                 .actorUsername(processor.getUsername())
-                .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
-                .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")
-                .newValue("{\"condition\":\"" + newCondition.name() + "\"}")
+            .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
+            .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")
+            .newValue("{\"condition\":\"" + newCondition.name() + "\"}")
                 .build());
 
         incidentRepo.save(report);
 
         auditLogService.logEvent(
-                "ASSET_INCIDENT",
+            ENTITY_TYPE_ASSET_INCIDENT,
                 AuthActionType.ASSET_REPORT_APPROVED,
                 processor.getUsername(),
                 report.getReportCode(),
-                null,
-                oldCondition.name(),
-                newCondition.name(),
+            null,
+            new AuditLogService.AuditValues(oldCondition.name(), newCondition.name()),
                 null);
 
-        // TODO: Create payroll record if LOST
         if (newCondition == AssetCondition.LOST) {
             log.info("Asset reported LOST. Should initiate payroll compensation process for asset: {}",
                     asset.getAssetCode());
@@ -257,13 +261,12 @@ public class IncidentServiceImpl implements IncidentService {
         incidentRepo.save(report);
 
         auditLogService.logEvent(
-                "ASSET_INCIDENT",
+            ENTITY_TYPE_ASSET_INCIDENT,
                 AuthActionType.ASSET_REPORT_REJECTED,
                 processor.getUsername(),
                 report.getReportCode(),
-                null,
-                null,
-                "REJECTED: " + report.getProcessNote(),
+            null,
+            new AuditLogService.AuditValues(null, "REJECTED: " + report.getProcessNote()),
                 null);
 
         log.info("Report {} rejected by {}", report.getReportCode(), processor.getUsername());
@@ -272,7 +275,8 @@ public class IncidentServiceImpl implements IncidentService {
     }
 
     private AssetIncidentReport findReportById(Long id) {
-        return incidentRepo.findById(id)
+        Long reportId = Objects.requireNonNull(id, "report id must not be null");
+        return incidentRepo.findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("AssetIncidentReport", "id", id));
     }
 
@@ -282,7 +286,8 @@ public class IncidentServiceImpl implements IncidentService {
     }
 
     private User resolveUser(CustomUserPrincipal principal) {
-        return userRepo.findById(principal.getUserId())
+        Long userId = Objects.requireNonNull(principal.getUserId(), "principal userId must not be null");
+        return userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", principal.getUserId()));
     }
 
@@ -320,9 +325,9 @@ public class IncidentServiceImpl implements IncidentService {
             Files.copy(file.getInputStream(), target);
 
             return "/" + UPLOAD_DIR + filename;
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Failed to save attachment", e);
-            throw new RuntimeException(e.getMessage());
+            throw new IllegalStateException("Failed to save attachment", e);
         }
     }
 
@@ -332,7 +337,7 @@ public class IncidentServiceImpl implements IncidentService {
         try {
             LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ISO_DATE);
             return startOfDay ? date.atStartOfDay() : date.atTime(LocalTime.MAX);
-        } catch (Exception e) {
+        } catch (DateTimeParseException e) {
             return null;
         }
     }

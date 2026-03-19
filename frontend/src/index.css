@@ -78,6 +78,7 @@
    BASE STYLES + 🔥 FIX ROOT HEIGHT
    ========================================= */
 @layer base {
+
   html,
   body,
   #root {
@@ -188,10 +189,6 @@
    UTILITIES
    ========================================= */
 @layer base {
-  .container-page {
-    @apply mx-auto max-w-screen-2xl p-6 space-y-6;
-  }
-
   /* Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
@@ -207,28 +204,8 @@
   }
 }
 
-@theme inline {
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
 @layer components {
+
   /* =========================================
      Shared UI utilities
      ========================================= */
@@ -580,42 +557,12 @@
     @apply text-2xl font-semibold;
   }
 
-  .page-subtitle {
-    @apply text-lg text-muted-foreground;
+  .form-data-item {
+    @apply flex flex-col pt-1;
   }
 
   /* =========================================
-     SECTION LABELS
-     ========================================= */
-  .section-label {
-    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
-  }
-
-  .section-label-with-icon {
-    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2;
-  }
-
-  /* =========================================
-     CARD VARIANTS
-     ========================================= */
-  .card-base {
-    @apply rounded-xl border shadow-sm;
-  }
-
-  .card-elevated {
-    @apply rounded-xl border shadow-md hover:shadow-lg transition;
-  }
-
-  .data-card {
-    @apply rounded-2xl border shadow-sm overflow-hidden;
-  }
-
-  .data-card-soft {
-    @apply bg-background rounded-2xl border border-border shadow-sm overflow-hidden;
-  }
-
-  /* =========================================
-     ICON BOXES
+     PAGE LAYOUTS
      ========================================= */
   .icon-box {
     @apply w-12 h-12 rounded-xl flex items-center justify-center;
@@ -808,19 +755,8 @@
     @apply h-full bg-green-500 rounded-full transition-all;
   }
 
-  /* =========================================
-     ASSET SPECIFIC
-     ========================================= */
-  .asset-image-placeholder {
-    @apply w-full h-40 rounded-2xl overflow-hidden shadow-lg border-4 border-background z-10 bg-muted relative;
-  }
-
   .asset-detail-section {
     @apply border rounded-xl p-4 space-y-4;
-  }
-
-  .asset-history-item {
-    @apply flex items-center justify-between bg-white p-5 rounded-xl border border-slate-200 shadow-sm;
   }
 
   /* =========================================
@@ -846,45 +782,22 @@
     @apply flex items-center gap-2;
   }
 
-  /* =========================================
-     CARD REUSABLE PATTERNS
-     ========================================= */
   .card-border {
     @apply border border-border shadow-sm;
-  }
-
-  .card-border-hover {
-    @apply border p-6 shadow-sm hover:shadow-md transition;
-  }
-
-  .card-full {
-    @apply bg-white dark:bg-slate-900 rounded-lg border shadow-sm;
-  }
-
-  .card-overflow {
-    @apply rounded-lg border shadow-sm overflow-hidden;
   }
 
   .card-soft {
     @apply bg-background rounded-2xl border border-border shadow-sm overflow-hidden;
   }
 
-  .card-soft-sm {
-    @apply bg-background rounded-xl border border-border shadow-sm overflow-hidden;
-  }
-
-  .card-elevated-hover {
-    @apply rounded-xl border shadow-sm hover:shadow-md transition;
-  }
-
   /* =========================================
      BADGE REUSABLE
      ========================================= */
-  .badge-status {
+  .badge-status-label {
     @apply px-2.5 py-0.5 text-xs font-semibold rounded-full;
   }
 
-  .badge-outline {
+  .badge-outline-label {
     @apply px-3 py-1 text-xs font-semibold rounded-md;
   }
 
@@ -895,21 +808,10 @@
     @apply bg-card px-5 py-2.5 rounded-xl border border-border shadow-sm;
   }
 
-  .btn-icon-upload {
-    @apply absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full border-2 border-white shadow-sm;
-  }
-
-  /* =========================================
-     FORM REUSABLE
-     ========================================= */
-  .form-textarea-resize {
-    @apply resize-none h-28 bg-white rounded-xl border-slate-200 shadow-sm placeholder:text-slate-400 p-4;
-  }
-
   /* =========================================
      SECTION HEADERS
      ========================================= */
-  .section-title {
+  .label-title {
     @apply text-xs font-bold uppercase tracking-wider;
   }
 
@@ -937,12 +839,14 @@
   body * {
     visibility: hidden !important;
   }
+
   .print\:block,
   .print\:block *,
   .print\:fixed,
   .print\:fixed * {
     visibility: visible !important;
   }
+
   .print\:fixed {
     position: fixed !important;
     top: 0 !important;
@@ -955,16 +859,19 @@
     background: white !important;
     z-index: 9999 !important;
   }
+
   /* Hide UI elements that shouldn't be in PDF */
   .print\:hidden {
     display: none !important;
   }
+
   /* Reset some shadcn/ui defaults for print */
   [role="dialog"] {
     position: static !important;
     box-shadow: none !important;
     border: none !important;
   }
+
   /* Force color printing */
   * {
     -webkit-print-color-adjust: exact !important;

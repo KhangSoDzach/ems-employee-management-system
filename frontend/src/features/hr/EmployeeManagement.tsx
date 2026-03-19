@@ -8,9 +8,8 @@ import { employeeService, EmployeeResponse, PageParams } from "@/services/employ
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 // Import Modals
-import EmployeeCreateModal from "./EmployeeCreateModal";
-import EmployeeEditModal from "./EmployeeEditModal";
 import EmployeeDetailModal from "./EmployeeDetailModal";
+import EmployeeFormModal from "./components/EmployeeFormModal";
 
 const PAGE_SIZE = 10;
 
@@ -64,7 +63,9 @@ export default function EmployeeManagementPage() {
     useEffect(() => { fetchList(); }, [fetchList]);
 
     const handleDelete = async (id: number) => {
-        if (!confirm(SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_CONFIRM)) return;
+        if (!confirm(SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_CONFIRM)) {
+            return;
+        }
         try {
             await employeeService.deleteEmployee(id);
             toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_SUCCESS);
@@ -290,10 +291,16 @@ export default function EmployeeManagementPage() {
                                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                                     let pg = i;
                                     if (totalPages > 5) {
-                                        if (page > 2) pg = page - 2 + i;
-                                        if (pg >= totalPages) pg = totalPages - 5 + i;
+                                        if (page > 2) {
+                                            pg = page - 2 + i;
+                                        }
+                                        if (pg >= totalPages) {
+                                            pg = totalPages - 5 + i;
+                                        }
                                     }
-                                    if (pg < 0 || pg >= totalPages) return null;
+                                    if (pg < 0 || pg >= totalPages) {
+                                        return null;
+                                    }
 
                                     return (
                                         <button
@@ -320,8 +327,9 @@ export default function EmployeeManagementPage() {
                     </div>
                 </main>
 
-                <EmployeeCreateModal
+                <EmployeeFormModal
                     open={openCreate}
+                    mode="create"
                     onClose={() => setOpenCreate(false)}
                     onSuccess={() => { fetchList(); setOpenCreate(false); }}
                 />
@@ -330,8 +338,9 @@ export default function EmployeeManagementPage() {
                     employeeId={selectedId}
                     onClose={() => setOpenDetail(false)}
                 />
-                <EmployeeEditModal
+                <EmployeeFormModal
                     open={openEdit}
+                    mode="edit"
                     employeeId={selectedId}
                     employee={selectedEmployee}
                     onClose={() => setOpenEdit(false)}

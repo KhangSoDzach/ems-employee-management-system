@@ -81,22 +81,11 @@ public class AssetDataScopeService {
                 .orElseThrow(() -> new ResourceNotFoundException(principal.getUsername()));
     }
 
-    /**
-     * FIX: The original implementation threw ForbiddenException when
-     * asset.getAssignedTo() == null.  Every newly created AVAILABLE asset has
-     * assignedTo == null, so managers could never read/use a freshly created asset.
-     * <p>
-     * New logic: unassigned assets are visible to any manager (they belong to no
-     * department yet). Only when the asset IS assigned do we enforce the
-     * department boundary.
-     */
     private void assertAssetInManagerDepartment(Asset asset, CustomUserPrincipal principal) {
-        // Unassigned assets are accessible to all managers — no department to check.
         if (asset.getAssignedTo() == null) {
             return;
         }
 
-        // Assigned but department unknown — let through rather than silently deny.
         if (asset.getAssignedTo().getDepartment() == null) {
             return;
         }

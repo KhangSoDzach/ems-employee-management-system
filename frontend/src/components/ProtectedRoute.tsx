@@ -1,16 +1,22 @@
-/* eslint-disable react/jsx-no-literals */
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { AUTH_ROLES } from "@/constants/roles";
 
 interface ProtectedRouteProps {
-    allowedRoles?: string[];
+  allowedRoles?: string[];
 }
 
 function getRedirectByRole(roles: string[]): string {
-    if (roles.includes("ROLE_ADMIN")) return "/admin-profile";
-    if (roles.includes("ROLE_HR")) return "/hr-profile";
-    if (roles.includes("ROLE_MANAGER")) return "/manager-profile";
-    return "/employee";
+  if (roles.includes(AUTH_ROLES.ADMIN)) {
+    return "/assets";
+  }
+  if (roles.includes(AUTH_ROLES.HR)) {
+    return "/hr-employees";
+  }
+  if (roles.includes(AUTH_ROLES.MANAGER)) {
+    return "/members";
+  }
+  return "/employee";
 }
 
 /**
@@ -20,35 +26,38 @@ function getRedirectByRole(roles: string[]): string {
  * - If role-based access is required: check if user has the role
  * - Otherwise: render child routes via <Outlet />
  */
-export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
-    const { user, isAuthenticated, isLoading } = useAuth();
+export function ProtectedRoute({
+  allowedRoles,
+}: Readonly<ProtectedRouteProps>) {
+  const { user, isAuthenticated, isLoading } = useAuth();
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                    <p className="text-sm text-muted-foreground">{"Đang xác thực..."}</p>
-                </div>
-            </div>
-        );
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">{"Đang xác thực..."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Role-based check
+  if (allowedRoles && user) {
+    const hasRole = allowedRoles.some(
+      (role) =>
+        user.roles.includes(role) || user.roles.includes(`ROLE_${role}`),
+    );
+
+    if (!hasRole) {
+      // Redirect về trang home phù hợp với role của user
+      return <Navigate to={getRedirectByRole(user.roles)} replace />;
     }
+  }
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
-
-    // Role-based check
-    if (allowedRoles && user) {
-        const hasRole = allowedRoles.some(role =>
-            user.roles.includes(role) || user.roles.includes(`ROLE_${role}`)
-        );
-
-        if (!hasRole) {
-            // Redirect về trang home phù hợp với role của user
-            return <Navigate to={getRedirectByRole(user.roles)} replace />;
-        }
-    }
-
-    return <Outlet />;
+  return <Outlet />;
 }

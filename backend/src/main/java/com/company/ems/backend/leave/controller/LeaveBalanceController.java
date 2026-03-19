@@ -1,6 +1,7 @@
 package com.company.ems.backend.leave.controller;
 
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.exception.ForbiddenException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
@@ -34,11 +35,8 @@ public class LeaveBalanceController {
     private final EmployeeRepository employeeRepository;
     private final DataScopeService dataScopeService;
 
-    /**
-     * Get balances for the currently authenticated employee.
-     */
     @GetMapping
-    @PreAuthorize("hasPermission(null, 'LEAVE_BALANCE_READ')")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_LEAVE_BALANCE_READ)
     @Operation(summary = "Get my leave balances for the current year")
     public ResponseEntity<ApiResponse<List<LeaveBalanceResponse>>> getMyBalances() {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
@@ -49,25 +47,13 @@ public class LeaveBalanceController {
         return ResponseEntity.ok(ApiResponse.success("OK", balances));
     }
 
-    /**
-     * Get balances for a specific employee (Managers/HR/Admins).
-     */
     @GetMapping("/{employeeId}")
-    @PreAuthorize("hasPermission(null, 'LEAVE_BALANCE_READ')")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_LEAVE_BALANCE_READ)
     @Operation(summary = "Get leave balances for a specific employee (requires data scope access)")
     public ResponseEntity<ApiResponse<List<LeaveBalanceResponse>>> getEmployeeBalances(
             @PathVariable Long employeeId) {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
 
-        // Ideally, we'd add asserting access to the DataScopeService for balances,
-        // but checking employee access is sufficient here since balance scope =
-        // employee scope.
-        // Assuming DataScopeService has an assertCanAccessEmployee method:
-        // dataScopeService.assertCanAccessEmployee(principal, employeeId);
-
-        // Security fallback if dataScope check is not available: Admin/HR all, Manager
-        // team
-        // Let's implement a quick permission check here
         Employee target = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", employeeId));
 
@@ -89,13 +75,12 @@ public class LeaveBalanceController {
         }
 
         // If user has 'TEAM' data scope (Manager), check if target is a subordinate
-        if (principal.hasDataScope(com.company.ems.backend.user.enums.DataScope.TEAM)) {
-            if (targetEmployee.getReportingManager() != null
+        if (principal.hasDataScope(com.company.ems.backend.user.enums.DataScope.TEAM) && targetEmployee.getReportingManager() != null
                     && targetEmployee.getReportingManager().getUser() != null
                     && targetEmployee.getReportingManager().getUser().getId().equals(principal.getUserId())) {
                 return;
             }
-        }
+
 
         throw new ForbiddenException();
     }
