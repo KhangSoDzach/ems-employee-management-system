@@ -409,7 +409,7 @@ export default function RequestPage() {
     await attendanceService.resubmitAdjustment(Number(id), payload);
     setEditRequest(null);
     await fetchAdjustments();
-   
+    setActiveTab("adjustment");
   };
 
   const handleResubmitAdjustment = (req: UnifiedRequest) => {
