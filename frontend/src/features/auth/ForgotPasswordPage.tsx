@@ -21,7 +21,15 @@ import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
-const TEXT = SYSTEM_MESSAGES.FORGOT_PASSWORD;
+const TEXT = {
+    ...SYSTEM_MESSAGES.FORGOT_PASSWORD,
+    TOAST_VALIDATION_ERROR: "Vui lòng kiểm tra lại các thông tin nhập liệu",
+    LOADING_SEND_OTP: "Đang gửi mã OTP...",
+    LOADING_RESET: "Đang cập nhật mật khẩu...",
+    SUCCESS_RESET: "Đổi mật khẩu thành công!",
+    LABEL_CURRENT_PASSWORD: "Mật khẩu hiện tại",
+    PLACEHOLDER_CURRENT_PASSWORD: "Nhập mật khẩu hiện tại",
+};
 
 interface ForgotPasswordPageProps {
     isProfileMode?: boolean;
@@ -32,24 +40,18 @@ interface ForgotPasswordPageProps {
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const emailSchema = z.object({
-    email: z.string().min(1, FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED).email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
+    email: z.string().email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
 });
 
 const otpAndPasswordSchema = z.object({
     otp: z
         .string()
-        .min(1, FORM_VALIDATION_MESSAGES.OTP_REQUIRED)
         .length(6, FORM_VALIDATION_MESSAGES.OTP_LENGTH)
         .regex(/^\d+$/, FORM_VALIDATION_MESSAGES.OTP_NUMERIC),
     newPassword: z
         .string()
-        .min(1, FORM_VALIDATION_MESSAGES.PASSWORD_REQUIRED)
-        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN)
-        .regex(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-            FORM_VALIDATION_MESSAGES.PASSWORD_COMPLEX,
-        ),
-    confirmPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
+        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
+    confirmPassword: z.string(),
 }).refine((d) => d.newPassword === d.confirmPassword, {
     message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
     path: ["confirmPassword"],
@@ -57,9 +59,7 @@ const otpAndPasswordSchema = z.object({
 
 const profileChangePasswordSchema = z.object({
     currentPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
-    newPassword: z
-        .string()
-        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
+    newPassword: z.string().min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
     confirmPassword: z.string(),
 }).refine((d) => d.newPassword === d.confirmPassword, {
     message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
@@ -77,12 +77,15 @@ const StepIcon = ({ step }: { step: 1 | 2 | 3 }) => (
     <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-primary/20">
         {step === 1 && <User className="text-primary w-8 h-8" />}
         {step === 2 && <KeyRound className="text-primary w-8 h-8" />}
-        {step === 3 && <div className="hidden" />}
+        {step === 3 && <CheckCircle2 className="text-green-500 w-8 h-8" />}
     </div>
 );
 
-const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolean; step: 1 | 2; savedEmail: string }) => {
+const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolean; step: 1 | 2 | 3; savedEmail: string }) => {
     const getTitle = () => {
+        if (step === 3) {
+            return TEXT.SUCCESS_TITLE;
+        }
         if (isProfileMode) {
             return SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_TITLE;
         }
@@ -93,6 +96,9 @@ const StepHeader = ({ isProfileMode, step, savedEmail }: { isProfileMode: boolea
     };
 
     const getDesc = () => {
+        if (step === 3) {
+            return TEXT.SUCCESS_DESC;
+        }
         if (isProfileMode) {
             return SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_DESC;
         }
@@ -394,20 +400,11 @@ const OtpResetPasswordForm = ({
 );
 
 const SuccessState = ({ isProfileMode, onClose, navigate }: { isProfileMode: boolean; onClose?: () => void; navigate: (p: string) => void }) => (
-    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-500 py-4">
-        <CheckCircle2 className="w-20 h-20 text-green-500" />
-        <div className="text-center space-y-2 px-2">
-            <h3 className="text-xl font-bold">{TEXT.SUCCESS_TITLE}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-                {TEXT.SUCCESS_DESC}
-            </p>
+    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-300">
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle2 className="w-10 h-10 text-green-500" />
         </div>
-
-        <Button 
-            className="w-full font-bold h-12 rounded-xl text-base shadow-lg hover:shadow-xl transition-all" 
-            size="lg" 
-            onClick={() => isProfileMode ? (onClose ? onClose() : window.location.reload()) : navigate("/login")}
-        >
+        <Button className="w-full font-bold" size="lg" onClick={() => isProfileMode ? (onClose ? onClose() : window.location.reload()) : navigate("/login")}>
             {isProfileMode ? SYSTEM_MESSAGES.BTN_CLOSE : TEXT.BTN_GO_LOGIN}
         </Button>
     </div>
@@ -503,10 +500,10 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
         });
 
         toast.promise(promise, {
-            loading: "Đang gửi mã OTP...",
-            success: "Mã OTP đã được gửi đến email của bạn.",
+            loading: TEXT.LOADING_SEND_OTP,
+            success: TEXT.TOAST_OTP_SENT,
             error: (err: unknown) => {
-                return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Không thể gửi mã. Vui lòng thử lại.";
+                return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? TEXT.TOAST_SEND_ERROR;
             },
         });
     };
@@ -518,39 +515,42 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
                 : resetPassword(savedEmail, data.otp, data.newPassword),
         onMutate: () => {
             toast.dismiss();
-            toast.loading("Đang cập nhật mật khẩu...");
+            toast.loading(TEXT.LOADING_RESET);
         },
         onSuccess: () => {
             toast.dismiss();
-            toast.success("Đặt lại mật khẩu thành công!");
+            toast.success(TEXT.SUCCESS_RESET);
             setStep(3);
         },
         onError: (err: unknown) => {
             toast.dismiss();
-            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Mã OTP không hợp lệ hoặc đã hết hạn.";
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? (isProfileMode ? "Mật khẩu hiện tại không chính xác" : TEXT.TOAST_OTP_INVALID);
             toast.error(message);
             if (isProfileMode) {
-                setFormError("currentPassword", { message: "Mật khẩu hiện tại không chính xác" });
+                setFormError("currentPassword", { message });
             } else if (message.toLowerCase().includes("hết hạn") || message.toLowerCase().includes("expired")) {
-                setFormError("otp" as keyof ResetFormValues, { message: "Mã xác thực đã hết hạn" });
+                setFormError("otp" as keyof ResetFormValues, { message: TEXT.TOAST_OTP_INVALID });
             } else {
-                setFormError("otp" as keyof ResetFormValues, { message: "Mã xác thực không hợp lệ" });
+                setFormError("otp" as keyof ResetFormValues, { message });
             }
-        },
+        }
     });
+
     const onSubmitReset = async (data: ResetFormValues) => {
         try {
             await resetMutation.mutateAsync(data);
-        } catch {
-            // Error is handled by resetMutation's onError callback
+        } catch (error) {
+            console.error("Password change error:", error);
         }
     };
+
     const handleResend = async () => {
         if (timeLeft > 0 || isResending) {
             return;
         }
         toast.dismiss();
         setIsResending(true);
+
         const promise = forgotPassword(savedEmail).then(() => {
             setTimeLeft(300);
             setIsTimerRunning(true);
@@ -559,19 +559,30 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
         });
 
         toast.promise(promise, {
-            loading: "Đang gửi lại mã OTP...",
-            success: "Đã gửi lại mã OTP mới.",
-            error: "Không thể gửi lại mã. Vui lòng thử lại.",
+            loading: TEXT.LOADING_SEND_OTP,
+            success: TEXT.TOAST_OTP_RESENT,
+            error: TEXT.TOAST_RESEND_ERROR,
         });
+    };
+
+    const onError = (errors: FieldErrors<EmailFormValues | OtpPasswordFormValues>) => {
+        toast.dismiss();
+        if (Object.keys(errors).length > 0) {
+            toast.error(TEXT.TOAST_VALIDATION_ERROR);
+        }
     };
 
 
     // ─── Render ───────────────────────────────────────────────────────────────
+
+
+
     const renderContent = () => (
         <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
             <CardHeader>
-                {step !== 3 && <StepHeader isProfileMode={isProfileMode} step={step as 1 | 2} savedEmail={savedEmail} />}
+                <StepHeader isProfileMode={isProfileMode} step={step} savedEmail={savedEmail} />
             </CardHeader>
+
             <CardContent className="space-y-6">
                 {isProfileMode && step === 2 && (
                     <ProfileChangePasswordForm
@@ -587,14 +598,16 @@ export const ForgotPasswordPage = ({ isProfileMode = false, userEmail = "", onCl
                         setShowConfirm={setShowConfirm}
                     />
                 )}
+
                 {step === 1 && (
                     <EmailStepForm
                         register={registerEmail}
                         errors={emailErrors}
                         isSubmitting={isEmailSubmitting}
-                        onSubmit={handleSubmitEmail(onSendCode)}
+                        onSubmit={handleSubmitEmail(onSendCode, onError)}
                     />
                 )}
+
                 {!isProfileMode && step === 2 && (
                     <OtpResetPasswordForm
                         register={registerForm}

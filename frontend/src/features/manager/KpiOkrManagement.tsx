@@ -54,13 +54,13 @@ const mockData: KpiItem[] = [
 ]
 
 function formatValue(v: number, mt: string) {
-  if (mt === "VND") {return new Intl.NumberFormat("vi-VN").format(v)}
-  if (mt === "PERCENT") {return `${v}%`}
+  if (mt === "VND") return new Intl.NumberFormat("vi-VN").format(v)
+  if (mt === "PERCENT") return `${v}%`
   return String(v)
 }
 function progressColor(p: number) {
-  if (p >= 90) {return { text: "text-emerald-600", bar: "bg-emerald-500" }}
-  if (p >= 60) {return { text: "text-orange-500", bar: "bg-orange-400" }}
+  if (p >= 90) return { text: "text-emerald-600", bar: "bg-emerald-500" }
+  if (p >= 60) return { text: "text-orange-500", bar: "bg-orange-400" }
   return { text: "text-red-600", bar: "bg-red-500" }
 }
 
@@ -72,7 +72,7 @@ export default function KpiOkrManagement() {
 
   const items = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) {return mockData}
+    if (!q) return mockData
     return mockData.filter((row) =>
       row.name.toLowerCase().includes(q) ||
       (row.description ?? "").toLowerCase().includes(q)

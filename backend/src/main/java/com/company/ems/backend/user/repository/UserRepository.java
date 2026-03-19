@@ -58,16 +58,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT COUNT(u) FROM User u WHERE u.enabled = true")
     long countActiveUsers();
-
-        @Query("SELECT u.id FROM User u WHERE u.enabled = true")
-        java.util.List<Long> findAllEnabledUserIds();
-
-        @Query("""
-                        SELECT DISTINCT u.id
-                        FROM User u
-                        JOIN u.roles r
-                        WHERE u.enabled = true
-                            AND r.id IN :roleIds
-                        """)
-        java.util.List<Long> findDistinctUserIdsByRoleIds(@Param("roleIds") java.util.List<Long> roleIds);
 }

@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { AUTH_ROLES } from "@/constants/auth"
 
 export type SalarySlip = {
   id: number
@@ -47,7 +46,7 @@ interface SalarySlipSheetProps {
 
 export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlipSheetProps) => {
   const { user } = useAuth()
-  const isHr = user?.roles?.includes(AUTH_ROLES.HR)
+  const isHr = user?.roles?.includes("ROLE_HR")
 
   const normalizeSlip = (s: SalarySlip | null): SalarySlip | null =>
     s
@@ -67,9 +66,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
     setIsEditing(false)
   }, [slip])
 
-  if (!form) {
-    return null
-  }
+  if (!form) return null
 
   const totalBonus = form.bonus.reduce((acc, cur) => {
     const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
@@ -87,7 +84,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
   }, 0)
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) {onOpenChange(false)} }}>
+    <Sheet open={open} onOpenChange={(v) => { if (!v) onOpenChange(false) }}>
       <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl">
         {/* Header */}
         <div className="px-6 py-5 border-b bg-muted/10 relative overflow-hidden">
@@ -111,28 +108,28 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                         variant="secondary"
                         size="sm"
                         onClick={() => {
-                          setForm(slip);
-                          setIsEditing(false);
+                          setForm(slip)
+                          setIsEditing(false)
                         }}
                       >
-                        {"Hủy"}
+                        Hủy
                       </Button>
                       <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => {
                           if (onSave && form) {
-                            onSave(form);
+                            onSave(form)
                           }
-                          setIsEditing(false);
+                          setIsEditing(false)
                         }}
                       >
-                        {"Lưu"}
+                        Lưu
                       </Button>
                     </>
                   ) : (
                     <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                      {"Chỉnh sửa"}
+                      Chỉnh sửa
                     </Button>
                   )}
                 </div>
@@ -163,11 +160,11 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PERIOD}{": "}{form.period}
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PERIOD}: {form.period}
                   </p>
 
                   <p className="text-xs text-muted-foreground">
-                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PAYMENT_DATE}{": "}{form.paymentDate}
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PAYMENT_DATE}: {form.paymentDate}
                   </p>
 
                   {isHr ? (
@@ -233,7 +230,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <Gift className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">{"Thưởng"}</h3>
+                <h3 className="font-semibold text-lg">Thưởng</h3>
               </div>
               <div className="bg-muted/20 rounded-xl p-4 space-y-3">
                 {form.bonus.map((b, idx) => (
@@ -245,7 +242,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                           onChange={(e) => {
                             const next = [...form.bonus]
                             const current = next[idx]
-                            if (!current) {return}
+                            if (!current) return
                             next[idx] = { ...current, label: e.target.value }
                             setForm({ ...form, bonus: next })
                           }}
@@ -257,7 +254,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                           onChange={(e) => {
                             const next = [...form.bonus]
                             const current = next[idx]
-                            if (!current) {return}
+                            if (!current) return
                             next[idx] = { ...current, amount: e.target.value }
                             setForm({ ...form, bonus: next })
                           }}
@@ -278,7 +275,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                     ) : (
                       <>
                         <span className="text-sm text-muted-foreground">{b.label}</span>
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{"+"}{" "}{b.amount}</span>
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">+ {b.amount}</span>
                       </>
                     )}
                   </div>
@@ -293,12 +290,12 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                     }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    {"Thêm thưởng"}
+                    Thêm thưởng
                   </Button>
                 )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
-                  <span>{"Tổng thưởng"}</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">{"+"}{" "}{totalBonus.toLocaleString("vi-VN")}{" đ"}</span>
+                  <span>Tổng thưởng</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">+ {totalBonus.toLocaleString("vi-VN")} đ</span>
                 </div>
               </div>
             </section>
@@ -319,7 +316,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                           onChange={(e) => {
                             const next = [...form.allowances]
                             const current = next[idx]
-                            if (!current) {return}
+                            if (!current) return
                             next[idx] = { ...current, label: e.target.value }
                             setForm({ ...form, allowances: next })
                           }}
@@ -331,7 +328,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                           onChange={(e) => {
                             const next = [...form.allowances]
                             const current = next[idx]
-                            if (!current) {return}
+                            if (!current) return
                             next[idx] = { ...current, amount: e.target.value }
                             setForm({ ...form, allowances: next })
                           }}
@@ -352,7 +349,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                     ) : (
                       <>
                         <span className="text-sm text-muted-foreground">{a.label}</span>
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{"+"}{" "}{a.amount}</span>
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">+ {a.amount}</span>
                       </>
                     )}
                   </div>
@@ -367,12 +364,12 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                     }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    {"Thêm phụ cấp"}
+                    Thêm phụ cấp
                   </Button>
                 )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
                   <span>{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_ALLOWANCES}</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">{"+"}{" "}{totalAllowances.toLocaleString("vi-VN")}{" đ"}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">+ {totalAllowances.toLocaleString("vi-VN")} đ</span>
                 </div>
               </div>
             </section>
@@ -393,7 +390,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                           onChange={(e) => {
                             const next = [...form.deductions]
                             const current = next[idx]
-                            if (!current) {return}
+                            if (!current) return
                             next[idx] = { ...current, label: e.target.value }
                             setForm({ ...form, deductions: next })
                           }}
@@ -405,7 +402,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                           onChange={(e) => {
                             const next = [...form.deductions]
                             const current = next[idx]
-                            if (!current) {return}
+                            if (!current) return
                             next[idx] = { ...current, amount: e.target.value }
                             setForm({ ...form, deductions: next })
                           }}
@@ -426,7 +423,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                     ) : (
                       <>
                         <span className="text-sm text-muted-foreground">{d.label}</span>
-                        <span className="font-medium text-primary">{"-"}{" "}{d.amount}</span>
+                        <span className="font-medium text-primary">- {d.amount}</span>
                       </>
                     )}
                   </div>
@@ -441,12 +438,12 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                     }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    {"Thêm khấu trừ"}
+                    Thêm khấu trừ
                   </Button>
                 )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
                   <span>{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_DEDUCTIONS}</span>
-                  <span className="text-primary">{"-"}{" "}{totalDeductions.toLocaleString("vi-VN")}{" đ"}</span>
+                  <span className="text-primary">- {totalDeductions.toLocaleString("vi-VN")} đ</span>
                 </div>
               </div>
             </section>

@@ -4,9 +4,8 @@ import { cn } from "@/lib/utils"
 import {
     ADJUSTMENT_STATUS_CONFIG,
     ADJUSTMENT_TYPE_CONFIG,
-    type AdjustmentStatus,
-    type AdjustmentType,
 } from "../adjustment-request.constants"
+import type { AdjustmentStatus, AdjustmentType } from "../adjustment-request.constants"
 
 /* ══════════════ STATUS BADGE ══════════════ */
 

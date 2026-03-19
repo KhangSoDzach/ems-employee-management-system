@@ -80,13 +80,13 @@ interface DetailSheetProps {
 }
 
 export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
-    if (!request) {return null}
+    if (!request) return null
 
     const hasIn = request.type === "CHECK_IN" || request.type === "BOTH"
     const hasOut = request.type === "CHECK_OUT" || request.type === "BOTH"
 
     return (
-        <Sheet open={open} onOpenChange={(v) => { if (!v) {onClose()} }}>
+        <Sheet open={open} onOpenChange={(v) => { if (!v) onClose() }}>
             <SheetContent className="w-full sm:max-w-lg overflow-y-auto flex flex-col gap-0 p-0">
                 {/* ── Header ── */}
                 <SheetHeader className="px-6 py-5 border-b">

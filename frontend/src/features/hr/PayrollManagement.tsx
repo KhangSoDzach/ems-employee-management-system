@@ -1,4 +1,119 @@
-import { SalaryComponentList } from "@/features/hr/components/SalaryComponentList";
+import { useMemo, useState } from "react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Filter,
+  X,
+  SlidersHorizontal,
+  Building,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import {
+  SalarySlipSheet,
+  type SalarySlip,
+} from "../employee/components/SalarySlipSheet";
+import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges";
+
+type PayrollRow = {
+  id: number;
+  name: string;
+  employeeId: string;
+  department: string;
+  role: string;
+  baseSalary: string;
+  bonus: Array<{ label: string; amount: string }>;
+  allowance: Array<{ label: string; amount: string }>;
+  deduction: Array<{ label: string; amount: string }>;
+  netSalary: string;
+  status: "PROCESSED" | "PENDING" | "REVIEW";
+  paymentMethod?: string;
+  paymentReference?: string;
+};
+
+const MOCK_PAYROLL: PayrollRow[] = [
+  {
+    id: 1,
+    name: "Jane Doe",
+    employeeId: "EMP-2045",
+    department: "Engineering",
+    role: "Senior Dev",
+    baseSalary: "$6,500",
+    allowance: [{ label: "Phụ cấp", amount: "$450" }],
+    bonus: [{ label: "Thưởng KPI", amount: "+$200" }],
+    deduction: [{ label: "Khấu trừ", amount: "-$120" }],
+    netSalary: "$7,030",
+    paymentMethod: "Chuyển khoản",
+    paymentReference: "REF-2045",
+    status: "PROCESSED",
+  },
+  {
+    id: 2,
+    name: "Mark Smith",
+    employeeId: "EMP-2089",
+    department: "Marketing",
+    role: "Specialist",
+    baseSalary: "$4,200",
+    allowance: [{ label: "Phụ cấp", amount: "$300" }],
+    bonus: [],
+    deduction: [{ label: "Khấu trừ", amount: "-$50" }],
+    netSalary: "$4,450",
+    paymentMethod: "Tiền mặt",
+    paymentReference: "REF-2089",
+    status: "PENDING",
+  },
+  {
+    id: 3,
+    name: "Sarah White",
+    employeeId: "EMP-2104",
+    department: "Design",
+    role: "UI Designer",
+    baseSalary: "$5,000",
+    allowance: [{ label: "Phụ cấp", amount: "$500" }],
+    bonus: [{ label: "Thưởng dự án", amount: "+$150" }],
+    deduction: [{ label: "Khấu trừ", amount: "-$80" }],
+    netSalary: "$5,570",
+    paymentMethod: "Chuyển khoản",
+    paymentReference: "REF-2104",
+    status: "PROCESSED",
+  },
+  {
+    id: 4,
+    name: "Robert Low",
+    employeeId: "EMP-2155",
+    department: "Engineering",
+    role: "DevOps",
+    baseSalary: "$7,800",
+    allowance: [{ label: "Phụ cấp", amount: "$600" }],
+    bonus: [{ label: "Thưởng hiệu suất", amount: "+$500" }],
+    deduction: [{ label: "Khấu trừ", amount: "-$150" }],
+    netSalary: "$8,750",
+    paymentMethod: "Chuyển khoản",
+    paymentReference: "REF-2155",
+    status: "REVIEW",
+  },
+];
 
 export default function PayrollManagement() {
   const t = SYSTEM_MESSAGES.PAYROLL;
@@ -460,7 +575,7 @@ export default function PayrollManagement() {
         slip={selectedSlip}
         open={!!selectedSlip}
         onOpenChange={(open) => {
-          if (!open) {setSelectedSlip(null);}
+          if (!open) setSelectedSlip(null);
         }}
         onSave={handleSaveSlip}
       />

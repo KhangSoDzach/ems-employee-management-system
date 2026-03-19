@@ -1,13 +1,12 @@
 import { useState } from "react"
 import { X } from "lucide-react"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
 import api from "@/lib/axios"
 import { toast } from "sonner"
 
-type KpiType = "KPI" | "OKR"
+type KpiType    = "KPI" | "OKR"
 type MetricType = "PERCENT" | "VND" | "NUMBER"
-type ScopeType = "COMPANY" | "DEPARTMENT" | "EMPLOYEE"
+type ScopeType  = "COMPANY" | "DEPARTMENT" | "EMPLOYEE"
 
 interface Props {
   open: boolean
@@ -18,45 +17,45 @@ interface Props {
 export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
   const t = SYSTEM_MESSAGES.KPI_OKR
 
-  const [name, setName] = useState("")
-  const [type, setType] = useState<KpiType>("KPI")
-  const [metricType, setMetricType] = useState<MetricType>("PERCENT")
+  const [name,        setName]        = useState("")
+  const [type,        setType]        = useState<KpiType>("KPI")
+  const [metricType,  setMetricType]  = useState<MetricType>("PERCENT")
   const [targetValue, setTargetValue] = useState("")
-  const [weight, setWeight] = useState("")
-  const [scopeType, setScopeType] = useState<ScopeType>("COMPANY")
-  const [scopeId, setScopeId] = useState("")
+  const [weight,      setWeight]      = useState("")
+  const [scopeType,   setScopeType]   = useState<ScopeType>("COMPANY")
+  const [scopeId,     setScopeId]     = useState("")
   const [periodStart, setPeriodStart] = useState("2026-01-01")
-  const [periodEnd, setPeriodEnd] = useState("2026-03-31")
+  const [periodEnd,   setPeriodEnd]   = useState("2026-03-31")
   const [description, setDescription] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [loading,     setLoading]     = useState(false)
+  const [errors,      setErrors]      = useState<Record<string, string>>({})
 
-  if (!open) {return null}
+  if (!open) return null
 
   const validate = (): boolean => {
     const e: Record<string, string> = {}
-    if (!name.trim()) {e.name = "Tên mục tiêu không được để trống"}
-    if (!targetValue || Number(targetValue) <= 0) {e.targetValue = "Giá trị mục tiêu phải lớn hơn 0"}
-    if (!weight || Number(weight) <= 0 || Number(weight) > 100) {e.weight = "Trọng số phải từ 0.01 đến 100"}
-    if (!periodStart) {e.periodStart = "Chọn ngày bắt đầu"}
-    if (!periodEnd) {e.periodEnd = "Chọn ngày kết thúc"}
-    if (periodStart && periodEnd && periodStart >= periodEnd) {e.periodEnd = "Ngày kết thúc phải sau ngày bắt đầu"}
-    if ((scopeType === "DEPARTMENT" || scopeType === "EMPLOYEE") && !scopeId) {e.scopeId = "Bắt buộc khi chọn Phòng ban / Nhân viên"}
+    if (!name.trim())                                                        e.name        = "Tên mục tiêu không được để trống"
+    if (!targetValue || Number(targetValue) <= 0)                            e.targetValue = "Giá trị mục tiêu phải lớn hơn 0"
+    if (!weight || Number(weight) <= 0 || Number(weight) > 100)              e.weight      = "Trọng số phải từ 0.01 đến 100"
+    if (!periodStart)                                                        e.periodStart = "Chọn ngày bắt đầu"
+    if (!periodEnd)                                                          e.periodEnd   = "Chọn ngày kết thúc"
+    if (periodStart && periodEnd && periodStart >= periodEnd)                e.periodEnd   = "Ngày kết thúc phải sau ngày bắt đầu"
+    if ((scopeType === "DEPARTMENT" || scopeType === "EMPLOYEE") && !scopeId) e.scopeId    = "Bắt buộc khi chọn Phòng ban / Nhân viên"
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
   const handleSubmit = async () => {
     if (!validate()) {
-      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT)
+      toast.error("Vui lòng kiểm tra lại các trường bắt buộc")
       return
     }
     const payload = {
       name: name.trim(), type, metricType,
       targetValue: Number(targetValue),
-      weight: Number(weight),
+      weight:      Number(weight),
       scopeType,
-      scopeId: scopeType === "COMPANY" ? null : Number(scopeId),
+      scopeId:     scopeType === "COMPANY" ? null : Number(scopeId),
       periodStart, periodEnd,
       description: description.trim() || undefined,
     }
@@ -69,8 +68,8 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string; errors?: Record<string, string> } } }
       const data = axiosError?.response?.data
-      if (data?.errors) {setErrors(data.errors)}
-      else {toast.error(data?.message || "Có lỗi xảy ra, vui lòng thử lại")}
+      if (data?.errors) setErrors(data.errors)
+      else toast.error(data?.message || "Có lỗi xảy ra, vui lòng thử lại")
     } finally {
       setLoading(false)
     }
@@ -90,7 +89,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-8px" onClick={handleClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[8px]" onClick={handleClose} />
       <div className="relative w-full max-w-lg bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
 
         {/* Header */}

@@ -77,7 +77,7 @@ export function CameraModal({
               `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
             );
             const json = await res.json();
-            if (json.display_name) {label = (json.display_name as string).split(',').slice(0, 3).join(',').trim();}
+            if (json.display_name) label = (json.display_name as string).split(',').slice(0, 3).join(',').trim();
           } catch {
             // Use coordinate fallback
           }
@@ -106,7 +106,7 @@ export function CameraModal({
 
   // ── Lifecycle: open/close ───────────────────────────────────────────────────
   useEffect(() => {
-    if (open) {startCamera();}
+    if (open) startCamera();
     return () => stopCamera();
   }, [open, startCamera, stopCamera]);
 
@@ -114,12 +114,12 @@ export function CameraModal({
   const capturePhoto = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas) {return;}
+    if (!video || !canvas) return;
 
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext('2d');
-    if (!ctx) {return;}
+    if (!ctx) return;
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
@@ -136,7 +136,7 @@ export function CameraModal({
 
   // ── Confirm ─────────────────────────────────────────────────────────────────
   const confirm = () => {
-    if (!capturedImage || !coords) {return;}
+    if (!capturedImage || !coords) return;
     const base64 = capturedImage.replace(/^data:image\/\w+;base64,/, '');
     onCapture({ photoBase64: base64, latitude: coords.lat, longitude: coords.lon, locationLabel: coords.label });
     onClose();

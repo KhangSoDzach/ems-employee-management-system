@@ -98,13 +98,13 @@ interface DetailSheetProps {
 }
 
 export const LeaveDetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
-    if (!request) {return null}
+    if (!request) return null
 
     const daysCount =
         Math.ceil((request.endDate.getTime() - request.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
 
     return (
-        <Sheet open={open} onOpenChange={(v) => { if (!v) {onClose()} }}>
+        <Sheet open={open} onOpenChange={(v) => { if (!v) onClose() }}>
             <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl">
 
                 {/* ── Header ── */}

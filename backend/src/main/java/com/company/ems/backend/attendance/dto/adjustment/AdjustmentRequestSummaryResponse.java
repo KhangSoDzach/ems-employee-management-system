@@ -21,10 +21,7 @@ public class AdjustmentRequestSummaryResponse {
     private String        employeeName;
     private String        employeeCode;
     private LocalDate     requestDate;
-    private LocalDateTime proposedCheckInTime;
-    private LocalDateTime proposedCheckOutTime;
     private String        reasonType;  // enum name
-    private String        reasonText;
     private String        status;      // enum name — for coloured badge in UI
     private int           currentApprovalLevel;
     private int           maxApprovalLevel;

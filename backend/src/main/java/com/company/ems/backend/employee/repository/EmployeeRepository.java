@@ -15,7 +15,6 @@ import com.company.ems.backend.department.entity.Department;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
 import com.company.ems.backend.position.entity.Position;
-
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
         Optional<Employee> findByEmail(String email);
@@ -109,13 +108,4 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
         @Query("SELECT e FROM Employee e WHERE e.user.username = :username")
         Optional<Employee> findByUserUsername(@Param("username") String username);
-
-                                @Query("""
-                                                                                                SELECT DISTINCT e.user.id
-                                                                                                FROM Employee e
-                                                                                                WHERE e.user IS NOT NULL
-                                                                                                        AND e.user.enabled = true
-                                                                                                        AND e.department.id IN :departmentIds
-                                                                                                """)
-                                List<Long> findDistinctUserIdsByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
 }

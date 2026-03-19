@@ -308,7 +308,7 @@ export default function SalaryHistoryPage() {
       <SalarySlipSheet
         slip={selectedSlip}
         open={!!selectedSlip}
-        onOpenChange={(open) => { if (!open) {setSelectedSlip(null)} }}
+        onOpenChange={(open) => { if (!open) setSelectedSlip(null) }}
       />
     </SidebarProvider>
   )

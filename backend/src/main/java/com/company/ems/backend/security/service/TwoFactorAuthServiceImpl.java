@@ -191,7 +191,9 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
                     return true;
                 }
             } catch (JsonProcessingException e) {
-                log.error("Failed to process recovery codes for user: {}", username, e);
+                log.error("Failed to parse recovery codes for user: {}", username, e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
 

@@ -189,7 +189,6 @@ public class Payroll extends BaseEntity {
     
     @PrePersist
     @PreUpdate
-    @SuppressWarnings("unused")
     private void beforeSave() {
         calculateNetPay();
     }

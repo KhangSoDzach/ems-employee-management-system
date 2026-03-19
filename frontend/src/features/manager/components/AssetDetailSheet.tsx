@@ -33,7 +33,7 @@ const PLACEHOLDERS = {
 } as const
 
 export function AssetDetailSheet({ asset, open, onClose }: Props) {
-  if (!asset) {return null}
+  if (!asset) return null
 
   const renderStatus = () => {
     switch (asset.status) {

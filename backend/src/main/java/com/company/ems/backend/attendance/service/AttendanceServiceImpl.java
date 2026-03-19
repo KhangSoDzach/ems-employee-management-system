@@ -3,7 +3,6 @@ package com.company.ems.backend.attendance.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Objects;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -68,7 +67,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         // ─── Check-in ─────────────────────────────────────────────────────────────
 
         @Override
-        @SuppressWarnings("null")
         public AttendanceResponse checkIn(CheckInRequest request, CustomUserPrincipal principal) {
                 Employee employee = resolveEmployee(principal);
 
@@ -112,7 +110,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                                 .userAgent(request.getUserAgent())
                                 .build();
 
-                Attendance saved = Objects.requireNonNull(attendanceRepository.save(attendance));
+                Attendance saved = attendanceRepository.save(attendance);
                 log.info("Employee [{}] checked in at {} (lat={}, lon={})",
                                 employee.getEmployeeCode(), checkInTime,
                                 request.getLatitude(), request.getLongitude());
@@ -205,7 +203,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                         CustomUserPrincipal principal) {
 
                 Long resolvedEmployeeId = resolveEmployeeIdForQuery(employeeId, principal);
-                Employee employee = employeeRepository.findById(Objects.requireNonNull(resolvedEmployeeId))
+                Employee employee = employeeRepository.findById(resolvedEmployeeId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", resolvedEmployeeId));
 
                 LocalDate from = startDate != null ? startDate : LocalDate.now().withDayOfMonth(1);
@@ -220,7 +218,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 long halfDay = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
                                 employee, AttendanceStatus.HALF_DAY, from, to);
 
-                long totalDays = from.until(to).getDays() + 1L;
+                long totalDays = from.until(to).getDays() + 1;
                 double percentage = totalDays > 0
                                 ? ((present + late + halfDay) / (double) totalDays) * 100.0
                                 : 0.0;
@@ -250,26 +248,18 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         /**
-         * Default behavior is always self-scoped (current user).
-         *
-         * <p>
-         * Managers/HR/Admin may query another employee only when explicitly passing
-         * {@code employeeId}. This keeps personal pages (e.g. check-in/check-out) correct
-         * for elevated roles that also need their own attendance timeline.
+         * For EMPLOYEE role, always return their own employee ID.
+         * For MANAGER/HR/ADMIN roles, honour the provided {@code employeeId} param.
          */
         private Long resolveEmployeeIdForQuery(Long requestedEmployeeId, CustomUserPrincipal principal) {
-                boolean canViewOtherEmployees = principal.getAuthorities().stream()
-                                .map(a -> a.getAuthority())
-                                .anyMatch(authority -> authority.equals("ROLE_ADMIN")
-                                                || authority.equals("ROLE_HR")
-                                                || authority.equals("ROLE_MANAGER"));
-
-                if (requestedEmployeeId != null && canViewOtherEmployees) {
-                        return requestedEmployeeId;
+                boolean isEmployee = principal.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ROLE_EMPLOYEE")
+                                                || a.getAuthority().equals("ROLE_EMPLOYEE"));
+                if (isEmployee) {
+                        Employee e = resolveEmployee(principal);
+                        return e.getId();
                 }
-
-                Employee employee = resolveEmployee(principal);
-                return employee.getId();
+                return requestedEmployeeId; // null means "all" for managers
         }
 
         private String safeCode(Employee employee) {

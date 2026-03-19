@@ -1,5 +1,4 @@
 import { useAuth } from "@/contexts/AuthContext"
-import { AUTH_ROLES } from "@/constants/auth"
 
 export type EffectiveRole = "admin" | "hr" | "manager" | "employee"
 
@@ -13,21 +12,10 @@ export function useEffectiveRole(
 ): EffectiveRole {
     const { user } = useAuth()
 
-    if (sidebarRole) {
-        return sidebarRole
-    }
+    if (sidebarRole) return sidebarRole
 
-    const roles = user?.roles || []
-
-    if (roles.includes(AUTH_ROLES.ADMIN)) {
-        return "admin"
-    }
-    if (roles.includes(AUTH_ROLES.HR)) {
-        return "hr"
-    }
-    if (roles.includes(AUTH_ROLES.MANAGER)) {
-        return "manager"
-    }
-
+    if (user?.roles.includes("ROLE_ADMIN")) return "admin"
+    if (user?.roles.includes("ROLE_HR")) return "hr"
+    if (user?.roles.includes("ROLE_MANAGER")) return "manager"
     return "employee"
 }
