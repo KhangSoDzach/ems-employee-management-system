@@ -76,12 +76,21 @@ export const AUDIT_ACTION_CONFIG = {
     RETURNED: { label: "Trả về", icon: RotateCcw, iconClass: "text-orange-500 bg-orange-50" },
 } as const
 
+/* ══════════════ POLICY ══════════════ */
+export const LEAVE_POLICY = {
+    MIN_DAYS_BEFORE: 2,
+    WEEKEND_DAYS: [0, 6], // Sunday, Saturday
+}
 /* ══════════════ SCHEMA & VALIDATION ══════════════ */
 
 export const VALIDATION_MSGS = {
     DATE_REQ: "Vui lòng chọn ngày",
     TYPE_REQ: "Vui lòng chọn loại phép",
     REASON_REQ: "Vui lòng nhập lý do tối thiểu 5 ký tự",
+
+    MIN_DAYS: `Phải đăng ký nghỉ trước ít nhất ${LEAVE_POLICY.MIN_DAYS_BEFORE} ngày`,
+    NO_WEEKEND: "Không được chọn ngày nghỉ vào cuối tuần",
+    START_BEFORE_END: "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu",
 }
 
 export const leaveSchema = z
@@ -89,17 +98,45 @@ export const leaveSchema = z
         leaveType: z.enum(["annual", "sick", "unpaid", "personal"] as const, {
             error: VALIDATION_MSGS.TYPE_REQ,
         }),
-        startDate: z.date({ error: VALIDATION_MSGS.DATE_REQ }),
-        endDate: z.date({ error: VALIDATION_MSGS.DATE_REQ }),
+
+        startDate: z
+            .date({ error: VALIDATION_MSGS.DATE_REQ })
+            .refine((date) => {
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+
+                const minDate = new Date(today)
+                minDate.setDate(
+                    minDate.getDate() + LEAVE_POLICY.MIN_DAYS_BEFORE
+                )
+
+                return date >= minDate
+            }, {
+                message: VALIDATION_MSGS.MIN_DAYS,
+            })
+            .refine((date) => {
+                const day = date.getDay()
+                return !LEAVE_POLICY.WEEKEND_DAYS.includes(day)
+            }, {
+                message: VALIDATION_MSGS.NO_WEEKEND,
+            }),
+
+        endDate: z
+            .date({ error: VALIDATION_MSGS.DATE_REQ })
+            .refine((date) => {
+                const day = date.getDay()
+                return !LEAVE_POLICY.WEEKEND_DAYS.includes(day)
+            }, {
+                message: VALIDATION_MSGS.NO_WEEKEND,
+            }),
+
         reason: z.string().min(5, VALIDATION_MSGS.REASON_REQ),
     })
     .refine((data) => data.endDate >= data.startDate, {
-        message: "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu",
+        message: VALIDATION_MSGS.START_BEFORE_END,
         path: ["endDate"],
     })
-
 export type LeaveFormValues = z.infer<typeof leaveSchema>
-
 /* ══════════════ MOCK DATA ══════════════ */
 
 export const MOCK_DATA: LeaveRequest[] = [

@@ -296,7 +296,6 @@ export const SYSTEM_MESSAGES = {
     TYPE_PERSONAL: "Việc riêng",
     EMPTY_PENDING: "Không có yêu cầu nghỉ phép nào đang chờ duyệt.",
     MSG_SUBMIT_SUCCESS: "Đơn xin nghỉ phép đã được gửi thành công!",
-   
   },
 
   // File Uploads

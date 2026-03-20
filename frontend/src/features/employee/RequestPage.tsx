@@ -61,7 +61,7 @@ import { CreateLeaveModal } from "./components/CreateLeaveModal";
 import type {
   AdjustmentRequest,
   AdjustmentStatus,
-  AdjustmentType,
+  AdjustmentType,AdjustmentFormValues
 } from "./adjustment-request.constants";
 import {
   ADJUSTMENT_STATUS_CONFIG,
@@ -70,7 +70,6 @@ import {
   ADJUSTMENT_TYPE_OPTIONS,
   DATE_FORMAT as ADJ_DATE_FORMAT,
 } from "./adjustment-request.constants";
-import type { AdjustmentFormValues } from "./adjustment-request.constants";
 import {
   ActiveFilterBadge as ActiveAdjustmentBadge,
   StatusBadge as AdjustmentStatusBadge,
