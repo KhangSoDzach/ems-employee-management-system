@@ -73,7 +73,7 @@ export default function AssetManagementPage() {
 
   const handleOpenEdit = useCallback(async (summary: AssetSummary) => {
     const identifier = resolveAssetIdentifier(summary);
-    if (identifier == null) {
+    if (identifier === null) {
       toast.error(SYSTEM_MESSAGES.ERROR);
       return;
     }
