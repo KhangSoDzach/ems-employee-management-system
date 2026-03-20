@@ -136,7 +136,7 @@ export const leaveSchema = z
         message: VALIDATION_MSGS.START_BEFORE_END,
         path: ["endDate"],
     })
-
+export type LeaveFormValues = z.infer<typeof leaveSchema>
 /* ══════════════ MOCK DATA ══════════════ */
 
 export const MOCK_DATA: LeaveRequest[] = [
