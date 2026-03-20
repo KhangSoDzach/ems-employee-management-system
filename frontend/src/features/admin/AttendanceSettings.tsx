@@ -95,7 +95,9 @@ const attendanceSettingsSchema = z.object({
     .string()
     .refine(
       (val) => {
-        if (!val) return true;
+        if (!val) {
+          return true;
+        }
         const num = parseFloat(val);
         return !isNaN(num);
       },
@@ -103,7 +105,9 @@ const attendanceSettingsSchema = z.object({
     )
     .refine(
       (val) => {
-        if (!val) return true;
+        if (!val) {
+          return true;
+        }
         const num = parseFloat(val);
         return (
           num >= ATTENDANCE_SETTINGS_SCHEMA.latitude.min &&
@@ -116,7 +120,9 @@ const attendanceSettingsSchema = z.object({
     .string()
     .refine(
       (val) => {
-        if (!val) return true;
+        if (!val) {
+          return true;
+        }
         const num = parseFloat(val);
         return !isNaN(num);
       },
@@ -124,7 +130,9 @@ const attendanceSettingsSchema = z.object({
     )
     .refine(
       (val) => {
-        if (!val) return true;
+        if (!val) {
+          return true;
+        }
         const num = parseFloat(val);
         return (
           num >= ATTENDANCE_SETTINGS_SCHEMA.longitude.min &&
@@ -144,12 +152,13 @@ const attendanceSettingsSchema = z.object({
   locationAction: z.enum(["BLOCK", "NOTIFY", "WARN"]),
 });
 
-type AttendanceSettingsFormValues = z.infer<typeof attendanceSettingsSchema>;
+type AttendanceSettingsFormInput = z.input<typeof attendanceSettingsSchema>;
+type AttendanceSettingsFormValues = z.output<typeof attendanceSettingsSchema>;
 
 const mockApiSubmit = async (
-  data: AttendanceSettingsFormValues,
+  _data: AttendanceSettingsFormValues,
 ): Promise<void> => {
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     setTimeout(() => {
       const hasPermission = true;
       if (!hasPermission) {
@@ -164,7 +173,11 @@ const mockApiSubmit = async (
 export default function AttendanceSettings() {
   const effectiveRole = useEffectiveRole();
 
-  const form = useForm<AttendanceSettingsFormValues>({
+  const form = useForm<
+    AttendanceSettingsFormInput,
+    unknown,
+    AttendanceSettingsFormValues
+  >({
     resolver: zodResolver(attendanceSettingsSchema),
     mode: "onChange",
     defaultValues: {
@@ -455,7 +468,20 @@ export default function AttendanceSettings() {
                                 <div className="setting-input-row">
                                   <Input
                                     type="number"
-                                    {...field}
+                                    name={field.name}
+                                    ref={field.ref}
+                                    onBlur={field.onBlur}
+                                    value={
+                                      typeof field.value === "number"
+                                        ? field.value
+                                        : 0
+                                    }
+                                    onChange={(event) => {
+                                      const value = Number(event.target.value);
+                                      field.onChange(
+                                        Number.isNaN(value) ? 0 : value,
+                                      );
+                                    }}
                                     className="form-input w-full"
                                     placeholder={
                                       ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
@@ -497,7 +523,20 @@ export default function AttendanceSettings() {
                                 <div className="setting-input-row">
                                   <Input
                                     type="number"
-                                    {...field}
+                                    name={field.name}
+                                    ref={field.ref}
+                                    onBlur={field.onBlur}
+                                    value={
+                                      typeof field.value === "number"
+                                        ? field.value
+                                        : 0
+                                    }
+                                    onChange={(event) => {
+                                      const value = Number(event.target.value);
+                                      field.onChange(
+                                        Number.isNaN(value) ? 0 : value,
+                                      );
+                                    }}
                                     className="form-input w-full"
                                     placeholder={
                                       ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
@@ -677,7 +716,20 @@ export default function AttendanceSettings() {
                                 <div className="setting-input-row">
                                   <Input
                                     type="number"
-                                    {...field}
+                                    name={field.name}
+                                    ref={field.ref}
+                                    onBlur={field.onBlur}
+                                    value={
+                                      typeof field.value === "number"
+                                        ? field.value
+                                        : 0
+                                    }
+                                    onChange={(event) => {
+                                      const value = Number(event.target.value);
+                                      field.onChange(
+                                        Number.isNaN(value) ? 0 : value,
+                                      );
+                                    }}
                                     className="form-input w-full"
                                     placeholder={
                                       ATTENDANCE_SETTINGS_CONSTANTS

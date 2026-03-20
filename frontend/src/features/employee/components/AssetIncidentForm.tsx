@@ -1,5 +1,5 @@
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -34,12 +34,9 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 
-// Import constants to avoid hardcoding
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+import { ASSET_INCIDENT_TEXT as TEXT } from "@/constants/ui-texts";
 
-/**
- * Zod Schema cho Form Báo cáo sự cố
- */
 const assetIncidentSchema = z.object({
   assetId: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
   incidentType: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
@@ -59,12 +56,6 @@ interface AssetIncidentFormProps {
   initialData?: Partial<AssetIncidentValues>;
 }
 
-// Centralized local constants to satisfy react/jsx-no-literals and avoid hardcoding
-import { ASSET_INCIDENT_TEXT as TEXT } from "@/constants/ui-texts";
-
-/**
- * Component hiển thị Label kèm dấu sao đỏ cho các trường bắt buộc
- */
 const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
   <FormLabel className="flex items-center gap-1">
     {children}
@@ -79,7 +70,6 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
   onCancel,
   initialData,
 }) => {
-  // 1. Khởi tạo Hook Form
   const form = useForm<AssetIncidentValues>({
     resolver: zodResolver(assetIncidentSchema),
     defaultValues: {
@@ -91,12 +81,9 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
     },
   });
 
-  // 2. Xử lý Submit (Promise Toast)
   const onSubmit = async (values: AssetIncidentValues) => {
-    // Dọn dẹp toast cũ trước khi thực hiện hành động mới
     toast.dismiss();
 
-    // Thực hiện API call thực tế
     const promise = assetService.submitReport(
       Number(values.assetId.replace(/\D/g, "")),
       {
@@ -105,22 +92,27 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
       },
     );
 
-    // 3. Xử lý lỗi validate (Validation Error Toast)
-    const onError = () => {
-        // Luôn dọn dẹp toast cũ để tránh ngập lụt màn hình
-        toast.dismiss();
-        toast.error(TEXT.TOAST_VALIDATION_ERROR);
-    };
+    toast.promise(promise, {
+      loading: TEXT.TOAST_LOADING,
+      success: () => {
+        form.reset();
+        onSuccess?.();
+        return TEXT.TOAST_SUCCESS;
+      },
+      error: (error: unknown) => {
+        if (error instanceof Error && error.message) {
+          return error.message;
+        }
+        return TEXT.TOAST_ERROR_GENERIC;
+      },
+    });
+  };
 
-  // 3. Xử lý lỗi validate (Validation Error Toast)
-  const onError = (errors: FieldErrors<AssetIncidentValues>) => {
-    console.log("Form Errors:", errors);
-    // Luôn dọn dẹp toast cũ để tránh ngập lụt màn hình
+  const onError = (_errors: FieldErrors<AssetIncidentValues>) => {
     toast.dismiss();
     toast.error(TEXT.TOAST_VALIDATION_ERROR);
   };
 
-  // 4. Các hành động phụ
   const handleCancel = () => {
     toast.dismiss();
     toast.warning(TEXT.TOAST_CANCEL_WARNING);
@@ -162,7 +154,6 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
             className="space-y-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Mã tài sản */}
               <FormField
                 control={form.control}
                 name="assetId"
@@ -180,7 +171,6 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
                 )}
               />
 
-              {/* Loại sự cố */}
               <FormField
                 control={form.control}
                 name="incidentType"
@@ -211,7 +201,6 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
               />
             </div>
 
-            {/* Mức độ nghiêm trọng */}
             <FormField
               control={form.control}
               name="severity"
@@ -241,7 +230,6 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
               )}
             />
 
-            {/* Mô tả chi tiết */}
             <FormField
               control={form.control}
               name="description"
@@ -263,7 +251,6 @@ export const AssetIncidentForm: React.FC<AssetIncidentFormProps> = ({
               )}
             />
 
-            {/* Các nút điều hướng form */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-muted">
               <div className="flex gap-3">
                 <Button

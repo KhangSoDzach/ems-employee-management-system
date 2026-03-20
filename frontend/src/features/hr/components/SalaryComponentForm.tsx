@@ -29,10 +29,63 @@ type FormState = {
   status: SalaryComponentPayload["status"];
 };
 
+type ComponentTypeRule = {
+  nature: SalaryComponentPayload["nature"];
+  showAmount: boolean;
+  showRatePercent: boolean;
+  isTaxable: boolean;
+  isInsurable: boolean;
+};
+
+const TYPE_RULES: Record<SalaryComponentPayload["type"], ComponentTypeRule> = {
+  BASE: {
+    nature: "INCOME",
+    showAmount: true,
+    showRatePercent: false,
+    isTaxable: true,
+    isInsurable: true,
+  },
+  ALLOWANCE: {
+    nature: "INCOME",
+    showAmount: true,
+    showRatePercent: false,
+    isTaxable: true,
+    isInsurable: true,
+  },
+  COMMISSION: {
+    nature: "INCOME",
+    showAmount: false,
+    showRatePercent: true,
+    isTaxable: true,
+    isInsurable: true,
+  },
+  BONUS: {
+    nature: "INCOME",
+    showAmount: true,
+    showRatePercent: true,
+    isTaxable: true,
+    isInsurable: true,
+  },
+  DEDUCTION: {
+    nature: "DEDUCTION",
+    showAmount: true,
+    showRatePercent: false,
+    isTaxable: false,
+    isInsurable: false,
+  },
+  INSURANCE: {
+    nature: "DEDUCTION",
+    showAmount: false,
+    showRatePercent: true,
+    isTaxable: false,
+    isInsurable: false,
+  },
+};
+
 const DEFAULT_STATE: FormState = {
   code: "",
   name: "",
-  type: "BASE",
+  type: "ALLOWANCE",
   isTaxable: true,
   isInsurable: true,
   amount: "",
@@ -53,31 +106,44 @@ export function SalaryComponentForm({
   const [form, setForm] = useState<FormState>(DEFAULT_STATE);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const normalizeFormState = (
+    nextMode: "create" | "edit",
+    nextInitialValue?: SalaryComponentResponse | null,
+  ): FormState => {
+    if (nextMode === "edit" && nextInitialValue) {
+      const initialRule = TYPE_RULES[nextInitialValue.type];
+      return {
+        code: nextInitialValue.code,
+        name: nextInitialValue.name,
+        type: nextInitialValue.type,
+        isTaxable: initialRule.isTaxable,
+        isInsurable: initialRule.isInsurable,
+        amount:
+          nextInitialValue.amount === null
+            ? ""
+            : String(nextInitialValue.amount),
+        ratePercent:
+          nextInitialValue.ratePercent === null
+            ? ""
+            : String(nextInitialValue.ratePercent),
+        nature: initialRule.nature,
+        status: nextInitialValue.status,
+      };
+    }
+
+    return DEFAULT_STATE;
+  };
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    if (mode === "edit" && initialValue) {
-      setForm({
-        code: initialValue.code,
-        name: initialValue.name,
-        type: initialValue.type,
-        isTaxable: initialValue.isTaxable,
-        isInsurable: initialValue.isInsurable,
-        amount: initialValue.amount == null ? "" : String(initialValue.amount),
-        ratePercent:
-          initialValue.ratePercent == null
-            ? ""
-            : String(initialValue.ratePercent),
-        nature: initialValue.nature,
-        status: initialValue.status,
-      });
-    } else {
-      setForm(DEFAULT_STATE);
-    }
-
-    setErrors({});
+    const nextForm = normalizeFormState(mode, initialValue);
+    queueMicrotask(() => {
+      setForm(nextForm);
+      setErrors({});
+    });
   }, [open, mode, initialValue]);
 
   const title = useMemo(
@@ -92,6 +158,7 @@ export function SalaryComponentForm({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    const selectedRule = TYPE_RULES[form.type];
 
     if (!form.code.trim()) {
       newErrors.code = "Mã thành phần là bắt buộc";
@@ -103,19 +170,22 @@ export function SalaryComponentForm({
     const hasAmount = form.amount.trim().length > 0;
     const hasRate = form.ratePercent.trim().length > 0;
 
-    if (!hasAmount && !hasRate) {
-      newErrors.amount = "Cần nhập Số tiền hoặc Hệ số/Phần trăm";
-      newErrors.ratePercent = "Cần nhập Số tiền hoặc Hệ số/Phần trăm";
+    if (selectedRule.showAmount && !hasAmount) {
+      newErrors.amount = "Vui lòng nhập Số tiền";
     }
 
-    if (hasAmount) {
+    if (selectedRule.showRatePercent && !hasRate) {
+      newErrors.ratePercent = "Vui lòng nhập Hệ số/Phần trăm";
+    }
+
+    if (selectedRule.showAmount && hasAmount) {
       const parsedAmount = Number(form.amount);
       if (Number.isNaN(parsedAmount) || parsedAmount < 0) {
         newErrors.amount = "Số tiền phải lớn hơn hoặc bằng 0";
       }
     }
 
-    if (hasRate) {
+    if (selectedRule.showRatePercent && hasRate) {
       const parsedRate = Number(form.ratePercent);
       if (Number.isNaN(parsedRate) || parsedRate < 0 || parsedRate > 100) {
         newErrors.ratePercent = "Hệ số/Phần trăm phải nằm trong khoảng 0 - 100";
@@ -130,11 +200,17 @@ export function SalaryComponentForm({
     code: form.code.trim().toUpperCase(),
     name: form.name.trim(),
     type: form.type,
-    isTaxable: form.isTaxable,
-    isInsurable: form.isInsurable,
-    amount: form.amount.trim() ? Number(form.amount) : null,
-    ratePercent: form.ratePercent.trim() ? Number(form.ratePercent) : null,
-    nature: form.nature,
+    isTaxable: TYPE_RULES[form.type].isTaxable,
+    isInsurable: TYPE_RULES[form.type].isInsurable,
+    amount:
+      TYPE_RULES[form.type].showAmount && form.amount.trim()
+        ? Number(form.amount)
+        : null,
+    ratePercent:
+      TYPE_RULES[form.type].showRatePercent && form.ratePercent.trim()
+        ? Number(form.ratePercent)
+        : null,
+    nature: TYPE_RULES[form.type].nature,
     status: form.status,
   });
 
@@ -159,20 +235,19 @@ export function SalaryComponentForm({
   };
 
   const handleTypeChange = (type: SalaryComponentPayload["type"]) => {
-    if (type === "INSURANCE") {
-      setForm((prev) => ({
-        ...prev,
-        type,
-        isTaxable: false,
-        isInsurable: false,
-        nature: "DEDUCTION",
-      }));
-      return;
-    }
-    setForm((prev) => ({ ...prev, type }));
+    const typeRule = TYPE_RULES[type];
+    setForm((prev) => ({
+      ...prev,
+      type,
+      nature: typeRule.nature,
+      isTaxable: typeRule.isTaxable,
+      isInsurable: typeRule.isInsurable,
+      amount: typeRule.showAmount ? prev.amount : "",
+      ratePercent: typeRule.showRatePercent ? prev.ratePercent : "",
+    }));
   };
 
-  const isInsuranceType = form.type === "INSURANCE";
+  const selectedTypeRule = TYPE_RULES[form.type];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -231,7 +306,9 @@ export function SalaryComponentForm({
                 className="h-10 w-full rounded-md border px-3 text-sm"
                 disabled={submitting}
               >
-                <option value="BASE">Lương cơ bản (BASE)</option>
+                {form.type === "BASE" ? (
+                  <option value="BASE">Lương cơ bản (BASE)</option>
+                ) : null}
                 <option value="ALLOWANCE">Phụ cấp (ALLOWANCE)</option>
                 <option value="COMMISSION">Hoa hồng (COMMISSION)</option>
                 <option value="BONUS">Thưởng (BONUS)</option>
@@ -245,14 +322,8 @@ export function SalaryComponentForm({
               </label>
               <select
                 value={form.nature}
-                onChange={(e) =>
-                  updateField(
-                    "nature",
-                    e.target.value as SalaryComponentPayload["nature"],
-                  )
-                }
                 className="h-10 w-full rounded-md border px-3 text-sm"
-                disabled={submitting || isInsuranceType}
+                disabled
               >
                 <option value="INCOME">Thu nhập (Income)</option>
                 <option value="DEDUCTION">Khấu trừ (Deduction)</option>
@@ -279,73 +350,54 @@ export function SalaryComponentForm({
               </select>
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Số tiền (không bắt buộc)
-              </label>
-              <Input
-                type="number"
-                min={0}
-                step="0.01"
-                value={form.amount}
-                onChange={(e) => updateField("amount", e.target.value)}
-                placeholder="0"
-                disabled={submitting}
-              />
-              {errors.amount && (
-                <p className="mt-1 text-xs text-red-500">{errors.amount}</p>
-              )}
-            </div>
+            {selectedTypeRule.showAmount ? (
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Số tiền
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.amount}
+                  onChange={(e) => updateField("amount", e.target.value)}
+                  placeholder="0"
+                  disabled={submitting}
+                />
+                {errors.amount && (
+                  <p className="mt-1 text-xs text-red-500">{errors.amount}</p>
+                )}
+              </div>
+            ) : null}
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Hệ số/Phần trăm (%)
-              </label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                step="0.01"
-                value={form.ratePercent}
-                onChange={(e) => updateField("ratePercent", e.target.value)}
-                placeholder="VD: 8"
-                disabled={submitting}
-              />
-              {errors.ratePercent && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.ratePercent}
-                </p>
-              )}
-            </div>
+            {selectedTypeRule.showRatePercent ? (
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Hệ số/Phần trăm (%)
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={form.ratePercent}
+                  onChange={(e) => updateField("ratePercent", e.target.value)}
+                  placeholder="VD: 8"
+                  disabled={submitting}
+                />
+                {errors.ratePercent && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.ratePercent}
+                  </p>
+                )}
+              </div>
+            ) : null}
           </div>
 
-          <div className="flex items-center gap-6 pt-1">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.isTaxable}
-                onChange={(e) => updateField("isTaxable", e.target.checked)}
-                disabled={submitting || isInsuranceType}
-              />
-              Tính thuế
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.isInsurable}
-                onChange={(e) => updateField("isInsurable", e.target.checked)}
-                disabled={submitting || isInsuranceType}
-              />
-              Tính bảo hiểm
-            </label>
-          </div>
-
-          {isInsuranceType ? (
-            <p className="text-xs text-amber-600">
-              Với loại Bảo hiểm, hệ thống tự động để Tính chất = Khấu trừ và bỏ
-              tích Chịu thuế/Đóng BHXH.
-            </p>
-          ) : null}
+          <p className="text-xs text-muted-foreground">
+            Tính chất được tự động khóa theo loại: Bảo hiểm → Khấu trừ, Thưởng →
+            Thu nhập.
+          </p>
 
           {serverError ? (
             <p className="text-sm text-red-600">{serverError}</p>
