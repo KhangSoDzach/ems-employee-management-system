@@ -442,7 +442,7 @@ export default function ProfilePage() {
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
-                                  variant={"outline"}
+                                  variant="outline"
                                   disabled={!canEdit}
                                   className={cn(
                                     "w-full pl-3 text-left font-normal bg-gray-50/50",
@@ -769,7 +769,7 @@ export default function ProfilePage() {
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
-                                  variant={"outline"}
+                                  variant="outline"
                                   disabled={!canEdit}
                                   className={cn(
                                     "w-full pl-3 text-left font-normal bg-gray-50/50",
@@ -820,7 +820,7 @@ export default function ProfilePage() {
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
-                                  variant={"outline"}
+                                  variant="outline"
                                   disabled={!canEdit}
                                   className={cn(
                                     "w-full pl-3 text-left font-normal bg-gray-50/50",

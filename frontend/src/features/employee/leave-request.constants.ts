@@ -1,6 +1,5 @@
 import * as z from "zod"
-import type { LucideIcon } from "lucide-react"
-import { CheckCircle2, FileText, RotateCcw, Send, XCircle } from "lucide-react"
+import { CheckCircle2, FileText, RotateCcw, Send, XCircle, type LucideIcon } from "lucide-react"
 
 /* ══════════════ TYPES ══════════════ */
 
@@ -137,45 +136,4 @@ export const leaveSchema = z
         path: ["endDate"],
     })
 export type LeaveFormValues = z.infer<typeof leaveSchema>
-/* ══════════════ MOCK DATA ══════════════ */
-
-export const MOCK_DATA: LeaveRequest[] = [
-    {
-        id: "LV-008",
-        dateCreated: new Date("2026-03-01T08:30:00"),
-        startDate: new Date("2026-03-05T00:00:00"),
-        endDate: new Date("2026-03-06T00:00:00"),
-        type: "annual",
-        status: "PENDING",
-        reason: "Xin nghỉ phép đi du lịch gia đình",
-        auditTrail: [
-            { id: "a1", action: "CREATED", actor: "Nguyễn Văn A", timestamp: new Date("2026-03-01T08:30:00") },
-        ],
-    },
-    {
-        id: "LV-007",
-        dateCreated: new Date("2026-02-15T09:15:00"),
-        startDate: new Date("2026-02-16T00:00:00"),
-        endDate: new Date("2026-02-16T00:00:00"),
-        type: "sick",
-        status: "APPROVED",
-        reason: "Sốt siêu vi, cần nghỉ ngơi",
-        auditTrail: [
-            { id: "a1", action: "CREATED", actor: "Nguyễn Văn A", timestamp: new Date("2026-02-15T09:15:00") },
-            { id: "a2", action: "APPROVED", actor: "Trần Trưởng Phòng", timestamp: new Date("2026-02-15T10:00:00"), note: "Chấp thuận. Giữ gìn sức khỏe." },
-        ],
-    },
-    {
-        id: "LV-006",
-        dateCreated: new Date("2026-01-10T14:20:00"),
-        startDate: new Date("2026-01-12T00:00:00"),
-        endDate: new Date("2026-01-13T00:00:00"),
-        type: "personal",
-        status: "RETURNED",
-        reason: "Giải quyết việc gia đình",
-        auditTrail: [
-            { id: "a1", action: "CREATED", actor: "Nguyễn Văn A", timestamp: new Date("2026-01-10T14:20:00") },
-            { id: "a2", action: "RETURNED", actor: "Trần Trưởng Phòng", timestamp: new Date("2026-01-10T15:30:00"), note: "Cần ghi rõ lý do việc gia đình là gì để duyệt." },
-        ],
-    },
-]
+export const MOCK_DATA: LeaveRequest[] = []

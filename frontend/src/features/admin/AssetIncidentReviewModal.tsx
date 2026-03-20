@@ -89,7 +89,7 @@ export default function AssetIncidentReviewModal({
                     {/* Incident Info */}
                     <section className="space-y-4 text-sm">
                         <h4 className="section-title-muted uppercase tracking-wider">
-                            {SYSTEM_MESSAGES.APPROVE.SECTION_LEAVE_DETAIL}
+                            {SYSTEM_MESSAGES.ASSET_REPORT.SECTION_ASSET_INFO}
                         </h4>
 
                         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

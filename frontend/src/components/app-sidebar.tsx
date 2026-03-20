@@ -58,21 +58,19 @@ export function AppSidebar({
                 url: "/payroll",
               },
               {
-                title:
-                  SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT ||
-                  "Quản lý sự cố tài sản",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                 url: "/asset-incidents",
               },
               {
-                title: "Thông báo nội bộ",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
                 url: "/announcements",
               },
               {
-                title: "Tạo thông báo",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_MANAGE_ANNOUNCEMENTS,
                 url: "/announcements/manage",
               },
               {
-                title: "Duyệt báo cáo sự cố",
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_REPORTS,
                 url: "/asset-reports",
               },
             ],
@@ -89,7 +87,7 @@ export function AppSidebar({
                   url: "/profile",
                 },
                 {
-                  title: "Chấm công",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
                   url: "/checkin",
                 },
                 {
@@ -123,12 +121,11 @@ export function AppSidebar({
                 },
                 {
                   title:
-                    SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT ||
-                    "Quản lý sự cố tài sản",
+                    SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                   url: "/asset-incidents",
                 },
                 {
-                  title: "Thông báo nội bộ",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
                   url: "/announcements",
                 },
                 {
@@ -136,11 +133,11 @@ export function AppSidebar({
                   url: "/payroll",
                 },
                 {
-                  title: "Tạo thông báo",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_MANAGE_ANNOUNCEMENTS,
                   url: "/announcements/manage",
                 },
                 {
-                  title: "Duyệt báo cáo sự cố",
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_REPORTS,
                   url: "/asset-reports",
                 },
               ],
@@ -157,7 +154,7 @@ export function AppSidebar({
                     url: "/profile",
                   },
                   {
-                    title: "Chấm công",
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
                     url: "/checkin",
                   },
                   {
@@ -178,16 +175,15 @@ export function AppSidebar({
                   },
                   {
                     title:
-                      SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT ||
-                      "Quản lý sự cố tài sản",
+                      SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                     url: "/asset-incidents",
                   },
                   {
-                    title: "Thông báo nội bộ",
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
                     url: "/announcements",
                   },
                   {
-                    title: "Duyệt báo cáo sự cố",
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_REPORTS,
                     url: "/asset-reports",
                   },
                 ],
@@ -203,11 +199,11 @@ export function AppSidebar({
                     url: "/profile",
                   },
                   {
-                    title: "Lịch sử lương",
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_SALARY_HISTORY,
                     url: "/salary-history",
                   },
                   {
-                    title: "Chấm công",
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
                     url: "/checkin",
                   },
                   {
@@ -220,7 +216,7 @@ export function AppSidebar({
                     url: "/my-assets",
                   },
                   {
-                    title: "Thông báo nội bộ",
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
                     url: "/announcements",
                   },
                 ],

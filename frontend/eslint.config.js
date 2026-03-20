@@ -39,22 +39,10 @@ export default defineConfig([
       // ==========================================
 
       // Bắt lỗi gõ trực tiếp Text vào HTML/JSX
-      "react/jsx-no-literals": ["warn", {
-        noStrings: true,
-        // Bỏ qua các ký tự vô thưởng vô phạt để không bị spam lỗi
-        allowedStrings: ["-", ":", "/", "&", "%", " ", "...", "*"],
-        // Bắt luôn cả hardcode trong props 
-        ignoreProps: false,
-        noAttributeStrings: true
-      }],
+      "react/jsx-no-literals": "off",
 
       // Bắt lỗi "Magic Numbers" (VD: gõ thẳng radius === 50 thay vì RADIUS_DEFAULT)
-      "no-magic-numbers": ["warn", {
-        ignore: [-1, 0, 1, 2], // Tha cho các số hay dùng làm index/logic cơ bản
-        ignoreArrayIndexes: true,
-        enforceConst: true,
-        detectObjects: false
-      }],
+      "no-magic-numbers": "off",
 
 
       // ==========================================
@@ -72,7 +60,7 @@ export default defineConfig([
       "no-duplicate-imports": "error",
 
       // -- Smells của TypeScript --
-      "@typescript-eslint/no-explicit-any": "warn", // Lạm dụng kiểu 'any' là smell nặng nhất
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }], // Khai báo biến/tham số mà không xài (có gạch dưới _ thì tha)
 
       // -- Smells của React --

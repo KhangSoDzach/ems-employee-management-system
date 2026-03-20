@@ -75,7 +75,7 @@ export default function AssetIncidentManagementPage() {
             });
             setIncidents(page.content.map(mapToIncidentItem));
         } catch {
-            toast.error("Không thể tải danh sách sự cố. Vui lòng thử lại.");
+            toast.error(SYSTEM_MESSAGES.ASSET_REPORT.MSG_FETCH_LIST_ERROR);
         } finally {
             setLoading(false);
         }
@@ -107,16 +107,16 @@ export default function AssetIncidentManagementPage() {
         try {
             if (newStatus === "Resolved" || newStatus === "APPROVED") {
                 await assetService.approveReport(item.numericId, note);
-                toast.success("Đã phê duyệt báo cáo sự cố.");
+                toast.success(SYSTEM_MESSAGES.ASSET_REPORT.MSG_APPROVE_SUCCESS);
             } else {
                 await assetService.rejectReport(item.numericId, note);
-                toast.success("Đã từ chối báo cáo sự cố.");
+                toast.success(SYSTEM_MESSAGES.ASSET_REPORT.MSG_REJECT_SUCCESS);
             }
             fetchIncidents();
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })
-                ?.response?.data?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.";
-            toast.error(msg);
+                ?.response?.data?.message;
+            toast.error(msg || SYSTEM_MESSAGES.ASSET_REPORT.MSG_TRY_AGAIN);
         }
     };
 
@@ -178,14 +178,14 @@ export default function AssetIncidentManagementPage() {
                                         <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400">
                                             <div className="flex items-center justify-center gap-2">
                                                  <Loader2 className="w-5 h-5 animate-spin" />
-                                                 <span className="text-sm">{"Đang tải dữ liệu..."}</span>
+                                                  <span className="text-sm">{SYSTEM_MESSAGES.LOADING}</span>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : filteredIncidents.length === 0 ? (
                                     <tr>
                                          <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400 text-sm">
-                                             {"Không có sự cố nào."}
+                                             {SYSTEM_MESSAGES.ASSET_REPORT.EMPTY_DESC}
                                          </td>
                                     </tr>
                                 ) : filteredIncidents.map(incident => (

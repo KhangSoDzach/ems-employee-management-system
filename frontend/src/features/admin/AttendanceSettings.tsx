@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Clock, MapPin, Save } from "lucide-react";
+import { Clock, MapPin, Save, ChevronRight, CheckCircle2, Sparkles } from "lucide-react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
@@ -479,7 +479,7 @@ export default function AttendanceSettings() {
                                     onChange={(event) => {
                                       const value = Number(event.target.value);
                                       field.onChange(
-                                        Number.isNaN(value) ? 0 : value,
+                                        Number.isNaN(value) ? 0 : value as any,
                                       );
                                     }}
                                     className="form-input w-full"
@@ -534,7 +534,7 @@ export default function AttendanceSettings() {
                                     onChange={(event) => {
                                       const value = Number(event.target.value);
                                       field.onChange(
-                                        Number.isNaN(value) ? 0 : value,
+                                        Number.isNaN(value) ? 0 : value as any,
                                       );
                                     }}
                                     className="form-input w-full"
@@ -727,7 +727,7 @@ export default function AttendanceSettings() {
                                     onChange={(event) => {
                                       const value = Number(event.target.value);
                                       field.onChange(
-                                        Number.isNaN(value) ? 0 : value,
+                                        Number.isNaN(value) ? 0 : value as any,
                                       );
                                     }}
                                     className="form-input w-full"

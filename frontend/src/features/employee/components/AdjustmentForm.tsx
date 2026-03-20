@@ -126,7 +126,7 @@ export const AdjustmentForm = ({
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
-                        variant={"outline"}
+                        variant="outline"
                         className={cn(
                           "w-full pl-3 text-left font-normal h-11 rounded-xl border-slate-200 hover:bg-slate-50 transition-colors",
                           !field.value && "text-muted-foreground"

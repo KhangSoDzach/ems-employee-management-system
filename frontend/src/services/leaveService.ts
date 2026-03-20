@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import { MOCK_LEAVE_REQUESTS } from "./mockData";
+
 
 // ─── Shared wrapper ───────────────────────────────────────────────────────────
 interface ApiResponse<T> {
@@ -65,23 +65,7 @@ export const leaveService = {
       api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>(
         "/leaves?size=100",
       ) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
-    ).then((res) => {
-      const data = res.data;
-      return {
-        ...data,
-        content: [...MOCK_LEAVE_REQUESTS, ...data.content],
-        totalElements: data.totalElements + MOCK_LEAVE_REQUESTS.length,
-      };
-    })
-    .catch(() => ({
-      content: MOCK_LEAVE_REQUESTS,
-      page: 0,
-      size: 100,
-      totalElements: MOCK_LEAVE_REQUESTS.length,
-      totalPages: 1,
-      first: true,
-      last: true,
-    })),
+    ).then((res) => res.data),
 
   /**
    * POST /api/v1/leaves – submit a new leave request.

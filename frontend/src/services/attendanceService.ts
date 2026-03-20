@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { MOCK_ADJUSTMENT_REQUESTS, MOCK_ADJUSTMENT_DETAILS } from './mockData';
+
 
 // ─── Shared wrapper ───────────────────────────────────────────────────────────
 interface ApiResponse<T> {
@@ -179,28 +179,11 @@ export const attendanceService = {
     (api.get<unknown, ApiResponse<PageResponse<AdjustmentRequestSummary>>>('/attendance/adjustments/my', { params }) as Promise<ApiResponse<PageResponse<AdjustmentRequestSummary>>>).then(r),
 
   getAdjustmentDetail: (requestId: number): Promise<AdjustmentRequestDetail> =>
-    (api.get<unknown, ApiResponse<AdjustmentRequestDetail>>(`/attendance/adjustments/${requestId}`) as Promise<ApiResponse<AdjustmentRequestDetail>>).then(r)
-    .catch(() => MOCK_ADJUSTMENT_DETAILS[requestId] || Promise.reject("Not found")),
+    (api.get<unknown, ApiResponse<AdjustmentRequestDetail>>(`/attendance/adjustments/${requestId}`) as Promise<ApiResponse<AdjustmentRequestDetail>>).then(r),
 
   // ── Adjustment requests (approver) ──────────────────────────────────────────
   getPendingAdjustments: (params?: { page?: number; size?: number }): Promise<PageResponse<AdjustmentRequestSummary>> =>
-    (api.get<unknown, ApiResponse<PageResponse<AdjustmentRequestSummary>>>('/attendance/adjustments/pending', { params }) as Promise<ApiResponse<PageResponse<AdjustmentRequestSummary>>>).then((res) => {
-      const data = res.data;
-      return {
-        ...data,
-        content: [...MOCK_ADJUSTMENT_REQUESTS, ...data.content],
-        totalElements: data.totalElements + MOCK_ADJUSTMENT_REQUESTS.length,
-      };
-    })
-    .catch(() => ({
-      content: MOCK_ADJUSTMENT_REQUESTS,
-      page: 0,
-      size: 10,
-      totalElements: MOCK_ADJUSTMENT_REQUESTS.length,
-      totalPages: 1,
-      first: true,
-      last: true,
-    })),
+    (api.get<unknown, ApiResponse<PageResponse<AdjustmentRequestSummary>>>('/attendance/adjustments/pending', { params }) as Promise<ApiResponse<PageResponse<AdjustmentRequestSummary>>>).then(r),
 
   approveAdjustment: (requestId: number, payload: ApprovalActionPayload): Promise<AdjustmentRequestDetail> =>
     (api.post<unknown, ApiResponse<AdjustmentRequestDetail>>(`/attendance/adjustments/${requestId}/approve`, payload) as Promise<ApiResponse<AdjustmentRequestDetail>>).then(r),
