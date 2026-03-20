@@ -34,21 +34,21 @@ interface ForgotPasswordPageProps {
 const emailSchema = z.object({
     email: z.string().min(1, FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED).email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
 });
-
+const passwordSchema = z
+    .string()
+    .min(1, FORM_VALIDATION_MESSAGES.PASSWORD_REQUIRED)
+    .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN)
+    .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+        FORM_VALIDATION_MESSAGES.PASSWORD_COMPLEX
+    );
 const otpAndPasswordSchema = z.object({
     otp: z
         .string()
         .min(1, FORM_VALIDATION_MESSAGES.OTP_REQUIRED)
         .length(6, FORM_VALIDATION_MESSAGES.OTP_LENGTH)
         .regex(/^\d+$/, FORM_VALIDATION_MESSAGES.OTP_NUMERIC),
-    newPassword: z
-        .string()
-        .min(1, FORM_VALIDATION_MESSAGES.PASSWORD_REQUIRED)
-        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN)
-        .regex(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-            FORM_VALIDATION_MESSAGES.PASSWORD_COMPLEX,
-        ),
+    newPassword: passwordSchema,
     confirmPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
 }).refine((d) => d.newPassword === d.confirmPassword, {
     message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
@@ -57,13 +57,21 @@ const otpAndPasswordSchema = z.object({
 
 const profileChangePasswordSchema = z.object({
     currentPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
-    newPassword: z
+
+    newPassword: passwordSchema,
+
+    confirmPassword: z
         .string()
-        .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN),
-    confirmPassword: z.string(),
-}).refine((d) => d.newPassword === d.confirmPassword, {
+        .min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
+
+})
+.refine((d) => d.newPassword === d.confirmPassword, {
     message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
     path: ["confirmPassword"],
+})
+.refine((d) => d.currentPassword !== d.newPassword, {
+    message: SYSTEM_MESSAGES.CHANGE_PASSWORD.NEWPASSWORD_DIFFERENT_CURRENT,
+    path: ["newPassword"],
 });
 
 type EmailFormValues = z.infer<typeof emailSchema>;

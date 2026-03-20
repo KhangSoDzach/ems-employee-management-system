@@ -173,11 +173,21 @@ function App() {
               <Route path="/salary-history" element={<SalaryHistoryPage />} />
             </Route>
 
+            {/* Shared MemberList: Manager + Employee */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[AUTH_ROLES.MANAGER, AUTH_ROLES.EMPLOYEE]}
+                />
+              }
+            >
+              <Route path="/members" element={<MemberList />} />
+            </Route>
+
             {/* Manager only */}
             <Route
               element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}
             >
-              <Route path="/members" element={<MemberList />} />
               <Route path="/kpi-okr" element={<KpiOkrManagement />} />
               <Route path="/approve" element={<ApproveLeaveRequest />} />
               <Route

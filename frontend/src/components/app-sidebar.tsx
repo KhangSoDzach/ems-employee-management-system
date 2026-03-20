@@ -211,6 +211,10 @@ export function AppSidebar({
                   url: "/checkin",
                 },
                 {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS,
+                  url: "/members",
+                },
+                {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
                   url: "/request",
                 },
