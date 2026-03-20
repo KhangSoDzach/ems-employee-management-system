@@ -999,6 +999,9 @@ export const SYSTEM_MESSAGES = {
     TOAST_RESEND_ERROR: "Không thể gửi lại mã. Vui lòng thử lại.",
     TOAST_SUCCESS: "Đặt lại mật khẩu thành công!",
   },
+  CHANGE_PASSWORD: {
+    NEWPASSWORD_DIFFERENT_CURRENT: "Mật khẩu mới phải khác mật khẩu hiện tại.",
+  },
 
   // Common Translations
   COMMON_EN: {

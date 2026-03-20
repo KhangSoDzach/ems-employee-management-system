@@ -1,135 +1,148 @@
-import { X, CheckCircle, XCircle } from "lucide-react";
-import { useState } from "react";
-import { SYSTEM_MESSAGES } from "@/constants/messages";
-import type { IncidentItem } from "./AssetIncidentManagementPage";
+import { useState } from "react"
+import {
+    Sheet,
+    SheetContent,
+} from "@/components/ui/sheet"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
+import type { IncidentItem } from "./AssetIncidentManagementPage"
+import {
+    ReviewSheetHeader,
+    ReviewSheetProfile,
+    ReviewSheetFeedback,
+    ReviewSheetFooter
+} from "@/components/review-sheet"
 
 interface AssetIncidentReviewModalProps {
-    open:      boolean;
-    onClose:   () => void;
-    incident:  IncidentItem | null;
-    onUpdate:  (id: string, status: string, note?: string) => Promise<void>;
+    open: boolean;
+    onClose: () => void;
+    incident: IncidentItem | null;
+    onUpdate: (id: string, status: string, note?: string) => Promise<void>;
 }
 
-export default function AssetIncidentReviewModal({open, onClose, incident, onUpdate,
+export default function AssetIncidentReviewModal({
+    open,
+    onClose,
+    incident,
+    onUpdate,
 }: Readonly<AssetIncidentReviewModalProps>) {
-    const [note,       setNote]       = useState("");
-    const [processing, setProcessing] = useState(false);
+    const [note, setNote] = useState("")
+    const [processing, setProcessing] = useState<"approve" | "reject" | null>(null)
 
-    if (!open || !incident) {
-        return null;
+    if (!incident) {
+        return null
     }
 
-    const handleApprove = async () => {
-        setProcessing(true);
+    const handleAction = async (action: "approve" | "reject") => {
+        setProcessing(action)
         try {
-            await onUpdate(incident.id, "Resolved", note || undefined);
-            setNote("");
-            onClose();
+            const status = action === "approve" ? "Resolved" : "Rejected"
+            await onUpdate(incident.id, status, note || undefined)
+            setNote("")
+            onClose()
         } finally {
-            setProcessing(false);
+            setProcessing(null)
         }
-    };
+    }
 
-    const handleReject = async () => {
-        setProcessing(true);
-        try {
-            await onUpdate(incident.id, "Rejected", note || undefined);
-            setNote("");
-            onClose();
-        } finally {
-            setProcessing(false);
+    const isPending = incident.status === "PENDING"
+
+    const getStatusColor = () => {
+        switch (incident.status) {
+            case "Resolved": return "badge-success";
+            case "Rejected": return "badge-error";
+            case "PENDING": return "badge-warning";
+            default: return "badge-gray";
         }
-    };
+    }
 
-    const isPending = incident.status === "PENDING";
+    const getStatusLabel = () => {
+        switch (incident.status) {
+            case "Resolved": return SYSTEM_MESSAGES.STATUS.APPROVED;
+            case "Rejected": return SYSTEM_MESSAGES.STATUS.REJECTED;
+            case "PENDING": return SYSTEM_MESSAGES.STATUS.PENDING;
+            default: return incident.status;
+        }
+    }
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-content sm:max-w-[500px]">
-                <div className="modal-header">
-                    <h2 className="modal-title">{SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.TITLE}</h2>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 transition-colors">
-                        <X size={20} className="text-slate-500" />
-                    </button>
-                </div>
+        <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+            <SheetContent
+                side="right"
+                className="w-full sm:max-w-md md:max-w-lg p-0 bg-slate-50 rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
+            >
+                <ReviewSheetHeader
+                    title={SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.TITLE}
+                    subtitle={incident.dateReported}
+                    id={incident.id}
+                    statusLabel={getStatusLabel()}
+                    statusColor={getStatusColor()}
+                />
 
-                <div className="modal-body space-y-6">
-                    {/* Employee info */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600">
-                            {incident.employeeAvatar}
-                        </div>
-                        <div>
-                            <div className="font-semibold text-gray-900">{incident.employeeName}</div>
-                            {incident.employeeDept && (
-                                <div className="text-sm text-gray-500">{incident.employeeDept}</div>
-                            )}
-                        </div>
-                    </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                    <ReviewSheetProfile
+                        name={incident.employeeName}
+                        dept={incident.employeeDept}
+                        avatar={incident.employeeAvatar}
+                        isUrgent={isPending}
+                    />
 
-                    {/* Incident details */}
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                        <div>
-                            <div className="form-label-secondary">{SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_ASSET_NAME}</div>
-                            <div className="font-medium mt-1">{incident.assetName}</div>
-                        </div>
-                        <div>
-                            <div className="form-label-secondary">{SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_ASSET_ID}</div>
-                            <div className="font-medium mt-1">{incident.assetId}</div>
-                        </div>
-                        <div>
-                            <div className="form-label-secondary">{SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_INCIDENT_TYPE}</div>
-                            <div className="font-medium mt-1">{incident.incidentType}</div>
-                        </div>
-                        <div>
-                            <div className="form-label-secondary">{SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_DATE}</div>
-                            <div className="font-medium mt-1">{incident.dateReported}</div>
-                        </div>
-                    </div>
+                    {/* Incident Info */}
+                    <section className="space-y-4 text-sm">
+                        <h4 className="section-title-muted uppercase tracking-wider">
+                            {SYSTEM_MESSAGES.APPROVE.SECTION_LEAVE_DETAIL}
+                        </h4>
 
-                    {/* Process note — shown for PENDING only */}
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="grid grid-cols-2 divide-x divide-slate-100 border-b">
+                                <div className="p-4 bg-muted/5">
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
+                                        {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_ASSET_NAME}
+                                    </p>
+                                    <p className="font-bold text-slate-900">{incident.assetName}</p>
+                                </div>
+                                <div className="p-4">
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
+                                        {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_ASSET_ID}
+                                    </p>
+                                    <p className="font-bold text-slate-900">{incident.assetId}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 divide-x divide-slate-100 italic">
+                                <div className="p-4">
+                                    <p className="text-[10px] text-slate-400 font-normal uppercase tracking-tight mb-1">
+                                        {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_INCIDENT_TYPE}
+                                    </p>
+                                    <p className="font-semibold text-slate-700">{incident.incidentType}</p>
+                                </div>
+                                <div className="p-4">
+                                    <p className="text-[10px] text-slate-400 font-normal uppercase tracking-tight mb-1">
+                                        {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_DATE}
+                                    </p>
+                                    <p className="font-semibold text-slate-700">{incident.dateReported}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     {isPending && (
-                        <div className="pt-4 border-t space-y-2">
-                            <label className="form-label-bold block text-sm text-gray-700">
-                                {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.LABEL_UPDATE_COND}
-                            </label>
-                            <textarea
-                                className="form-input w-full resize-none h-24 text-sm"
-                                placeholder="Nhập ghi chú xử lý (không bắt buộc)..."
-                                value={note}
-                                onChange={e => setNote(e.target.value)}
-                                disabled={processing}
-                            />
-                        </div>
+                        <ReviewSheetFeedback
+                            value={note}
+                            onChange={setNote}
+                        />
                     )}
                 </div>
 
-                <div className="modal-footer">
-                    <button onClick={onClose} disabled={processing} className="btn-secondary">
-                        {SYSTEM_MESSAGES.BTN_CANCEL}
-                    </button>
-                    {isPending && (
-                        <>
-                            <button
-                                onClick={handleReject}
-                                disabled={processing}
-                                className="btn-action bg-red-500 hover:bg-red-600 flex items-center gap-2 disabled:opacity-60"
-                            >
-                                <XCircle size={16} />
-                                {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.BTN_REJECT}
-                            </button>
-                            <button
-                                onClick={handleApprove}
-                                disabled={processing}
-                                className="btn-action bg-green-600 hover:bg-green-700 flex items-center gap-2 disabled:opacity-60"
-                            >
-                                <CheckCircle size={16} />
-                                {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.BTN_APPROVE}
-                            </button>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+                <ReviewSheetFooter
+                    onApprove={() => handleAction("approve")}
+                    onReject={() => handleAction("reject")}
+                    isPending={isPending}
+                    processing={processing}
+                    labels={{
+                        approve: SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.BTN_APPROVE,
+                        reject: SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.BTN_REJECT
+                    }}
+                />
+            </SheetContent>
+        </Sheet>
+    )
 }

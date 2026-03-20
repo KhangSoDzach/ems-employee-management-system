@@ -4,15 +4,19 @@ import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { CheckCircle2, XCircle, Loader2, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 
 import { leaveService } from "@/services/leaveService"
 import type { LeaveRequest } from "../ApproveLeaveRequest"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
+import { DATETIME_FORMAT, DATE_FORMAT } from "../../employee/adjustment-request.constants"
+import {
+  ReviewSheetHeader,
+  ReviewSheetProfile,
+  ReviewSheetFeedback,
+  ReviewSheetFooter
+} from "@/components/review-sheet"
 
 /* ================= TYPES ================= */
 
@@ -35,8 +39,6 @@ export default function ApproveLeaveDialog({
   if (!request) {
     return null
   }
-
-  const fmt = (d: string) => format(new Date(d + "T00:00:00"), "dd/MM/yyyy")
 
   const doAction = async (action: "APPROVE" | "REJECT" | "SEND_BACK") => {
     if ((action === "REJECT" || action === "SEND_BACK") && !comment.trim()) {
@@ -106,90 +108,46 @@ export default function ApproveLeaveDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md p-0 bg-white rounded-l-2xl flex flex-col"
+        className="w-full sm:max-w-md md:max-w-lg p-0 bg-slate-50 rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
       >
-        {/* ================= HEADER ================= */}
-        <div className="px-6 py-5 border-b bg-muted/10 space-y-3">
-          <div>
-            <h2 className="text-xl font-bold">
-              {SYSTEM_MESSAGES.LEAVE.SHEET_TITLE}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {SYSTEM_MESSAGES.ADJUSTMENT.SHEET_CREATED_AT} {SYSTEM_MESSAGES.APPROVE.PLACEHOLDER_TIME}
-            </p>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono bg-white px-2 py-1 rounded-md shadow border">
-              {request.id}
-            </span>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor()}`}>
-              {getStatusLabel()}
-            </span>
-          </div>
-        </div>
+        <ReviewSheetHeader
+          title={SYSTEM_MESSAGES.LEAVE.SHEET_TITLE}
+          subtitle={format(new Date(request.createdAt), DATETIME_FORMAT)}
+          id={request.id}
+          statusLabel={getStatusLabel()}
+          statusColor={getStatusColor()}
+        />
 
         {/* ================= BODY ================= */}
         <div className="p-6 space-y-8 overflow-y-auto flex-1">
-
-          {/* ===== THÔNG TIN CHUNG ===== */}
-          <section className="space-y-4">
-            <h4 className="section-title-muted">
-              {SYSTEM_MESSAGES.APPROVE.SECTION_GENERAL}
-            </h4>
-
-            <div className="bg-muted/20 p-4 rounded-xl border space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {SYSTEM_MESSAGES.LABEL_EMPLOYEE}
-                  </p>
-                  <p className="font-semibold text-sm">
-                    {request.name}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {SYSTEM_MESSAGES.APPROVE.LABEL_EMP_CODE_SHORT}
-                  </p>
-                  <p className="font-semibold text-sm">
-                    {SYSTEM_MESSAGES.APPROVE.PLACEHOLDER_ID}
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t">
-                <p className="text-xs text-muted-foreground mb-1">
-                  {SYSTEM_MESSAGES.LABEL_DEPARTMENT}
-                </p>
-                <p className="font-semibold text-sm">
-                  {request.dept}
-                </p>
-              </div>
-            </div>
-          </section>
+          <ReviewSheetProfile
+            name={request.name}
+            dept={request.dept}
+            id={request.id}
+            isUrgent={request.status.startsWith("PENDING")}
+          />
 
           {/* ===== CHI TIẾT NGHỈ PHÉP ===== */}
           <section className="space-y-4">
-            <h4 className="section-title-muted">
+            <h4 className="section-title-muted uppercase tracking-wider">
               {SYSTEM_MESSAGES.APPROVE.SECTION_LEAVE_DETAIL}
             </h4>
 
-            <div className="rounded-xl border shadow-sm overflow-hidden">
-              <div className="grid grid-cols-2 divide-x border-b bg-muted/20">
-                <div className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START}</p>
-                  <p className="font-semibold text-sm">{fmt(request.startDate)}</p>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-sm">
+              <div className="grid grid-cols-2 divide-x divide-slate-100 border-b">
+                <div className="p-4 bg-muted/5">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">{SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START}</p>
+                  <p className="font-bold text-slate-900">{format(new Date(request.startDate + "T00:00:00"), DATE_FORMAT)}</p>
                 </div>
                 <div className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.SHEET_END_DATE}</p>
-                  <p className="font-semibold text-sm">{fmt(request.endDate)}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">{SYSTEM_MESSAGES.LEAVE.SHEET_END_DATE}</p>
+                  <p className="font-bold text-slate-900">{format(new Date(request.endDate + "T00:00:00"), DATE_FORMAT)}</p>
                 </div>
               </div>
               <div className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.SHEET_TOTAL_TIME}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">{SYSTEM_MESSAGES.LEAVE.SHEET_TOTAL_TIME}</p>
                 <p className="font-bold text-red-500">
-                  {request.duration != null ? `${request.duration} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                  {request.duration !== null ? `${request.duration} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                 </p>
               </div>
             </div>
@@ -197,63 +155,30 @@ export default function ApproveLeaveDialog({
 
           {/* ===== LÝ DO CHI TIẾT ===== */}
           <section className="space-y-3">
-            <h4 className="section-title-muted">
+            <h4 className="section-title-muted uppercase tracking-wider">
               {SYSTEM_MESSAGES.APPROVE.SECTION_REASON_DETAIL}
             </h4>
 
-            <div className="p-4 bg-muted/30 border rounded-xl shadow-sm">
-              <p className="text-sm leading-relaxed">
-                {request.reason}
+            <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm italic text-slate-600 font-medium text-sm">
+              <p className="leading-relaxed">
+                {SYSTEM_MESSAGES.SYMBOLS.QUOTE}{request.reason}{SYSTEM_MESSAGES.SYMBOLS.QUOTE}
               </p>
             </div>
           </section>
 
-          {/* ===== COMMENT (GIỮ NGUYÊN) ===== */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">
-              {SYSTEM_MESSAGES.APPROVE.LABEL_FEEDBACK}
-            </label>
-
-            <Textarea
-              placeholder={SYSTEM_MESSAGES.APPROVE.FEEDBACK_PLACEHOLDER}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[110px] rounded-xl"
-            />
-          </div>
+          <ReviewSheetFeedback
+            value={comment}
+            onChange={setComment}
+          />
         </div>
 
-        {/* ================= FOOTER ================= */}
-        <div className="p-4 border-t bg-muted/20 flex gap-2">
-          <Button
-            variant="secondary"
-            disabled={loading}
-            onClick={handleReject}
-            className="btn-reject"
-          >
-            {loading ? <Loader2 className="animate-spin" size={18} /> : <XCircle size={18} />}
-            {SYSTEM_MESSAGES.APPROVE.STATUS_REJECTED}
-          </Button>
- 
-          <Button
-            variant="outline"
-            disabled={loading}
-            onClick={handleSendBack}
-            className="btn-request-more"
-          >
-            {loading ? <Loader2 className="animate-spin" size={18} /> : <RotateCcw size={18} />}
-            {SYSTEM_MESSAGES.STATUS.RETURNED}
-          </Button>
- 
-          <Button
-            disabled={loading}
-            onClick={handleApprove}
-            className="btn-approve"
-          >
-            {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-            {SYSTEM_MESSAGES.APPROVE.BTN_APPROVE}
-          </Button>
-        </div>
+        <ReviewSheetFooter
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onReturn={handleSendBack}
+          isPending={request.status.startsWith("PENDING")}
+          processing={loading}
+        />
       </SheetContent>
     </Sheet>
   )

@@ -2,8 +2,12 @@
 
 export const ATTENDANCE_SETTINGS_CONSTANTS = {
   PAGE: {
-    TITLE: "Cấu hình Quy tắc Chấm công",
-    DESCRIPTION: "Thiết lập logic chấm công tự động cho toàn bộ hệ thống",
+    TITLE: "Cấu hình chấm công",
+    DESCRIPTION:
+      "Thiết lập các quy tắc về thời gian, địa điểm và phương thức xác thực để tối ưu hóa quy trình quản lý nhân sự của doanh nghiệp bạn.",
+    SYSTEM_CONFIG: "Hệ thống",
+    SECURITY_HIGH: "Bảo mật: Cao",
+    CONFIG_ACTIVE: "Cấu hình: Hoạt động",
   },
 
   TABS: {
@@ -12,8 +16,10 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
   },
 
   TIME_RULES: {
-    SECTION_TITLE: "Quy tắc Thời gian",
-    SECTION_DESC: "Thiết lập các ngưỡng thời gian cho việc chấm công tự động",
+    SECTION_TITLE: "Quy tắc thời gian",
+    SECTION_DESC: "Quản lý ca làm việc và thời gian linh hoạt",
+    SHIFT_01: "01",
+    SHIFT_02: "02",
 
     SHIFT_1: {
       LABEL: "Ca 1",
@@ -44,18 +50,23 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
     },
 
     GRACE_PERIOD: {
-      LABEL: "Ngưỡng đi trễ",
+      LABEL: "Thời gian đi muộn cho phép",
       SUFFIX: "phút",
       PLACEHOLDER: "15",
-      DESCRIPTION: "Số phút cho phép đi trễ trước khi bị đánh dấu muộn",
+      DESCRIPTION: "Số phút tối đa được phép đi muộn",
     },
 
     EARLY_LEAVE_THRESHOLD: {
-      LABEL: "Ngưỡng về sớm",
+      LABEL: "Thời gian về sớm cho phép",
       SUFFIX: "phút",
       PLACEHOLDER: "15",
-      DESCRIPTION: "Số phút được phép về sớm trước giờ tan ca",
+      DESCRIPTION: "Số phút được phép về sớm mà không bị tính là vi phạm",
     },
+
+    GRACE_PERIODS_SUBTITLE: "Độ trễ & Sớm cho phép",
+    GRACE_PERIODS_DESC: "Thiết lập ngưỡng sai số thời gian cho phép",
+    PROCESS_TITLE: "Quy trình áp dụng",
+    PROCESS_DESC: "Mọi thay đổi sẽ có hiệu lực ngay lập tức cho các lượt chấm công mới từ phiên làm việc kế tiếp của nhân viên.",
   },
 
   LOCATION_RULES: {
@@ -96,12 +107,17 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
       WARN: "Chỉ cảnh báo",
       NOTIFY: "Gửi thông báo về Admin",
     },
+
+    VALIDATION_TITLE: "Cấu hình xác thực",
+    VALIDATION_DESC: "Thiết lập phạm vi & hành động",
   },
 
   BUTTONS: {
     SAVE: "Lưu thay đổi",
     CANCEL: "Hủy",
     RESET: "Đặt lại mặc định",
+    CONFIRM_TIME: "Xác nhận thời gian",
+    CONFIRM_LOCATION: "Xác nhận vị trí",
   },
 
   TOAST: {
@@ -123,6 +139,8 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
     LONGITUDE_RANGE: "Kinh độ phải từ -180 đến 180",
     RADIUS_RANGE: "Bán kính phải từ 1 đến 10000 mét",
     DECIMAL_COORDINATE: "Tọa độ phải là số thập phân hợp lệ",
+    SHIFT_END_BEFORE_START: "Giờ tan ca phải sau giờ vào ca",
+    SHIFT_OVERLAP: "Thời gian các ca không được chồng lấn (Ca 2 phải sau Ca 1)",
   },
 
   DEFAULTS: {

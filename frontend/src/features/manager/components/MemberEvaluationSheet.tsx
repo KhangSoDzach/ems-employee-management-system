@@ -255,7 +255,7 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
               </div>
             </div>
 
-            {/* Role indicator */}
+            {/* Role indicator
             <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-start gap-3">
               <Info className="text-primary text-xl" />
               <div className="flex-1">
@@ -275,7 +275,7 @@ export function MemberEvaluationSheet({ member, open, mode = "view", onOpenChang
               >
                 {t.SHEET_ROLE_CHANGE}
               </Button>
-            </div>
+            </div> */}
 
             {/* Summary */}
             <div className="grid grid-cols-2 gap-4">

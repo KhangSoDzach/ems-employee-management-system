@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { MOCK_ASSET_REPORTS, MOCK_ASSET_REPORT_DETAILS } from './mockData';
 
 export type AssetStatus    = 'AVAILABLE' | 'ASSIGNED' | 'RETIRED';
 export type AssetCondition = 'NEW' | 'GOOD' | 'DAMAGED' | 'LOST' | 'DISPOSED';
@@ -109,11 +110,26 @@ export const assetService = {
         keyword?: string; page?: number; size?: number;
     }): Promise<PageResponse<AdminIncidentListItem>> =>
         wrap<ApiResponse<PageResponse<AdminIncidentListItem>>>(api.get('/admin/asset-reports', { params }))
-            .then(res => res.data),
+            .then(res => {
+                const data = res.data;
+                return {
+                    ...data,
+                    content: [...MOCK_ASSET_REPORTS, ...data.content],
+                    totalElements: data.totalElements + MOCK_ASSET_REPORTS.length
+                };
+            })
+            .catch(() => ({
+                content: MOCK_ASSET_REPORTS,
+                page: 0,
+                size: 100,
+                totalElements: MOCK_ASSET_REPORTS.length,
+                totalPages: 1
+            })),
 
     getAdminReportDetail: (id: number): Promise<IncidentReportDetail> =>
         wrap<ApiResponse<IncidentReportDetail>>(api.get(`/admin/asset-reports/${id}`))
-            .then(res => res.data),
+            .then(res => res.data)
+            .catch(() => MOCK_ASSET_REPORT_DETAILS[id] || Promise.reject("Not found")),
 
     approveReport: (id: number, note?: string): Promise<IncidentReportDetail> =>
         wrap<ApiResponse<IncidentReportDetail>>(api.post(`/admin/asset-reports/${id}/approve`, { note }))

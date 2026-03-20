@@ -3,6 +3,7 @@ import { Search, ChevronLeft, ChevronRight, Eye, Star } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,7 @@ const PAGE_SIZE = 10;
 
 export default function MemberList() {
   const t = SYSTEM_MESSAGES.MEMBER_LIST;
+  const effectiveRole = useEffectiveRole();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [sheetMode, setSheetMode] = useState<"view" | "edit">("view");
   const [search, setSearch] = useState<string>("");
@@ -112,7 +114,7 @@ export default function MemberList() {
 
   return (
     <SidebarProvider>
-      <AppSidebar role="manager" variant="inset" />
+      <AppSidebar role={effectiveRole} variant="inset" />
       <SidebarInset>
         <SiteHeader />
 
@@ -231,19 +233,21 @@ export default function MemberList() {
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="text-primary hover:bg-primary/10"
-                                title={t.BTN_EVALUATE}
-                                aria-label={t.BTN_EVALUATE}
-                                onClick={() => {
-                                  setSelectedMember(member);
-                                  setSheetMode("edit");
-                                }}
-                              >
-                                <Star className="w-4 h-4" />
-                              </Button>
+                              {effectiveRole !== "employee" && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="text-primary hover:bg-primary/10"
+                                  title={t.BTN_EVALUATE}
+                                  aria-label={t.BTN_EVALUATE}
+                                  onClick={() => {
+                                    setSelectedMember(member);
+                                    setSheetMode("edit");
+                                  }}
+                                >
+                                  <Star className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>

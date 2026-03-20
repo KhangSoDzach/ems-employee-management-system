@@ -1,10 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTheme } from "next-themes";
-import { Toaster as SonnerToaster, ToasterProps } from "sonner";
+import { Toaster as SonnerToaster, ToasterProps, toast } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-sonner-toast]")) {
+        toast.dismiss();
+      }
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
 
   return (
     <SonnerToaster

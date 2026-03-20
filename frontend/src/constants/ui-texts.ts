@@ -101,5 +101,5 @@ export const ASSET_INCIDENT_TEXT = {
 } as const;
 
 export const COMMON_TEXT = {
-    LOADING: "Loading...",
+    LOADING: "Đang tải...",
 } as const;
