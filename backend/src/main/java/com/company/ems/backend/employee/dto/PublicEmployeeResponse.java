@@ -20,6 +20,8 @@ public class PublicEmployeeResponse {
     private String phone;
     private LocalDate dateOfBirth;
     private LocalDate hireDate;
+    private String employeeCode;
+    private String nationalId;
     private String position;
     private String department;
     private String address;

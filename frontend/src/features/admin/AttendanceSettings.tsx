@@ -167,16 +167,34 @@ const attendanceSettingsSchema = z.object({
   path: ["shift2CheckOut"],
 });
 
-type AttendanceSettingsFormValues = z.infer<typeof attendanceSettingsSchema>;
+type AttendanceSettingsFormInput = z.input<typeof attendanceSettingsSchema>;
+type AttendanceSettingsFormValues = z.output<typeof attendanceSettingsSchema>;
 
-const MOCK_SUBMIT_DELAY = 1200;
+const mockApiSubmit = async (
+  _data: AttendanceSettingsFormValues,
+): Promise<void> => {
+  await new Promise<void>((resolve, reject) => {
+    setTimeout(() => {
+      const hasPermission = true;
+      if (!hasPermission) {
+        reject(new Error("403"));
+      } else {
+        resolve();
+      }
+    }, 1000);
+  });
+};
 
 export default function AttendanceSettings() {
   const effectiveRole = useEffectiveRole();
   const [activeTab, setActiveTab] = React.useState("time");
 
-  const form = useForm<AttendanceSettingsFormValues>({
-    resolver: zodResolver(attendanceSettingsSchema) as any,
+  const form = useForm<
+    AttendanceSettingsFormInput,
+    unknown,
+    AttendanceSettingsFormValues
+  >({
+    resolver: zodResolver(attendanceSettingsSchema),
     mode: "onChange",
     defaultValues: {
       shift1CheckIn: ATTENDANCE_SETTINGS_CONSTANTS.DEFAULTS.SHIFT_1_CHECK_IN,
@@ -306,81 +324,96 @@ export default function AttendanceSettings() {
                   </div>
                 </div>
 
-                <div className={"relative min-h-[500px]"}>
-                    {/* Time Rules Tab Content */}
-                    <TabsContent key={"time-pane"} value={"time"} className={"mt-0 focus-visible:ring-0 data-[state=inactive]:hidden"}>
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className={"grid grid-cols-1 lg:grid-cols-3 gap-8"}
-                      >
-                        <Card className={"lg:col-span-2 glass-card overflow-hidden group border-none shadow-xl flex flex-col"}>
-                          <CardHeader className={"p-8 pb-4"}>
-                            <div className={"flex items-center gap-4"}>
-                              <div className={"w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform"}>
-                                <Clock className={"w-6 h-6"} />
-                              </div>
-                              <div className={"space-y-1"}>
-                                <CardTitle className={"text-2xl font-black text-slate-900 dark:text-white"}>
-                                  {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SECTION_TITLE}
-                                </CardTitle>
-                                <CardDescription className={"text-slate-400 font-medium"}>
-                                  {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SECTION_DESC}
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className={"p-8 pt-6 space-y-10 flex-1"}>
-                            <div className={"grid grid-cols-1 md:grid-cols-2 gap-10"}>
-                              {/* Shift 1 */}
-                              <div className={"space-y-6"}>
-                                <div className={"flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800"}>
-                                  <h3 className={"font-black text-slate-800 dark:text-slate-200 flex items-center gap-2 italic uppercase tracking-wider"}>
-                                    <div className={"w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center text-xs not-italic font-black"}>
-                                      {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_01}
-                                    </div>
-                                    {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1.LABEL}
-                                  </h3>
-                                </div>
-                                <div className={"grid grid-cols-1 gap-5"}>
-                                  <FormField
-                                    control={form.control}
-                                    name={"shift1CheckIn"}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className={"text-xs font-bold text-slate-500 uppercase flex items-center gap-2"}>
-                                          <ChevronRight className={"w-3 h-3 text-primary"} />
-                                          {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1.CHECK_IN.LABEL}
-                                        </FormLabel>
-                                        <FormControl>
-                                           <div className={"relative group/input"}>
-                                              <Input type={"time"} {...field} className={"premium-input h-12 pl-12 bg-slate-50/30"} />
-                                              <Clock className={"absolute left-4 top-3.5 w-5 h-5 text-slate-300 pointer-events-none group-focus-within/input:text-primary transition-colors"} />
-                                           </div>
-                                        </FormControl>
-                                        <FormMessage className={"text-[10px] font-bold"} />
-                                      </FormItem>
-                                    )}
+                        <FormField
+                          control={form.control}
+                          name="gracePeriod"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="setting-label">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                                    .GRACE_PERIOD.LABEL
+                                }
+                              </FormLabel>
+                              <FormControl>
+                                <div className="setting-input-row">
+                                  <Input
+                                    type="number"
+                                    name={field.name}
+                                    ref={field.ref}
+                                    onBlur={field.onBlur}
+                                    value={
+                                      typeof field.value === "number"
+                                        ? field.value
+                                        : 0
+                                    }
+                                    onChange={(event) => {
+                                      const value = Number(event.target.value);
+                                      field.onChange(
+                                        Number.isNaN(value) ? 0 : value,
+                                      );
+                                    }}
+                                    className="form-input w-full"
+                                    placeholder={
+                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                                        .GRACE_PERIOD.PLACEHOLDER
+                                    }
+                                    min={0}
                                   />
-                                  <FormField
-                                    control={form.control}
-                                    name={"shift1CheckOut"}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className={"text-xs font-bold text-slate-500 uppercase flex items-center gap-2"}>
-                                          <ChevronRight className={"w-3 h-3 text-primary"} />
-                                          {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1.CHECK_OUT.LABEL}
-                                        </FormLabel>
-                                        <FormControl>
-                                           <div className={"relative group/input"}>
-                                              <Input type={"time"} {...field} className={"premium-input h-12 pl-12 bg-slate-50/30"} />
-                                              <Clock className={"absolute left-4 top-3.5 w-5 h-5 text-slate-300 pointer-events-none group-focus-within/input:text-primary transition-colors"} />
-                                           </div>
-                                        </FormControl>
-                                        <FormMessage className={"text-[10px] font-bold"} />
-                                      </FormItem>
-                                    )}
+                                  <span className="setting-suffix">
+                                    {
+                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                                        .GRACE_PERIOD.SUFFIX
+                                    }
+                                  </span>
+                                </div>
+                              </FormControl>
+                              <FormDescription className="setting-description">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                                    .GRACE_PERIOD.DESCRIPTION
+                                }
+                              </FormDescription>
+                              <FormMessage className="text-xs font-medium" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="earlyLeaveThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="setting-label">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                                    .EARLY_LEAVE_THRESHOLD.LABEL
+                                }
+                              </FormLabel>
+                              <FormControl>
+                                <div className="setting-input-row">
+                                  <Input
+                                    type="number"
+                                    name={field.name}
+                                    ref={field.ref}
+                                    onBlur={field.onBlur}
+                                    value={
+                                      typeof field.value === "number"
+                                        ? field.value
+                                        : 0
+                                    }
+                                    onChange={(event) => {
+                                      const value = Number(event.target.value);
+                                      field.onChange(
+                                        Number.isNaN(value) ? 0 : value,
+                                      );
+                                    }}
+                                    className="form-input w-full"
+                                    placeholder={
+                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                                        .EARLY_LEAVE_THRESHOLD.PLACEHOLDER
+                                    }
+                                    min={0}
                                   />
                                 </div>
                               </div>
@@ -521,56 +554,61 @@ export default function AttendanceSettings() {
                       </motion.div>
                     </TabsContent>
 
-                    {/* Location Rules Tab Content */}
-                    <TabsContent key={"location-pane"} value={"location"} className={"mt-0 focus-visible:ring-0 data-[state=inactive]:hidden"}>
-                      <motion.div
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className={"grid grid-cols-1 lg:grid-cols-3 gap-8"}
-                      >
-                        <Card className={"lg:col-span-2 glass-card overflow-hidden group border-none shadow-xl flex flex-col"}>
-                           <CardHeader className={"p-8 pb-4"}>
-                            <div className={"flex items-center gap-4"}>
-                              <div className={"w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform"}>
-                                <MapPin className={"w-6 h-6"} />
-                              </div>
-                              <div className={"space-y-1"}>
-                                <CardTitle className={"text-2xl font-black text-slate-900 dark:text-white"}>
-                                  {ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.SECTION_TITLE}
-                                </CardTitle>
-                                <CardDescription className={"text-slate-400 font-medium"}>
-                                  {ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.SECTION_DESC}
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className={"p-8 pt-6 space-y-10 flex-1"}>
-                                <FormField
-                                  control={form.control}
-                                  name={"gpsEnabled"}
-                                  render={({ field }) => (
-                                    <FormItem className={"p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between group/toggle overflow-hidden relative space-y-0"}>
-                                        <div className={cn("absolute inset-0 transition-opacity pointer-events-none", gpsEnabled ? "bg-emerald-500/5 opacity-100" : "bg-slate-500/5 opacity-0")} />
-                                        <div className={"space-y-1 relative z-10"}>
-                                            <FormLabel className={"font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2 cursor-pointer"}>
-                                                {ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.GPS_ENABLED.LABEL}
-                                                {gpsEnabled && <span className={"w-2 h-2 rounded-full bg-emerald-500 animate-pulse"} />}
-                                            </FormLabel>
-                                            <FormDescription className={"text-xs text-slate-500 font-medium max-w-sm"}>
-                                                {ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.GPS_ENABLED.DESCRIPTION}
-                                            </FormDescription>
-                                        </div>
-                                        <FormControl>
-                                          <Switch 
-                                            checked={field.value} 
-                                            onCheckedChange={field.onChange} 
-                                            className={"data-[state=checked]:bg-emerald-500 h-7 w-12 relative z-10"}
-                                          />
-                                        </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
+                        <FormField
+                          control={form.control}
+                          name="radius"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="setting-label">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                    .RADIUS.LABEL
+                                }
+                              </FormLabel>
+                              <FormControl>
+                                <div className="setting-input-row">
+                                  <Input
+                                    type="number"
+                                    name={field.name}
+                                    ref={field.ref}
+                                    onBlur={field.onBlur}
+                                    value={
+                                      typeof field.value === "number"
+                                        ? field.value
+                                        : 0
+                                    }
+                                    onChange={(event) => {
+                                      const value = Number(event.target.value);
+                                      field.onChange(
+                                        Number.isNaN(value) ? 0 : value,
+                                      );
+                                    }}
+                                    className="form-input w-full"
+                                    placeholder={
+                                      ATTENDANCE_SETTINGS_CONSTANTS
+                                        .LOCATION_RULES.RADIUS.PLACEHOLDER
+                                    }
+                                    min={1}
+                                    disabled={!form.watch("gpsEnabled")}
+                                  />
+                                  <span className="setting-suffix">
+                                    {
+                                      ATTENDANCE_SETTINGS_CONSTANTS
+                                        .LOCATION_RULES.RADIUS.SUFFIX
+                                    }
+                                  </span>
+                                </div>
+                              </FormControl>
+                              <FormDescription className="setting-description">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                    .RADIUS.DESCRIPTION
+                                }
+                              </FormDescription>
+                              <FormMessage className="text-xs font-medium" />
+                            </FormItem>
+                          )}
+                        />
 
                             <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-10 transition-all duration-500", !gpsEnabled && "opacity-40 grayscale pointer-events-none")}>
                                 <FormField

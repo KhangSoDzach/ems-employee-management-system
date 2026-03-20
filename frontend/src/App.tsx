@@ -89,7 +89,11 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR, AUTH_ROLES.MANAGER]}
+                  allowedRoles={[
+                    AUTH_ROLES.ADMIN,
+                    AUTH_ROLES.HR,
+                    AUTH_ROLES.MANAGER,
+                  ]}
                 />
               }
             >
@@ -120,14 +124,26 @@ function App() {
               <Route path="/announcements" element={<AnnouncementsPage />} />
             </Route>
 
-            {/* Admin only */}
-            <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}>
+            {/* Admin + HR */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR]}
+                />
+              }
+            >
               <Route path="/assets" element={<AssetManagementPage />} />
               <Route path="/payroll" element={<PayrollManagement />} />
               <Route
                 path="/announcements/manage"
                 element={<AnnouncementManagementPage />}
               />
+            </Route>
+
+            {/* Admin only */}
+            <Route
+              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}
+            >
               <Route
                 path="/attendance-settings"
                 element={<AttendanceSettings />}
@@ -155,7 +171,11 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={[AUTH_ROLES.EMPLOYEE, AUTH_ROLES.HR, AUTH_ROLES.MANAGER]}
+                  allowedRoles={[
+                    AUTH_ROLES.EMPLOYEE,
+                    AUTH_ROLES.HR,
+                    AUTH_ROLES.MANAGER,
+                  ]}
                 />
               }
             >
