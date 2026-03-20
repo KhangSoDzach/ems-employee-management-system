@@ -197,7 +197,7 @@ function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
-      <Toaster richColors position="top-right" visibleToasts={1} closeButton />
+      <Toaster richColors position="top-center" visibleToasts={1} />
     </AuthProvider>
   );
 }
