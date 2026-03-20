@@ -16,14 +16,17 @@ public interface EmployeeMapper {
     @Mapping(target = "reportingManagerName", source = "reportingManager.fullName")
     @Mapping(target = "contractType",         expression = "java(employee.getContractType() != null ? employee.getContractType().name() : null)")
     @Mapping(target = "status",               expression = "java(employee.getStatus() != null ? employee.getStatus().name() : null)")
+    @Mapping(target = "employeeCode",         source = "employeeCode")
     EmployeeResponse toResponse(Employee employee);
 
     @Mapping(target = "position",   source = "position.title")
     @Mapping(target = "department", source = "department.name")
     @Mapping(target = "status",     expression = "java(employee.getStatus() != null ? employee.getStatus().name() : null)")
+    @Mapping(target = "employeeCode", source = "employeeCode")
     PublicEmployeeResponse toPublicResponse(Employee employee);
     @Mapping(target = "positionTitle",   source = "position.title")
     @Mapping(target = "departmentName",  source = "department.name")
     @Mapping(target = "status",          expression = "java(employee.getStatus() != null ? employee.getStatus().name() : null)")
+    @Mapping(target = "employeeCode",    source = "employeeCode")
     MemberResponse toMemberResponse(Employee employee);
 }

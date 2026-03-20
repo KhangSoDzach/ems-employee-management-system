@@ -11,7 +11,7 @@ function getRedirectByRole(roles: string[]): string {
     return "/assets";
   }
   if (roles.includes(AUTH_ROLES.HR)) {
-    return "/payroll";
+    return "/assets";
   }
   if (roles.includes(AUTH_ROLES.MANAGER)) {
     return "/members";

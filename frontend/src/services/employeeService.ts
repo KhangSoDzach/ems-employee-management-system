@@ -1,4 +1,4 @@
-import api from '@/lib/axios';
+import api from "@/lib/axios";
 
 export interface PublicEmployeeProfile {
   id: number;
@@ -8,6 +8,8 @@ export interface PublicEmployeeProfile {
   phone: string | null;
   dateOfBirth: string;
   hireDate: string;
+  employeeCode: string | null;
+  nationalId: string | null;
   position: string | null;
   department: string | null;
   address: string | null;
@@ -132,42 +134,68 @@ export const employeeService = {
    * Trả hồ sơ (read-only, public fields) của user đang đăng nhập.
    */
   getMyProfile: (): Promise<PublicEmployeeProfile> =>
-    (api.get<unknown, ApiResponse<PublicEmployeeProfile>>('/employees/me') as Promise<ApiResponse<PublicEmployeeProfile>>)
-      .then((res) => res.data),
+    (
+      api.get<unknown, ApiResponse<PublicEmployeeProfile>>(
+        "/employees/me",
+      ) as Promise<ApiResponse<PublicEmployeeProfile>>
+    ).then((res) => res.data),
 
   /**
    * GET /api/v1/employees
    * Phân trang & search
    */
-  getAllEmployees: (params: PageParams): Promise<PageResponse<EmployeeResponse>> =>
-    (api.get<unknown, ApiResponse<PageResponse<EmployeeResponse>>>('/employees', { params }) as Promise<ApiResponse<PageResponse<EmployeeResponse>>>)
-      .then((res) => res.data),
+  getAllEmployees: (
+    params: PageParams,
+  ): Promise<PageResponse<EmployeeResponse>> =>
+    (
+      api.get<unknown, ApiResponse<PageResponse<EmployeeResponse>>>(
+        "/employees",
+        { params },
+      ) as Promise<ApiResponse<PageResponse<EmployeeResponse>>>
+    ).then((res) => res.data),
 
   /**
    * GET /api/v1/employees/:id
    */
   getEmployeeById: (id: number): Promise<EmployeeResponse> =>
-    (api.get<unknown, ApiResponse<EmployeeResponse>>(`/employees/${id}`) as Promise<ApiResponse<EmployeeResponse>>)
-      .then((res) => res.data),
+    (
+      api.get<unknown, ApiResponse<EmployeeResponse>>(
+        `/employees/${id}`,
+      ) as Promise<ApiResponse<EmployeeResponse>>
+    ).then((res) => res.data),
 
   /**
    * POST /api/v1/employees
    */
   createEmployee: (data: EmployeeRequest): Promise<EmployeeResponse> =>
-    (api.post<unknown, ApiResponse<EmployeeResponse>>('/employees', data) as Promise<ApiResponse<EmployeeResponse>>)
-      .then((res) => res.data),
+    (
+      api.post<unknown, ApiResponse<EmployeeResponse>>(
+        "/employees",
+        data,
+      ) as Promise<ApiResponse<EmployeeResponse>>
+    ).then((res) => res.data),
 
   /**
    * PUT /api/v1/employees/:id
    */
-  updateEmployee: (id: number, data: EmployeeRequest): Promise<EmployeeResponse> =>
-    (api.put<unknown, ApiResponse<EmployeeResponse>>(`/employees/${id}`, data) as Promise<ApiResponse<EmployeeResponse>>)
-      .then((res) => res.data),
+  updateEmployee: (
+    id: number,
+    data: EmployeeRequest,
+  ): Promise<EmployeeResponse> =>
+    (
+      api.put<unknown, ApiResponse<EmployeeResponse>>(
+        `/employees/${id}`,
+        data,
+      ) as Promise<ApiResponse<EmployeeResponse>>
+    ).then((res) => res.data),
 
   /**
    * DELETE /api/v1/employees/:id
    */
   deleteEmployee: (id: number): Promise<void> =>
-    (api.delete<unknown, ApiResponse<void>>(`/employees/${id}`) as Promise<ApiResponse<void>>)
-      .then(() => { }),
+    (
+      api.delete<unknown, ApiResponse<void>>(`/employees/${id}`) as Promise<
+        ApiResponse<void>
+      >
+    ).then(() => {}),
 };

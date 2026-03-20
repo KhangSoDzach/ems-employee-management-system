@@ -165,10 +165,6 @@ export function AppSidebar({
                     url: "/hr-employees",
                   },
                   {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
-                    url: "/payroll",
-                  },
-                  {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                     url: "/my-assets",
                   },
