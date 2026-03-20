@@ -68,7 +68,7 @@ export default function AssetIncidentReviewModal({
         <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
             <SheetContent
                 side="right"
-                className="w-full sm:max-w-md p-0 bg-slate-50 rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
+                className="w-full sm:max-w-md md:max-w-lg p-0 bg-slate-50 rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
             >
                 <ReviewSheetHeader
                     title={SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.TITLE}

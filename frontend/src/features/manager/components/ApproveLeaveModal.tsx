@@ -108,7 +108,7 @@ export default function ApproveLeaveDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md p-0 bg-slate-50 rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
+        className="w-full sm:max-w-md md:max-w-lg p-0 bg-slate-50 rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
       >
         <ReviewSheetHeader
           title={SYSTEM_MESSAGES.LEAVE.SHEET_TITLE}
