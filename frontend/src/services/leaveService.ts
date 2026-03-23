@@ -1,6 +1,5 @@
 import api from "@/lib/axios";
 
-
 // ─── Shared wrapper ───────────────────────────────────────────────────────────
 interface ApiResponse<T> {
   success: boolean;
@@ -46,6 +45,17 @@ export interface LeaveApprovalDTO {
   comments?: string;
 }
 
+export interface LeaveBalanceDTO {
+  id: number;
+  employeeId: number;
+  leaveType: string;
+  year: number;
+  totalDays: number;
+  usedDays: number;
+  remainingDays: number;
+  carriedForwardDays: number;
+}
+
 export const leaveService = {
   /**
    * GET /api/v1/leaves/me – always returns current authenticated user's own leaves.
@@ -55,6 +65,16 @@ export const leaveService = {
       api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>(
         "/leaves/me?size=100",
       ) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
+    ).then((res) => res.data),
+
+  /**
+   * GET /api/v1/leave-balances – current user's leave balances for current year.
+   */
+  getMyLeaveBalances: (): Promise<LeaveBalanceDTO[]> =>
+    (
+      api.get<unknown, ApiResponse<LeaveBalanceDTO[]>>(
+        "/leave-balances",
+      ) as Promise<ApiResponse<LeaveBalanceDTO[]>>
     ).then((res) => res.data),
 
   /**
