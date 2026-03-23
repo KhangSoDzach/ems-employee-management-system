@@ -2,9 +2,12 @@ package com.company.ems.backend.employee.service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Map;
 
+import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
+import com.company.ems.backend.attendance.service.AttendanceService;
 import com.company.ems.backend.employee.mapper.EmployeeMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +29,8 @@ import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
+import com.company.ems.backend.leave.enums.LeaveType;
+import com.company.ems.backend.leave.service.LeaveBalanceService;
 import com.company.ems.backend.position.entity.Position;
 import com.company.ems.backend.position.repository.PositionRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
@@ -54,6 +59,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         private final EmployeeEmailNotificationService emailNotificationService;
         private final RoleRepository roleRepository;
         private final PasswordEncoder passwordEncoder;
+        private final LeaveBalanceService leaveBalanceService;
+        private final AttendanceService attendanceService;
 
         @Override
         public EmployeeResponse createEmployee(EmployeeRequest request) {
@@ -152,6 +159,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .build();
 
                 Employee saved = employeeRepository.save(employee);
+
+                int currentYear = LocalDate.now().getYear();
+                leaveBalanceService.initializeDefaultBalancesForEmployee(saved.getId(), currentYear);
 
                 // ── Async email notification ──────────────────────────────────
                 // Send default credentials to the employee's registered email.
@@ -370,7 +380,22 @@ public class EmployeeServiceImpl implements EmployeeService {
                 log.info("User [{}] accessed own profile [employeeId={}]",
                                 principal.getUsername(), employee.getId());
 
-                return employeeMapper.toPublicResponse(employee);
+                PublicEmployeeResponse response = employeeMapper.toPublicResponse(employee);
+
+                int annualRemaining = leaveBalanceService.getRemainingDays(employee.getId(), LeaveType.ANNUAL);
+                response.setAnnualLeaveBalance(annualRemaining);
+
+                if (employee.getSickLeaveBalance() != null) {
+                        response.setSickLeaveBalance(employee.getSickLeaveBalance());
+                }
+
+                LocalDate today = LocalDate.now();
+                LocalDate firstDayOfMonth = today.with(TemporalAdjusters.firstDayOfMonth());
+                AttendanceSummaryResponse summary = attendanceService.getSummary(
+                                employee.getId(), firstDayOfMonth, today, principal);
+                response.setAttendancePercentage(summary.getAttendancePercentage());
+
+                return response;
         }
 
         @Override

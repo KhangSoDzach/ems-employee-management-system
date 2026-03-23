@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format, differenceInYears } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 import {
   CalendarIcon,
   FileText,
@@ -55,6 +56,8 @@ import {
 } from "@/constants/options";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
+import { leaveService } from "@/services/leaveService";
+import { attendanceService } from "@/services/attendanceService";
 
 const CONTRACT_CLASSES: Record<string, string> = {
   FULL_TIME: "bg-green-100 text-green-700",
@@ -123,41 +126,63 @@ export default function ProfilePage() {
     mode: "onChange",
   });
 
-  // --- Load hồ sơ thực từ backend GET /api/v1/employees/me ---
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [profileError, setProfileError] = useState<string | null>(null);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
 
+  const profileQuery = useQuery({
+    queryKey: ["profile", "me"],
+    queryFn: employeeService.getMyProfile,
+  });
+
+  const leaveBalancesQuery = useQuery({
+    queryKey: ["leave-balances", "me"],
+    queryFn: leaveService.getMyLeaveBalances,
+    enabled: !!profileQuery.data,
+  });
+
+  const attendanceSummaryQuery = useQuery({
+    queryKey: ["attendance", "summary", "me"],
+    queryFn: () => attendanceService.getSummary(),
+    enabled: !!profileQuery.data,
+  });
+
   useEffect(() => {
-    employeeService
-      .getMyProfile()
-      .then((data) => {
-        const email = data.email ?? "";
-        setUserEmail(email);
-        form.reset({
-          employeeCode: data.employeeCode ?? "",
-          fullName: [data.firstName, data.lastName].filter(Boolean).join(" "),
-          companyEmail: email,
-          nationalId: data.nationalId ?? "", // trường nhạy cảm – có thể server chưa trả
-          phoneNumber: data.phone ?? "",
-          dateOfBirth: data.dateOfBirth
-            ? new Date(data.dateOfBirth)
-            : new Date(),
-          startDate: data.hireDate ? new Date(data.hireDate) : new Date(),
-          department: data.department ?? "",
-          jobRole: data.position ?? "",
-          lineManager: "", // chưa có trong PublicEmployeeResponse
-          workStatus:
-            (data.status as ProfileFormValues["workStatus"]) ?? "ACTIVE",
-          contractType: "FULL_TIME",
-        });
-      })
-      .catch(() => setProfileError(SYSTEM_MESSAGES.API_ERROR))
-      .finally(() => setProfileLoading(false));
+    const data = profileQuery.data;
+    if (!data) {
+      return;
+    }
+
+    const email = data.email ?? "";
+    setUserEmail(email);
+    form.reset({
+      employeeCode: data.employeeCode ?? "",
+      fullName: [data.firstName, data.lastName].filter(Boolean).join(" "),
+      companyEmail: email,
+      nationalId: data.nationalId ?? "", // trường nhạy cảm – có thể server chưa trả
+      phoneNumber: data.phone ?? "",
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(),
+      startDate: data.hireDate ? new Date(data.hireDate) : new Date(),
+      department: data.department ?? "",
+      jobRole: data.position ?? "",
+      lineManager: "", // chưa có trong PublicEmployeeResponse
+      workStatus: (data.status as ProfileFormValues["workStatus"]) ?? "ACTIVE",
+      contractType: "FULL_TIME",
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [profileQuery.data]);
   // ----------------------------------------------------------
+
+  const annualLeaveFromBalances = leaveBalancesQuery.data?.find(
+    (item) => item.leaveType === "ANNUAL",
+  )?.remainingDays;
+
+  const annualLeaveDays =
+    annualLeaveFromBalances ?? profileQuery.data?.annualLeaveBalance ?? 12;
+
+  const attendancePercentage =
+    attendanceSummaryQuery.data?.attendancePercentage ??
+    profileQuery.data?.attendancePercentage ??
+    0;
 
   function onSubmit(data: ProfileFormValues) {
     console.log("Form submitted: ", data);
@@ -186,7 +211,7 @@ export default function ProfilePage() {
   ];
 
   // Loading skeleton
-  if (profileLoading) {
+  if (profileQuery.isLoading) {
     return (
       <SidebarProvider>
         <AppSidebar role={effectiveRole} variant="inset" />
@@ -203,14 +228,16 @@ export default function ProfilePage() {
   }
 
   // API Error banner
-  if (profileError) {
+  if (profileQuery.isError) {
     return (
       <SidebarProvider>
         <AppSidebar role={effectiveRole} variant="inset" />
         <SidebarInset>
           <SiteHeader />
           <main className="flex flex-1 items-center justify-center min-h-screen">
-            <p className="text-destructive font-medium">{profileError}</p>
+            <p className="text-destructive font-medium">
+              {SYSTEM_MESSAGES.API_ERROR}
+            </p>
           </main>
         </SidebarInset>
       </SidebarProvider>
@@ -911,7 +938,7 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="border bg-purple-50/50 dark:bg-purple-900/10 rounded-xl p-4 text-center">
                       <p className="text-3xl font-black text-purple-600 mb-1">
-                        {0}
+                        {annualLeaveDays}
                       </p>
                       <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">
                         {SYSTEM_MESSAGES.PROFILE.STATS_LEAVE}
@@ -919,7 +946,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="border bg-teal-50/50 dark:bg-teal-900/10 rounded-xl p-4 text-center">
                       <p className="text-3xl font-black text-teal-600 mb-1">
-                        {0}
+                        {Math.round(attendancePercentage * 10) / 10}
                         <span className="text-xl">
                           {SYSTEM_MESSAGES.PROFILE.PERCENT_SIGN}
                         </span>

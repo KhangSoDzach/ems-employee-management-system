@@ -1,28 +1,36 @@
 package com.company.ems.backend.leave.service;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.leave.dto.LeaveBalanceResponse;
 import com.company.ems.backend.leave.entity.LeaveBalance;
 import com.company.ems.backend.leave.enums.LeaveType;
 import com.company.ems.backend.leave.mapper.LeaveMapper;
 import com.company.ems.backend.leave.repository.LeaveBalanceRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LeaveBalanceServiceImplTest {
@@ -32,6 +40,9 @@ class LeaveBalanceServiceImplTest {
 
     @Mock
     private LeaveMapper leaveMapper;
+
+    @Mock
+    private EmployeeRepository employeeRepository;
 
     @InjectMocks
     private LeaveBalanceServiceImpl leaveBalanceService;
@@ -44,6 +55,11 @@ class LeaveBalanceServiceImplTest {
     void setUp() {
         Employee employee = new Employee();
         employee.setId(employeeId);
+
+        lenient().when(employeeRepository.getReferenceById(employeeId)).thenReturn(employee);
+        lenient().when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        lenient().when(employeeRepository.save(any(Employee.class))).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(leaveBalanceRepository.save(any(LeaveBalance.class))).thenAnswer(inv -> inv.getArgument(0));
 
         annualBalance = LeaveBalance.builder()
                 .employee(employee)
@@ -98,6 +114,7 @@ class LeaveBalanceServiceImplTest {
         LeaveBalance saved = captor.getValue();
         assertEquals(5, saved.getUsedDays()); // 3 + 2
         assertEquals(9, saved.getRemainingDays()); // 14 - 5
+        verify(employeeRepository, atLeastOnce()).save(any(Employee.class));
     }
 
     @Test
@@ -152,5 +169,35 @@ class LeaveBalanceServiceImplTest {
 
         boolean result = leaveBalanceService.hasSufficientBalance(employeeId, LeaveType.UNPAID, 10);
         assertTrue(result);
+    }
+
+    @Test
+    void initializeDefaultBalancesForEmployee_createsAnnualWhenMissing() {
+        when(leaveBalanceRepository.findByEmployeeIdAndYearAndLeaveType(employeeId, currentYear, LeaveType.ANNUAL))
+                .thenReturn(Optional.empty());
+        when(leaveBalanceRepository.save(any(LeaveBalance.class))).thenAnswer(inv -> {
+            LeaveBalance lb = inv.getArgument(0);
+            lb.setId(999L);
+            return lb;
+        });
+
+        leaveBalanceService.initializeDefaultBalancesForEmployee(employeeId, currentYear);
+
+        verify(leaveBalanceRepository).save(any(LeaveBalance.class));
+        verify(employeeRepository, atLeastOnce()).save(any(Employee.class));
+    }
+
+    @Test
+    void getRemainingDays_returnsDefaultWhenAnnualMissing() {
+        when(leaveBalanceRepository.findByEmployeeIdAndYearAndLeaveType(employeeId, currentYear, LeaveType.ANNUAL))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.empty());
+        when(leaveBalanceRepository.save(any(LeaveBalance.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        int remaining = leaveBalanceService.getRemainingDays(employeeId, LeaveType.ANNUAL);
+
+        assertEquals(12, remaining);
+        verify(leaveBalanceRepository, atLeastOnce())
+                .findByEmployeeIdAndYearAndLeaveType(anyLong(), anyInt(), eq(LeaveType.ANNUAL));
     }
 }

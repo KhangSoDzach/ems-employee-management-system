@@ -17,6 +17,9 @@ export interface PublicEmployeeProfile {
   state: string | null;
   country: string | null;
   status: string;
+  annualLeaveBalance?: number;
+  sickLeaveBalance?: number;
+  attendancePercentage?: number;
   avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;

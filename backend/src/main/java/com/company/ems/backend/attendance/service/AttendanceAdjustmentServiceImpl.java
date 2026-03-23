@@ -1,5 +1,6 @@
 package com.company.ems.backend.attendance.service;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,7 @@ import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.service.NotificationService;
 import com.company.ems.backend.common.service.PhotoStorageService;
+import com.company.ems.backend.config.OfficeLocationProperties;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.user.entity.User;
@@ -75,6 +77,7 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
         private final WorkflowEngineService workflowEngineService;
         private final NotificationService notificationService;
         private final PhotoStorageService photoStorageService;
+        private final OfficeLocationProperties officeProps;
 
         // ─── Employee actions ─────────────────────────────────────────────────────
 
@@ -398,10 +401,24 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                 }
                 attendance.calculateWorkHours();
 
-                // Mark status as PRESENT if otherwise unset
-                if (attendance.getStatus() == null) {
-                        attendance.setStatus(
-                                        com.company.ems.backend.attendance.enums.AttendanceStatus.PRESENT);
+                // Determine if late based on adjusted check-in
+                if (attendance.getCheckInTime() != null) {
+                        LocalTime checkInLocalTime = attendance.getCheckInTime().toLocalTime();
+                        LocalTime shiftStart = LocalTime.parse(officeProps.getShift1CheckIn());
+                        LocalTime shift1End = LocalTime.parse(officeProps.getShift1CheckOut());
+
+                        if (checkInLocalTime.isAfter(shift1End)) {
+                                shiftStart = LocalTime.parse(officeProps.getShift2CheckIn());
+                        }
+
+                        boolean isLate = checkInLocalTime.isAfter(shiftStart.plusMinutes(officeProps.getGracePeriod()));
+                        attendance.setIsLate(isLate);
+
+                        if (isLate) {
+                                attendance.setStatus(com.company.ems.backend.attendance.enums.AttendanceStatus.LATE);
+                        } else {
+                                attendance.setStatus(com.company.ems.backend.attendance.enums.AttendanceStatus.PRESENT);
+                        }
                 }
 
                 attendanceRepository.save(attendance);

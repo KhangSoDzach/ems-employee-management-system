@@ -58,6 +58,10 @@ export function AppSidebar({
                 url: "/payroll",
               },
               {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
+                url: "/audit-logs",
+              },
+              {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                 url: "/asset-incidents",
               },
@@ -171,6 +175,10 @@ export function AppSidebar({
                   {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
                     url: "/assets",
+                  },
+                  {
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
+                    url: "/audit-logs",
                   },
                   {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,

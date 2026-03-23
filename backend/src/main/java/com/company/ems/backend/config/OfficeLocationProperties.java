@@ -31,4 +31,22 @@ public class OfficeLocationProperties {
 
     /** Maximum allowed distance from office in metres (default 30 m). */
     private double radiusMeters = 30.0;
+
+    /** Shift 1 check-in time (HH:mm) */
+    private String shift1CheckIn = "08:00";
+
+    /** Shift 1 check-out time (HH:mm) */
+    private String shift1CheckOut = "12:00";
+
+    /** Shift 2 check-in time (HH:mm) */
+    private String shift2CheckIn = "13:30";
+
+    /** Shift 2 check-out time (HH:mm) */
+    private String shift2CheckOut = "17:30";
+
+    /** Grace period in minutes */
+    private int gracePeriod = 15;
+
+    /** Early leave threshold in minutes */
+    private int earlyLeaveThreshold = 15;
 }

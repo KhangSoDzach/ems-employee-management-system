@@ -20,7 +20,7 @@
   },
   "lint-staged": {
     "frontend/**/*.{js,jsx,ts,tsx}": [
-      "eslint --config frontend/eslint.config.js --fix",
+      "npx --no-install --prefix frontend eslint --config frontend/eslint.config.js --fix",
       "prettier --write"
     ],
     "frontend/**/*.{css,scss,html}": [

@@ -36,6 +36,7 @@ import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.service.GeolocationService;
 import com.company.ems.backend.common.service.PhotoStorageService;
+import com.company.ems.backend.config.OfficeLocationProperties;
 import com.company.ems.backend.config.StorageProperties;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
@@ -68,6 +69,8 @@ class AttendanceServiceImplTest {
         MessageService messages;
         @Mock
         StorageProperties storageProperties;
+        @Mock
+        OfficeLocationProperties officeProps;
 
         @InjectMocks
         AttendanceServiceImpl service;
@@ -95,6 +98,14 @@ class AttendanceServiceImplTest {
                 // Mock messages
                 lenient().when(messages.get(any(MessageCode.class), any())).thenReturn("Mocked Message");
                 lenient().when(messages.get(any(MessageCode.class))).thenReturn("Mocked Message");
+
+                // Mock office properties
+                lenient().when(officeProps.getShift1CheckIn()).thenReturn("08:00");
+                lenient().when(officeProps.getShift1CheckOut()).thenReturn("12:00");
+                lenient().when(officeProps.getShift2CheckIn()).thenReturn("13:30");
+                lenient().when(officeProps.getShift2CheckOut()).thenReturn("17:30");
+                lenient().when(officeProps.getGracePeriod()).thenReturn(15);
+                lenient().when(officeProps.getEarlyLeaveThreshold()).thenReturn(15);
 
                 lenient().when(attendanceMapper.toResponse(any(Attendance.class))).thenAnswer(inv -> {
                         Attendance attendance = inv.getArgument(0);

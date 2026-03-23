@@ -1,27 +1,36 @@
 package com.company.ems.backend.employee.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
+import com.company.ems.backend.attendance.service.AttendanceService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.ForbiddenException;
@@ -34,6 +43,8 @@ import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
 import com.company.ems.backend.employee.mapper.EmployeeMapper;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
+import com.company.ems.backend.leave.enums.LeaveType;
+import com.company.ems.backend.leave.service.LeaveBalanceService;
 import com.company.ems.backend.position.entity.Position;
 import com.company.ems.backend.position.repository.PositionRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
@@ -65,6 +76,12 @@ class EmployeeServiceImplTest {
 
     @Mock
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Mock
+    private LeaveBalanceService leaveBalanceService;
+
+    @Mock
+    private AttendanceService attendanceService;
 
     @InjectMocks
     private EmployeeServiceImpl employeeService;
@@ -124,6 +141,10 @@ class EmployeeServiceImplTest {
                     .email(emp.getEmail())
                     .build();
         });
+
+        lenient().when(attendanceService.getSummary(any(), any(), any(), any()))
+            .thenReturn(AttendanceSummaryResponse.builder().attendancePercentage(95.0).build());
+        lenient().when(leaveBalanceService.getRemainingDays(any(), eq(LeaveType.ANNUAL))).thenReturn(12);
     }
 
     @Test
@@ -284,5 +305,24 @@ class EmployeeServiceImplTest {
         assertNotNull(response);
         assertEquals("John Updated", employee.getFirstName());
         verify(employeeRepository, times(1)).save(employee);
+    }
+
+    @Test
+    void getMyProfile_shouldIncludeLeaveAndAttendanceStats() {
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(employeePrincipal);
+
+        employee.setAnnualLeaveBalance(8);
+        employee.setSickLeaveBalance(5);
+        when(employeeRepository.findByUserId(employeePrincipal.getUserId())).thenReturn(Optional.of(employee));
+        when(leaveBalanceService.getRemainingDays(employee.getId(), LeaveType.ANNUAL)).thenReturn(12);
+        when(attendanceService.getSummary(eq(employee.getId()), any(), any(), eq(employeePrincipal)))
+                .thenReturn(AttendanceSummaryResponse.builder().attendancePercentage(97.5).build());
+
+        var response = employeeService.getMyProfile();
+
+        assertNotNull(response);
+        assertEquals(12, response.getAnnualLeaveBalance());
+        assertEquals(5, response.getSickLeaveBalance());
+        assertEquals(97.5, response.getAttendancePercentage());
     }
 }
