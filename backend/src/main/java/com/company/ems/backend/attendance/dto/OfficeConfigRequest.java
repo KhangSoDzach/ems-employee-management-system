@@ -41,4 +41,22 @@ public class OfficeConfigRequest {
      */
     @Positive(message = "Bán kính phải là số dương")
     private Double radiusMeters;
+
+    /** Shift 1 check-in time (HH:mm) */
+    private String shift1CheckIn;
+
+    /** Shift 1 check-out time (HH:mm) */
+    private String shift1CheckOut;
+
+    /** Shift 2 check-in time (HH:mm) */
+    private String shift2CheckIn;
+
+    /** Shift 2 check-out time (HH:mm) */
+    private String shift2CheckOut;
+
+    /** Grace period in minutes */
+    private Integer gracePeriod;
+
+    /** Early leave threshold in minutes */
+    private Integer earlyLeaveThreshold;
 }

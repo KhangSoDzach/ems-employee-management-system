@@ -12,6 +12,12 @@ export interface OfficeConfigResponse {
   latitude: number;
   longitude: number;
   radiusMeters: number;
+  shift1CheckIn: string;
+  shift1CheckOut: string;
+  shift2CheckIn: string;
+  shift2CheckOut: string;
+  gracePeriod: number;
+  earlyLeaveThreshold: number;
   updatedAt?: string;
   updatedBy?: string;
   source?: string;
@@ -21,6 +27,12 @@ export interface OfficeConfigRequest {
   latitude: number;
   longitude: number;
   radiusMeters: number;
+  shift1CheckIn?: string;
+  shift1CheckOut?: string;
+  shift2CheckIn?: string;
+  shift2CheckOut?: string;
+  gracePeriod?: number;
+  earlyLeaveThreshold?: number;
 }
 
 export interface OfficeLocationResponse {

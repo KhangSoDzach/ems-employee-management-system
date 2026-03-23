@@ -9,10 +9,10 @@ import com.company.ems.backend.attendance.enums.AdjustmentRequestStatus;
 import com.company.ems.backend.attendance.repository.AttendanceAdjustmentHistoryRepository;
 import com.company.ems.backend.attendance.repository.AttendanceAdjustmentRequestRepository;
 import com.company.ems.backend.attendance.repository.AttendanceRepository;
+import com.company.ems.backend.attendance.mapper.AttendanceMapper;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.service.NotificationService;
-import com.company.ems.backend.common.service.PhotoStorageService;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.user.entity.User;
@@ -24,6 +24,7 @@ import com.company.ems.backend.workflow.enums.WorkflowType;
 import com.company.ems.backend.workflow.service.WorkflowEngineService;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.config.OfficeLocationProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -78,9 +79,11 @@ class AttendanceAdjustmentServiceImplTest {
         @Mock
         NotificationService notificationService;
         @Mock
-        PhotoStorageService photoStorageService;
-        @Mock
         MessageService messages;
+        @Mock
+        AttendanceMapper attendanceMapper;
+        @Mock
+        OfficeLocationProperties officeProps;
 
         @InjectMocks
         AttendanceAdjustmentServiceImpl service;
@@ -129,6 +132,18 @@ class AttendanceAdjustmentServiceImplTest {
                 // Standard mock for messages
                 lenient().when(messages.get(any(MessageCode.class), any())).thenReturn("Mocked Message");
                 lenient().when(messages.get(any(MessageCode.class))).thenReturn("Mocked Message");
+
+                // Mock office properties
+                lenient().when(officeProps.getShift1CheckIn()).thenReturn("08:00");
+                lenient().when(officeProps.getShift1CheckOut()).thenReturn("12:00");
+                lenient().when(officeProps.getShift2CheckIn()).thenReturn("13:30");
+                lenient().when(officeProps.getShift2CheckOut()).thenReturn("17:30");
+                lenient().when(officeProps.getGracePeriod()).thenReturn(15);
+                lenient().when(officeProps.getEarlyLeaveThreshold()).thenReturn(15);
+
+                // Mock mapper
+                lenient().when(attendanceMapper.toDetailResponse(any()))
+                                .thenReturn(new com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestResponse());
         }
 
         /* ── submitRequest ───────────────────────────────────────────────────── */

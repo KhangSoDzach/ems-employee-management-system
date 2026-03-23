@@ -25,6 +25,11 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
     rules: {
       // --- Cấu hình mặc định của bạn ---
       "react-hooks/rules-of-hooks": "error",
@@ -44,7 +49,6 @@ export default defineConfig([
       // Bắt lỗi "Magic Numbers" (VD: gõ thẳng radius === 50 thay vì RADIUS_DEFAULT)
       "no-magic-numbers": "off",
 
-
       // ==========================================
       // 2. RULES TRỊ CODE SMELLS (REACT & TYPESCRIPT)
       // ==========================================
@@ -61,7 +65,10 @@ export default defineConfig([
 
       // -- Smells của TypeScript --
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }], // Khai báo biến/tham số mà không xài (có gạch dưới _ thì tha)
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_" },
+      ], // Khai báo biến/tham số mà không xài (có gạch dưới _ thì tha)
 
       // -- Smells của React --
       "react/jsx-no-useless-fragment": "warn", // Bắt lỗi dùng <></> thừa thãi bọc ngoài 1 thẻ duy nhất

@@ -254,6 +254,26 @@ export default function AttendanceSettings() {
     form.setValue("longitude", String(officeConfig.longitude));
     form.setValue("radius", officeConfig.radiusMeters);
     form.setValue("gpsEnabled", true);
+
+    // Set shift and grace period values
+    if (officeConfig.shift1CheckIn) {
+      form.setValue("shift1CheckIn", officeConfig.shift1CheckIn);
+    }
+    if (officeConfig.shift1CheckOut) {
+      form.setValue("shift1CheckOut", officeConfig.shift1CheckOut);
+    }
+    if (officeConfig.shift2CheckIn) {
+      form.setValue("shift2CheckIn", officeConfig.shift2CheckIn);
+    }
+    if (officeConfig.shift2CheckOut) {
+      form.setValue("shift2CheckOut", officeConfig.shift2CheckOut);
+    }
+    if (officeConfig.gracePeriod !== undefined) {
+      form.setValue("gracePeriod", officeConfig.gracePeriod);
+    }
+    if (officeConfig.earlyLeaveThreshold !== undefined) {
+      form.setValue("earlyLeaveThreshold", officeConfig.earlyLeaveThreshold);
+    }
   }, [officeConfig, form]);
 
   const updateOfficeConfigMutation = useMutation({
@@ -297,6 +317,12 @@ export default function AttendanceSettings() {
         latitude,
         longitude,
         radiusMeters,
+        shift1CheckIn: data.shift1CheckIn,
+        shift1CheckOut: data.shift1CheckOut,
+        shift2CheckIn: data.shift2CheckIn,
+        shift2CheckOut: data.shift2CheckOut,
+        gracePeriod: data.gracePeriod,
+        earlyLeaveThreshold: data.earlyLeaveThreshold,
       });
 
       toast.dismiss(loadingToastId);

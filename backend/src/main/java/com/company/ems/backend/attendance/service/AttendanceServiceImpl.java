@@ -28,6 +28,7 @@ import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.service.GeolocationService;
 import com.company.ems.backend.common.service.PhotoStorageService;
+import com.company.ems.backend.config.OfficeLocationProperties;
 import com.company.ems.backend.config.StorageProperties;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
@@ -48,6 +49,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         private final GeolocationService geolocationService;
         private final PhotoStorageService photoStorageService;
         private final StorageProperties storageProperties;
+        private final OfficeLocationProperties officeProps;
 
         // ─── Check-in ─────────────────────────────────────────────────────────────
 
@@ -76,7 +78,16 @@ public class AttendanceServiceImpl implements AttendanceService {
 
                 // Determine if the employee is late
                 LocalDateTime checkInTime = LocalDateTime.now();
-                boolean isLate = checkInTime.toLocalTime().isAfter(LocalTime.of(9, 0)); // 09:00 standard start
+                LocalTime checkInLocalTime = checkInTime.toLocalTime();
+                LocalTime shiftStart = LocalTime.parse(officeProps.getShift1CheckIn());
+
+                // If checking in after shift 1 end, maybe it's shift 2?
+                LocalTime shift1End = LocalTime.parse(officeProps.getShift1CheckOut());
+                if (checkInLocalTime.isAfter(shift1End)) {
+                        shiftStart = LocalTime.parse(officeProps.getShift2CheckIn());
+                }
+
+                boolean isLate = checkInLocalTime.isAfter(shiftStart.plusMinutes(officeProps.getGracePeriod()));
 
                 Attendance attendance = Attendance.builder()
                                 .employee(employee)
