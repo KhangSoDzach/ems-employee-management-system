@@ -1,5 +1,18 @@
 package com.company.ems.backend.attendance.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.company.ems.backend.attendance.dto.OfficeLocationRequest;
 import com.company.ems.backend.attendance.dto.OfficeLocationResponse;
 import com.company.ems.backend.attendance.service.OfficeLocationService;
@@ -7,16 +20,12 @@ import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.rbac.service.DataScopeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/office-locations")
@@ -35,7 +44,7 @@ public class AdminOfficeLocationController {
         return ResponseEntity.ok(ApiResponse.success("Danh sách vị trí văn phòng.", officeLocationService.getAllLocations()));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     @PreAuthorize(RoleAuthorization.HAS_PERM_SYSTEM_CONFIG_MANAGE)
     @Operation(summary = "Get office location by ID")
     public ResponseEntity<ApiResponse<OfficeLocationResponse>> getLocationById(@PathVariable Long id) {
@@ -50,7 +59,7 @@ public class AdminOfficeLocationController {
         return ResponseEntity.ok(ApiResponse.success("Đã tạo vị trí văn phòng mới.", officeLocationService.createLocation(request, principal.getUsername())));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     @PreAuthorize(RoleAuthorization.HAS_PERM_SYSTEM_CONFIG_MANAGE)
     @Operation(summary = "Update office location")
     public ResponseEntity<ApiResponse<OfficeLocationResponse>> updateLocation(@PathVariable Long id, @Valid @RequestBody OfficeLocationRequest request) {
@@ -58,7 +67,7 @@ public class AdminOfficeLocationController {
         return ResponseEntity.ok(ApiResponse.success("Đã cập nhật vị trí văn phòng.", officeLocationService.updateLocation(id, request, principal.getUsername())));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     @PreAuthorize(RoleAuthorization.HAS_PERM_SYSTEM_CONFIG_MANAGE)
     @Operation(summary = "Delete office location")
     public ResponseEntity<ApiResponse<Void>> deleteLocation(@PathVariable Long id) {

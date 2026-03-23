@@ -32,6 +32,7 @@ import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
+import com.company.ems.backend.employee.mapper.EmployeeMapper;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.position.entity.Position;
 import com.company.ems.backend.position.repository.PositionRepository;
@@ -43,6 +44,9 @@ class EmployeeServiceImplTest {
 
     @Mock
     private EmployeeRepository employeeRepository;
+
+    @Mock
+    private EmployeeMapper employeeMapper;
 
     @Mock
     private DepartmentRepository departmentRepository;
@@ -98,6 +102,28 @@ class EmployeeServiceImplTest {
                 Collections.emptyList(), Set.of(DataScope.TEAM));
         employeePrincipal = new CustomUserPrincipal(3L, "emp", "password", true, true, true, true,
                 Collections.emptyList(), Set.of(DataScope.SELF));
+
+        lenient().when(employeeMapper.toResponse(any(Employee.class))).thenAnswer(inv -> {
+            Employee emp = inv.getArgument(0);
+            EmployeeResponse response = new EmployeeResponse();
+            response.setId(emp.getId());
+            response.setFirstName(emp.getFirstName());
+            response.setLastName(emp.getLastName());
+            response.setEmail(emp.getEmail());
+            response.setDepartment(emp.getDepartment() != null ? emp.getDepartment().getName() : null);
+            response.setPosition(emp.getPosition() != null ? emp.getPosition().getTitle() : null);
+            return response;
+        });
+
+        lenient().when(employeeMapper.toPublicResponse(any(Employee.class))).thenAnswer(inv -> {
+            Employee emp = inv.getArgument(0);
+            return com.company.ems.backend.employee.dto.PublicEmployeeResponse.builder()
+                    .id(emp.getId())
+                    .firstName(emp.getFirstName())
+                    .lastName(emp.getLastName())
+                    .email(emp.getEmail())
+                    .build();
+        });
     }
 
     @Test
@@ -127,7 +153,8 @@ class EmployeeServiceImplTest {
 
         verify(employeeRepository, times(1)).save(any(Employee.class));
         // DOB is null in this request → email notification must be skipped
-        verify(emailNotificationService, never()).notifyNewEmployeeAsync(anyString(), anyString(), anyString(), anyString());
+        verify(emailNotificationService, never()).notifyNewEmployeeAsync(anyString(), anyString(), anyString(),
+                anyString());
     }
 
     @Test
@@ -143,12 +170,12 @@ class EmployeeServiceImplTest {
 
         when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
         when(positionRepository.findById(1L)).thenReturn(Optional.of(position));
-        
+
         com.company.ems.backend.user.entity.Role mockRole = new com.company.ems.backend.user.entity.Role();
         mockRole.setName("ROLE_EMPLOYEE");
         when(roleRepository.findByName("ROLE_EMPLOYEE")).thenReturn(Optional.of(mockRole));
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        
+
         when(employeeRepository.save(any(Employee.class))).thenAnswer(i -> {
             Employee emp = i.getArgument(0);
             emp.setId(3L);

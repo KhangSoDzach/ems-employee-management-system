@@ -66,12 +66,34 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
     GRACE_PERIODS_SUBTITLE: "Độ trễ & Sớm cho phép",
     GRACE_PERIODS_DESC: "Thiết lập ngưỡng sai số thời gian cho phép",
     PROCESS_TITLE: "Quy trình áp dụng",
-    PROCESS_DESC: "Mọi thay đổi sẽ có hiệu lực ngay lập tức cho các lượt chấm công mới từ phiên làm việc kế tiếp của nhân viên.",
+    PROCESS_DESC:
+      "Mọi thay đổi sẽ có hiệu lực ngay lập tức cho các lượt chấm công mới từ phiên làm việc kế tiếp của nhân viên.",
   },
 
   LOCATION_RULES: {
     SECTION_TITLE: "Quy tắc Vị trí",
     SECTION_DESC: "Thiết lập các thông số GPS và kiểm tra vị trí khi chấm công",
+
+    BRANCH_LOCATIONS: {
+      SECTION_TITLE: "Vị trí check-in theo chi nhánh",
+      SECTION_DESC:
+        "Quản lý nhiều chi nhánh để gán vị trí check-in theo từng bộ phận/chức danh",
+      BRANCH_NAME_LABEL: "Tên chi nhánh",
+      BRANCH_NAME_PLACEHOLDER: "Ví dụ: Chi nhánh Hà Nội",
+      BRANCH_ADDRESS_LABEL: "Địa chỉ",
+      BRANCH_ADDRESS_PLACEHOLDER: "Ví dụ: 123 Trần Duy Hưng, Cầu Giấy, Hà Nội",
+      LATITUDE_LABEL: "Vĩ độ",
+      LONGITUDE_LABEL: "Kinh độ",
+      RADIUS_LABEL: "Bán kính (m)",
+      ACTIVE_LABEL: "Kích hoạt",
+      ADD_BUTTON: "Thêm chi nhánh",
+      EMPTY_MESSAGE: "Chưa có chi nhánh nào. Hãy thêm chi nhánh đầu tiên.",
+      COORDINATE_PREFIX: "Tọa độ",
+      RADIUS_PREFIX: "Bán kính",
+      ADDRESS_FALLBACK: "Chưa cập nhật địa chỉ",
+      ACTIVE_STATUS: "Hoạt động",
+      INACTIVE_STATUS: "Tạm dừng",
+    },
 
     GPS_ENABLED: {
       LABEL: "Bật/Tắt GPS",
@@ -153,6 +175,7 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
     RADIUS: 50,
     GPS_ENABLED: false,
     ACTION_ON_MISMATCH: "NOTIFY",
+    BRANCH_RADIUS: 100,
   },
 } as const;
 

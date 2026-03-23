@@ -4,6 +4,7 @@ import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.leave.dto.LeaveBalanceResponse;
 import com.company.ems.backend.leave.entity.LeaveBalance;
 import com.company.ems.backend.leave.enums.LeaveType;
+import com.company.ems.backend.leave.mapper.LeaveMapper;
 import com.company.ems.backend.leave.repository.LeaveBalanceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ class LeaveBalanceServiceImplTest {
     @Mock
     private LeaveBalanceRepository leaveBalanceRepository;
 
+    @Mock
+    private LeaveMapper leaveMapper;
+
     @InjectMocks
     private LeaveBalanceServiceImpl leaveBalanceService;
 
@@ -51,6 +55,18 @@ class LeaveBalanceServiceImplTest {
                 .build();
         annualBalance.setId(100L);
         annualBalance.calculateRemainingDays();
+
+        lenient().when(leaveMapper.toResponse(any(LeaveBalance.class))).thenAnswer(inv -> {
+            LeaveBalance balance = inv.getArgument(0);
+            return LeaveBalanceResponse.builder()
+                    .id(balance.getId())
+                    .leaveType(balance.getLeaveType() != null ? balance.getLeaveType().name() : null)
+                    .totalDays(balance.getTotalDays())
+                    .carriedForwardDays(balance.getCarriedForwardDays())
+                    .usedDays(balance.getUsedDays())
+                    .remainingDays(balance.getRemainingDays())
+                    .build();
+        });
     }
 
     @Test

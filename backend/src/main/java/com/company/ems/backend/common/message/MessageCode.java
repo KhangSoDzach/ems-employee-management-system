@@ -1,10 +1,5 @@
 package com.company.ems.backend.common.message;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@Getter
-@RequiredArgsConstructor
 public enum MessageCode {
 
     // ── Asset: CRUD ───────────────────────────────────────────────────────────
@@ -206,4 +201,12 @@ public enum MessageCode {
     SALARY_COMPONENT_DUPLICATE_NAME("salary.component.duplicate_name");
 
     private final String key;
+
+    MessageCode(String key) {
+        this.key = key;
+    }
+
+    public String getKey() {
+        return key;
+    }
 }

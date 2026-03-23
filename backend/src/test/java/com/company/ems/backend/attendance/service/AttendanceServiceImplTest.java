@@ -1,35 +1,45 @@
 package com.company.ems.backend.attendance.service;
 
-import com.company.ems.backend.attendance.dto.CheckInRequest;
-import com.company.ems.backend.attendance.entity.Attendance;
-import com.company.ems.backend.attendance.enums.AttendanceStatus;
-import com.company.ems.backend.attendance.repository.AttendanceRepository;
-import com.company.ems.backend.auth.security.CustomUserPrincipal;
-import com.company.ems.backend.common.exception.BusinessException;
-import com.company.ems.backend.common.service.GeolocationService;
-import com.company.ems.backend.common.service.PhotoStorageService;
-import com.company.ems.backend.config.StorageProperties;
-import com.company.ems.backend.employee.entity.Employee;
-import com.company.ems.backend.employee.repository.EmployeeRepository;
-import com.company.ems.backend.rbac.service.DataScopeService;
-import com.company.ems.backend.common.message.MessageService;
-import com.company.ems.backend.common.message.MessageCode;
+import java.time.LocalDate;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import com.company.ems.backend.attendance.dto.CheckInRequest;
+import com.company.ems.backend.attendance.entity.Attendance;
+import com.company.ems.backend.attendance.enums.AttendanceStatus;
+import com.company.ems.backend.attendance.mapper.AttendanceMapper;
+import com.company.ems.backend.attendance.repository.AttendanceRepository;
+import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.common.exception.BusinessException;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.common.service.GeolocationService;
+import com.company.ems.backend.common.service.PhotoStorageService;
+import com.company.ems.backend.config.StorageProperties;
+import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.employee.repository.EmployeeRepository;
+import com.company.ems.backend.rbac.service.DataScopeService;
 
 /**
  * Unit tests for {@link AttendanceServiceImpl}.
@@ -44,6 +54,8 @@ class AttendanceServiceImplTest {
         /* ── Mocks ──────────────────────────────────────────────────────────── */
         @Mock
         AttendanceRepository attendanceRepository;
+        @Mock
+        AttendanceMapper attendanceMapper;
         @Mock
         EmployeeRepository employeeRepository;
         @Mock
@@ -83,6 +95,15 @@ class AttendanceServiceImplTest {
                 // Mock messages
                 lenient().when(messages.get(any(MessageCode.class), any())).thenReturn("Mocked Message");
                 lenient().when(messages.get(any(MessageCode.class))).thenReturn("Mocked Message");
+
+                lenient().when(attendanceMapper.toResponse(any(Attendance.class))).thenAnswer(inv -> {
+                        Attendance attendance = inv.getArgument(0);
+                        var response = new com.company.ems.backend.attendance.dto.AttendanceResponse();
+                        response.setStatus(attendance.getStatus() != null ? attendance.getStatus().name() : null);
+                        response.setEmployeeId(
+                                        attendance.getEmployee() != null ? attendance.getEmployee().getId() : null);
+                        return response;
+                });
         }
 
         /* ── checkIn ─────────────────────────────────────────────────────────── */
@@ -105,7 +126,8 @@ class AttendanceServiceImplTest {
                         when(attendanceRepository.existsByEmployeeIdAndDate(10L, LocalDate.now()))
                                         .thenReturn(false);
                         doNothing().when(geolocationService)
-                                        .validateWithinOfficeRadius(anyDouble(), anyDouble());
+                                        .validateWithinOfficeRadiusForEmployee(any(Employee.class), anyDouble(),
+                                                        anyDouble());
                         when(photoStorageService.savePhoto(anyString(), anyString()))
                                         .thenReturn("uploads/attendance-photos/EMP001/checkin_123.jpg");
 
@@ -148,7 +170,8 @@ class AttendanceServiceImplTest {
                         doThrow(new BusinessException("LOCATION_OUT_OF_RANGE",
                                         "You are too far from the office."))
                                         .when(geolocationService)
-                                        .validateWithinOfficeRadius(anyDouble(), anyDouble());
+                                        .validateWithinOfficeRadiusForEmployee(any(Employee.class), anyDouble(),
+                                                        anyDouble());
 
                         assertThatThrownBy(() -> service.checkIn(buildRequest(0.0, 0.0), principal))
                                         .isInstanceOf(BusinessException.class)

@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,7 @@ import com.company.ems.backend.leave.dto.ApproveLeaveRequest;
 import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.leave.enums.LeaveStatus;
 import com.company.ems.backend.leave.enums.LeaveType;
+import com.company.ems.backend.leave.mapper.LeaveMapper;
 import com.company.ems.backend.leave.repository.LeaveRepository;
 import com.company.ems.backend.rbac.service.DataScopeService;
 import com.company.ems.backend.user.entity.User;
@@ -35,6 +37,9 @@ class LeaveServiceImplTest {
 
     @Mock
     private LeaveRepository leaveRepository;
+
+    @Mock
+    private LeaveMapper leaveMapper;
 
     @Mock
     private EmployeeRepository employeeRepository;
@@ -55,7 +60,15 @@ class LeaveServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        managerPrincipal = new CustomUserPrincipal(2L, "manager", "pwd", true, true, true, true, java.util.Collections.emptyList(), java.util.Set.of(com.company.ems.backend.user.enums.DataScope.TEAM));
+        managerPrincipal = new CustomUserPrincipal(2L, "manager", "pwd", true, true, true, true,
+                java.util.Collections.emptyList(), java.util.Set.of(com.company.ems.backend.user.enums.DataScope.TEAM));
+
+        lenient().when(leaveMapper.toResponse(any(Leave.class))).thenAnswer(inv -> {
+            Leave leave = inv.getArgument(0);
+            return com.company.ems.backend.leave.dto.LeaveResponse.builder()
+                    .status(leave.getStatus() != null ? leave.getStatus().name() : null)
+                    .build();
+        });
     }
 
     @Test
