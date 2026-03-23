@@ -37,3 +37,8 @@ build/
 
 .env
 uploads/attendance-photos/
+
+# Temporary and log files
+*.log
+*.txt
+!READEME.md

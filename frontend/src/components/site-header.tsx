@@ -1,6 +1,7 @@
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { cn } from "@/lib/utils";
 
 import { Bell, Settings } from "lucide-react";
 import SidebarSettings from "@/features/security/SecuritySettings";
@@ -28,6 +29,7 @@ const formatTime = (value: string) => {
 export function SiteHeader() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { state, isMobile } = useSidebar();
   const { data: announcements = [], isLoading } = useAnnouncements(
     user?.id ?? null,
   );
@@ -57,7 +59,16 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 h-14 md:left-52 z-50 w-full md:w-[calc(100%-13rem)] bg-white dark:bg-slate-950 flex shrink-0 items-center justify-between border-b transition-[width,height] ease-linear">
+    <header
+      className={cn(
+        "fixed top-0 right-0 z-50 flex h-14 shrink-0 items-center justify-between border-b bg-white transition-all duration-200 ease-linear dark:bg-slate-950",
+        isMobile
+          ? "left-0 w-full"
+          : state === "collapsed"
+            ? "left-0 w-full"
+            : "left-52 w-[calc(100%-13rem)]",
+      )}
+    >
       <div className="flex items-center gap-2 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Separator

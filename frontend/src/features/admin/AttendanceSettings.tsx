@@ -60,6 +60,93 @@ import {
   OfficeLocationUpsertRequest,
 } from "@/services/officeLocationService";
 
+interface TimeFieldProps {
+  control: any;
+  name: string;
+  label: string;
+  description: string;
+}
+
+const TimeField: React.FC<TimeFieldProps> = ({
+  control,
+  name,
+  label,
+  description,
+}) => (
+  <FormField
+    control={control}
+    name={name}
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel className="font-medium text-foreground">{label}</FormLabel>
+        <FormControl>
+          <Input type="time" {...field}  />
+        </FormControl>
+        <FormDescription className="text-sm text-muted-foreground">
+          {description}
+        </FormDescription>
+        <FormMessage className="text-xs font-medium" />
+      </FormItem>
+    )}
+  />
+);
+
+interface NumberFieldProps {
+  control: any;
+  name: string;
+  label: string;
+  description: string;
+  placeholder: string;
+  suffix: string;
+  min?: number;
+  disabled?: boolean;
+}
+
+const NumberField: React.FC<NumberFieldProps> = ({
+  control,
+  name,
+  label,
+  description,
+  placeholder,
+  suffix,
+  min = 0,
+  disabled = false,
+}) => (
+  <FormField
+    control={control}
+    name={name}
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel className="font-medium text-foreground">{label}</FormLabel>
+        <FormControl>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              name={field.name}
+              ref={field.ref}
+              onBlur={field.onBlur}
+              value={typeof field.value === "number" ? field.value : 0}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                field.onChange(Number.isNaN(val) ? 0 : val);
+              }}
+              
+              placeholder={placeholder}
+              min={min}
+              disabled={disabled}
+            />
+            <span className="text-sm text-muted-foreground whitespace-nowrap">{suffix}</span>
+          </div>
+        </FormControl>
+        <FormDescription className="text-sm text-muted-foreground">
+          {description}
+        </FormDescription>
+        <FormMessage className="text-xs font-medium" />
+      </FormItem>
+    )}
+  />
+);
+
 const attendanceSettingsSchema = z.object({
   shift1CheckIn: z
     .string()
@@ -455,13 +542,16 @@ export default function AttendanceSettings() {
   const onSearchMapLocation = () => {
     const keyword = mapSearchKeyword.trim();
     if (!keyword) {
-      toast.error("Vui lòng nhập địa điểm cần tìm.");
+      toast.error(
+        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH
+          .TOAST_ENTER_LOCATION,
+      );
       return;
     }
 
     if (keyword.length < LOCATION_SEARCH_MIN_LENGTH) {
       toast.error(
-        `Vui lòng nhập tối thiểu ${LOCATION_SEARCH_MIN_LENGTH} ký tự.`,
+        `${ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH.TOAST_MIN_LENGTH_PREFIX} ${LOCATION_SEARCH_MIN_LENGTH} ${ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH.TOAST_MIN_LENGTH_SUFFIX}`,
       );
       return;
     }
@@ -478,7 +568,10 @@ export default function AttendanceSettings() {
     searchPromise
       .then((results) => {
         if (results.length === 0) {
-          toast.error("Không tìm thấy địa điểm phù hợp.");
+          toast.error(
+            ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH
+              .TOAST_NOT_FOUND,
+          );
           setLocationSuggestions([]);
           return;
         }
@@ -486,7 +579,10 @@ export default function AttendanceSettings() {
         setLocationSuggestions(results);
       })
       .catch(() => {
-        toast.error("Không thể tìm kiếm vị trí. Vui lòng thử lại.");
+        toast.error(
+          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH
+            .TOAST_SEARCH_ERROR,
+        );
       })
       .finally(() => {
         setIsSearchingLocation(false);
@@ -514,7 +610,10 @@ export default function AttendanceSettings() {
     const radiusMeters = Number(branchLocationDraft.radiusMeters);
 
     if (!name) {
-      toast.error("Vui lòng nhập tên chi nhánh.");
+      toast.error(
+        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.BRANCH_LOCATIONS
+          .TOAST_PLEASE_ENTER_NAME,
+      );
       return;
     }
 
@@ -553,23 +652,38 @@ export default function AttendanceSettings() {
       });
 
       resetBranchLocationDraft();
-      toast.success("Đã thêm chi nhánh check-in.");
+      toast.success(
+        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.BRANCH_LOCATIONS
+          .TOAST_ADD_SUCCESS,
+      );
     } catch {
-      toast.error("Không thể thêm chi nhánh check-in.");
+      toast.error(
+        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.BRANCH_LOCATIONS
+          .TOAST_ADD_ERROR,
+      );
     }
   };
 
   const onDeleteOfficeLocation = async (officeId: number) => {
-    const confirmed = window.confirm("Bạn có chắc muốn xóa chi nhánh này?");
+    const confirmed = window.confirm(
+      ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.BRANCH_LOCATIONS
+        .CONFIRM_DELETE,
+    );
     if (!confirmed) {
       return;
     }
 
     try {
       await deleteOfficeLocationMutation.mutateAsync(officeId);
-      toast.success("Đã xóa chi nhánh check-in.");
+      toast.success(
+        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.BRANCH_LOCATIONS
+          .TOAST_DELETE_SUCCESS,
+      );
     } catch {
-      toast.error("Không thể xóa chi nhánh check-in.");
+      toast.error(
+        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.BRANCH_LOCATIONS
+          .TOAST_DELETE_ERROR,
+      );
     }
   };
 
@@ -614,27 +728,17 @@ export default function AttendanceSettings() {
       <SidebarInset>
         <SiteHeader />
 
-        <main className="flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950">
-          <div className="page-header">
-            <div>
-              <h1 className="page-title">
+        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <h1 className="page-heading">
                 {ATTENDANCE_SETTINGS_CONSTANTS.PAGE.TITLE}
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground">
                 {ATTENDANCE_SETTINGS_CONSTANTS.PAGE.DESCRIPTION}
               </p>
             </div>
-            <div className="page-header-actions">
-              <Button variant="outline" onClick={handleReset}>
-                {ATTENDANCE_SETTINGS_CONSTANTS.BUTTONS.RESET}
-              </Button>
-              <Button
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={updateOfficeConfigMutation.isPending}
-              >
-                <Save className="mr-2 h-4 w-4" />
-                {ATTENDANCE_SETTINGS_CONSTANTS.BUTTONS.SAVE}
-              </Button>
+            <div className="flex items-center gap-2">
             </div>
           </div>
 
@@ -653,20 +757,20 @@ export default function AttendanceSettings() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <TabsContent value="time" className="mt-6">
-                  <Card className="settings-card">
-                    <CardHeader className="settings-card-header">
+                  <Card className="shadow-sm">
+                    <CardHeader className="pb-4 border-b mb-6">
                       <div className="flex items-center gap-3">
                         <div className="icon-box-sm bg-primary/10">
                           <Clock className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <CardTitle className="settings-card-title">
+                          <CardTitle className="text-lg font-semibold leading-none tracking-tight">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
                                 .SECTION_TITLE
                             }
                           </CardTitle>
-                          <CardDescription className="settings-card-desc">
+                          <CardDescription className="text-sm text-muted-foreground">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
                                 .SECTION_DESC
@@ -675,10 +779,10 @@ export default function AttendanceSettings() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="settings-card-content">
-                      <div className="settings-form-grid">
+                    <CardContent className="space-y-6 pt-0">
+                      <div className="grid gap-6 md:grid-cols-2">
                         {/* Ca 1 */}
-                        <div className="settings-form-grid-full">
+                        <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold">
                               1
@@ -691,67 +795,35 @@ export default function AttendanceSettings() {
                             </span>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
-                            <FormField
+                            <TimeField
                               control={form.control}
                               name="shift1CheckIn"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="setting-label">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .SHIFT_1.CHECK_IN.LABEL
-                                    }
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="time"
-                                      {...field}
-                                      className="form-input"
-                                    />
-                                  </FormControl>
-                                  <FormDescription className="setting-description">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .SHIFT_1.CHECK_IN.DESCRIPTION
-                                    }
-                                  </FormDescription>
-                                  <FormMessage className="text-xs font-medium" />
-                                </FormItem>
-                              )}
+                              label={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .CHECK_IN.LABEL
+                              }
+                              description={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .CHECK_IN.DESCRIPTION
+                              }
                             />
-                            <FormField
+                            <TimeField
                               control={form.control}
                               name="shift1CheckOut"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="setting-label">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .SHIFT_1.CHECK_OUT.LABEL
-                                    }
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="time"
-                                      {...field}
-                                      className="form-input"
-                                    />
-                                  </FormControl>
-                                  <FormDescription className="setting-description">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .SHIFT_1.CHECK_OUT.DESCRIPTION
-                                    }
-                                  </FormDescription>
-                                  <FormMessage className="text-xs font-medium" />
-                                </FormItem>
-                              )}
+                              label={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .CHECK_OUT.LABEL
+                              }
+                              description={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .CHECK_OUT.DESCRIPTION
+                              }
                             />
                           </div>
                         </div>
 
                         {/* Ca 2 */}
-                        <div className="settings-form-grid-full">
+                        <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold">
                               2
@@ -764,177 +836,73 @@ export default function AttendanceSettings() {
                             </span>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
-                            <FormField
+                            <TimeField
                               control={form.control}
                               name="shift2CheckIn"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="setting-label">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .SHIFT_2.CHECK_IN.LABEL
-                                    }
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="time"
-                                      {...field}
-                                      className="form-input"
-                                    />
-                                  </FormControl>
-                                  <FormDescription className="setting-description">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .SHIFT_2.CHECK_IN.DESCRIPTION
-                                    }
-                                  </FormDescription>
-                                  <FormMessage className="text-xs font-medium" />
-                                </FormItem>
-                              )}
+                              label={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .CHECK_IN.LABEL
+                              }
+                              description={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .CHECK_IN.DESCRIPTION
+                              }
                             />
-                            <FormField
+                            <TimeField
                               control={form.control}
                               name="shift2CheckOut"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="setting-label">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .SHIFT_2.CHECK_OUT.LABEL
-                                    }
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="time"
-                                      {...field}
-                                      className="form-input"
-                                    />
-                                  </FormControl>
-                                  <FormDescription className="setting-description">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .SHIFT_2.CHECK_OUT.DESCRIPTION
-                                    }
-                                  </FormDescription>
-                                  <FormMessage className="text-xs font-medium" />
-                                </FormItem>
-                              )}
+                              label={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .CHECK_OUT.LABEL
+                              }
+                              description={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .CHECK_OUT.DESCRIPTION
+                              }
                             />
                           </div>
                         </div>
 
-                        <FormField
+                        <NumberField
                           control={form.control}
                           name="gracePeriod"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="setting-label">
-                                {
-                                  ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                    .GRACE_PERIOD.LABEL
-                                }
-                              </FormLabel>
-                              <FormControl>
-                                <div className="setting-input-row">
-                                  <Input
-                                    type="number"
-                                    name={field.name}
-                                    ref={field.ref}
-                                    onBlur={field.onBlur}
-                                    value={
-                                      typeof field.value === "number"
-                                        ? field.value
-                                        : 0
-                                    }
-                                    onChange={(event) => {
-                                      const value = Number(event.target.value);
-                                      field.onChange(
-                                        Number.isNaN(value)
-                                          ? 0
-                                          : (value as any),
-                                      );
-                                    }}
-                                    className="form-input w-full"
-                                    placeholder={
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .GRACE_PERIOD.PLACEHOLDER
-                                    }
-                                    min={0}
-                                  />
-                                  <span className="setting-suffix">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .GRACE_PERIOD.SUFFIX
-                                    }
-                                  </span>
-                                </div>
-                              </FormControl>
-                              <FormDescription className="setting-description">
-                                {
-                                  ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                    .GRACE_PERIOD.DESCRIPTION
-                                }
-                              </FormDescription>
-                              <FormMessage className="text-xs font-medium" />
-                            </FormItem>
-                          )}
+                          label={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .GRACE_PERIOD.LABEL
+                          }
+                          description={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .GRACE_PERIOD.DESCRIPTION
+                          }
+                          placeholder={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .GRACE_PERIOD.PLACEHOLDER
+                          }
+                          suffix={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .GRACE_PERIOD.SUFFIX
+                          }
                         />
 
-                        <FormField
+                        <NumberField
                           control={form.control}
                           name="earlyLeaveThreshold"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="setting-label">
-                                {
-                                  ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                    .EARLY_LEAVE_THRESHOLD.LABEL
-                                }
-                              </FormLabel>
-                              <FormControl>
-                                <div className="setting-input-row">
-                                  <Input
-                                    type="number"
-                                    name={field.name}
-                                    ref={field.ref}
-                                    onBlur={field.onBlur}
-                                    value={
-                                      typeof field.value === "number"
-                                        ? field.value
-                                        : 0
-                                    }
-                                    onChange={(event) => {
-                                      const value = Number(event.target.value);
-                                      field.onChange(
-                                        Number.isNaN(value)
-                                          ? 0
-                                          : (value as any),
-                                      );
-                                    }}
-                                    className="form-input w-full"
-                                    placeholder={
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .EARLY_LEAVE_THRESHOLD.PLACEHOLDER
-                                    }
-                                    min={0}
-                                  />
-                                  <span className="setting-suffix">
-                                    {
-                                      ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                        .EARLY_LEAVE_THRESHOLD.SUFFIX
-                                    }
-                                  </span>
-                                </div>
-                              </FormControl>
-                              <FormDescription className="setting-description">
-                                {
-                                  ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                                    .EARLY_LEAVE_THRESHOLD.DESCRIPTION
-                                }
-                              </FormDescription>
-                              <FormMessage className="text-xs font-medium" />
-                            </FormItem>
-                          )}
+                          label={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .EARLY_LEAVE_THRESHOLD.LABEL
+                          }
+                          description={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .EARLY_LEAVE_THRESHOLD.DESCRIPTION
+                          }
+                          placeholder={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .EARLY_LEAVE_THRESHOLD.PLACEHOLDER
+                          }
+                          suffix={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .EARLY_LEAVE_THRESHOLD.SUFFIX
+                          }
                         />
                       </div>
                     </CardContent>
@@ -942,20 +910,20 @@ export default function AttendanceSettings() {
                 </TabsContent>
 
                 <TabsContent value="location" className="mt-6">
-                  <Card className="settings-card">
-                    <CardHeader className="settings-card-header">
+                  <Card className="shadow-sm">
+                    <CardHeader className="pb-4 border-b mb-6">
                       <div className="flex items-center gap-3">
                         <div className="icon-box-sm bg-primary/10">
                           <MapPin className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <CardTitle className="settings-card-title">
+                          <CardTitle className="text-lg font-semibold leading-none tracking-tight">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .SECTION_TITLE
                             }
                           </CardTitle>
-                          <CardDescription className="settings-card-desc">
+                          <CardDescription className="text-sm text-muted-foreground">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .SECTION_DESC
@@ -964,22 +932,22 @@ export default function AttendanceSettings() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="settings-card-content">
-                      <div className="settings-form-grid">
+                    <CardContent className="space-y-6 pt-0">
+                      <div className="grid gap-6 md:grid-cols-2">
                         <FormField
                           control={form.control}
                           name="gpsEnabled"
                           render={({ field }) => (
-                            <FormItem className="settings-form-grid-full">
-                              <div className="setting-toggle-row">
-                                <div className="setting-toggle-info">
-                                  <FormLabel className="setting-toggle-label">
+                            <FormItem className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
+                              <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                  <FormLabel className="text-base font-medium text-foreground">
                                     {
                                       ATTENDANCE_SETTINGS_CONSTANTS
                                         .LOCATION_RULES.GPS_ENABLED.LABEL
                                     }
                                   </FormLabel>
-                                  <FormDescription className="setting-toggle-desc">
+                                  <FormDescription className="text-sm text-muted-foreground">
                                     {field.value
                                       ? ATTENDANCE_SETTINGS_CONSTANTS
                                           .LOCATION_RULES.GPS_ENABLED.ENABLED
@@ -1005,13 +973,13 @@ export default function AttendanceSettings() {
                           )}
                         />
 
-                        <div className="settings-form-grid-full settings-grid-coords">
+                        <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
                           <FormField
                             control={form.control}
                             name="latitude"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="setting-label">
+                                <FormLabel className="font-medium text-foreground">
                                   {
                                     ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                       .COORDINATES.LATITUDE.LABEL
@@ -1020,7 +988,7 @@ export default function AttendanceSettings() {
                                 <FormControl>
                                   <Input
                                     {...field}
-                                    className="form-input form-input-mono"
+                                    className="font-mono"
                                     placeholder={
                                       ATTENDANCE_SETTINGS_CONSTANTS
                                         .LOCATION_RULES.COORDINATES.LATITUDE
@@ -1029,7 +997,7 @@ export default function AttendanceSettings() {
                                     disabled={!form.watch("gpsEnabled")}
                                   />
                                 </FormControl>
-                                <FormDescription className="setting-description">
+                                <FormDescription className="text-sm text-muted-foreground">
                                   {
                                     ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                       .COORDINATES.LATITUDE.DESCRIPTION
@@ -1045,7 +1013,7 @@ export default function AttendanceSettings() {
                             name="longitude"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="setting-label">
+                                <FormLabel className="font-medium text-foreground">
                                   {
                                     ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                       .COORDINATES.LONGITUDE.LABEL
@@ -1054,7 +1022,7 @@ export default function AttendanceSettings() {
                                 <FormControl>
                                   <Input
                                     {...field}
-                                    className="form-input form-input-mono"
+                                    className="font-mono"
                                     placeholder={
                                       ATTENDANCE_SETTINGS_CONSTANTS
                                         .LOCATION_RULES.COORDINATES.LONGITUDE
@@ -1063,7 +1031,7 @@ export default function AttendanceSettings() {
                                     disabled={!form.watch("gpsEnabled")}
                                   />
                                 </FormControl>
-                                <FormDescription className="setting-description">
+                                <FormDescription className="text-sm text-muted-foreground">
                                   {
                                     ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                       .COORDINATES.LONGITUDE.DESCRIPTION
@@ -1080,14 +1048,14 @@ export default function AttendanceSettings() {
                           name="radius"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="setting-label">
+                              <FormLabel className="font-medium text-foreground">
                                 {
                                   ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                     .RADIUS.LABEL
                                 }
                               </FormLabel>
                               <FormControl>
-                                <div className="setting-input-row">
+                                <div className="flex items-center gap-2">
                                   <Input
                                     type="number"
                                     name={field.name}
@@ -1106,7 +1074,7 @@ export default function AttendanceSettings() {
                                           : (value as any),
                                       );
                                     }}
-                                    className="form-input w-full"
+                                    
                                     placeholder={
                                       ATTENDANCE_SETTINGS_CONSTANTS
                                         .LOCATION_RULES.RADIUS.PLACEHOLDER
@@ -1114,7 +1082,7 @@ export default function AttendanceSettings() {
                                     min={1}
                                     disabled={!form.watch("gpsEnabled")}
                                   />
-                                  <span className="setting-suffix">
+                                  <span className="text-sm text-muted-foreground whitespace-nowrap">
                                     {
                                       ATTENDANCE_SETTINGS_CONSTANTS
                                         .LOCATION_RULES.RADIUS.SUFFIX
@@ -1122,7 +1090,7 @@ export default function AttendanceSettings() {
                                   </span>
                                 </div>
                               </FormControl>
-                              <FormDescription className="setting-description">
+                              <FormDescription className="text-sm text-muted-foreground">
                                 {
                                   ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                     .RADIUS.DESCRIPTION
@@ -1138,7 +1106,7 @@ export default function AttendanceSettings() {
                           name="locationAction"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="setting-label">
+                              <FormLabel className="font-medium text-foreground">
                                 {
                                   ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                     .ACTION_ON_MISMATCH.LABEL
@@ -1165,7 +1133,7 @@ export default function AttendanceSettings() {
                                   </SelectContent>
                                 </Select>
                               </FormControl>
-                              <FormDescription className="setting-description">
+                              <FormDescription className="text-sm text-muted-foreground">
                                 {
                                   ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                     .ACTION_ON_MISMATCH.DESCRIPTION
@@ -1176,7 +1144,7 @@ export default function AttendanceSettings() {
                           )}
                         />
 
-                        <div className="settings-form-grid-full">
+                        <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
                           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-3">
                             <Input
                               value={mapSearchKeyword}
@@ -1189,8 +1157,11 @@ export default function AttendanceSettings() {
                                   onSearchMapLocation();
                                 }
                               }}
-                              placeholder="Tìm kiếm địa chỉ hoặc địa danh trên Google Maps"
-                              className="form-input"
+                              placeholder={
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .MAP_SEARCH.SEARCH_PLACEHOLDER
+                              }
+                              
                             />
                             <Button
                               type="button"
@@ -1203,7 +1174,10 @@ export default function AttendanceSettings() {
                               ) : (
                                 <Search className="mr-2 h-4 w-4" />
                               )}
-                              Tìm vị trí
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .MAP_SEARCH.SEARCH_BTN
+                              }
                             </Button>
                           </div>
 
@@ -1238,7 +1212,10 @@ export default function AttendanceSettings() {
                               disabled={!form.watch("gpsEnabled")}
                             >
                               <Navigation className="mr-2 h-4 w-4" />
-                              Dùng vị trí hiện tại
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .MAP_SEARCH.USE_CURRENT_LOCATION
+                              }
                             </Button>
                             <Button
                               type="button"
@@ -1260,7 +1237,10 @@ export default function AttendanceSettings() {
                               }}
                             >
                               <ExternalLink className="mr-2 h-4 w-4" />
-                              Mở Google Maps
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .MAP_SEARCH.OPEN_GOOGLE_MAPS
+                              }
                             </Button>
                           </div>
 
@@ -1279,14 +1259,14 @@ export default function AttendanceSettings() {
                   </Card>
 
                   <Card className="settings-card mt-6">
-                    <CardHeader className="settings-card-header">
-                      <CardTitle className="settings-card-title">
+                    <CardHeader className="pb-4 border-b mb-6">
+                      <CardTitle className="text-lg font-semibold leading-none tracking-tight">
                         {
                           ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                             .BRANCH_LOCATIONS.SECTION_TITLE
                         }
                       </CardTitle>
-                      <CardDescription className="settings-card-desc">
+                      <CardDescription className="text-sm text-muted-foreground">
                         {
                           ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                             .BRANCH_LOCATIONS.SECTION_DESC
@@ -1296,7 +1276,7 @@ export default function AttendanceSettings() {
                     <CardContent className="settings-card-content space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="setting-label">
+                          <label className="font-medium text-foreground">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .BRANCH_LOCATIONS.BRANCH_NAME_LABEL
@@ -1314,12 +1294,12 @@ export default function AttendanceSettings() {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .BRANCH_LOCATIONS.BRANCH_NAME_PLACEHOLDER
                             }
-                            className="form-input"
+                            
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <label className="setting-label">
+                          <label className="font-medium text-foreground">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .BRANCH_LOCATIONS.BRANCH_ADDRESS_LABEL
@@ -1337,12 +1317,12 @@ export default function AttendanceSettings() {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .BRANCH_LOCATIONS.BRANCH_ADDRESS_PLACEHOLDER
                             }
-                            className="form-input"
+                            
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <label className="setting-label">
+                          <label className="font-medium text-foreground">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .BRANCH_LOCATIONS.LATITUDE_LABEL
@@ -1358,12 +1338,12 @@ export default function AttendanceSettings() {
                                 latitude: event.target.value,
                               }))
                             }
-                            className="form-input form-input-mono"
+                            className="font-mono"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <label className="setting-label">
+                          <label className="font-medium text-foreground">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .BRANCH_LOCATIONS.LONGITUDE_LABEL
@@ -1379,12 +1359,12 @@ export default function AttendanceSettings() {
                                 longitude: event.target.value,
                               }))
                             }
-                            className="form-input form-input-mono"
+                            className="font-mono"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <label className="setting-label">
+                          <label className="font-medium text-foreground">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .BRANCH_LOCATIONS.RADIUS_LABEL
@@ -1401,7 +1381,7 @@ export default function AttendanceSettings() {
                                 radiusMeters: event.target.value,
                               }))
                             }
-                            className="form-input"
+                            
                           />
                         </div>
 
@@ -1517,12 +1497,16 @@ export default function AttendanceSettings() {
                   </Card>
                 </TabsContent>
 
-                <div className="settings-actions">
+                <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t">
                   <Button type="button" variant="outline" onClick={handleReset}>
                     {ATTENDANCE_SETTINGS_CONSTANTS.BUTTONS.CANCEL}
                   </Button>
-                  <Button type="submit">
-                    <Save className="mr-2 h-4 w-4" />
+                  <Button type="submit" disabled={updateOfficeConfigMutation.isPending}>
+                    {updateOfficeConfigMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="mr-2 h-4 w-4" />
+                    )}
                     {ATTENDANCE_SETTINGS_CONSTANTS.BUTTONS.SAVE}
                   </Button>
                 </div>
