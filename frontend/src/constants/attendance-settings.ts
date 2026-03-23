@@ -94,6 +94,26 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
       ADDRESS_FALLBACK: "Chưa cập nhật địa chỉ",
       ACTIVE_STATUS: "Hoạt động",
       INACTIVE_STATUS: "Tạm dừng",
+      TOAST_ADD_SUCCESS: "Đã thêm chi nhánh check-in.",
+      TOAST_ADD_ERROR: "Không thể thêm chi nhánh check-in.",
+      TOAST_DELETE_SUCCESS: "Đã xóa chi nhánh check-in.",
+      TOAST_DELETE_ERROR: "Không thể xóa chi nhánh check-in.",
+      TOAST_PLEASE_ENTER_NAME: "Vui lòng nhập tên chi nhánh.",
+      CONFIRM_DELETE: "Bạn có chắc muốn xóa chi nhánh này?",
+    },
+
+    MAP_SEARCH: {
+      SEARCH_PLACEHOLDER: "Tìm kiếm địa chỉ hoặc địa danh trên Google Maps",
+      SEARCH_BTN: "Tìm vị trí",
+      USE_CURRENT_LOCATION: "Dùng vị trí hiện tại",
+      OPEN_GOOGLE_MAPS: "Mở Google Maps",
+      TOAST_ENTER_LOCATION: "Vui lòng nhập địa điểm cần tìm.",
+      TOAST_MIN_LENGTH_PREFIX: "Vui lòng nhập tối thiểu",
+      TOAST_MIN_LENGTH_SUFFIX: "ký tự.",
+      TOAST_NOT_FOUND: "Không tìm thấy địa điểm phù hợp.",
+      TOAST_SEARCH_ERROR: "Không thể tìm kiếm vị trí. Vui lòng thử lại.",
+      TOAST_NO_GEOLOCATION: "Trình duyệt không hỗ trợ định vị.",
+      TOAST_CANNOT_GET_LOCATION: "Không thể lấy vị trí hiện tại.",
     },
 
     GPS_ENABLED: {

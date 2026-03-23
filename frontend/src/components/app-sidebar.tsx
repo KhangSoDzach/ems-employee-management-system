@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 import { VersionSwitcher } from "@/components/version-switcher";
 import {
@@ -251,14 +251,14 @@ export function AppSidebar({
                       asChild
                       isActive={location.pathname === subItem.url}
                     >
-                      <a
-                        href={subItem.url}
+                      <Link
+                        to={subItem.url}
                         className="flex w-full items-center gap-2"
                       >
                         <span className="flex-1 truncate text-left">
                           {subItem.title}
                         </span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

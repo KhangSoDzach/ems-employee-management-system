@@ -86,7 +86,10 @@ function maskIdentifier(identifier: string | null): string {
     return "—";
   }
   if (identifier.includes("@")) {
-    const [left, right] = identifier.split("@");
+    const parts = identifier.split("@");
+    const left = parts[0] || "";
+    const right = parts.length > 1 ? parts.slice(1).join("@") : "";
+    
     if (left.length <= 2) {
       return `***@${right}`;
     }
