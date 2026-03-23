@@ -178,14 +178,14 @@ export default function AssetIncidentManagementPage() {
                                         <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400">
                                             <div className="flex items-center justify-center gap-2">
                                                  <Loader2 className="w-5 h-5 animate-spin" />
-                                                  <span className="text-sm">{SYSTEM_MESSAGES.LOADING}</span>
+                                                  <span className="text-sm">{SYSTEM_MESSAGES.ASSET_INCIDENT.LOADING_DATA}</span>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : filteredIncidents.length === 0 ? (
                                     <tr>
                                          <td colSpan={canProcess ? 6 : 5} className="py-16 text-center text-gray-400 text-sm">
-                                             {SYSTEM_MESSAGES.ASSET_REPORT.EMPTY_DESC}
+                                             {SYSTEM_MESSAGES.ASSET_INCIDENT.NO_DATA}
                                          </td>
                                     </tr>
                                 ) : filteredIncidents.map(incident => (

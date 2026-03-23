@@ -835,6 +835,8 @@ export const SYSTEM_MESSAGES = {
     PAGINATION_RESULTS: "kết quả",
     BTN_PREV: "Trước",
     BTN_NEXT: "Tiếp",
+    LOADING_DATA: "Đang tải dữ liệu...",
+    NO_DATA: "Không có sự cố nào.",
   },
 
   ASSET_INCIDENT_MODAL: {
