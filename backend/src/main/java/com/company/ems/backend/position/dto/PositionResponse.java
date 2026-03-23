@@ -14,6 +14,8 @@ public class PositionResponse {
     private String title;
     private String code;
     private Long departmentId;
+    private Long officeLocationId;
+    private String officeLocationName;
     private Integer level; // 1=junior, 2=senior, 3=manager — used by frontend to show/hide manager
                            // dropdown
 }

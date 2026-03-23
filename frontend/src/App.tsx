@@ -140,9 +140,13 @@ function App() {
               />
             </Route>
 
-            {/* Admin only */}
+            {/* Admin + HR */}
             <Route
-              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}
+              element={
+                <ProtectedRoute
+                  allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR]}
+                />
+              }
             >
               <Route
                 path="/attendance-settings"

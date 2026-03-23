@@ -11,6 +11,7 @@ import com.company.ems.backend.leave.entity.LeaveApprovalHistory;
 import com.company.ems.backend.leave.enums.LeaveApprovalAction;
 import com.company.ems.backend.leave.enums.LeaveStatus;
 import com.company.ems.backend.leave.enums.LeaveType;
+import com.company.ems.backend.leave.mapper.LeaveMapper;
 import com.company.ems.backend.leave.repository.LeaveApprovalHistoryRepository;
 import com.company.ems.backend.leave.repository.LeaveRepository;
 import com.company.ems.backend.user.entity.User;
@@ -42,6 +43,8 @@ class LeaveApprovalServiceImplTest {
 
     @Mock
     private LeaveRepository leaveRepository;
+    @Mock
+    private LeaveMapper leaveMapper;
     @Mock
     private LeaveApprovalHistoryRepository leaveApprovalHistoryRepository;
     @Mock
@@ -100,6 +103,15 @@ class LeaveApprovalServiceImplTest {
 
         lenient().when(leaveRepository.findById(leaveId)).thenReturn(Optional.of(leave));
         lenient().when(userRepository.findById(approverId)).thenReturn(Optional.of(approver));
+        lenient().when(leaveMapper.toResponse(any(Leave.class))).thenAnswer(inv -> {
+            Leave entity = inv.getArgument(0);
+            return LeaveResponse.builder()
+                    .id(entity.getId())
+                    .status(entity.getStatus() != null ? entity.getStatus().name() : null)
+                    .currentApprovalLevel(entity.getCurrentApprovalLevel())
+                    .maxApprovalLevel(entity.getMaxApprovalLevel())
+                    .build();
+        });
     }
 
     @Test

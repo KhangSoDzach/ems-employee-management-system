@@ -40,6 +40,8 @@ public class PositionController {
                                                         .title(p.getTitle())
                                                         .code(p.getCode())
                                                         .departmentId(p.getDepartment().getId())
+                                                        .officeLocationId(p.getOfficeLocation() != null ? p.getOfficeLocation().getId() : null)
+                                                        .officeLocationName(p.getOfficeLocation() != null ? p.getOfficeLocation().getName() : null)
                                                         .level(p.getLevel())
                                                         .build())
                                         .collect(Collectors.toList());
@@ -51,6 +53,8 @@ public class PositionController {
                                                         .title(p.getTitle())
                                                         .code(p.getCode())
                                                         .departmentId(p.getDepartment().getId())
+                                                        .officeLocationId(p.getOfficeLocation() != null ? p.getOfficeLocation().getId() : null)
+                                                        .officeLocationName(p.getOfficeLocation() != null ? p.getOfficeLocation().getName() : null)
                                                         .level(p.getLevel())
                                                         .build())
                                         .collect(Collectors.toList());
