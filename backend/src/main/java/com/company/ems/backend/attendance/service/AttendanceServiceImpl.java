@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Objects;
 
-import com.company.ems.backend.attendance.mapper.AttendanceMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -19,15 +18,17 @@ import com.company.ems.backend.attendance.dto.CheckOutRequest;
 import com.company.ems.backend.attendance.entity.Attendance;
 import com.company.ems.backend.attendance.enums.AttendanceStatus;
 import com.company.ems.backend.attendance.enums.CheckInMethod;
-import com.company.ems.backend.common.message.MessageCode;
-import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.attendance.mapper.AttendanceMapper;
 import com.company.ems.backend.attendance.repository.AttendanceRepository;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.service.GeolocationService;
 import com.company.ems.backend.common.service.PhotoStorageService;
+import com.company.ems.backend.config.OfficeLocationProperties;
 import com.company.ems.backend.config.StorageProperties;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
@@ -48,6 +49,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         private final GeolocationService geolocationService;
         private final PhotoStorageService photoStorageService;
         private final StorageProperties storageProperties;
+        private final OfficeLocationProperties officeProps;
 
         // ─── Check-in ─────────────────────────────────────────────────────────────
 
@@ -63,8 +65,11 @@ public class AttendanceServiceImpl implements AttendanceService {
                                         messages.get(MessageCode.ATTENDANCE_ALREADY_CHECKIN));
                 }
 
-                // Validate distance (throws BusinessException if out of range)
-                geolocationService.validateWithinOfficeRadius(request.getLatitude(), request.getLongitude());
+                // Validate distance by employee's position-assigned office location
+                geolocationService.validateWithinOfficeRadiusForEmployee(
+                                employee,
+                                request.getLatitude(),
+                                request.getLongitude());
 
                 // Save photo to filesystem
                 String photoPath = photoStorageService.savePhoto(
@@ -73,7 +78,16 @@ public class AttendanceServiceImpl implements AttendanceService {
 
                 // Determine if the employee is late
                 LocalDateTime checkInTime = LocalDateTime.now();
-                boolean isLate = checkInTime.toLocalTime().isAfter(LocalTime.of(9, 0)); // 09:00 standard start
+                LocalTime checkInLocalTime = checkInTime.toLocalTime();
+                LocalTime shiftStart = LocalTime.parse(officeProps.getShift1CheckIn());
+
+                // If checking in after shift 1 end, maybe it's shift 2?
+                LocalTime shift1End = LocalTime.parse(officeProps.getShift1CheckOut());
+                if (checkInLocalTime.isAfter(shift1End)) {
+                        shiftStart = LocalTime.parse(officeProps.getShift2CheckIn());
+                }
+
+                boolean isLate = checkInLocalTime.isAfter(shiftStart.plusMinutes(officeProps.getGracePeriod()));
 
                 Attendance attendance = Attendance.builder()
                                 .employee(employee)
@@ -120,8 +134,11 @@ public class AttendanceServiceImpl implements AttendanceService {
                                         messages.get(MessageCode.ATTENDANCE_ALREADY_CHECKOUT));
                 }
 
-                // Validate distance
-                geolocationService.validateWithinOfficeRadius(request.getLatitude(), request.getLongitude());
+                // Validate distance by employee's position-assigned office location
+                geolocationService.validateWithinOfficeRadiusForEmployee(
+                                employee,
+                                request.getLatitude(),
+                                request.getLongitude());
 
                 // Save photo
                 String photoPath = photoStorageService.savePhoto(
@@ -238,7 +255,8 @@ public class AttendanceServiceImpl implements AttendanceService {
          *
          * <p>
          * Managers/HR/Admin may query another employee only when explicitly passing
-         * {@code employeeId}. This keeps personal pages (e.g. check-in/check-out) correct
+         * {@code employeeId}. This keeps personal pages (e.g. check-in/check-out)
+         * correct
          * for elevated roles that also need their own attendance timeline.
          */
         private Long resolveEmployeeIdForQuery(Long requestedEmployeeId, CustomUserPrincipal principal) {

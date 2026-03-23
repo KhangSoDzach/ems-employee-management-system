@@ -3,6 +3,7 @@ package com.company.ems.backend.employee.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +30,15 @@ public class PublicEmployeeResponse {
     private String state;
     private String country;
     private String status;
+    @Schema(description = "Remaining annual leave days")
+    private Integer annualLeaveBalance;
+
+    @Schema(description = "Remaining sick leave days")
+    private Integer sickLeaveBalance;
+
+    @Schema(description = "Attendance percentage for current month")
+    private Double attendancePercentage;
+
     private String avatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

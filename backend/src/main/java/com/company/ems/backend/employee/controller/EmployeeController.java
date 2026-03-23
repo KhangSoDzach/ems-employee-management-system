@@ -1,9 +1,8 @@
 package com.company.ems.backend.employee.controller;
 
-import com.company.ems.backend.common.constant.RoleAuthorization;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.message.MessageCode;
@@ -66,7 +66,7 @@ public class EmployeeController {
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Get my profile", description = "Retrieves the read-only public profile of the currently authenticated employee")
+    @Operation(summary = "Get my profile", description = "Retrieves the read-only public profile of the currently authenticated employee, including annual leave remaining and attendance percentage")
     public ResponseEntity<ApiResponse<PublicEmployeeResponse>> getMyProfile() {
         return ResponseEntity
                 .ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), employeeService.getMyProfile()));

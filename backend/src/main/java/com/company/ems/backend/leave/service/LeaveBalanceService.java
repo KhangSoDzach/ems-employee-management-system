@@ -1,9 +1,9 @@
 package com.company.ems.backend.leave.service;
 
+import java.util.List;
+
 import com.company.ems.backend.leave.dto.LeaveBalanceResponse;
 import com.company.ems.backend.leave.enums.LeaveType;
-
-import java.util.List;
 
 /**
  * Service for reading and adjusting employee leave balances.
@@ -14,6 +14,16 @@ public interface LeaveBalanceService {
      * Returns all leave balances for the current year for the given employee.
      */
     List<LeaveBalanceResponse> getBalanceForEmployee(Long employeeId);
+
+    /**
+     * Ensures default leave balances exist for a specific employee and year.
+     */
+    void initializeDefaultBalancesForEmployee(Long employeeId, int year);
+
+    /**
+     * Returns remaining days for an employee and leave type in current year.
+     */
+    int getRemainingDays(Long employeeId, LeaveType leaveType);
 
     /**
      * Deducts days from an employee's leave balance when a leave is approved.

@@ -1,11 +1,11 @@
 package com.company.ems.backend.attendance.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * Response DTO representing the current office location configuration.
@@ -43,4 +43,22 @@ public class OfficeConfigResponse {
      * application.yaml values.
      */
     private String source;
+
+    /** Shift 1 check-in time (HH:mm) */
+    private String shift1CheckIn;
+
+    /** Shift 1 check-out time (HH:mm) */
+    private String shift1CheckOut;
+
+    /** Shift 2 check-in time (HH:mm) */
+    private String shift2CheckIn;
+
+    /** Shift 2 check-out time (HH:mm) */
+    private String shift2CheckOut;
+
+    /** Grace period in minutes */
+    private Integer gracePeriod;
+
+    /** Early leave threshold in minutes */
+    private Integer earlyLeaveThreshold;
 }

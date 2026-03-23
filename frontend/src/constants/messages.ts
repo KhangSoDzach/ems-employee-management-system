@@ -56,6 +56,7 @@ export const SYSTEM_MESSAGES = {
     MENU_MEMBERS: "Thành viên nhóm",
     MENU_KPI: "Thiết lập KPI/OKR",
     MENU_PAYROLL: "Quản lý lương",
+    MENU_AUDIT_LOGS: "Nhật ký kiểm toán",
     MENU_ASSET_INCIDENT: "Quản lý sự cố tài sản",
     MENU_APPROVE_REPORTS: "Duyệt báo cáo sự cố",
     MENU_ANNOUNCEMENTS: "Thông báo nội bộ",
@@ -470,7 +471,8 @@ export const SYSTEM_MESSAGES = {
     HINT_SELECT_DEPT: "Vui lòng chọn phòng ban trước",
     HINT_CHOOSE_POSITION: "Vui lòng chọn vị trí trước",
     MSG_NO_MANAGERS: "Không tìm thấy quản lý nào phù hợp cho vị trí này.",
-    LABEL_AVATAR_DESC: "Tải lên hoặc kéo thả ảnh chân dung chuyên nghiệp (JPG, PNG).",
+    LABEL_AVATAR_DESC:
+      "Tải lên hoặc kéo thả ảnh chân dung chuyên nghiệp (JPG, PNG).",
     BTN_UPLOAD: "Chọn tệp",
     SELECT_DEPT: "Chọn phòng ban...",
     SELECT_POSITION: "Chọn vị trí...",
@@ -509,7 +511,8 @@ export const SYSTEM_MESSAGES = {
     MSG_VALIDATION_ERROR: "Vui lòng điền đầy đủ nội dung",
     MSG_DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa nhân viên này?",
     MSG_FETCH_ERROR: "Không thể tải danh sách nhân viên.",
-    INFO_NOTE: "Các thay đổi về chức danh và phòng ban sẽ cần sự phê duyệt của trưởng bộ phận.",
+    INFO_NOTE:
+      "Các thay đổi về chức danh và phòng ban sẽ cần sự phê duyệt của trưởng bộ phận.",
     DEPT_SOFTWARE: "Phòng Phát triển phần mềm",
     DEPT_HR: "Phòng Nhân sự",
     DEPT_SALES: "Phòng Kinh doanh",

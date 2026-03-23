@@ -58,6 +58,10 @@ export function AppSidebar({
                 url: "/payroll",
               },
               {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
+                url: "/audit-logs",
+              },
+              {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                 url: "/asset-incidents",
               },
@@ -120,8 +124,7 @@ export function AppSidebar({
                   url: "/my-assets",
                 },
                 {
-                  title:
-                    SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                   url: "/asset-incidents",
                 },
                 {
@@ -162,6 +165,10 @@ export function AppSidebar({
                     url: "/hr-employees",
                   },
                   {
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE_SETTINGS,
+                    url: "/attendance-settings",
+                  },
+                  {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                     url: "/my-assets",
                   },
@@ -170,12 +177,15 @@ export function AppSidebar({
                     url: "/assets",
                   },
                   {
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
+                    url: "/audit-logs",
+                  },
+                  {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
                     url: "/request",
                   },
                   {
-                    title:
-                      SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                     url: "/asset-incidents",
                   },
                   {

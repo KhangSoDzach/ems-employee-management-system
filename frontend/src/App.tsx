@@ -65,6 +65,7 @@ const AnnouncementsPage = lazy(
 const AnnouncementManagementPage = lazy(
   () => import("./features/hr/AnnouncementManagementPage"),
 );
+const AuditLogsPage = lazy(() => import("./features/admin/AuditLogsPage"));
 
 function RouteFallback() {
   return (
@@ -134,15 +135,20 @@ function App() {
             >
               <Route path="/assets" element={<AssetManagementPage />} />
               <Route path="/payroll" element={<PayrollManagement />} />
+              <Route path="/audit-logs" element={<AuditLogsPage />} />
               <Route
                 path="/announcements/manage"
                 element={<AnnouncementManagementPage />}
               />
             </Route>
 
-            {/* Admin only */}
+            {/* Admin + HR */}
             <Route
-              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}
+              element={
+                <ProtectedRoute
+                  allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR]}
+                />
+              }
             >
               <Route
                 path="/attendance-settings"

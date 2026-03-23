@@ -3,6 +3,8 @@ package com.company.ems.backend.common.service;
 import org.springframework.stereotype.Service;
 
 import com.company.ems.backend.common.exception.BusinessException;
+import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.position.entity.Position;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,11 @@ public class GeolocationService {
 
     /** Mean Earth radius in metres (IUGG recommended value). */
     private static final double EARTH_RADIUS_METRES = 6_371_000.0;
+        private static final double LOCATION_EPSILON_METRES = 0.1;
+        private static final String ERROR_POSITION_LOCATION_NOT_CONFIGURED = "POSITION_LOCATION_NOT_CONFIGURED";
+        private static final String ERROR_LOCATION_OUT_OF_RANGE = "LOCATION_OUT_OF_RANGE";
+        private static final String MESSAGE_POSITION_LOCATION_NOT_CONFIGURED =
+            "Vị trí công việc chưa được gán khu vực check-in. Vui lòng liên hệ admin cấu hình.";
 
     private final com.company.ems.backend.attendance.repository.OfficeLocationRepository officeLocationRepository;
 
@@ -90,10 +97,33 @@ public class GeolocationService {
                 String.format("%.2f", minDistance));
 
         throw new BusinessException(
-            "LOCATION_OUT_OF_RANGE",
+            ERROR_LOCATION_OUT_OF_RANGE,
             String.format(
                 "Vị trí không hợp lệ. Bạn đang cách văn phòng gần nhất (%s) %.1f mét.",
                 closestOffice.getName(), minDistance));
+    }
+
+    public void validateWithinOfficeRadiusForEmployee(Employee employee, double latitude, double longitude) {
+        Position position = employee.getPosition();
+        if (position == null || position.getOfficeLocation() == null) {
+            throw new BusinessException(ERROR_POSITION_LOCATION_NOT_CONFIGURED, MESSAGE_POSITION_LOCATION_NOT_CONFIGURED);
+        }
+
+        var location = position.getOfficeLocation();
+        if (!Boolean.TRUE.equals(location.getIsActive())) {
+            throw new BusinessException(ERROR_POSITION_LOCATION_NOT_CONFIGURED, MESSAGE_POSITION_LOCATION_NOT_CONFIGURED);
+        }
+
+        double distance = calculateDistance(latitude, longitude, location.getLatitude(), location.getLongitude());
+        if (distance - location.getRadiusMeters() > LOCATION_EPSILON_METRES) {
+            throw new BusinessException(
+                    ERROR_LOCATION_OUT_OF_RANGE,
+                    String.format(
+                            "Vị trí không hợp lệ cho chức danh %s. Bạn đang cách khu vực cho phép (%s) %.1f mét.",
+                            position.getTitle(),
+                            location.getName(),
+                            distance));
+        }
     }
 
     /**
