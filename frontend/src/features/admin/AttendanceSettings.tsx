@@ -14,6 +14,7 @@ import {
   Navigation,
   Save,
   Search,
+  Trash2,
 } from "lucide-react";
 
 import { AppSidebar } from "@/components/app-sidebar";
@@ -57,7 +58,6 @@ import {
 import {
   officeLocationService,
   OfficeLocationUpsertRequest,
-  PositionLocationMappingResponse,
 } from "@/services/officeLocationService";
 
 const attendanceSettingsSchema = z.object({
@@ -172,7 +172,6 @@ type AttendanceSettingsFormValues = z.output<typeof attendanceSettingsSchema>;
 
 const QUERY_KEY_OFFICE_CONFIG = ["office-config"] as const;
 const QUERY_KEY_OFFICE_LOCATIONS = ["office-locations"] as const;
-const QUERY_KEY_POSITION_MAPPINGS = ["position-location-mappings"] as const;
 const LOCATION_SEARCH_MIN_LENGTH = 2;
 const LOCATION_SEARCH_LIMIT = 5;
 
@@ -211,9 +210,6 @@ export default function AttendanceSettings() {
       ),
       isActive: true,
     });
-  const [positionMappingDraft, setPositionMappingDraft] = React.useState<
-    Record<number, string>
-  >({});
 
   const form = useForm<
     AttendanceSettingsFormInput,
@@ -249,11 +245,6 @@ export default function AttendanceSettings() {
     queryFn: officeLocationService.getOfficeLocations,
   });
 
-  const { data: positionMappings = [] } = useQuery({
-    queryKey: QUERY_KEY_POSITION_MAPPINGS,
-    queryFn: officeLocationService.getPositionMappings,
-  });
-
   React.useEffect(() => {
     if (!officeConfig) {
       return;
@@ -265,26 +256,6 @@ export default function AttendanceSettings() {
     form.setValue("gpsEnabled", true);
   }, [officeConfig, form]);
 
-  React.useEffect(() => {
-    if (positionMappings.length === 0) {
-      return;
-    }
-
-    const nextDraft = positionMappings.reduce<Record<number, string>>(
-      (acc, mapping) => {
-        acc[mapping.positionId] =
-          mapping.officeLocationId !== null &&
-          mapping.officeLocationId !== undefined
-            ? String(mapping.officeLocationId)
-            : "";
-        return acc;
-      },
-      {},
-    );
-
-    setPositionMappingDraft(nextDraft);
-  }, [positionMappings]);
-
   const updateOfficeConfigMutation = useMutation({
     mutationFn: officeLocationService.updateOfficeConfig,
     onSuccess: () => {
@@ -293,28 +264,18 @@ export default function AttendanceSettings() {
     },
   });
 
-  const updatePositionMappingMutation = useMutation({
-    mutationFn: ({
-      positionId,
-      officeLocationId,
-    }: {
-      positionId: number;
-      officeLocationId: number;
-    }) =>
-      officeLocationService.updatePositionMapping(positionId, {
-        officeLocationId,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY_POSITION_MAPPINGS });
-    },
-  });
-
   const createOfficeLocationMutation = useMutation({
     mutationFn: (payload: OfficeLocationUpsertRequest) =>
       officeLocationService.createOfficeLocation(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY_OFFICE_LOCATIONS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY_POSITION_MAPPINGS });
+    },
+  });
+
+  const deleteOfficeLocationMutation = useMutation({
+    mutationFn: (id: number) => officeLocationService.deleteOfficeLocation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY_OFFICE_LOCATIONS });
     },
   });
 
@@ -451,6 +412,12 @@ export default function AttendanceSettings() {
     setMapSearchKeyword(suggestion.displayName);
     setMapSearchQuery(suggestion.displayName);
     setLocationSuggestions([]);
+    setBranchLocationDraft((prev) => ({
+      ...prev,
+      address: suggestion.displayName,
+      latitude: String(suggestion.latitude),
+      longitude: String(suggestion.longitude),
+    }));
     form.setValue("latitude", String(suggestion.latitude), {
       shouldDirty: true,
     });
@@ -498,28 +465,6 @@ export default function AttendanceSettings() {
       .finally(() => {
         setIsSearchingLocation(false);
       });
-  };
-
-  const onUpdatePositionMapping = async (
-    mapping: PositionLocationMappingResponse,
-  ) => {
-    const officeLocationIdRaw = positionMappingDraft[mapping.positionId];
-    const officeLocationId = Number(officeLocationIdRaw);
-
-    if (!officeLocationIdRaw || Number.isNaN(officeLocationId)) {
-      toast.error("Vui lòng chọn văn phòng cho vị trí.");
-      return;
-    }
-
-    try {
-      await updatePositionMappingMutation.mutateAsync({
-        positionId: mapping.positionId,
-        officeLocationId,
-      });
-      toast.success("Đã cập nhật mapping vị trí.");
-    } catch {
-      toast.error("Không thể cập nhật mapping vị trí.");
-    }
   };
 
   const resetBranchLocationDraft = () => {
@@ -585,6 +530,20 @@ export default function AttendanceSettings() {
       toast.success("Đã thêm chi nhánh check-in.");
     } catch {
       toast.error("Không thể thêm chi nhánh check-in.");
+    }
+  };
+
+  const onDeleteOfficeLocation = async (officeId: number) => {
+    const confirmed = window.confirm("Bạn có chắc muốn xóa chi nhánh này?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteOfficeLocationMutation.mutateAsync(officeId);
+      toast.success("Đã xóa chi nhánh check-in.");
+    } catch {
+      toast.error("Không thể xóa chi nhánh check-in.");
     }
   };
 
@@ -1473,15 +1432,36 @@ export default function AttendanceSettings() {
                             >
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <p className="font-medium">{office.name}</p>
-                                <span className="text-xs text-muted-foreground">
-                                  {office.isActive
-                                    ? ATTENDANCE_SETTINGS_CONSTANTS
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">
+                                    {office.isActive
+                                      ? ATTENDANCE_SETTINGS_CONSTANTS
+                                          .LOCATION_RULES.BRANCH_LOCATIONS
+                                          .ACTIVE_STATUS
+                                      : ATTENDANCE_SETTINGS_CONSTANTS
+                                          .LOCATION_RULES.BRANCH_LOCATIONS
+                                          .INACTIVE_STATUS}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-2 text-red-600 hover:text-red-700"
+                                    onClick={() =>
+                                      onDeleteOfficeLocation(office.id)
+                                    }
+                                    disabled={
+                                      deleteOfficeLocationMutation.isPending
+                                    }
+                                  >
+                                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                                    {
+                                      ATTENDANCE_SETTINGS_CONSTANTS
                                         .LOCATION_RULES.BRANCH_LOCATIONS
-                                        .ACTIVE_STATUS
-                                    : ATTENDANCE_SETTINGS_CONSTANTS
-                                        .LOCATION_RULES.BRANCH_LOCATIONS
-                                        .INACTIVE_STATUS}
-                                </span>
+                                        .DELETE_BUTTON
+                                    }
+                                  </Button>
+                                </div>
                               </div>
                               <p className="text-sm text-muted-foreground">
                                 {office.address ||
@@ -1507,69 +1487,6 @@ export default function AttendanceSettings() {
                           ))}
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-
-                  <Card className="settings-card mt-6">
-                    <CardHeader className="settings-card-header">
-                      <CardTitle className="settings-card-title">
-                        Mapping vị trí làm việc theo chức danh
-                      </CardTitle>
-                      <CardDescription className="settings-card-desc">
-                        Mỗi chức danh chỉ được check-in trong văn phòng được
-                        gán.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="settings-card-content space-y-4">
-                      {positionMappings.map((mapping) => (
-                        <div
-                          key={mapping.positionId}
-                          className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-center border rounded-lg p-3"
-                        >
-                          <div>
-                            <p className="font-medium">
-                              {mapping.positionTitle}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {mapping.positionCode}
-                            </p>
-                          </div>
-
-                          <Select
-                            value={
-                              positionMappingDraft[mapping.positionId] ?? ""
-                            }
-                            onValueChange={(value) =>
-                              setPositionMappingDraft((prev) => ({
-                                ...prev,
-                                [mapping.positionId]: value,
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Chọn văn phòng" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {officeLocations.map((office) => (
-                                <SelectItem
-                                  key={office.id}
-                                  value={String(office.id)}
-                                >
-                                  {office.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          <Button
-                            type="button"
-                            onClick={() => onUpdatePositionMapping(mapping)}
-                            disabled={updatePositionMappingMutation.isPending}
-                          >
-                            Lưu mapping
-                          </Button>
-                        </div>
-                      ))}
                     </CardContent>
                   </Card>
                 </TabsContent>

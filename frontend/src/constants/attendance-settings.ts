@@ -87,6 +87,7 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
       RADIUS_LABEL: "Bán kính (m)",
       ACTIVE_LABEL: "Kích hoạt",
       ADD_BUTTON: "Thêm chi nhánh",
+      DELETE_BUTTON: "Xóa",
       EMPTY_MESSAGE: "Chưa có chi nhánh nào. Hãy thêm chi nhánh đầu tiên.",
       COORDINATE_PREFIX: "Tọa độ",
       RADIUS_PREFIX: "Bán kính",

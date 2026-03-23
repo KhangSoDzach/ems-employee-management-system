@@ -31,6 +31,7 @@ public final class AppConstant {
 
     // Leave status
     public static final String LEAVE_PENDING = "PENDING";
+    public static final String LEAVE_REJECTED = "REJECTED";
     public static final String LEAVE_CANCELLED = "CANCELLED";
 
     // Leave types
@@ -45,7 +46,6 @@ public final class AppConstant {
     public static final String ROLE_EMPLOYEE = "EMPLOYEE";
 
     public static final String LEAVE_APPROVED = "APPROVED";
-    public static final String LEAVE_REJECTED = "REJECTED";
 
     // Security
     public static final String TOKEN_PREFIX = "Bearer ";

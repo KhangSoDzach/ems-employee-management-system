@@ -91,6 +91,13 @@ export const officeLocationService = {
       ) as Promise<ApiResponse<OfficeLocationResponse>>
     ).then(unwrap),
 
+  deleteOfficeLocation: (id: number): Promise<void> =>
+    (
+      api.delete<unknown, ApiResponse<null>>(
+        `/admin/office-locations/${id}`,
+      ) as Promise<ApiResponse<null>>
+    ).then(() => undefined),
+
   getPositionMappings: (): Promise<PositionLocationMappingResponse[]> =>
     (
       api.get<unknown, ApiResponse<PositionLocationMappingResponse[]>>(
