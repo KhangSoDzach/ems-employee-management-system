@@ -37,7 +37,9 @@ import { CHECKIN_STATUS } from "@/constants/options";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function fmtTime(iso: string | null) {
-  if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  if (!iso) {
+    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  }
   return new Date(iso).toLocaleTimeString("vi-VN", {
     hour: "2-digit",
     minute: "2-digit",
@@ -45,7 +47,9 @@ function fmtTime(iso: string | null) {
 }
 
 function fmtDate(iso: string | null) {
-  if (!iso) return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  if (!iso) {
+    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  }
   return format(new Date(iso), "dd/MM/yyyy");
 }
 
@@ -78,7 +82,9 @@ function statusLabel(s: AttendanceRecord["status"]) {
 type CheckStatus = "unchecked" | "checked_in" | "checked_out";
 
 function dateKeyFromRecord(record: AttendanceRecord | null): string | null {
-  if (!record) return null;
+  if (!record) {
+    return null;
+  }
 
   if (typeof record.date === "string" && record.date.length >= 10) {
     return record.date.slice(0, 10);
@@ -99,7 +105,9 @@ function upsertHistoryRecord(
   record: AttendanceRecord,
 ): AttendanceRecord[] {
   const key = dateKeyFromRecord(record);
-  if (!key) return history;
+  if (!key) {
+    return history;
+  }
 
   const existingIdx = history.findIndex(
     (item) => dateKeyFromRecord(item) === key,
@@ -117,26 +125,34 @@ function upsertHistoryRecord(
   });
 }
 function parseTimeToMinutes(iso: string | null) {
-  if (!iso) return null;
+  if (!iso) {
+    return null;
+  }
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
+  if (Number.isNaN(d.getTime())) {
+    return null;
+  }
   return d.getHours() * 60 + d.getMinutes();
 }
 
 function checkinClass(iso: string | null) {
   const t = parseTimeToMinutes(iso);
-  if (t == null) return "text-muted-foreground";
+  if (t === null) {
+    return "text-muted-foreground";
+  }
   return t > 8 * 60 ? "text-rose-600" : "text-emerald-600";
 }
 
 function checkoutClass(iso: string | null) {
   const t = parseTimeToMinutes(iso);
-  if (t == null) return "text-muted-foreground";
+  if (t === null) {
+    return "text-muted-foreground";
+  }
   return t < 17 * 60 ? "text-rose-600" : "text-emerald-600";
 }
 
 function workHoursStatus(minutes: number | null) {
-  if (minutes == null) {
+  if (minutes === null) {
     return {
       className: "text-muted-foreground",
       lines: [SYSTEM_MESSAGES.COMMON.EMPTY_VALUE],
@@ -219,7 +235,8 @@ export default function CheckinPage() {
   >(null);
 
   // ── Derive status ─────────────────────────────────────────────────────────
-  const status: CheckStatus = todayRecord === null
+  const status: CheckStatus =
+    todayRecord === null
       ? "unchecked"
       : todayRecord.checkOutTime
         ? "checked_out"
@@ -247,7 +264,9 @@ export default function CheckinPage() {
       const todayRec =
         records.find((r) => dateKeyFromRecord(r) === today) ?? null;
       setTodayRecord((prev) => {
-        if (todayRec) return todayRec;
+        if (todayRec) {
+          return todayRec;
+        }
         return dateKeyFromRecord(prev) === today ? prev : null;
       });
     }
@@ -276,7 +295,9 @@ export default function CheckinPage() {
     longitude: number;
     locationLabel: string;
   }) => {
-    if (!pendingAction) return;
+    if (!pendingAction) {
+      return;
+    }
     setActionLoading(true);
     try {
       if (pendingAction === "checkIn") {
@@ -355,8 +376,12 @@ export default function CheckinPage() {
   };
 
   const getGreetingMessage = () => {
-    if (status === "unchecked") return SYSTEM_MESSAGES.CHECKIN.MSG_MORNING;
-    if (status === "checked_in") return SYSTEM_MESSAGES.CHECKIN.MSG_WORKING;
+    if (status === "unchecked") {
+      return SYSTEM_MESSAGES.CHECKIN.MSG_MORNING;
+    }
+    if (status === "checked_in") {
+      return SYSTEM_MESSAGES.CHECKIN.MSG_WORKING;
+    }
     return SYSTEM_MESSAGES.CHECKIN.MSG_DONE;
   };
 
