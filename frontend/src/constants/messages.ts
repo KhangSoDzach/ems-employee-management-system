@@ -540,6 +540,13 @@ export const SYSTEM_MESSAGES = {
     DEFAULT_NATIONALITY: "Việt Nam",
     INFO_EMP_CODE: "Mã nhân viên sẽ được hệ thống tự động tạo.",
     SYSTEM_HR: "Hệ thống Nhân sự",
+    PLACEHOLDER_SOCIAL_WARRANTY_NUMBER: "Số bảo hiểm xã hội...",
+    LABEL_SOCIAL_WARRANTY_NUMBER: "Số bảo hiểm xã hội",
+    SECTION_ATTACHMENTS: "Tài liệu đính kèm",
+    TXT_CLICK_OR_DRAG_TO_UPLOAD: "Click hoặc kéo thả file vào đây để tải lên",
+    TXT_SUPPORTED_FILE_TYPES: "Hỗ trợ PDF, DOCX, JPG, PNG (Tối đa 10MB)",
+    MSG_DELETE_DESC:
+      "Hành động này có thể bị chặn nếu nhân viên có dữ liệu ràng buộc.",
   },
 
   // Common Toast Messages

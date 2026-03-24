@@ -1,420 +1,529 @@
 import { useState, useEffect } from "react";
 import { X, Save, User, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
-import { employeeService, EmployeeRequest, EmployeeResponse } from "@/services/employeeService";
-import { lookupService, DepartmentOption, PositionOption, ManagerOption, MANAGER_LEVEL } from "@/services/lookupService";
+import {
+  employeeService,
+  EmployeeRequest,
+  EmployeeResponse,
+} from "@/services/employeeService";
+import {
+  lookupService,
+  DepartmentOption,
+  PositionOption,
+  ManagerOption,
+  MANAGER_LEVEL,
+} from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import EmployeeFormFields from "./EmployeeFormFields";
 
 interface Props {
-    open: boolean;
-    mode: "create" | "edit";
-    employeeId?: number | null;
-    employee?: EmployeeResponse | null;
-    onClose: () => void;
-    onSuccess: () => void;
+  open: boolean;
+  mode: "create" | "edit";
+  employeeId?: number | null;
+  employee?: EmployeeResponse | null;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
 interface ApiError {
-    response?: {
-        data?: {
-            message?: string;
-            fieldErrors?: Record<string, string>;
-        };
+  response?: {
+    data?: {
+      message?: string;
+      fieldErrors?: Record<string, string>;
     };
+  };
 }
 
 const INITIAL_FORM_STATE: EmployeeRequest = {
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    dateOfBirth: "",
-    hireDate: new Date().toISOString().slice(0, 10),
-    departmentId: 0,
-    positionId: 0,
-    salary: 0,
-    gender: "MALE",
-    contractType: "FULL_TIME",
-    nationality: "Việt Nam",
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    country: "",
-    nationalId: "",
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    emergencyContactRelation: "",
-    bankName: "",
-    bankAccountNumber: "",
-    bankBranch: "",
-    taxId: "",
-    socialSecurityNumber: "",
-    workLocation: "",
-    notes: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  dateOfBirth: "",
+  hireDate: new Date().toISOString().slice(0, 10),
+  departmentId: 0,
+  positionId: 0,
+  salary: 0,
+  gender: "MALE",
+  contractType: "FULL_TIME",
+  nationality: "Việt Nam",
+  address: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  country: "",
+  nationalId: "",
+  emergencyContactName: "",
+  emergencyContactPhone: "",
+  emergencyContactRelation: "",
+  bankName: "",
+  bankAccountNumber: "",
+  bankBranch: "",
+  taxId: "",
+  socialSecurityNumber: "",
+  workLocation: "",
+  notes: "",
 };
 
-export default function EmployeeFormModal({ open, mode, employeeId, employee, onClose, onSuccess }: Props) {
-    const [loading, setLoading] = useState(false);
-    const [departments, setDepartments] = useState<DepartmentOption[]>([]);
-    const [positions, setPositions] = useState<PositionOption[]>([]);
-    const [positionsLoading, setPositionsLoading] = useState(false);
-    const [managers, setManagers] = useState<ManagerOption[]>([]);
+type ReadonlyProps = Readonly<Props>;
 
-    const [formData, setFormData] = useState<EmployeeRequest>(INITIAL_FORM_STATE);
-    const [errors, setErrors] = useState<Record<string, string>>({});
+export default function EmployeeFormModal(props: ReadonlyProps) {
+  const { open, mode, employeeId, employee, onClose, onSuccess } = props;
 
-    const normalizeValidationMessage = (message: string): string => {
-        const parts = message.split("|").map((part) => part.trim()).filter(Boolean);
-        if (parts.length >= 2) {
-            const detail = parts[1] ?? message;
-            const hint = parts[2];
-            return hint ? `${detail} (${hint})` : detail;
-        }
-        return message;
-    };
+  const [loading, setLoading] = useState(false);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [positions, setPositions] = useState<PositionOption[]>([]);
+  const [positionsLoading, setPositionsLoading] = useState(false);
+  const [managers, setManagers] = useState<ManagerOption[]>([]);
 
-    const applyServerValidationErrors = (error: unknown): boolean => {
-        const fieldErrors = (error as ApiError)?.response?.data?.fieldErrors;
-        if (fieldErrors && typeof fieldErrors === "object") {
-            const normalized: Record<string, string> = {};
-            Object.entries(fieldErrors as Record<string, unknown>).forEach(([field, message]) => {
-                if (typeof message === "string") {
-                    normalized[field] = normalizeValidationMessage(message);
-                }
-            });
-            setErrors((prev) => ({ ...prev, ...normalized }));
-            const firstFieldError = Object.values(normalized)[0];
-            if (firstFieldError) {
-                toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
-            }
-            return true;
-        }
-        return false;
-    };
+  const [formData, setFormData] = useState<EmployeeRequest>(INITIAL_FORM_STATE);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const validateForm = () => {
-        const newErrors: Record<string, string> = {};
+  const normalizeValidationMessage = (message: string): string => {
+    const parts = message
+      .split("|")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length >= 2) {
+      const detail = parts[1] ?? message;
+      const hint = parts[2];
+      return hint ? `${detail} (${hint})` : detail;
+    }
+    return message;
+  };
 
-        if (!formData.firstName?.trim()) {
-            newErrors.firstName = FORM_VALIDATION_MESSAGES.FIRST_NAME_REQUIRED;
-        }
-        if (!formData.lastName?.trim()) {
-            newErrors.lastName = FORM_VALIDATION_MESSAGES.LAST_NAME_REQUIRED;
-        }
+  const applyServerValidationErrors = (error: unknown): boolean => {
+    const fieldErrors = (error as ApiError)?.response?.data?.fieldErrors;
+    if (fieldErrors && typeof fieldErrors === "object") {
+      const normalized: Record<string, string> = {};
+      Object.entries(fieldErrors as Record<string, unknown>).forEach(
+        ([field, message]) => {
+          if (typeof message === "string") {
+            normalized[field] = normalizeValidationMessage(message);
+          }
+        },
+      );
+      setErrors((prev) => ({ ...prev, ...normalized }));
+      const firstFieldError = Object.values(normalized)[0];
+      if (firstFieldError) {
+        toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+      }
+      return true;
+    }
+    return false;
+  };
 
-        if (!formData.email?.trim()) {
-            newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED;
-        } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-            newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_INVALID;
-        }
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
 
-        if (formData.phone?.trim() && !/^\d{10,13}$/.test(formData.phone.trim())) {
-            newErrors.phone = FORM_VALIDATION_MESSAGES.PHONE_FORMAT;
-        }
+    if (!formData.firstName?.trim()) {
+      newErrors.firstName = FORM_VALIDATION_MESSAGES.FIRST_NAME_REQUIRED;
+    }
+    if (!formData.lastName?.trim()) {
+      newErrors.lastName = FORM_VALIDATION_MESSAGES.LAST_NAME_REQUIRED;
+    }
 
-        if (!formData.departmentId) {
-            newErrors.departmentId = FORM_VALIDATION_MESSAGES.DEPT_REQUIRED;
-        }
-        if (!formData.positionId) {
-            newErrors.positionId = FORM_VALIDATION_MESSAGES.ROLE_REQUIRED;
-        }
+    if (!formData.email?.trim()) {
+      newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED;
+    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_INVALID;
+    }
 
-        if (!formData.dateOfBirth) {
-            newErrors.dateOfBirth = FORM_VALIDATION_MESSAGES.DOB_REQUIRED;
-        } else {
-            const birth = new Date(formData.dateOfBirth);
-            const today = new Date();
-            let age = today.getFullYear() - birth.getFullYear();
-            const m = today.getMonth() - birth.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-                age--;
-            }
-            if (age < 18) {
-                newErrors.dateOfBirth = FORM_VALIDATION_MESSAGES.AGE_MIN;
-            }
-        }
+    if (formData.phone?.trim() && !/^\d{10,13}$/.test(formData.phone.trim())) {
+      newErrors.phone = FORM_VALIDATION_MESSAGES.PHONE_FORMAT;
+    }
 
-        if (!formData.hireDate) {
-            newErrors.hireDate = FORM_VALIDATION_MESSAGES.START_DATE_REQUIRED;
-        }
+    if (!formData.departmentId) {
+      newErrors.departmentId = FORM_VALIDATION_MESSAGES.DEPT_REQUIRED;
+    }
+    if (!formData.positionId) {
+      newErrors.positionId = FORM_VALIDATION_MESSAGES.ROLE_REQUIRED;
+    }
 
-        if (!formData.nationalId?.trim()) {
-            newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_REQUIRED;
-        } else if (!/^\d{9}(\d{3})?$/.test(formData.nationalId.trim())) {
-            newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_FORMAT;
-        }
+    if (formData.dateOfBirth === undefined || formData.dateOfBirth === "") {
+      newErrors.dateOfBirth = FORM_VALIDATION_MESSAGES.DOB_REQUIRED;
+    } else {
+      const birth = new Date(formData.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        newErrors.dateOfBirth = FORM_VALIDATION_MESSAGES.AGE_MIN;
+      }
+    }
 
-        if (!formData.address?.trim()) {
-            newErrors.address = FORM_VALIDATION_MESSAGES.ADDRESS_REQUIRED;
-        }
+    if (!formData.hireDate) {
+      newErrors.hireDate = FORM_VALIDATION_MESSAGES.START_DATE_REQUIRED;
+    }
 
-        if (!formData.salary || formData.salary <= 0) {
-            newErrors.salary = FORM_VALIDATION_MESSAGES.SALARY_REQUIRED;
-        }
+    if (!formData.nationalId?.trim()) {
+      newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_REQUIRED;
+    } else if (!/^\d{9}(\d{3})?$/.test(formData.nationalId.trim())) {
+      newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_FORMAT;
+    }
 
-        if (!formData.bankName?.trim()) {
-            newErrors.bankName = FORM_VALIDATION_MESSAGES.BANK_NAME_REQUIRED;
-        }
+    if (!formData.socialSecurityNumber) {
+      newErrors.socialSecurityNumber =
+        FORM_VALIDATION_MESSAGES.SOCIAL_WARRANTY_NUMBER_REQUIRED;
+    } else if (!/^\d{10}$/.test(formData.socialSecurityNumber)) {
+      newErrors.socialSecurityNumber =
+        FORM_VALIDATION_MESSAGES.SOCIAL_WARRANTY_NUMBER_FORMAT;
+    }
 
-        if (!formData.bankAccountNumber?.trim()) {
-            newErrors.bankAccountNumber = FORM_VALIDATION_MESSAGES.BANK_ACC_REQUIRED;
-        } else if (!/^\d{4,20}$/.test(formData.bankAccountNumber.trim())) {
-            newErrors.bankAccountNumber = FORM_VALIDATION_MESSAGES.BANK_ACC_FORMAT;
-        }
+    if (!formData.address?.trim()) {
+      newErrors.address = FORM_VALIDATION_MESSAGES.ADDRESS_REQUIRED;
+    }
 
-        setErrors(newErrors);
-        if (Object.keys(newErrors).length > 0) {
-            toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
-        }
-        return Object.keys(newErrors).length === 0;
-    };
+    if (!formData.salary || formData.salary <= 0) {
+      newErrors.salary = FORM_VALIDATION_MESSAGES.SALARY_REQUIRED;
+    }
 
-    const hasError = (field: string) => !!errors[field];
-    const inputClass = (field: string) =>
-        `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${hasError(field)
-            ? "border-red-500 focus:ring-red-500"
-            : "border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary"
-        }`;
-    const selectClass = (field: string) =>
-        `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-white ${hasError(field)
-            ? "border-red-500 focus:ring-red-500"
-            : "border border-gray-200 dark:border-gray-800"
-        }`;
+    if (!formData.bankName?.trim()) {
+      newErrors.bankName = FORM_VALIDATION_MESSAGES.BANK_NAME_REQUIRED;
+    }
 
-    const selectedPosition = positions.find(p => p.id === formData.positionId);
-    const isManagerPosition = selectedPosition ? selectedPosition.level >= MANAGER_LEVEL : false;
+    if (!formData.bankAccountNumber?.trim()) {
+      newErrors.bankAccountNumber = FORM_VALIDATION_MESSAGES.BANK_ACC_REQUIRED;
+    } else if (!/^\d{4,20}$/.test(formData.bankAccountNumber.trim())) {
+      newErrors.bankAccountNumber = FORM_VALIDATION_MESSAGES.BANK_ACC_FORMAT;
+    }
 
-    // Load common lookups
-    useEffect(() => {
-        if (open) {
-            lookupService.getDepartments().then(setDepartments);
-            lookupService.getManagers().then(setManagers).catch(() => setManagers([]));
-        }
-    }, [open]);
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+    }
+    return Object.keys(newErrors).length === 0;
+  };
 
-    // Mode handling: Reset or Load data
-    useEffect(() => {
-        if (open) {
-            if (mode === "create") {
-                setFormData(INITIAL_FORM_STATE);
-                setErrors({});
-            } else if (mode === "edit" && employee) {
-                setFormData({
-                    firstName: employee.firstName,
-                    lastName: employee.lastName,
-                    email: employee.email,
-                    phone: employee.phone || "",
-                    dateOfBirth: employee.dateOfBirth,
-                    hireDate: employee.hireDate,
-                    departmentId: employee.departmentId || 0,
-                    positionId: employee.positionId || 0,
-                    salary: employee.salary || 0,
-                    address: employee.address || "",
-                    city: employee.city || "",
-                    state: employee.state || "",
-                    zipCode: employee.zipCode || "",
-                    country: employee.country || "",
-                    emergencyContactName: employee.emergencyContactName || "",
-                    emergencyContactPhone: employee.emergencyContactPhone || "",
-                    emergencyContactRelation: employee.emergencyContactRelation || "",
-                    taxId: employee.taxId || "",
-                    socialSecurityNumber: employee.socialSecurityNumber || "",
-                    nationalId: employee.nationalId || "",
-                    bankAccountNumber: employee.bankAccountNumber || "",
-                    bankName: employee.bankName || "",
-                    bankBranch: employee.bankBranch || "",
-                    reportingManagerId: employee.reportingManagerId || undefined,
-                    contractType: employee.contractType || "FULL_TIME",
-                    probationEndDate: employee.probationEndDate || undefined,
-                    contractEndDate: employee.contractEndDate || undefined,
-                    workLocation: employee.workLocation || "",
-                    nationality: employee.nationality || "Việt Nam",
-                    bloodGroup: employee.bloodGroup || "",
-                    gender: employee.gender || "MALE",
-                    avatarUrl: employee.avatarUrl || "",
-                    notes: employee.notes || "",
-                });
-                setErrors({});
-            }
-        }
-    }, [open, mode, employee]);
+  const hasError = (field: string) => !!errors[field];
+  const inputClass = (field: string) =>
+    `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${
+      hasError(field)
+        ? "border-red-500 focus:ring-red-500"
+        : "border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary"
+    }`;
+  const selectClass = (field: string) =>
+    `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-white ${
+      hasError(field)
+        ? "border-red-500 focus:ring-red-500"
+        : "border border-gray-200 dark:border-gray-800"
+    }`;
 
-    // Handle mapping when only string name is available (for safety/backward compat)
-    useEffect(() => {
-        if (open && mode === "edit" && departments.length > 0 && employee && !formData.departmentId) {
-            const dept = departments.find(d => d.name === employee.department);
-            if (dept) {
-                setFormData(prev => ({ ...prev, departmentId: dept.id }));
-            }
-        }
-    }, [open, mode, departments, employee, formData.departmentId]);
+  const selectedPosition = positions.find((p) => p.id === formData.positionId);
+  const isManagerPosition = selectedPosition
+    ? selectedPosition.level >= MANAGER_LEVEL
+    : false;
 
-    // Load positions when department changes
-    useEffect(() => {
-        if (formData.departmentId) {
-            setPositionsLoading(true);
-            lookupService.getPositions(formData.departmentId).then(posList => {
-                setPositions(posList);
-                // In edit mode, if we just changed department, check if the old position title exists in the new list
-                if (mode === "edit" && employee && !formData.positionId) {
-                    const pos = posList.find(p => p.title === employee.position);
-                    if (pos) {
-                        setFormData(prev => ({ ...prev, positionId: pos.id }));
-                    }
-                }
-            }).finally(() => setPositionsLoading(false));
-        } else {
-            setPositions([]);
-        }
-    }, [formData.departmentId, formData.positionId, mode, employee]);
+  // Load common lookups
+  useEffect(() => {
+    if (open) {
+      lookupService.getDepartments().then(setDepartments);
+      lookupService
+        .getManagers()
+        .then(setManagers)
+        .catch(() => setManagers([]));
+    }
+  }, [open]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => {
-            const updated = {
-                ...prev,
-                [name]: name === "departmentId" || name === "positionId" || name === "salary"
-                    ? Number(value)
-                    : name === "reportingManagerId"
-                        ? (value === "" ? undefined : Number(value))
-                        : value
-            };
-            if (name === "departmentId") {
-                updated.positionId = 0;
-                updated.reportingManagerId = undefined;
-                setPositions([]);
-            }
-            return updated;
+  // Mode handling: Reset or Load data
+  useEffect(() => {
+    if (open) {
+      if (mode === "create") {
+        setFormData(INITIAL_FORM_STATE);
+        setErrors({});
+      } else if (mode === "edit" && employee) {
+        setFormData({
+          firstName: employee.firstName,
+          lastName: employee.lastName,
+          email: employee.email,
+          phone: employee.phone || "",
+          dateOfBirth: employee.dateOfBirth,
+          hireDate: employee.hireDate,
+          departmentId: employee.departmentId || 0,
+          positionId: employee.positionId || 0,
+          salary: employee.salary || 0,
+          address: employee.address || "",
+          city: employee.city || "",
+          state: employee.state || "",
+          zipCode: employee.zipCode || "",
+          country: employee.country || "",
+          emergencyContactName: employee.emergencyContactName || "",
+          emergencyContactPhone: employee.emergencyContactPhone || "",
+          emergencyContactRelation: employee.emergencyContactRelation || "",
+          taxId: employee.taxId || "",
+          socialSecurityNumber: employee.socialSecurityNumber || "",
+          nationalId: employee.nationalId || "",
+          bankAccountNumber: employee.bankAccountNumber || "",
+          bankName: employee.bankName || "",
+          bankBranch: employee.bankBranch || "",
+          reportingManagerId: employee.reportingManagerId || undefined,
+          contractType: employee.contractType || "FULL_TIME",
+          probationEndDate: employee.probationEndDate || undefined,
+          contractEndDate: employee.contractEndDate || undefined,
+          workLocation: employee.workLocation || "",
+          nationality: employee.nationality || "Việt Nam",
+          bloodGroup: employee.bloodGroup || "",
+          gender: employee.gender || "MALE",
+          avatarUrl: employee.avatarUrl || "",
+          notes: employee.notes || "",
         });
+        setErrors({});
+      }
+    }
+  }, [open, mode, employee]);
 
-        setErrors(prev => {
-            const next = { ...prev };
-            delete next[name];
-            return next;
-        });
-    };
+  // Handle mapping when only string name is available (for safety/backward compat)
+  useEffect(() => {
+    if (
+      open &&
+      mode === "edit" &&
+      departments.length > 0 &&
+      employee &&
+      !formData.departmentId
+    ) {
+      const dept = departments.find((d) => d.name === employee.department);
+      if (dept) {
+        setFormData((prev) => ({ ...prev, departmentId: dept.id }));
+      }
+    }
+  }, [open, mode, departments, employee, formData.departmentId]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (mode === "edit" && !employeeId) {return;}
-
-        if (!validateForm()) {return;}
-
-        const payload: EmployeeRequest = {
-            ...formData,
-            phone: formData.phone?.trim() || undefined,
-            nationalId: formData.nationalId?.trim() || undefined,
-            address: formData.address?.trim() || undefined,
-            city: formData.city?.trim() || undefined,
-            state: formData.state?.trim() || undefined,
-            zipCode: formData.zipCode?.trim() || undefined,
-            country: formData.country?.trim() || undefined,
-            emergencyContactName: formData.emergencyContactName?.trim() || undefined,
-            emergencyContactPhone: formData.emergencyContactPhone?.trim() || undefined,
-            emergencyContactRelation: formData.emergencyContactRelation?.trim() || undefined,
-            bankName: formData.bankName?.trim() || undefined,
-            bankAccountNumber: formData.bankAccountNumber?.trim() || undefined,
-            bankBranch: formData.bankBranch?.trim() || undefined,
-            taxId: formData.taxId?.trim() || undefined,
-            socialSecurityNumber: formData.socialSecurityNumber?.trim() || undefined,
-            workLocation: formData.workLocation?.trim() || undefined,
-            notes: formData.notes?.trim() || undefined,
-            nationality: formData.nationality?.trim() || undefined,
-        };
-
-        setLoading(true);
-        try {
-            if (mode === "create") {
-                await employeeService.createEmployee(payload);
-                toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_SUCCESS);
-            } else {
-                await employeeService.updateEmployee(employeeId!, payload);
-                toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_SUCCESS);
+  // Load positions when department changes
+  useEffect(() => {
+    if (formData.departmentId) {
+      setPositionsLoading(true);
+      lookupService
+        .getPositions(formData.departmentId)
+        .then((posList) => {
+          setPositions(posList);
+          // In edit mode, if we just changed department, check if the old position title exists in the new list
+          if (mode === "edit" && employee && !formData.positionId) {
+            const pos = posList.find((p) => p.title === employee.position);
+            if (pos) {
+              setFormData((prev) => ({ ...prev, positionId: pos.id }));
             }
-            onSuccess();
-        } catch (error: unknown) {
-            console.error(error);
-            if (applyServerValidationErrors(error)) {return;}
+          }
+        })
+        .finally(() => setPositionsLoading(false));
+    } else {
+      setPositions([]);
+    }
+  }, [formData.departmentId, formData.positionId, mode, employee]);
 
-            const rawMessage = (error as ApiError)?.response?.data?.message;
-            const errMsg = mode === "create" ? SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_ERROR : SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_ERROR;
-            const msg = rawMessage === "Request body is invalid or missing. Please check the JSON format"
-                ? SYSTEM_MESSAGES.EMPLOYEE.MSG_VALIDATION_ERROR
-                : rawMessage || errMsg;
-            toast.error(msg);
-        } finally {
-            setLoading(false);
-        }
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]:
+          name === "departmentId" || name === "positionId" || name === "salary"
+            ? Number(value)
+            : name === "reportingManagerId"
+              ? value === ""
+                ? undefined
+                : Number(value)
+              : value,
+      };
+      if (name === "departmentId") {
+        updated.positionId = 0;
+        updated.reportingManagerId = undefined;
+        setPositions([]);
+      }
+      return updated;
+    });
+
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setFormData((prev) => ({ ...prev, avatarUrl: url }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mode === "edit" && !employeeId) {
+      return;
+    }
+
+    if (!validateForm()) {
+      return;
+    }
+
+    const payload: EmployeeRequest = {
+      ...formData,
+      phone: formData.phone?.trim() || undefined,
+      nationalId: formData.nationalId?.trim() || undefined,
+      address: formData.address?.trim() || undefined,
+      city: formData.city?.trim() || undefined,
+      state: formData.state?.trim() || undefined,
+      zipCode: formData.zipCode?.trim() || undefined,
+      country: formData.country?.trim() || undefined,
+      emergencyContactName: formData.emergencyContactName?.trim() || undefined,
+      emergencyContactPhone:
+        formData.emergencyContactPhone?.trim() || undefined,
+      emergencyContactRelation:
+        formData.emergencyContactRelation?.trim() || undefined,
+      bankName: formData.bankName?.trim() || undefined,
+      bankAccountNumber: formData.bankAccountNumber?.trim() || undefined,
+      bankBranch: formData.bankBranch?.trim() || undefined,
+      taxId: formData.taxId?.trim() || undefined,
+      socialSecurityNumber: formData.socialSecurityNumber?.trim() || undefined,
+      workLocation: formData.workLocation?.trim() || undefined,
+      notes: formData.notes?.trim() || undefined,
+      nationality: formData.nationality?.trim() || undefined,
     };
 
-    if (!open) {return null;}
+    setLoading(true);
+    try {
+      if (mode === "create") {
+        await employeeService.createEmployee(payload);
+        toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_SUCCESS);
+      } else {
+        await employeeService.updateEmployee(employeeId!, payload);
+        toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_SUCCESS);
+      }
+      onSuccess();
+    } catch (error: unknown) {
+      console.error(error);
+      if (applyServerValidationErrors(error)) {
+        return;
+      }
 
-    const title = mode === "create" ? SYSTEM_MESSAGES.EMPLOYEE.MODAL_CREATE_TITLE : SYSTEM_MESSAGES.EMPLOYEE.MODAL_UPDATE_TITLE;
-    const submitBtnText = mode === "create" ? SYSTEM_MESSAGES.EMPLOYEE.BTN_CREATE : SYSTEM_MESSAGES.EMPLOYEE.BTN_SAVE_PROFILE;
-    const infoText = mode === "create" ? SYSTEM_MESSAGES.EMPLOYEE.INFO_EMP_CODE : SYSTEM_MESSAGES.EMPLOYEE.INFO_NOTE;
-    const statusColor = mode === "create" ? "bg-emerald-500" : "bg-blue-500";
+      const rawMessage = (error as ApiError)?.response?.data?.message;
+      const errMsg =
+        mode === "create"
+          ? SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_ERROR
+          : SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_ERROR;
+      const msg =
+        rawMessage ===
+        "Request body is invalid or missing. Please check the JSON format"
+          ? SYSTEM_MESSAGES.EMPLOYEE.MSG_VALIDATION_ERROR
+          : rawMessage || errMsg;
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 overflow-hidden">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+  if (!open) {
+    return null;
+  }
 
-            <div className="relative bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col transition-all animate-in fade-in zoom-in duration-200 overflow-hidden">
-                {/* HEADER */}
-                <div className="px-8 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl z-10 rounded-t-2xl">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-primary/10 text-primary rounded-xl shadow-inner-sm">
-                            <User size={22} className="drop-shadow-sm" />
-                        </div>
-                        <div className="flex flex-col">
-                            <h2 className="text-xl font-bold bg-linear-to-br from-gray-900 via-gray-800 to-gray-700 dark:from-white dark:via-gray-100 dark:to-gray-300 bg-clip-text text-transparent uppercase tracking-tight">
-                                {title}
-                            </h2>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <span className={`w-1.5 h-1.5 rounded-full ${statusColor} animate-pulse`}></span>
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{SYSTEM_MESSAGES.EMPLOYEE.SYSTEM_HR}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors">
-                        <X size={20} />
-                    </button>
-                </div>
+  const title =
+    mode === "create"
+      ? SYSTEM_MESSAGES.EMPLOYEE.MODAL_CREATE_TITLE
+      : SYSTEM_MESSAGES.EMPLOYEE.MODAL_UPDATE_TITLE;
+  const submitBtnText =
+    mode === "create"
+      ? SYSTEM_MESSAGES.EMPLOYEE.BTN_CREATE
+      : SYSTEM_MESSAGES.EMPLOYEE.BTN_SAVE_PROFILE;
+  const infoText =
+    mode === "create"
+      ? SYSTEM_MESSAGES.EMPLOYEE.INFO_EMP_CODE
+      : SYSTEM_MESSAGES.EMPLOYEE.INFO_NOTE;
+  const statusColor = mode === "create" ? "bg-emerald-500" : "bg-blue-500";
 
-                {/* FORM */}
-                <form onSubmit={handleSubmit} noValidate className="flex-1 overflow-y-auto overscroll-contain p-8 custom-scrollbar">
-                    <EmployeeFormFields
-                        formData={formData}
-                        errors={errors}
-                        handleChange={handleChange}
-                        departments={departments}
-                        positions={positions}
-                        managers={managers}
-                        positionsLoading={positionsLoading}
-                        isManagerPosition={isManagerPosition}
-                        inputClass={inputClass}
-                        selectClass={selectClass}
-                    />
+  return (
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
-                    {/* ACTIONS */}
-                    <div className="mt-12 pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                        <div className="text-xs text-gray-400 flex items-center gap-1">
-                            <Info size={14} /> {infoText}
-                        </div>
-                        <div className="flex gap-3">
-                            <button type="button" onClick={onClose} className="px-6 py-2 border border-gray-200 dark:border-gray-800 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition drop-shadow-sm">
-                                {SYSTEM_MESSAGES.BTN_CANCEL}
-                            </button>
-                            <button type="submit" disabled={loading} className="px-8 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/25 flex items-center gap-2">
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={18} />}
-                                {submitBtnText}
-                            </button>
-                        </div>
-                    </div>
-                </form>
+      <div className="relative bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col transition-all animate-in fade-in zoom-in duration-200 overflow-hidden">
+        {/* HEADER */}
+        <div className="px-8 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl z-10 rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-primary/10 text-primary rounded-xl shadow-inner-sm">
+              <User size={22} className="drop-shadow-sm" />
             </div>
+            <div className="flex flex-col">
+              <h2 className="text-xl font-bold bg-linear-to-br from-gray-900 via-gray-800 to-gray-700 dark:from-white dark:via-gray-100 dark:to-gray-300 bg-clip-text text-transparent uppercase tracking-tight">
+                {title}
+              </h2>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${statusColor} animate-pulse`}
+                ></span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  {SYSTEM_MESSAGES.EMPLOYEE.SYSTEM_HR}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors"
+          >
+            <X size={20} />
+          </button>
         </div>
-    );
+
+        {/* FORM */}
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex-1 overflow-y-auto overscroll-contain p-8 custom-scrollbar"
+        >
+          <EmployeeFormFields
+            formData={formData}
+            errors={errors}
+            handleChange={handleChange}
+            departments={departments}
+            positions={positions}
+            managers={managers}
+            positionsLoading={positionsLoading}
+            isManagerPosition={isManagerPosition}
+            inputClass={inputClass}
+            selectClass={selectClass}
+            handleImageUpload={handleImageUpload}
+          />
+
+          {/* ACTIONS */}
+          <div className="mt-12 pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <div className="text-xs text-gray-400 flex items-center gap-1">
+              <Info size={14} /> {infoText}
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2 border border-gray-200 dark:border-gray-800 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition drop-shadow-sm"
+              >
+                {SYSTEM_MESSAGES.BTN_CANCEL}
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/25 flex items-center gap-2"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save size={18} />
+                )}
+                {submitBtnText}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
