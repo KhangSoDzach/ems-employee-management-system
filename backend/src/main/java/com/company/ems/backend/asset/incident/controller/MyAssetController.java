@@ -17,6 +17,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.company.ems.backend.asset.request.dto.AssetRequestDto;
+import com.company.ems.backend.asset.request.service.AssetRequestService;
+
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class MyAssetController {
 
     private final IncidentService incidentService;
+    private final AssetRequestService requestService;
 
     @GetMapping("/my/assets")
     @PreAuthorize(RoleAuthorization.HAS_ANY)
@@ -65,5 +69,44 @@ public class MyAssetController {
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(
                 ApiResponse.success(incidentService.getMyReportDetail(id, principal)));
+    }
+
+    @PostMapping("/my/asset-requests")
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @Operation(summary = "Submit a request for a new asset")
+    public ResponseEntity<ApiResponse<AssetRequestDto.RequestDetail>> submitAssetRequest(
+            @Valid @RequestBody AssetRequestDto.SubmitRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(requestService.submitRequest(request, principal));
+    }
+
+    @PostMapping("/my/asset-requests/{id}/cancel")
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @Operation(summary = "Cancel a pending asset request")
+    public ResponseEntity<ApiResponse<AssetRequestDto.RequestDetail>> cancelAssetRequest(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(requestService.cancelRequest(id, principal));
+    }
+
+    @GetMapping("/my/asset-requests")
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @Operation(summary = "Get my asset requests history")
+    public ResponseEntity<ApiResponse<PageResponse<AssetRequestDto.RequestRow>>> getMyAssetRequests(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(
+                ApiResponse.success(requestService.getMyRequests(page, size, principal)));
+    }
+
+    @GetMapping("/my/asset-requests/{id}")
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @Operation(summary = "Get detail of my asset request")
+    public ResponseEntity<ApiResponse<AssetRequestDto.RequestDetail>> getMyAssetRequestDetail(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(
+                ApiResponse.success(requestService.getMyRequestDetail(id, principal)));
     }
 }

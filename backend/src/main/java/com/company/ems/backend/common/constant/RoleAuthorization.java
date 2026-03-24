@@ -41,5 +41,5 @@ public final class RoleAuthorization {
     public static final String HAS_PERM_LEAVE_CREATE             = "hasPermission(null, 'LEAVE_CREATE')";
     public static final String HAS_PERM_LEAVE_APPROVE            = "hasPermission(null, 'LEAVE_APPROVE')";
     public static final String HAS_PERM_LEAVE_CANCEL             = "hasPermission(null, 'LEAVE_CANCEL')";
-    public static final String HAS_PERM_LEAVE_BALANCE_READ       = "hasPermission(null, 'LEAVE_BALANCE_READ')";
+    public static final String HAS_PERM_LEAVE_BALANCE_READ       = "hasPermission(null, 'LEAVE_VIEW')";
 }

@@ -49,6 +49,9 @@ const PayrollManagement = lazy(() => import("@/features/hr/PayrollManagement"));
 const AssetReportManagement = lazy(
   () => import("./features/admin/AssetReportManagement"),
 );
+const AssetRequestManagement = lazy(
+  () => import("./features/admin/AssetRequestManagement"),
+);
 const AssetGroupManagement = lazy(
   () => import("./features/manager/AssetGroupManagement"),
 );
@@ -105,6 +108,10 @@ function App() {
               <Route
                 path="/asset-reports"
                 element={<AssetReportManagement />}
+              />
+              <Route
+                path="/asset-requests"
+                element={<AssetRequestManagement />}
               />
               <Route path="/hr-employees" element={<EmployeeManagement />} />
             </Route>

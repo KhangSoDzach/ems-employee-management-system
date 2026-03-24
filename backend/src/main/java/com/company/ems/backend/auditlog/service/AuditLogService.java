@@ -1,12 +1,17 @@
 package com.company.ems.backend.auditlog.service;
 
 import java.time.LocalDateTime;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.company.ems.backend.auditlog.dto.AuditLogFilterRequest;
 import com.company.ems.backend.auditlog.dto.AuditLogResponse;
@@ -16,6 +21,7 @@ import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.repository.AuditLogRepository;
 import com.company.ems.backend.common.dto.PageResponse;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AuditLogService {
 
         private static final String ENTITY_TYPE_AUTH = "AUTHENTICATION";
+        private static final Pattern FORWARDED_FOR_PATTERN = Pattern.compile("(?i)(?:^|;)\\s*for=\\\"?([^;\\\",]+)");
 
         public record AuditValues(String oldValue, String newValue) {}
 
@@ -109,6 +116,8 @@ public class AuditLogService {
                         RequestContext ctx) {
 
                 try {
+                        RequestContext effectiveCtx = resolveRequestContext(ctx);
+
                         AuditLog auditLog = AuditLog.builder()
                                         .entityType(entityType)
                                         .entityId(entityId)
@@ -117,10 +126,10 @@ public class AuditLogService {
                                         .identifierAttempted(identifierAttempted)
                                         .oldValue(values != null ? values.oldValue() : null)
                                         .newValue(values != null ? values.newValue() : null)
-                                        .ipAddress(ctx != null ? ctx.getIpAddress() : null)
-                                        .userAgent(ctx != null ? ctx.getUserAgent() : null)
-                                        .clientType(ctx != null ? ctx.getClientType() : "WEB")
-                                        .correlationId(ctx != null ? ctx.getCorrelationId() : null)
+                                        .ipAddress(effectiveCtx.getIpAddress())
+                                        .userAgent(effectiveCtx.getUserAgent())
+                                        .clientType(effectiveCtx.getClientType())
+                                        .correlationId(effectiveCtx.getCorrelationId())
                                         .build();
 
                         auditLogRepository.save(auditLog);
@@ -222,5 +231,133 @@ public class AuditLogService {
                         sb.append("\"result\":\"").append(result).append("\"");
                 sb.append("}");
                 return sb.toString();
+        }
+
+        private RequestContext resolveRequestContext(RequestContext providedCtx) {
+                String ip = nullIfBlank(providedCtx != null ? providedCtx.getIpAddress() : null);
+                String userAgent = nullIfBlank(providedCtx != null ? providedCtx.getUserAgent() : null);
+                String clientType = nullIfBlank(providedCtx != null ? providedCtx.getClientType() : null);
+                String correlationId = nullIfBlank(providedCtx != null ? providedCtx.getCorrelationId() : null);
+
+                HttpServletRequest currentRequest = currentHttpRequest();
+                if (currentRequest != null) {
+                        if (ip == null) {
+                                ip = extractClientIp(currentRequest);
+                        }
+                        if (userAgent == null) {
+                                userAgent = nullIfBlank(currentRequest.getHeader("User-Agent"));
+                        }
+                        if (correlationId == null) {
+                                correlationId = firstNonBlank(
+                                                currentRequest.getHeader("X-Correlation-ID"),
+                                                currentRequest.getHeader("X-Correlation-Id"),
+                                                currentRequest.getHeader("X-Request-ID"),
+                                                currentRequest.getHeader("X-Request-Id"));
+                        }
+                }
+
+                if (clientType == null) {
+                        clientType = inferClientType(userAgent);
+                }
+
+                return RequestContext.builder()
+                                .ipAddress(ip)
+                                .userAgent(userAgent)
+                                .clientType(clientType)
+                                .correlationId(correlationId)
+                                .build();
+        }
+
+        private HttpServletRequest currentHttpRequest() {
+                RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+                if (attributes instanceof ServletRequestAttributes servletAttrs) {
+                        return servletAttrs.getRequest();
+                }
+                return null;
+        }
+
+        private String extractClientIp(HttpServletRequest request) {
+                String ip = firstNonBlank(
+                                firstIpFromHeader(request.getHeader("X-Forwarded-For")),
+                                firstIpFromForwardedHeader(request.getHeader("Forwarded")),
+                                request.getHeader("X-Real-IP"),
+                                request.getHeader("CF-Connecting-IP"),
+                                request.getHeader("True-Client-IP"),
+                                request.getRemoteAddr());
+                return normalizeIp(ip);
+        }
+
+        private String firstIpFromHeader(String value) {
+                String nonBlank = nullIfBlank(value);
+                if (nonBlank == null) {
+                        return null;
+                }
+                int commaIdx = nonBlank.indexOf(',');
+                String candidate = commaIdx >= 0 ? nonBlank.substring(0, commaIdx) : nonBlank;
+                return normalizeIp(candidate);
+        }
+
+        private String firstIpFromForwardedHeader(String forwarded) {
+                String nonBlank = nullIfBlank(forwarded);
+                if (nonBlank == null) {
+                        return null;
+                }
+                Matcher matcher = FORWARDED_FOR_PATTERN.matcher(nonBlank);
+                if (!matcher.find()) {
+                        return null;
+                }
+                return normalizeIp(matcher.group(1));
+        }
+
+        private String normalizeIp(String value) {
+                String candidate = nullIfBlank(value);
+                if (candidate == null) {
+                        return null;
+                }
+                if ("unknown".equalsIgnoreCase(candidate)) {
+                        return null;
+                }
+                if (candidate.startsWith("[") && candidate.endsWith("]") && candidate.length() > 2) {
+                        candidate = candidate.substring(1, candidate.length() - 1);
+                }
+                return candidate;
+        }
+
+        private String inferClientType(String userAgent) {
+                String ua = nullIfBlank(userAgent);
+                if (ua == null) {
+                        return "WEB";
+                }
+                String lower = ua.toLowerCase();
+                if (lower.contains("okhttp") || lower.contains("android") || lower.contains("ios")
+                                || lower.contains("dart") || lower.contains("flutter")) {
+                        return "MOBILE";
+                }
+                if (lower.contains("python") || lower.contains("java/") || lower.contains("go-http")
+                                || lower.contains("curl") || lower.contains("postman") || lower.contains("axios")) {
+                        return "API";
+                }
+                return "WEB";
+        }
+
+        private String firstNonBlank(String... values) {
+                if (values == null) {
+                        return null;
+                }
+                for (String value : values) {
+                        String nonBlank = nullIfBlank(value);
+                        if (nonBlank != null) {
+                                return nonBlank;
+                        }
+                }
+                return null;
+        }
+
+        private String nullIfBlank(String value) {
+                if (value == null) {
+                        return null;
+                }
+                String trimmed = value.trim();
+                return trimmed.isEmpty() ? null : trimmed;
         }
 }

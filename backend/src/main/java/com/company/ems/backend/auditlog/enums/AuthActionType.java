@@ -49,5 +49,17 @@ public enum AuthActionType {
     ASSET_REPORT_APPROVED,
 
     /** Asset Incident Report was rejected by HR/Admin. */
-    ASSET_REPORT_REJECTED
+    ASSET_REPORT_REJECTED,
+
+    /** Asset request was submitted. */
+    ASSET_REQUEST_SUBMITTED,
+
+    /** Asset request was approved. */
+    ASSET_REQUEST_APPROVED,
+
+    /** Asset request was rejected. */
+    ASSET_REQUEST_REJECTED,
+
+    /** Asset request was cancelled by employee. */
+    ASSET_REQUEST_CANCELLED
 }

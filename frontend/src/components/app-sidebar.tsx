@@ -143,6 +143,10 @@ export function AppSidebar({
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_REPORTS,
                   url: "/asset-reports",
                 },
+                {
+                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ASSET_REQUESTS,
+                  url: "/asset-requests",
+                },
               ],
             },
           ]
@@ -195,6 +199,10 @@ export function AppSidebar({
                   {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_REPORTS,
                     url: "/asset-reports",
+                  },
+                  {
+                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ASSET_REQUESTS,
+                    url: "/asset-requests",
                   },
                 ],
               },
