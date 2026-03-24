@@ -2,6 +2,7 @@ package com.company.ems.backend.attendance.service;
 
 import java.time.LocalDate;
 
+import com.company.ems.backend.attendance.dto.AttendanceCalendarResponse;
 import com.company.ems.backend.attendance.dto.AttendanceResponse;
 import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
 import com.company.ems.backend.attendance.dto.CheckInRequest;
@@ -78,5 +79,17 @@ public interface AttendanceService {
             Long employeeId,
             LocalDate startDate,
             LocalDate endDate,
+            CustomUserPrincipal principal);
+
+    /**
+     * Returns monthly calendar data with summary cards and trend versus previous month.
+     *
+     * @param employeeId optional employee id (admins/managers may view others)
+     * @param month      target month in yyyy-MM format
+     * @param principal  authenticated principal
+     */
+    AttendanceCalendarResponse getMonthlyCalendar(
+            Long employeeId,
+            String month,
             CustomUserPrincipal principal);
 }

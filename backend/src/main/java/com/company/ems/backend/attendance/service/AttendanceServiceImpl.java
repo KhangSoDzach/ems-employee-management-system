@@ -3,6 +3,11 @@ package com.company.ems.backend.attendance.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.data.domain.Page;
@@ -11,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.company.ems.backend.attendance.dto.AttendanceCalendarResponse;
 import com.company.ems.backend.attendance.dto.AttendanceResponse;
 import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
 import com.company.ems.backend.attendance.dto.CheckInRequest;
@@ -29,7 +35,6 @@ import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.service.GeolocationService;
 import com.company.ems.backend.common.service.PhotoStorageService;
 import com.company.ems.backend.config.OfficeLocationProperties;
-import com.company.ems.backend.config.StorageProperties;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 
@@ -42,13 +47,14 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class AttendanceServiceImpl implements AttendanceService {
 
+        private static final int FULL_WORK_DAY_MINUTES = 8 * 60;
+
         private final AttendanceRepository attendanceRepository;
         private final AttendanceMapper attendanceMapper;
         private final EmployeeRepository employeeRepository;
         private final MessageService messages;
         private final GeolocationService geolocationService;
         private final PhotoStorageService photoStorageService;
-        private final StorageProperties storageProperties;
         private final OfficeLocationProperties officeProps;
 
         // ─── Check-in ─────────────────────────────────────────────────────────────
@@ -241,6 +247,94 @@ public class AttendanceServiceImpl implements AttendanceService {
                                 .build();
         }
 
+        @Override
+        @Transactional(readOnly = true)
+        public AttendanceCalendarResponse getMonthlyCalendar(
+                        Long employeeId,
+                        String month,
+                        CustomUserPrincipal principal) {
+
+                YearMonth targetMonth = parseMonth(month);
+                Long resolvedEmployeeId = resolveEmployeeIdForQuery(employeeId, principal);
+
+                Employee employee = employeeRepository.findById(Objects.requireNonNull(resolvedEmployeeId))
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", resolvedEmployeeId));
+
+                LocalDate startDate = targetMonth.atDay(1);
+                LocalDate endDate = targetMonth.atEndOfMonth();
+
+                List<Attendance> currentMonthAttendances = attendanceRepository
+                                .findByEmployeeIdAndDateBetweenOrderByDateAsc(resolvedEmployeeId, startDate, endDate);
+
+                YearMonth previousMonth = targetMonth.minusMonths(1);
+                LocalDate prevStartDate = previousMonth.atDay(1);
+                LocalDate prevEndDate = previousMonth.atEndOfMonth();
+                List<Attendance> previousMonthAttendances = attendanceRepository
+                                .findByEmployeeIdAndDateBetweenOrderByDateAsc(resolvedEmployeeId, prevStartDate,
+                                                prevEndDate);
+
+                Map<LocalDate, Attendance> attendanceByDate = new HashMap<>();
+                for (Attendance attendance : currentMonthAttendances) {
+                        attendanceByDate.put(attendance.getDate(), attendance);
+                }
+
+                List<AttendanceCalendarResponse.CalendarDay> days = startDate.datesUntil(endDate.plusDays(1))
+                                .map(date -> {
+                                        Attendance attendance = attendanceByDate.get(date);
+                                        if (attendance == null) {
+                                                return AttendanceCalendarResponse.CalendarDay.builder()
+                                                                .date(date)
+                                                                .hasRecord(false)
+                                                                .build();
+                                        }
+
+                                        return AttendanceCalendarResponse.CalendarDay.builder()
+                                                        .date(date)
+                                                        .hasRecord(true)
+                                                        .status(attendance.getStatus() != null
+                                                                        ? attendance.getStatus().name()
+                                                                        : null)
+                                                        .checkInTime(attendance.getCheckInTime())
+                                                        .checkOutTime(attendance.getCheckOutTime())
+                                                        .workHours(attendance.getWorkHours())
+                                                        .isLate(Boolean.TRUE.equals(attendance.getIsLate()))
+                                                        .missingClockOut(attendance.getCheckOutTime() == null)
+                                                        .checkInMethod(attendance.getCheckInMethod() != null
+                                                                        ? attendance.getCheckInMethod().name()
+                                                                        : null)
+                                                        .notes(attendance.getNotes())
+                                                        .build();
+                                })
+                                .toList();
+
+                int currentFullWorkDays = countFullWorkDays(currentMonthAttendances);
+                int previousFullWorkDays = countFullWorkDays(previousMonthAttendances);
+
+                int currentLateDays = countByStatus(currentMonthAttendances, AttendanceStatus.LATE);
+                int previousLateDays = countByStatus(previousMonthAttendances, AttendanceStatus.LATE);
+
+                int currentNoClockOutDays = (int) attendanceRepository
+                                .countByEmployeeIdAndDateBetweenAndCheckOutTimeIsNull(resolvedEmployeeId, startDate,
+                                                endDate);
+                int previousNoClockOutDays = (int) attendanceRepository
+                                .countByEmployeeIdAndDateBetweenAndCheckOutTimeIsNull(resolvedEmployeeId, prevStartDate,
+                                                prevEndDate);
+
+                int currentAbsentDays = countByStatus(currentMonthAttendances, AttendanceStatus.ABSENT);
+                int previousAbsentDays = countByStatus(previousMonthAttendances, AttendanceStatus.ABSENT);
+
+                return AttendanceCalendarResponse.builder()
+                                .employeeId(resolvedEmployeeId)
+                                .employeeName(employee.getFirstName() + " " + employee.getLastName())
+                                .month(targetMonth.toString())
+                                .fullWorkDays(toMetric(currentFullWorkDays, previousFullWorkDays))
+                                .lateDays(toMetric(currentLateDays, previousLateDays))
+                                .noClockOutDays(toMetric(currentNoClockOutDays, previousNoClockOutDays))
+                                .absentDays(toMetric(currentAbsentDays, previousAbsentDays))
+                                .days(days)
+                                .build();
+        }
+
         // ─── Private helpers ──────────────────────────────────────────────────────
 
         private Employee resolveEmployee(CustomUserPrincipal principal) {
@@ -277,5 +371,36 @@ public class AttendanceServiceImpl implements AttendanceService {
         private String safeCode(Employee employee) {
                 return employee.getEmployeeCode() != null ? employee.getEmployeeCode()
                                 : String.valueOf(employee.getId());
+        }
+
+        private YearMonth parseMonth(String month) {
+                if (month == null || month.isBlank()) {
+                        return YearMonth.now();
+                }
+                try {
+                        return YearMonth.parse(month);
+                } catch (DateTimeParseException ex) {
+                        throw new BusinessException("INVALID_MONTH_FORMAT", "month must follow yyyy-MM format");
+                }
+        }
+
+        private int countFullWorkDays(List<Attendance> attendances) {
+                return (int) attendances.stream()
+                                .filter(a -> a.getWorkHours() != null && a.getWorkHours() >= FULL_WORK_DAY_MINUTES)
+                                .count();
+        }
+
+        private int countByStatus(List<Attendance> attendances, AttendanceStatus status) {
+                return (int) attendances.stream()
+                                .filter(a -> a.getStatus() == status)
+                                .count();
+        }
+
+        private AttendanceCalendarResponse.AttendanceMetric toMetric(int current, int previous) {
+                double changePercent = previous > 0 ? ((current - previous) * 100.0) / previous : 0.0;
+                return AttendanceCalendarResponse.AttendanceMetric.builder()
+                                .current(current)
+                                .changePercent(Math.round(changePercent * 10.0) / 10.0)
+                                .build();
         }
 }

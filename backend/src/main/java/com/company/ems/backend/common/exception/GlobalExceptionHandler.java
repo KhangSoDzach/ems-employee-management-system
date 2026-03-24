@@ -25,6 +25,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import javax.naming.AuthenticationException;
 import java.util.HashMap;
@@ -104,6 +105,23 @@ public class GlobalExceptionHandler {
                 return responseFromCode(ErrorCode.ACCESS_DENIED, req);
         }
 
+        @ExceptionHandler(BusinessException.class)
+        public ResponseEntity<ApiErrorResponse> handleBusinessException(
+                BusinessException ex, HttpServletRequest req) {
+                String code = ex.getErrorCode() != null ? ex.getErrorCode() : "BUSINESS_ERROR";
+                String message = ex.getMessage() != null ? ex.getMessage() : messageService.get(ErrorCode.VALID_REQUEST_BODY);
+                log.warn("[{}] BusinessException code={} path={}: {}", traceId(), code, req.getRequestURI(), message);
+
+                ApiErrorResponse body = ApiErrorResponse.of(
+                        HttpStatus.BAD_REQUEST.value(),
+                        code,
+                        message,
+                        req.getRequestURI(),
+                        traceId());
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        }
+
         @ExceptionHandler(ForbiddenException.class)
         public ResponseEntity<ApiErrorResponse> handleForbidden(
                 ForbiddenException ex, HttpServletRequest req) {
@@ -173,6 +191,13 @@ public class GlobalExceptionHandler {
                 HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
                 log.warn("[{}] Method not allowed method={} path={}", traceId(), ex.getMethod(), req.getRequestURI());
                 return responseFromCode(ErrorCode.VALID_METHOD_NOT_ALLOWED, req);
+        }
+
+        @ExceptionHandler(NoResourceFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleNoResourceFound(
+                NoResourceFoundException ex, HttpServletRequest req) {
+                log.warn("[{}] Resource handler miss path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                return responseFromCode(ErrorCode.RESOURCE_NOT_FOUND, req);
         }
 
         @ExceptionHandler(DataIntegrityViolationException.class)

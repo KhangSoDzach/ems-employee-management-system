@@ -1,13 +1,25 @@
-import { useState, useEffect, useCallback } from "react";
+import { useMemo, useState } from "react";
 import {
-  Search,
   Calendar,
-  Clock,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Loader2,
+  LogIn,
+  LogOut,
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import {
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameMonth,
+  isToday,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
@@ -15,127 +27,21 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 import {
   attendanceService,
-  AttendanceRecord,
-  AttendanceSummary,
+  AttendanceCalendarData,
+  AttendanceCalendarDay,
 } from "@/services/attendanceService";
 
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { ATTENDANCE_STATUS } from "@/constants/options";
 
-// ─── Formatters ───────────────────────────────────────────────────────────────
-function fmtTime(iso: string | null) {
-  if (!iso) {
-    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
-  }
-  return new Date(iso).toLocaleTimeString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+type StatusKey = NonNullable<AttendanceCalendarDay["status"]>;
 
-function fmtDate(iso: string | null) {
-  if (!iso) {
-    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
-  }
-  return format(new Date(iso), "dd/MM/yyyy");
-}
-
-function parseTimeToMinutes(iso: string | null) {
-  if (!iso) {
-    return null;
-  }
-
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) {
-    return null;
-  }
-
-  return d.getHours() * 60 + d.getMinutes();
-}
-
-function checkinClass(iso: string | null) {
-  const t = parseTimeToMinutes(iso);
-  if (t === null || t === undefined) {
-    return "text-muted-foreground";
-  }
-  return t > 8 * 60 ? "text-rose-600" : "text-emerald-600";
-}
-
-function checkoutClass(iso: string | null) {
-  const t = parseTimeToMinutes(iso);
-  if (t === null || t === undefined) {
-    return "text-muted-foreground";
-  }
-  return t < 17 * 60 ? "text-rose-600" : "text-emerald-600";
-}
-
-function workHoursStatus(minutes: number | null) {
-  if (minutes === null || minutes === undefined) {
-    return {
-      className: "text-muted-foreground",
-      lines: [SYSTEM_MESSAGES.COMMON.EMPTY_VALUE],
-    };
-  }
-
-  if (minutes < 8 * 60) {
-    return {
-      className: "text-rose-600",
-      lines: [
-        `${Math.floor(minutes / 60)}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${(
-          minutes % 60
-        )
-          .toString()
-          .padStart(2, "0")}m`,
-      ],
-    };
-  }
-
-  const base = 8 * 60;
-  const overtime = minutes - base;
-  const overtimeHours = Math.floor(overtime / 60);
-  const overtimeMinutes = overtime % 60;
-
-  const overtimeLabel =
-    overtimeMinutes === 0
-      ? `${overtimeHours} ${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`
-      : `${overtimeHours} ${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${overtimeMinutes.toString().padStart(2, "0")}m`;
-
-  return {
-    className: "text-emerald-600",
-    lines:
-      overtime === 0
-        ? [`${Math.floor(minutes / 60)}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`]
-        : [
-            `8 ${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`,
-            `+${overtimeLabel} over time`,
-          ],
-  };
-}
-
-type StatusKey = AttendanceRecord["status"];
-
-function statusInfo(s: StatusKey): { label: string; cls: string } {
-  const map: Record<string, { label: string; cls: string }> = {
+function statusInfo(status: AttendanceCalendarDay["status"]) {
+  const map: Record<StatusKey, { label: string; cls: string }> = {
     PRESENT: {
       label: ATTENDANCE_STATUS.PRESENT.label,
       cls: ATTENDANCE_STATUS.PRESENT.cls,
@@ -157,117 +63,144 @@ function statusInfo(s: StatusKey): { label: string; cls: string } {
       cls: ATTENDANCE_STATUS.ON_LEAVE.cls,
     },
   };
-  return map[s] ?? { label: s, cls: "bg-muted text-muted-foreground" };
+
+  if (!status) {
+    return {
+      label: SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
+      cls: "bg-muted text-muted-foreground",
+    };
+  }
+
+  return (
+    map[status] ?? { label: status, cls: "bg-muted text-muted-foreground" }
+  );
 }
 
-// ─── Summary Card ─────────────────────────────────────────────────────────────
-function SummaryCard({
-  label,
+function fmtTime(iso: string | null) {
+  if (!iso) {
+    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  }
+  return new Date(iso).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatWorkHours(minutes: number | null) {
+  if (minutes === null || minutes === undefined) {
+    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  }
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins === 0
+    ? `${hours}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`
+    : `${hours}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${mins}m`;
+}
+
+function formatTrend(value: number) {
+  const rounded = Math.round(value * 10) / 10;
+  return `${rounded > 0 ? "+" : ""}${rounded}%`;
+}
+
+function MetricCard({
+  title,
   value,
-  sub,
+  trend,
   color,
   loading,
-}: {
-  label: string;
-  value: string;
-  sub: string;
+}: Readonly<{
+  title: string;
+  value: number;
+  trend: number;
   color: string;
   loading?: boolean;
-}) {
+}>) {
   return (
     <Card className="card-border">
       <CardContent className="p-5">
-        <p className="section-title-muted mb-1">{label}</p>
+        <p className="section-title-muted mb-1">{title}</p>
         {loading ? (
           <Loader2 className="w-5 h-5 animate-spin my-1 text-muted-foreground" />
         ) : (
           <p className={`text-3xl font-extrabold ${color}`}>{value}</p>
         )}
-        <p className="text-xs text-muted-foreground mt-1">{sub}</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {loading ? "…" : formatTrend(trend)}{" "}
+          {SYSTEM_MESSAGES.ATTENDANCE_HIST.COMPARE_PREV_MONTH}
+        </p>
       </CardContent>
     </Card>
   );
 }
 
-const PAGE_SIZE = 10;
+const WEEKDAY_LABELS = ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"];
 
 export default function AttendanceHistoryPage() {
   const effectiveRole = useEffectiveRole();
+  const [viewMonth, setViewMonth] = useState<Date>(startOfMonth(new Date()));
+  const [selectedDateOverride, setSelectedDateOverride] = useState<
+    string | null
+  >(null);
 
-  // ── Filters ───────────────────────────────────────────────────────────────
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [page, setPage] = useState(0);
+  const monthParam = format(viewMonth, "yyyy-MM");
 
-  const now = new Date();
-  const [startDate] = useState(format(startOfMonth(now), "yyyy-MM-dd"));
-  const [endDate] = useState(format(endOfMonth(now), "yyyy-MM-dd"));
-
-  // ── Data ──────────────────────────────────────────────────────────────────
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [summary, setSummary] = useState<AttendanceSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const status = filterStatus === "all" ? undefined : filterStatus;
-      const histPage = await attendanceService.getAttendance({
-        page,
-        size: PAGE_SIZE,
-        startDate,
-        endDate,
-        status,
-      });
-      setRecords(histPage.content);
-      setTotalElements(histPage.totalElements);
-      setTotalPages(histPage.totalPages);
-    } catch {
-      setRecords([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, filterStatus, startDate, endDate]);
-
-  const fetchSummary = useCallback(async () => {
-    setSummaryLoading(true);
-    try {
-      const sum = await attendanceService.getSummary({ startDate, endDate });
-      setSummary(sum);
-    } catch {
-      setSummary(null);
-    } finally {
-      setSummaryLoading(false);
-    }
-  }, [startDate, endDate]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-  useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
-
-  // Reset page on filter change
-  useEffect(() => {
-    setPage(0);
-  }, [filterStatus]);
-
-  // ── Client-side search (on current page) ──────────────────────────────────
-  const filtered = records.filter((r) => {
-    if (!search) {
-      return true;
-    }
-    const d = fmtDate(r.date).toLowerCase();
-    const s = statusInfo(r.status).label.toLowerCase();
-    const q = search.toLowerCase();
-    return d.includes(q) || s.includes(q);
+  const calendarQuery = useQuery<AttendanceCalendarData>({
+    queryKey: ["attendance", "calendar", monthParam],
+    queryFn: () => attendanceService.getCalendar({ month: monthParam }),
+    retry: 1,
+    retryDelay: 400,
   });
 
-  const monthLabel = format(now, "MM/yyyy");
+  const dayMap = useMemo(() => {
+    const map = new Map<string, AttendanceCalendarDay>();
+    for (const day of calendarQuery.data?.days ?? []) {
+      map.set(day.date, day);
+    }
+    return map;
+  }, [calendarQuery.data?.days]);
+
+  const monthStart = startOfMonth(viewMonth);
+  const monthEnd = endOfMonth(viewMonth);
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+  const calendarCells = useMemo(() => {
+    const dates: Date[] = [];
+    for (
+      let cursor = gridStart;
+      cursor <= gridEnd;
+      cursor = new Date(
+        cursor.getFullYear(),
+        cursor.getMonth(),
+        cursor.getDate() + 1,
+      )
+    ) {
+      dates.push(cursor);
+    }
+    return dates;
+  }, [gridStart, gridEnd]);
+
+  const selectedDate = useMemo(() => {
+    if (selectedDateOverride && dayMap.has(selectedDateOverride)) {
+      return selectedDateOverride;
+    }
+
+    if (!calendarQuery.data) {
+      return null;
+    }
+
+    const todayKey = format(new Date(), "yyyy-MM-dd");
+    const hasTodayInMonth = calendarQuery.data.days.some(
+      (d) => d.date === todayKey,
+    );
+    if (hasTodayInMonth && todayKey.startsWith(monthParam)) {
+      return todayKey;
+    }
+
+    return calendarQuery.data.days[0]?.date ?? null;
+  }, [calendarQuery.data, dayMap, monthParam, selectedDateOverride]);
+
+  const selectedDay = selectedDate ? dayMap.get(selectedDate) : null;
 
   return (
     <SidebarProvider>
@@ -276,7 +209,6 @@ export default function AttendanceHistoryPage() {
         <SiteHeader />
 
         <main className="page-layout-wrapper">
-          {/* Header */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="page-heading">
@@ -288,241 +220,234 @@ export default function AttendanceHistoryPage() {
             </div>
           </div>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <SummaryCard
-              label={SYSTEM_MESSAGES.ATTENDANCE.STATS_PRESENT}
-              value={
-                summary
-                  ? String(summary.presentDays)
-                  : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
-              }
-              sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <MetricCard
+              title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_FULL_WORK_DAYS}
+              value={calendarQuery.data?.fullWorkDays.current ?? 0}
+              trend={calendarQuery.data?.fullWorkDays.changePercent ?? 0}
               color="text-emerald-600"
-              loading={summaryLoading}
+              loading={calendarQuery.isLoading}
             />
-            <SummaryCard
-              label={SYSTEM_MESSAGES.ATTENDANCE.STATS_LATE}
-              value={
-                summary
-                  ? String(summary.lateDays)
-                  : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
-              }
-              sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
+            <MetricCard
+              title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_LATE_DAYS}
+              value={calendarQuery.data?.lateDays.current ?? 0}
+              trend={calendarQuery.data?.lateDays.changePercent ?? 0}
               color="text-amber-600"
-              loading={summaryLoading}
+              loading={calendarQuery.isLoading}
             />
-            <SummaryCard
-              label={SYSTEM_MESSAGES.ATTENDANCE.STATS_ABSENT}
-              value={
-                summary
-                  ? String(summary.absentDays)
-                  : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
-              }
-              sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
-              color="text-red-600"
-              loading={summaryLoading}
+            <MetricCard
+              title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_NO_CLOCK_OUT_DAYS}
+              value={calendarQuery.data?.noClockOutDays.current ?? 0}
+              trend={calendarQuery.data?.noClockOutDays.changePercent ?? 0}
+              color="text-violet-600"
+              loading={calendarQuery.isLoading}
             />
-            <SummaryCard
-              label={SYSTEM_MESSAGES.ATTENDANCE.STATS_WORK_HOURS}
-              value={
-                summary
-                  ? `${summary.totalWorkHours.toFixed(1)}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`
-                  : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE
-              }
-              sub={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(monthLabel)}
-              color="text-foreground"
-              loading={summaryLoading}
+            <MetricCard
+              title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_ABSENT_DAYS}
+              value={calendarQuery.data?.absentDays.current ?? 0}
+              trend={calendarQuery.data?.absentDays.changePercent ?? 0}
+              color="text-rose-600"
+              loading={calendarQuery.isLoading}
             />
           </div>
 
-          {/* Data Table */}
-          <Card className="card-border">
-            <CardHeader className="pb-4">
-              <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-                <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-primary" />
-                  {SYSTEM_MESSAGES.ATTENDANCE_HIST.TABLE_TITLE}
-                </CardTitle>
-
-                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder={SYSTEM_MESSAGES.SEARCH_PLACEHOLDER}
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="pl-9 h-9 w-full sm:w-64 text-sm"
-                    />
-                  </div>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="h-9 w-full sm:w-44 text-sm">
-                      <SelectValue
-                        placeholder={
-                          SYSTEM_MESSAGES.ATTENDANCE_HIST
-                            .FILTER_STATUS_PLACEHOLDER
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        {SYSTEM_MESSAGES.LABEL_ALL}
-                      </SelectItem>
-                      <SelectItem value="PRESENT">
-                        {SYSTEM_MESSAGES.STATUS.PRESENT}
-                      </SelectItem>
-                      <SelectItem value="LATE">
-                        {SYSTEM_MESSAGES.STATUS.LATE}
-                      </SelectItem>
-                      <SelectItem value="ABSENT">
-                        {SYSTEM_MESSAGES.STATUS.ABSENT}
-                      </SelectItem>
-                      <SelectItem value="HALF_DAY">
-                        {SYSTEM_MESSAGES.STATUS.HALF_DAY}
-                      </SelectItem>
-                      <SelectItem value="ON_LEAVE">
-                        {SYSTEM_MESSAGES.STATUS.ON_LEAVE}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="flex justify-center py-16">
-                  <Loader2 className="w-7 h-7 animate-spin text-muted-foreground" />
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                  <Calendar className="w-12 h-12 mb-3 opacity-30" />
-                  <p className="text-sm font-medium">
-                    {SYSTEM_MESSAGES.NO_DATA}
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/40 hover:bg-muted/40">
-                      <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">
-                        {SYSTEM_MESSAGES.ATTENDANCE.TABLE_DATE}
-                      </TableHead>
-                      <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">
-                        {SYSTEM_MESSAGES.ATTENDANCE.TABLE_CHECKIN}
-                      </TableHead>
-                      <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">
-                        {SYSTEM_MESSAGES.ATTENDANCE.TABLE_CHECKOUT}
-                      </TableHead>
-                      <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">
-                        {SYSTEM_MESSAGES.ATTENDANCE.TABLE_WORK_HOURS}
-                      </TableHead>
-                      <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">
-                        {SYSTEM_MESSAGES.ATTENDANCE.TABLE_METHOD}
-                      </TableHead>
-                      <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">
-                        {SYSTEM_MESSAGES.ATTENDANCE.TABLE_STATUS}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.map((row) => {
-                      const { label, cls } = statusInfo(row.status);
-                      const checkInCls = checkinClass(row.checkInTime);
-                      const checkOutCls = checkoutClass(row.checkOutTime);
-                      const workStatus = workHoursStatus(row.workHours);
-
-                      return (
-                        <TableRow
-                          key={row.id}
-                          className="hover:bg-muted/30 transition-colors border-border"
-                        >
-                          <TableCell className="px-6 py-4 font-medium text-foreground">
-                            {fmtDate(row.date)}
-                          </TableCell>
-                          <TableCell
-                            className={`px-6 py-4 font-medium ${checkInCls}`}
-                          >
-                            {fmtTime(row.checkInTime)}
-                          </TableCell>
-                          <TableCell
-                            className={`px-6 py-4 font-medium ${checkOutCls}`}
-                          >
-                            {fmtTime(row.checkOutTime)}
-                          </TableCell>
-                          <TableCell
-                            className={`px-6 py-4 font-semibold ${workStatus.className}`}
-                          >
-                            {workStatus.lines.map((line, index) => (
-                              <div
-                                key={`${row.id}-work-${index}`}
-                                className={
-                                  index === 0
-                                    ? ""
-                                    : "text-xs text-muted-foreground"
-                                }
-                              >
-                                {line}
-                              </div>
-                            ))}
-                          </TableCell>
-                          <TableCell className="px-6 py-4 text-xs text-muted-foreground">
-                            {row.checkInMethod === "CAMERA_GEO"
-                              ? SYSTEM_MESSAGES.COMMON.METHOD_CAMERA_GPS
-                              : row.checkInMethod === "MANUAL"
-                                ? SYSTEM_MESSAGES.COMMON.METHOD_MANUAL
-                                : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                          </TableCell>
-                          <TableCell className="px-6 py-4">
-                            <Badge
-                              variant="outline"
-                              className={`status-badge px-2.5 py-0.5 ${cls}`}
-                            >
-                              {label}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-
-              {/* Footer: count + pagination */}
-              <div className="px-6 py-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  {SYSTEM_MESSAGES.ATTENDANCE_HIST.TOTAL_PREFIX} {totalElements}{" "}
-                  {SYSTEM_MESSAGES.ATTENDANCE_HIST.UNIT_RECORDS}
-                </span>
-                {totalPages > 1 && (
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <Card className="card-border xl:col-span-3">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.CALENDAR_TITLE}
+                  </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-7 w-7"
-                      disabled={page === 0}
-                      onClick={() => setPage((p) => p - 1)}
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setSelectedDateOverride(null);
+                        setViewMonth((prev) => addMonths(prev, -1));
+                      }}
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
-                    <span>
-                      {page + 1} / {totalPages}
-                    </span>
+                    <div className="min-w-[130px] text-center font-semibold text-base">
+                      {`Tháng ${format(viewMonth, "M, yyyy")}`}
+                    </div>
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-7 w-7"
-                      disabled={page >= totalPages - 1}
-                      onClick={() => setPage((p) => p + 1)}
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setSelectedDateOverride(null);
+                        setViewMonth((prev) => addMonths(prev, 1));
+                      }}
                     >
                       <ChevronRight className="w-4 h-4" />
                     </Button>
                   </div>
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                {calendarQuery.isLoading ? (
+                  <div className="flex justify-center py-16">
+                    <Loader2 className="w-7 h-7 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-7 text-sm text-muted-foreground font-medium">
+                      {WEEKDAY_LABELS.map((label) => (
+                        <div key={label} className="px-2 py-2 text-center">
+                          {label}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden border border-border bg-border">
+                      {calendarCells.map((date) => {
+                        const dateKey = format(date, "yyyy-MM-dd");
+                        const dayData = dayMap.get(dateKey);
+                        const inCurrentMonth = isSameMonth(date, viewMonth);
+                        const active = selectedDate === dateKey;
+                        let dayNumberClass = "text-muted-foreground/60";
+                        if (inCurrentMonth) {
+                          dayNumberClass = isToday(date)
+                            ? "text-primary"
+                            : "text-foreground";
+                        }
+
+                        return (
+                          <button
+                            key={dateKey}
+                            type="button"
+                            onClick={() =>
+                              inCurrentMonth && setSelectedDateOverride(dateKey)
+                            }
+                            className={`h-[112px] bg-background p-2 text-left transition-colors ${
+                              inCurrentMonth
+                                ? "hover:bg-muted/30"
+                                : "bg-muted/20"
+                            } ${active ? "ring-2 ring-primary" : ""}`}
+                            disabled={!inCurrentMonth}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`text-sm font-semibold ${dayNumberClass}`}
+                              >
+                                {format(date, "d")}
+                              </span>
+                              {dayData?.hasRecord && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                              )}
+                            </div>
+
+                            {inCurrentMonth && dayData?.hasRecord && (
+                              <div className="mt-2 space-y-1">
+                                <Badge
+                                  variant="outline"
+                                  className={`status-badge px-2 py-0 ${statusInfo(dayData.status).cls}`}
+                                >
+                                  {statusInfo(dayData.status).label}
+                                </Badge>
+                                <p className="text-[11px] text-muted-foreground leading-tight">
+                                  {fmtTime(dayData.checkInTime)} -{" "}
+                                  {fmtTime(dayData.checkOutTime)}
+                                </p>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <Card className="card-border">
+              <CardHeader>
+                <CardTitle className="text-base font-semibold">
+                  {SYSTEM_MESSAGES.ATTENDANCE_HIST.DETAIL_TITLE}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedDay?.hasRecord ? (
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Ngày</p>
+                      <p className="font-semibold">
+                        {format(parseISO(selectedDay.date), "dd/MM/yyyy")}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">
+                        Trạng thái
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={`status-badge px-2.5 py-0.5 ${statusInfo(selectedDay.status).cls}`}
+                      >
+                        {statusInfo(selectedDay.status).label}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="rounded-lg border border-border p-3">
+                        <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                          <LogIn className="w-3.5 h-3.5" />
+                          Check-in
+                        </div>
+                        <div className="font-medium">
+                          {fmtTime(selectedDay.checkInTime)}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-border p-3">
+                        <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                          <LogOut className="w-3.5 h-3.5" />
+                          Check-out
+                        </div>
+                        <div className="font-medium">
+                          {fmtTime(selectedDay.checkOutTime)}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-border p-3">
+                        <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          Tổng giờ làm
+                        </div>
+                        <div className="font-medium">
+                          {formatWorkHours(selectedDay.workHours)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedDay.missingClockOut && (
+                      <p className="text-xs text-violet-600">
+                        Bản ghi này chưa có Clock Out.
+                      </p>
+                    )}
+
+                    {selectedDay.notes && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Ghi chú</p>
+                        <p className="text-sm whitespace-pre-wrap">
+                          {selectedDay.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.DETAIL_EMPTY}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>
