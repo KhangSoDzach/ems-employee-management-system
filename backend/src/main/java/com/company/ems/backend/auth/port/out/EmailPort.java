@@ -29,4 +29,14 @@ public interface EmailPort {
      */
     void sendAccountCredentialsEmail(String toEmail, String fullName,
                                      String username, String rawPassword);
+
+    /**
+     * Send an internal announcement email to a recipient.
+     *
+     * @param toEmail        recipient email address
+     * @param title          announcement title
+     * @param content        announcement content
+     * @param publishedAtIso publication timestamp in ISO-8601 format
+     */
+    void sendAnnouncementEmail(String toEmail, String title, String content, String publishedAtIso);
 }

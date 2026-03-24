@@ -38,6 +38,9 @@ public class CreateAnnouncementRequest {
     @Builder.Default
     private List<Long> targetIds = java.util.Collections.emptyList();
 
+    @Builder.Default
+    private Boolean sendEmail = false;
+
     public boolean requiresTargetIds() {
         return TargetAudience.BY_DEPARTMENT.equals(targetAudience) || TargetAudience.BY_ROLE.equals(targetAudience);
     }

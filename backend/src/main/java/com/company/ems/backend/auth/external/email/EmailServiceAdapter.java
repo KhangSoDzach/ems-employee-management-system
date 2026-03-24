@@ -85,6 +85,26 @@ public class EmailServiceAdapter implements EmailPort {
         }
     }
 
+      @Override
+      public void sendAnnouncementEmail(String toEmail, String title, String content, String publishedAtIso) {
+        try {
+          MimeMessage message = mailSender.createMimeMessage();
+          MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+          helper.setFrom(fromAddress);
+          helper.setTo(toEmail);
+          helper.setSubject("[EMS] Thông báo nội bộ mới: " + title);
+          helper.setText(buildAnnouncementEmailBody(title, content, publishedAtIso), true);
+
+          mailSender.send(message);
+          log.info("[EMS-EMAIL] Announcement email sent to: {}", toEmail);
+        } catch (MessagingException | org.springframework.mail.MailException e) {
+          log.error("[EMS-EMAIL] Failed to send announcement email to [{}]: {}",
+              toEmail, e.getMessage(), e);
+          throw new RuntimeException("Email delivery failed: " + e.getMessage(), e);
+        }
+      }
+
     // ──────────────────────────────────────────────────────────────
     // Private helpers
     // ──────────────────────────────────────────────────────────────
@@ -195,5 +215,39 @@ public class EmailServiceAdapter implements EmailPort {
                 </html>
                 """
                 .formatted(fullName, username, rawPassword);
+    }
+
+    private String buildAnnouncementEmailBody(String title, String content, String publishedAtIso) {
+        return """
+                <!DOCTYPE html>
+                <html lang="vi">
+                <head>
+                  <meta charset="UTF-8"/>
+                  <title>Thông báo nội bộ</title>
+                </head>
+                <body style="font-family:Arial,sans-serif;background:#f0f4f8;padding:24px;margin:0;">
+                  <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.10);">
+                    <div style="background:linear-gradient(135deg,#1a56db 0%%,#0e3f9e 100%%);padding:24px 28px;">
+                      <h2 style="margin:0;color:#ffffff;font-size:20px;">📢 Thông báo nội bộ EMS</h2>
+                    </div>
+
+                    <div style="padding:24px 28px;">
+                      <p style="margin:0 0 12px;color:#4a5568;font-size:13px;">
+                        Thời gian đăng: <strong>%s</strong>
+                      </p>
+                      <h3 style="margin:0 0 12px;color:#1a202c;font-size:18px;">%s</h3>
+                      <div style="color:#2d3748;font-size:14px;line-height:1.7;white-space:pre-line;">%s</div>
+                    </div>
+
+                    <div style="background:#f7fafc;border-top:1px solid #e2e8f0;padding:16px 28px;text-align:center;">
+                      <p style="color:#a0aec0;font-size:12px;margin:0;">
+                        Employee Management System &mdash; Email tự động, vui lòng không trả lời.
+                      </p>
+                    </div>
+                  </div>
+                </body>
+                </html>
+                """
+                .formatted(publishedAtIso, title, content);
     }
 }

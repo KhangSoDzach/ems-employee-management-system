@@ -54,5 +54,13 @@ public class Announcement extends BaseEntity {
     private TargetAudience targetAudience;
 
     @Column(nullable = false)
+    @Builder.Default
+    private Boolean emailDeliveryRequested = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer emailedRecipientCount = 0;
+
+    @Column(nullable = false)
     private LocalDateTime publishedAt;
 }

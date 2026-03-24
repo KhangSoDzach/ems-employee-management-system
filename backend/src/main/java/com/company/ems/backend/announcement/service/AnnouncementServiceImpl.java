@@ -24,6 +24,7 @@ import com.company.ems.backend.announcement.enums.TargetAudience;
 import com.company.ems.backend.announcement.repository.AnnouncementReadRepository;
 import com.company.ems.backend.announcement.repository.AnnouncementRepository;
 import com.company.ems.backend.announcement.repository.AnnouncementTargetRepository;
+import com.company.ems.backend.auth.port.out.EmailPort;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.exception.ForbiddenException;
@@ -37,9 +38,11 @@ import com.company.ems.backend.user.repository.RoleRepository;
 import com.company.ems.backend.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AnnouncementServiceImpl implements AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
@@ -49,17 +52,21 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
+    private final EmailPort emailPort;
 
     @Override
     @Transactional
     public CreateAnnouncementResponse createAnnouncement(CreateAnnouncementRequest request) {
         request.validateTargetIds();
+        boolean emailDeliveryRequested = Boolean.TRUE.equals(request.getSendEmail());
 
         Announcement announcement = Announcement.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
                 .announcementType(request.getAnnouncementType())
                 .targetAudience(request.getTargetAudience())
+                .emailDeliveryRequested(emailDeliveryRequested)
+                .emailedRecipientCount(0)
                 .publishedAt(LocalDateTime.now())
                 .build();
 
@@ -82,11 +89,46 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         announcementReadRepository.saveAll(reads);
 
+        int emailedRecipientCount = 0;
+        if (emailDeliveryRequested) {
+            emailedRecipientCount = sendAnnouncementEmails(savedAnnouncement, recipients);
+            savedAnnouncement.setEmailedRecipientCount(emailedRecipientCount);
+            announcementRepository.save(savedAnnouncement);
+        }
+
         return CreateAnnouncementResponse.builder()
                 .announcementId(savedAnnouncement.getId())
                 .recipientCount(reads.size())
+                .emailDeliveryRequested(emailDeliveryRequested)
+                .emailedRecipientCount(emailedRecipientCount)
                 .publishedAt(savedAnnouncement.getPublishedAt())
                 .build();
+    }
+
+    private int sendAnnouncementEmails(Announcement announcement, List<User> recipients) {
+        int successCount = 0;
+        String publishedAtIso = announcement.getPublishedAt().toString();
+
+        for (User recipient : recipients) {
+            String recipientEmail = recipient.getEmail();
+            if (recipientEmail == null || recipientEmail.isBlank()) {
+                continue;
+            }
+
+            try {
+                emailPort.sendAnnouncementEmail(
+                        recipientEmail,
+                        announcement.getTitle(),
+                        announcement.getContent(),
+                        publishedAtIso);
+                successCount++;
+            } catch (Exception exception) {
+                log.error("[EMS-ANNOUNCEMENT] Failed to send announcement email [announcementId={}] to [{}]: {}",
+                        announcement.getId(), recipientEmail, exception.getMessage(), exception);
+            }
+        }
+
+        return successCount;
     }
 
     @Override
