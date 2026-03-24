@@ -12,6 +12,7 @@ import {
   UserPlus,
   Search,
   FilterX,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -20,7 +21,6 @@ import {
   PageParams,
 } from "@/services/employeeService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-
 // Import Modals
 import EmployeeDetailModal from "./EmployeeDetailModal";
 import EmployeeFormModal from "./components/EmployeeFormModal";
@@ -81,22 +81,60 @@ export default function EmployeeManagementPage() {
     fetchList();
   }, [fetchList]);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm(SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_CONFIRM)) {
-      return;
-    }
-    try {
-      await employeeService.deleteEmployee(id);
-      toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_SUCCESS);
-      fetchList();
-    } catch (error: unknown) {
-      const apiError = error as {
-        response?: { data?: { message?: string; errorCode?: string } };
-      };
-      const serverMsg = apiError?.response?.data?.message;
-      const errMsg = serverMsg || SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_ERROR;
-      toast.error(errMsg);
-    }
+  const handleDelete = (id: number) => {
+    toast.custom(
+      (t) => (
+        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl p-5 w-[360px] animate-in slide-in-from-right-full">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle
+                className="text-red-600 dark:text-red-500"
+                size={20}
+              />
+            </div>
+
+            <div className="flex-1">
+              <p className="font-bold text-gray-900 dark:text-white text-base">
+                {SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_CONFIRM}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">
+                {SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_DESC}
+              </p>
+
+              <div className="flex justify-end gap-2 mt-5">
+                <button
+                  onClick={() => toast.dismiss(t)}
+                  className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
+                  {SYSTEM_MESSAGES.BTN_CANCEL}
+                </button>
+                <button
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-md shadow-red-500/20 transition"
+                  onClick={async () => {
+                    toast.dismiss(t);
+                    try {
+                      await employeeService.deleteEmployee(id);
+                      toast.success(
+                        SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_SUCCESS,
+                      );
+                      fetchList();
+                    } catch (error: any) {
+                      const errorMsg =
+                        error.response?.data?.message ||
+                        SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_ERROR;
+                      toast.error(errorMsg);
+                    }
+                  }}
+                >
+                  {SYSTEM_MESSAGES.BTN_DELETE}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+      { duration: 6000 },
+    );
   };
 
   const handleOpenDetail = (emp: EmployeeResponse) => {
@@ -133,7 +171,7 @@ export default function EmployeeManagementPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  placeholder="Tìm theo tên, email, mã NV..."
+                  placeholder={SYSTEM_MESSAGES.SEARCH_PLACEHOLDER}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10 pr-4 py-2 w-64 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
@@ -321,21 +359,21 @@ export default function EmployeeManagementPage() {
                             <button
                               onClick={() => handleOpenDetail(emp)}
                               className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition"
-                              title="Xem chi tiết"
+                              title={SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
                             >
                               <Eye size={18} />
                             </button>
                             <button
                               onClick={() => handleOpenEdit(emp)}
                               className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
-                              title="Chỉnh sửa"
+                              title={SYSTEM_MESSAGES.BTN_EDIT}
                             >
                               <Pencil size={18} />
                             </button>
                             <button
                               onClick={() => handleDelete(emp.id)}
                               className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                              title="Xóa nhân viên"
+                              title={SYSTEM_MESSAGES.BTN_DELETE}
                             >
                               <Trash2 size={18} />
                             </button>
@@ -353,7 +391,7 @@ export default function EmployeeManagementPage() {
               <div className="text-gray-500">
                 {totalElements === 0
                   ? SYSTEM_MESSAGES.NO_DATA
-                  : `Hiển thị ${from}–${to} trên ${totalElements} nhân viên`}
+                  : `${SYSTEM_MESSAGES.ASSET.PAGINATION_SHOW} ${from}–${to} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ON} ${totalElements} ${SYSTEM_MESSAGES.EMPLOYEE.LABEL_UNIT}`}
               </div>
               <div className="flex items-center gap-1.5">
                 <button

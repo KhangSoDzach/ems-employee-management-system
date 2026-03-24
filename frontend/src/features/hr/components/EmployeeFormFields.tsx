@@ -1,4 +1,5 @@
-import { Info, User } from "lucide-react";
+import React, { useState } from "react";
+import { Info, UploadCloud } from "lucide-react";
 import { EmployeeRequest } from "@/services/employeeService";
 import {
   DepartmentOption,
@@ -22,30 +23,62 @@ interface EmployeeFormFieldsProps {
   isManagerPosition: boolean;
   inputClass: (field: string) => string;
   selectClass: (field: string) => string;
+  handleImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export default function EmployeeFormFields({
-  formData,
-  errors,
-  handleChange,
-  departments,
-  positions,
-  managers,
-  positionsLoading,
-  isManagerPosition,
-  inputClass,
-  selectClass,
-}: EmployeeFormFieldsProps) {
+type Props = Readonly<EmployeeFormFieldsProps>;
+
+export default function EmployeeFormFields(props: Props) {
+  const {
+    formData,
+    errors,
+    handleChange,
+    departments,
+    positions,
+    managers,
+    positionsLoading,
+    isManagerPosition,
+    inputClass,
+    selectClass,
+    handleImageUpload,
+  } = props;
+
+  const [attachments, setAttachments] = useState<File[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  let positionLabel = "";
+
+  if (!formData.departmentId) {
+    positionLabel = SYSTEM_MESSAGES.EMPLOYEE.SELECT_DEPT;
+  } else if (positionsLoading) {
+    positionLabel = SYSTEM_MESSAGES.LOADING;
+  } else if (positions.length === 0) {
+    positionLabel = SYSTEM_MESSAGES.NO_DATA;
+  } else {
+    positionLabel = SYSTEM_MESSAGES.EMPLOYEE.SELECT_POSITION;
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {/* SECTION: PERSONAL */}
-      <div className="lg:col-span-2 space-y-6">
-        <div className="space-y-4">
-          <h4 className="flex items-center gap-2 text-xs font-bold text-primary border-l-4 border-primary pl-3 uppercase tracking-widest">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* LEFT COLUMN: PERSONAL & ADDRESS */}
+      <div className="lg:col-span-2 space-y-8">
+        {/* SECTION: BASIC INFO */}
+        <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+          <h4 className="flex items-center gap-3 text-sm font-bold text-primary border-l-4 border-primary pl-4 uppercase tracking-widest">
             {SYSTEM_MESSAGES.EMPLOYEE.SECTION_BASIC}
           </h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_LAST_NAME}{" "}
                 <span className="text-red-500">
@@ -63,7 +96,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_FIRST_NAME}{" "}
                 <span className="text-red-500">
@@ -81,7 +114,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
               )}
             </div>
-            <div className="space-y-1 col-span-2">
+            <div className="space-y-1.5 sm:col-span-2">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_COMP_EMAIL}{" "}
                 <span className="text-red-500">
@@ -100,7 +133,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.email}</p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}
               </label>
@@ -115,7 +148,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_GENDER}
               </label>
@@ -136,7 +169,7 @@ export default function EmployeeFormFields({
                 </option>
               </select>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DOB}{" "}
                 <span className="text-red-500">
@@ -156,7 +189,7 @@ export default function EmployeeFormFields({
                 </p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONAL_ID}{" "}
                 <span className="text-red-500">
@@ -174,15 +207,35 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.nationalId}</p>
               )}
             </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-500 uppercase">
+                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SOCIAL_WARRANTY_NUMBER}
+              </label>
+              <input
+                name="socialSecurityNumber"
+                value={formData.socialSecurityNumber || ""}
+                onChange={handleChange}
+                className={inputClass("socialSecurityNumber")}
+                placeholder={
+                  SYSTEM_MESSAGES.EMPLOYEE.PLACEHOLDER_SOCIAL_WARRANTY_NUMBER
+                }
+              />
+              {errors.socialSecurityNumber && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.socialSecurityNumber}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h4 className="flex items-center gap-2 text-xs font-bold text-blue-500 border-l-4 border-blue-500 pl-3 uppercase tracking-widest">
+        {/* SECTION: ADDRESS & EMERGENCY */}
+        <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+          <h4 className="flex items-center gap-3 text-sm font-bold text-blue-500 border-l-4 border-blue-500 pl-4 uppercase tracking-widest">
             {SYSTEM_MESSAGES.EMPLOYEE.LABEL_ADDRESS}
           </h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="sm:col-span-2 space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_ADDRESS}{" "}
                 <span className="text-red-500">
@@ -200,7 +253,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.address}</p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_CITY}
               </label>
@@ -215,7 +268,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.city}</p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONALITY}
               </label>
@@ -231,7 +284,7 @@ export default function EmployeeFormFields({
                 </p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.SECTION_EMERGENCY}
               </label>
@@ -250,7 +303,7 @@ export default function EmployeeFormFields({
                 </p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMERGENCY_PHONE}
               </label>
@@ -271,16 +324,99 @@ export default function EmployeeFormFields({
             </div>
           </div>
         </div>
+
+        {/* SECTION: ATTACHMENTS */}
+        <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+          <h4 className="flex items-center gap-3 text-sm font-bold text-teal-500 border-l-4 border-teal-500 pl-4 uppercase tracking-widest">
+            {SYSTEM_MESSAGES.EMPLOYEE.SECTION_ATTACHMENTS}
+          </h4>
+          <div className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer relative group">
+            <UploadCloud className="w-10 h-10 text-slate-400 group-hover:text-teal-500 group-hover:scale-110 transition-all duration-300 mb-3" />
+            <h5 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">
+              {SYSTEM_MESSAGES.EMPLOYEE.TXT_CLICK_OR_DRAG_TO_UPLOAD}
+            </h5>
+            <p className="text-xs text-slate-500">
+              {SYSTEM_MESSAGES.EMPLOYEE.TXT_SUPPORTED_FILE_TYPES}
+            </p>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              title={SYSTEM_MESSAGES.EMPLOYEE.TXT_CLICK_OR_DRAG_TO_UPLOAD}
+            />
+          </div>
+          {attachments.length > 0 && (
+            <div className="space-y-2 mt-4">
+              {attachments.map((file) => (
+                <div
+                  key={`${file.name}-${file.lastModified}`}
+                  className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                >
+                  <span className="truncate max-w-[200px] text-slate-700 dark:text-slate-300 font-medium">
+                    {file.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(attachments.indexOf(file))}
+                    className="text-red-500 hover:text-red-700 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-lg text-[10px] uppercase tracking-wider font-bold transition-colors"
+                  >
+                    Xóa
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* SECTION: JOB & FINANCE */}
-      <div className="space-y-8 bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
-        <div className="space-y-4">
-          <h4 className="flex items-center gap-2 text-xs font-bold text-indigo-500 border-l-4 border-indigo-500 pl-3 uppercase tracking-widest">
+      {/* RIGHT COLUMN: AVATAR, JOB & FINANCE */}
+      <div className="space-y-8">
+        {/* SECTION: AVATAR */}
+        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <label className="text-xs font-bold text-gray-500 uppercase mb-3 block">
+            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_AVATAR || "Avatar"}
+          </label>
+          <div className="w-full aspect-square max-h-64 mx-auto bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg flex items-center justify-center overflow-hidden relative group">
+            {formData.avatarUrl ? (
+              <img
+                src={formData.avatarUrl}
+                alt="avatar preview"
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <div className="text-center text-slate-400">
+                <UploadCloud className="w-8 h-8 mx-auto mb-2" />
+                <p className="text-xs">
+                  {SYSTEM_MESSAGES.EMPLOYEE.BTN_UPLOAD || "Upload Image"}
+                </p>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors cursor-pointer" />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              title="Select avatar image"
+            />
+          </div>
+          <input
+            name="avatarUrl"
+            placeholder="Enter avatar URL (Optional)"
+            value={formData.avatarUrl || ""}
+            onChange={handleChange}
+            className={inputClass("avatarUrl") + " mt-3 text-xs w-full"}
+          />
+        </div>
+
+        {/* SECTION: CURRENT JOB */}
+        <div className="bg-gray-50/50 dark:bg-gray-800/50 p-6 sm:p-8 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-inner space-y-6">
+          <h4 className="flex items-center gap-3 text-sm font-bold text-indigo-500 border-l-4 border-indigo-500 pl-4 uppercase tracking-widest">
             {SYSTEM_MESSAGES.EMPLOYEE.SECTION_CURRENT_JOB}
           </h4>
-          <div className="space-y-4">
-            <div className="space-y-1">
+          <div className="space-y-5">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DEPARTMENT}{" "}
                 <span className="text-red-500">
@@ -308,7 +444,7 @@ export default function EmployeeFormFields({
                 </p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_POSITION}{" "}
                 <span className="text-red-500">
@@ -325,15 +461,7 @@ export default function EmployeeFormFields({
                   " disabled:opacity-50 disabled:cursor-not-allowed"
                 }
               >
-                <option value={0}>
-                  {!formData.departmentId
-                    ? SYSTEM_MESSAGES.EMPLOYEE.SELECT_DEPT
-                    : positionsLoading
-                      ? SYSTEM_MESSAGES.LOADING
-                      : positions.length === 0
-                        ? SYSTEM_MESSAGES.NO_DATA
-                        : SYSTEM_MESSAGES.EMPLOYEE.SELECT_POSITION}
-                </option>
+                <option value={0}>{positionLabel}</option>
                 {positions.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title}
@@ -349,7 +477,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.positionId}</p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_CONTRACT}
               </label>
@@ -357,7 +485,7 @@ export default function EmployeeFormFields({
                 name="contractType"
                 value={formData.contractType}
                 onChange={handleChange}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-bold bg-white"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-bold bg-white dark:bg-gray-900 transition-all focus:ring-2 focus:ring-primary/20"
               >
                 <option value="FULL_TIME">
                   {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.FULL_TIME}
@@ -379,7 +507,7 @@ export default function EmployeeFormFields({
                 </option>
               </select>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_JOIN_DATE}{" "}
                 <span className="text-red-500">
@@ -398,8 +526,8 @@ export default function EmployeeFormFields({
               )}
             </div>
 
-            {!isManagerPosition && (
-              <div className="col-span-2 space-y-1">
+            {isManagerPosition === false ? (
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1.5">
                   {SYSTEM_MESSAGES.EMPLOYEE.LABEL_REPORTING_MANAGER}
                   {!formData.positionId && (
@@ -413,7 +541,7 @@ export default function EmployeeFormFields({
                   value={formData.reportingManagerId ?? ""}
                   onChange={handleChange}
                   disabled={!formData.positionId}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-medium bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-medium bg-white dark:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">
                     {SYSTEM_MESSAGES.EMPLOYEE.OPTION_NO_MANAGER}
@@ -425,16 +553,15 @@ export default function EmployeeFormFields({
                   ))}
                 </select>
                 {managers.length === 0 && formData.positionId > 0 && (
-                  <p className="text-[10px] text-amber-500 italic">
+                  <p className="text-[10px] text-amber-500 italic mt-1">
                     {SYSTEM_MESSAGES.EMPLOYEE.MSG_NO_MANAGERS}
                   </p>
                 )}
               </div>
-            )}
-            {isManagerPosition && (
-              <div className="col-span-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                <Info size={14} className="text-blue-500 shrink-0" />
-                <p className="text-xs text-blue-600 dark:text-blue-400">
+            ) : (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-3 flex items-start gap-3 border border-blue-100 dark:border-blue-900/30">
+                <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium leading-relaxed">
                   {SYSTEM_MESSAGES.EMPLOYEE.MSG_MANAGER_LEVEL}
                 </p>
               </div>
@@ -442,12 +569,13 @@ export default function EmployeeFormFields({
           </div>
         </div>
 
-        <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h4 className="flex items-center gap-2 text-xs font-bold text-amber-500 border-l-4 border-amber-500 pl-3 uppercase tracking-widest">
+        {/* SECTION: FINANCE */}
+        <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+          <h4 className="flex items-center gap-3 text-sm font-bold text-amber-500 border-l-4 border-amber-500 pl-4 uppercase tracking-widest">
             {SYSTEM_MESSAGES.EMPLOYEE.SECTION_FINANCE_NOTES}
           </h4>
-          <div className="space-y-4">
-            <div className="space-y-1">
+          <div className="space-y-5">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SALARY}{" "}
                 <span className="text-red-500">
@@ -472,7 +600,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.salary}</p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_BANK_NAME}{" "}
                 <span className="text-red-500">
@@ -490,7 +618,7 @@ export default function EmployeeFormFields({
                 <p className="text-xs text-red-500 mt-1">{errors.bankName}</p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_BANK_ACCOUNT}{" "}
                 <span className="text-red-500">
@@ -502,7 +630,8 @@ export default function EmployeeFormFields({
                 value={formData.bankAccountNumber || ""}
                 onChange={handleChange}
                 className={
-                  inputClass("bankAccountNumber") + " tracking-widest font-bold"
+                  inputClass("bankAccountNumber") +
+                  " tracking-widest font-bold font-mono"
                 }
               />
               {errors.bankAccountNumber && (
@@ -511,79 +640,7 @@ export default function EmployeeFormFields({
                 </p>
               )}
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500 uppercase">
-                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SOCIAL_ID}
-              </label>
-              <input
-                name="socialSecurityNumber"
-                value={formData.socialSecurityNumber || ""}
-                onChange={handleChange}
-                className={
-                  inputClass("socialSecurityNumber") + " tracking-widest"
-                }
-                placeholder="VD: 01234567890"
-              />
-              {errors.socialSecurityNumber && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.socialSecurityNumber}
-                </p>
-              )}
-            </div>
           </div>
-        </div>
-      </div>
-
-      {/* SECTION: AVATAR & NOTES */}
-      <div className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 border-t border-gray-100 dark:border-gray-800">
-        <div className="space-y-4">
-          <h4 className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_AVATAR}
-          </h4>
-          <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-2xl bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center gap-2 text-gray-400 overflow-hidden shrink-0">
-              {formData.avatarUrl ? (
-                <img
-                  src={formData.avatarUrl}
-                  alt="avatar"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <>
-                  <User size={32} />
-                  <span className="text-[10px] uppercase font-bold tracking-tighter">
-                    Avatar
-                  </span>
-                </>
-              )}
-            </div>
-            <div className="flex-1 space-y-2">
-              <p className="text-xs text-gray-500 leading-relaxed">
-                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_AVATAR_DESC ||
-                  "Nhập URL ảnh đại diện (JPG, PNG)."}
-              </p>
-              <input
-                name="avatarUrl"
-                value={formData.avatarUrl || ""}
-                onChange={handleChange}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="https://example.com/avatar.jpg"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="lg:col-span-2 space-y-4">
-          <h4 className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NOTES}
-          </h4>
-          <textarea
-            name="notes"
-            value={formData.notes || ""}
-            onChange={handleChange}
-            rows={3}
-            className="w-full px-4 py-3 rounded-2xl border border-gray-100 dark:border-gray-800 outline-none text-sm bg-gray-50/30 dark:bg-gray-800/20 focus:ring-2 focus:ring-primary/20 transition-all resize-none"
-            placeholder={SYSTEM_MESSAGES.EMPLOYEE.PLACEHOLDER_NOTES}
-          />
         </div>
       </div>
     </div>
