@@ -41,6 +41,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
         List<Employee> findAllActive();
 
         @Query("SELECT e FROM Employee e WHERE " +
+                "(e.isDeleted IS NULL OR e.isDeleted = false) AND " +
                 "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
                 "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
                 "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
@@ -55,6 +56,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
                 Pageable pageable);
 
         @Query("SELECT e FROM Employee e WHERE " +
+                "(e.isDeleted IS NULL OR e.isDeleted = false) AND " +
                 "e.reportingManager.id = :managerId AND " +
                 "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
                 "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +

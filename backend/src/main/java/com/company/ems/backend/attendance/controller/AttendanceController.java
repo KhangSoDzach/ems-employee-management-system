@@ -2,6 +2,7 @@ package com.company.ems.backend.attendance.controller;
 
 import com.company.ems.backend.attendance.dto.AttendanceResponse;
 import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
+import com.company.ems.backend.attendance.dto.AttendanceCalendarResponse;
 import com.company.ems.backend.attendance.dto.CheckInRequest;
 import com.company.ems.backend.attendance.dto.CheckOutRequest;
 import com.company.ems.backend.attendance.service.AttendanceService;
@@ -38,6 +39,8 @@ import java.time.LocalDate;
 @Tag(name = "Attendance", description = "Employee check-in / check-out operations")
 @SecurityRequirement(name = "bearerAuth")
 public class AttendanceController {
+
+    private static final String SUCCESS_MESSAGE = "success";
 
     private final AttendanceService attendanceService;
     private final DataScopeService dataScopeService;
@@ -90,7 +93,7 @@ public class AttendanceController {
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
         PageResponse<AttendanceResponse> result = attendanceService.getAttendance(page, size, employeeId, startDate,
                 endDate, status, principal);
-        return ResponseEntity.ok(ApiResponse.success("success", result));
+        return ResponseEntity.ok(ApiResponse.success(SUCCESS_MESSAGE, result));
     }
 
     /**
@@ -106,7 +109,19 @@ public class AttendanceController {
 
         CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
         AttendanceSummaryResponse summary = attendanceService.getSummary(employeeId, startDate, endDate, principal);
-        return ResponseEntity.ok(ApiResponse.success("success", summary));
+        return ResponseEntity.ok(ApiResponse.success(SUCCESS_MESSAGE, summary));
+    }
+
+    @GetMapping("/calendar")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_ATTENDANCE_READ)
+    @Operation(summary = "Get monthly attendance calendar with trend metrics")
+    public ResponseEntity<ApiResponse<AttendanceCalendarResponse>> getAttendanceCalendar(
+            @RequestParam(required = false) Long employeeId,
+            @RequestParam(required = false) String month) {
+
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+        AttendanceCalendarResponse calendar = attendanceService.getMonthlyCalendar(employeeId, month, principal);
+        return ResponseEntity.ok(ApiResponse.success(SUCCESS_MESSAGE, calendar));
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────

@@ -364,8 +364,14 @@ public class EmployeeServiceImpl implements EmployeeService {
                 Employee employee = employeeRepository.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
-                employeeRepository.delete(employee);
-                log.info("User [{}] deleted employee [{}]", principal.getUsername(), id);
+                // Soft delete: mark as deleted, set status TERMINATED
+                employee.softDelete(principal.getUsername());
+                employee.setStatus(EmployeeStatus.TERMINATED);
+                if (employee.getTerminationDate() == null) {
+                        employee.setTerminationDate(LocalDate.now());
+                }
+                employeeRepository.save(employee);
+                log.info("User [{}] soft-deleted employee [{}]", principal.getUsername(), id);
         }
 
         @Override

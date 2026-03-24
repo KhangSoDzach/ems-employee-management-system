@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,9 +21,22 @@ export const CreateRequestModal = ({
   onClose,
   onSubmit,
 }: CreateRequestModalProps) => {
+  const [submitting, setSubmitting] = useState(false);
+
   const handleFormSubmit = async (data: AdjustmentFormValues) => {
-    await onSubmit(data);
-    onClose();
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await onSubmit(data);
+      onClose();
+    } catch {
+      // Error toast is handled by parent callback; keep modal open for correction.
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -38,9 +52,10 @@ export const CreateRequestModal = ({
         </DialogHeader>
 
         <div className="p-8 bg-white max-h-[70vh] overflow-y-auto custom-scrollbar">
-          <AdjustmentForm 
+          <AdjustmentForm
             onSubmit={handleFormSubmit}
             onCancel={onClose}
+            loading={submitting}
             text={TEXT}
           />
         </div>

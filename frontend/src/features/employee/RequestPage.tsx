@@ -35,18 +35,16 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-import type {
-  LeaveFormValues,
-  LeaveRequest,
-  LeaveStatus,
-  LeaveType,
-} from "./leave-request.constants";
 import {
   ALL_LABEL,
   DATE_FORMAT,
   LEAVE_STATUS_CONFIG,
   LEAVE_STATUS_OPTIONS,
   LEAVE_TYPE_CONFIG,
+  type LeaveFormValues,
+  type LeaveRequest,
+  type LeaveStatus,
+  type LeaveType,
 } from "./leave-request.constants";
 import { leaveService } from "@/services/leaveService";
 import { employeeService } from "@/services/employeeService";
@@ -58,17 +56,16 @@ import {
 import { LeaveDetailSheet } from "./components/LeaveDetailSheet";
 import { CreateLeaveModal } from "./components/CreateLeaveModal";
 
-import type {
-  AdjustmentRequest,
-  AdjustmentStatus,
-  AdjustmentType,AdjustmentFormValues
-} from "./adjustment-request.constants";
 import {
   ADJUSTMENT_STATUS_CONFIG,
   ADJUSTMENT_STATUS_OPTIONS,
   ADJUSTMENT_TYPE_CONFIG,
   ADJUSTMENT_TYPE_OPTIONS,
   DATE_FORMAT as ADJ_DATE_FORMAT,
+  type AdjustmentFormValues,
+  type AdjustmentRequest,
+  type AdjustmentStatus,
+  type AdjustmentType,
 } from "./adjustment-request.constants";
 import {
   ActiveFilterBadge as ActiveAdjustmentBadge,
@@ -89,20 +86,49 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 
 const PAGE_SIZE = 10;
 
+function extractApiErrorMessage(error: unknown, fallback: string): string {
+  const apiError = error as {
+    response?: {
+      data?: {
+        message?: string;
+        errors?: Record<string, string>;
+      };
+    };
+  };
+
+  const fieldErrors = apiError?.response?.data?.errors;
+  if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+    return Object.values(fieldErrors)[0] ?? fallback;
+  }
+
+  return apiError?.response?.data?.message ?? fallback;
+}
+
 function mapBackendStatus(status: string): LeaveStatus {
-  if (status.startsWith("PENDING")) {return "PENDING";}
-  if (status === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
-  if (status === "APPROVED" || status === "REJECTED")
-    {return status as LeaveStatus;}
+  if (status.startsWith("PENDING")) {
+    return "PENDING";
+  }
+  if (status === "RETURNED_TO_EMPLOYEE") {
+    return "RETURNED";
+  }
+  if (status === "APPROVED" || status === "REJECTED") {
+    return status as LeaveStatus;
+  }
   return "PENDING";
 }
 
 function mapAdjustmentStatus(
   s: AdjustmentRequestSummary["status"],
 ): AdjustmentStatus {
-  if (s === "APPROVED") {return "APPROVED";}
-  if (s === "REJECTED") {return "REJECTED";}
-  if (s === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
+  if (s === "APPROVED") {
+    return "APPROVED";
+  }
+  if (s === "REJECTED") {
+    return "REJECTED";
+  }
+  if (s === "RETURNED_TO_EMPLOYEE") {
+    return "RETURNED";
+  }
   return "PENDING";
 }
 
@@ -110,8 +136,12 @@ function deriveAdjustmentType(
   inTime: string | null,
   outTime: string | null,
 ): AdjustmentType {
-  if (inTime && outTime) {return "BOTH";}
-  if (inTime) {return "CHECK_IN";}
+  if (inTime && outTime) {
+    return "BOTH";
+  }
+  if (inTime) {
+    return "CHECK_IN";
+  }
   return "CHECK_OUT";
 }
 
@@ -136,8 +166,12 @@ function mapAdjustmentToFrontend(
 }
 
 function typeToReason(type: AdjustmentType): AdjustmentReason {
-  if (type === "CHECK_IN") {return "FORGOT_CHECKIN";}
-  if (type === "CHECK_OUT") {return "FORGOT_CHECKOUT";}
+  if (type === "CHECK_IN") {
+    return "FORGOT_CHECKIN";
+  }
+  if (type === "CHECK_OUT") {
+    return "FORGOT_CHECKOUT";
+  }
   return "OTHER";
 }
 
@@ -292,7 +326,7 @@ export default function RequestPage() {
     adjStatus !== "ALL" || adjType !== "ALL" || adjSearch !== "";
 
   const handleCreateLeave = async (data: LeaveFormValues) => {
-    if (employeeId == null) {
+    if (employeeId === null) {
       throw new Error("Không lấy được thông tin nhân viên hiện tại");
     }
 
@@ -317,22 +351,34 @@ export default function RequestPage() {
   };
 
   const handleCreateAdjustment = async (data: AdjustmentFormValues) => {
-    const payload = buildAdjustmentPayload(data);
-    await attendanceService.submitAdjustment(payload);
-    setAdjPage(0);
-    await fetchAdjustments();
-    setActiveTab("adjustment");
+    try {
+      const payload = buildAdjustmentPayload(data);
+      await attendanceService.submitAdjustment(payload);
+      setAdjPage(0);
+      await fetchAdjustments();
+      setActiveTab("adjustment");
+      toast.success(SYSTEM_MESSAGES.ADJUSTMENT.MSG_SUBMIT_SUCCESS);
+    } catch (error) {
+      toast.error(extractApiErrorMessage(error, SYSTEM_MESSAGES.API_ERROR));
+      throw error;
+    }
   };
 
   const handleEditAdjustment = async (
     id: string,
     data: AdjustmentFormValues,
   ) => {
-    const payload = buildAdjustmentPayload(data);
-    await attendanceService.resubmitAdjustment(Number(id), payload);
-    setAdjPage(0);
-    await fetchAdjustments();
-    setActiveTab("adjustment");
+    try {
+      const payload = buildAdjustmentPayload(data);
+      await attendanceService.resubmitAdjustment(Number(id), payload);
+      setAdjPage(0);
+      await fetchAdjustments();
+      setActiveTab("adjustment");
+      toast.success(SYSTEM_MESSAGES.ADJUSTMENT.MSG_RESUBMIT_SUCCESS);
+    } catch (error) {
+      toast.error(extractApiErrorMessage(error, SYSTEM_MESSAGES.API_ERROR));
+      throw error;
+    }
   };
 
   return (
