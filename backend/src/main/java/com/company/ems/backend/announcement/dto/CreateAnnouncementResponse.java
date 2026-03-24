@@ -16,5 +16,7 @@ import lombok.Setter;
 public class CreateAnnouncementResponse {
     private Long announcementId;
     private Integer recipientCount;
+    private Boolean emailDeliveryRequested;
+    private Integer emailedRecipientCount;
     private LocalDateTime publishedAt;
 }

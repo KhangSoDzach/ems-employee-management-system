@@ -7,11 +7,14 @@ export interface CreateAnnouncementRequest {
   announcementType: AnnouncementType;
   targetAudience: TargetAudience;
   targetIds: number[];
+  sendEmail?: boolean;
 }
 
 export interface CreateAnnouncementResponse {
   announcementId: number;
   recipientCount: number;
+  emailDeliveryRequested?: boolean;
+  emailedRecipientCount?: number;
   publishedAt: string;
 }
 

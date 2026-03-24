@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -102,11 +102,6 @@ export function CreateAnnouncementForm() {
     [selectedAudience],
   );
 
-  useEffect(() => {
-    setTargetSearch("");
-    form.setValue("targetIds", []);
-  }, [selectedAudience, form]);
-
   const selectedTargetIds = useWatch({
     control: form.control,
     name: "targetIds",
@@ -133,18 +128,24 @@ export function CreateAnnouncementForm() {
 
   const filteredTargets = useMemo(() => {
     const keyword = targetSearch.trim().toLowerCase();
-    if (!keyword) {return availableTargets;}
+    if (!keyword) {
+      return availableTargets;
+    }
     return availableTargets.filter((item) =>
       item.label.toLowerCase().includes(keyword),
     );
   }, [availableTargets, targetSearch]);
 
   const selectedTargetLabels = useMemo(() => {
-    if (selectedTargetIds.length === 0) {return "Chọn đối tượng";}
+    if (selectedTargetIds.length === 0) {
+      return "Chọn đối tượng";
+    }
     const labels = availableTargets
       .filter((item) => selectedTargetIds.includes(item.id))
       .map((item) => item.label);
-    if (labels.length <= 2) {return labels.join(", ");}
+    if (labels.length <= 2) {
+      return labels.join(", ");
+    }
     return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
   }, [availableTargets, selectedTargetIds]);
 
@@ -163,7 +164,7 @@ export function CreateAnnouncementForm() {
     });
   };
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const submitAnnouncement = async (values: FormValues, sendEmail: boolean) => {
     if (requiresIds && values.targetIds.length === 0) {
       form.setError("targetIds", {
         message: "Vui lòng chọn ít nhất một đối tượng",
@@ -178,9 +179,14 @@ export function CreateAnnouncementForm() {
         announcementType: values.announcementType,
         targetAudience: values.targetAudience as TargetAudience,
         targetIds: values.targetIds,
+        sendEmail,
       });
+      const emailText =
+        sendEmail && (result.emailedRecipientCount ?? 0) > 0
+          ? `, đã gửi email ${result.emailedRecipientCount} người`
+          : "";
       toast.success(
-        `Tạo thông báo thành công (${result.recipientCount} người nhận)`,
+        `Tạo thông báo thành công (${result.recipientCount} người nhận${emailText})`,
       );
       form.reset({
         title: "",
@@ -194,6 +200,14 @@ export function CreateAnnouncementForm() {
         error instanceof Error ? error.message : "Không thể tạo thông báo",
       );
     }
+  };
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    await submitAnnouncement(values, false);
+  });
+
+  const onSubmitAndSendGmail = form.handleSubmit(async (values) => {
+    await submitAnnouncement(values, true);
   });
 
   return (
@@ -266,7 +280,15 @@ export function CreateAnnouncementForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Đối tượng nhận</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setTargetSearch("");
+                      setOpenTargetDropdown(false);
+                      form.setValue("targetIds", [], { shouldValidate: true });
+                    }}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn đối tượng" />
@@ -360,9 +382,21 @@ export function CreateAnnouncementForm() {
             />
           )}
 
-          <Button type="submit" disabled={createMutation.isPending}>
-            {createMutation.isPending ? "Đang tạo..." : "Tạo thông báo"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={createMutation.isPending}>
+              {createMutation.isPending
+                ? "Đang tạo..."
+                : "Tạo thông báo nội bộ"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={createMutation.isPending}
+              onClick={onSubmitAndSendGmail}
+            >
+              {createMutation.isPending ? "Đang gửi..." : "Tạo & Gửi Gmail"}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

@@ -2,7 +2,6 @@ package com.company.ems.backend.announcement.controller;
 
 import java.util.List;
 
-import com.company.ems.backend.common.constant.RoleAuthorization;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +18,7 @@ import com.company.ems.backend.announcement.dto.CreateAnnouncementRequest;
 import com.company.ems.backend.announcement.dto.CreateAnnouncementResponse;
 import com.company.ems.backend.announcement.dto.MarkAnnouncementReadRequest;
 import com.company.ems.backend.announcement.service.AnnouncementService;
+import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.common.dto.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,7 +40,7 @@ public class AnnouncementController {
 
     @PostMapping
     @PreAuthorize(RoleAuthorization.HAS_ADMIN_ONLY)
-    @Operation(summary = "Create announcement", description = "Creates a new internal announcement and pre-generates read receipts for all recipients")
+    @Operation(summary = "Create announcement", description = "Creates a new internal announcement, pre-generates read receipts for all recipients, and can optionally send Gmail notifications when sendEmail=true")
     public ResponseEntity<ApiResponse<CreateAnnouncementResponse>> createAnnouncement(
             @Valid @RequestBody CreateAnnouncementRequest request) {
         CreateAnnouncementResponse response = announcementService.createAnnouncement(request);

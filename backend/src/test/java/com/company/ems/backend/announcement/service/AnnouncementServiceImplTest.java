@@ -1,20 +1,23 @@
 package com.company.ems.backend.announcement.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,6 +31,7 @@ import com.company.ems.backend.announcement.enums.TargetAudience;
 import com.company.ems.backend.announcement.repository.AnnouncementReadRepository;
 import com.company.ems.backend.announcement.repository.AnnouncementRepository;
 import com.company.ems.backend.announcement.repository.AnnouncementTargetRepository;
+import com.company.ems.backend.auth.port.out.EmailPort;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.exception.ForbiddenException;
 import com.company.ems.backend.department.repository.DepartmentRepository;
@@ -60,6 +64,9 @@ class AnnouncementServiceImplTest {
     @Mock
     private EmployeeRepository employeeRepository;
 
+        @Mock
+        private EmailPort emailPort;
+
     @InjectMocks
     private AnnouncementServiceImpl announcementService;
 
@@ -90,6 +97,7 @@ class AnnouncementServiceImplTest {
                 .announcementType(AnnouncementType.POLICY)
                 .targetAudience(TargetAudience.ALL_COMPANY)
                 .targetIds(List.of())
+                .sendEmail(false)
                 .build();
 
         Announcement savedAnnouncement = Announcement.builder()
@@ -114,6 +122,61 @@ class AnnouncementServiceImplTest {
 
         assertEquals(1L, response.getAnnouncementId());
         assertEquals(2, response.getRecipientCount());
+        assertEquals(false, response.getEmailDeliveryRequested());
+        assertEquals(0, response.getEmailedRecipientCount());
+        verify(emailPort, never()).sendAnnouncementEmail(any(), any(), any(), any());
+    }
+
+    @Test
+    void createAnnouncement_sendEmailTrue_shouldSendEmailsToRecipients() {
+        CustomUserPrincipal principal = new CustomUserPrincipal(
+                99L,
+                "admin.user",
+                "pwd",
+                true,
+                true,
+                true,
+                true,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")),
+                Set.of());
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+
+        CreateAnnouncementRequest request = CreateAnnouncementRequest.builder()
+                .title("Email update")
+                .content("Please read this update")
+                .announcementType(AnnouncementType.EVENT)
+                .targetAudience(TargetAudience.ALL_COMPANY)
+                .targetIds(List.of())
+                .sendEmail(true)
+                .build();
+
+        Announcement savedAnnouncement = Announcement.builder()
+                .title(request.getTitle())
+                .content(request.getContent())
+                .announcementType(request.getAnnouncementType())
+                .targetAudience(request.getTargetAudience())
+                .publishedAt(LocalDateTime.now())
+                .build();
+        savedAnnouncement.setId(2L);
+
+        when(announcementRepository.save(any(Announcement.class))).thenReturn(savedAnnouncement);
+        when(userRepository.findAllEnabledUserIds()).thenReturn(List.of(1L, 2L));
+
+        User u1 = User.builder().username("u1").email("u1@ems.com").password("x").enabled(true).build();
+        u1.setId(1L);
+        User u2 = User.builder().username("u2").email("u2@ems.com").password("x").enabled(true).build();
+        u2.setId(2L);
+        when(userRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(u1, u2));
+
+        var response = announcementService.createAnnouncement(request);
+
+        assertEquals(2, response.getRecipientCount());
+        assertEquals(true, response.getEmailDeliveryRequested());
+        assertEquals(2, response.getEmailedRecipientCount());
+        verify(emailPort, times(1)).sendAnnouncementEmail(eq("u1@ems.com"), any(), any(), any());
+        verify(emailPort, times(1)).sendAnnouncementEmail(eq("u2@ems.com"), any(), any(), any());
     }
 
     @Test
