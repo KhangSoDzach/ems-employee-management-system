@@ -8,12 +8,16 @@
 -- Date: 2026-03-23
 -- =====================================
 
+UPDATE employees
+SET annual_leave_balance = CASE
+    WHEN annual_leave_balance IS NULL THEN 12
+    WHEN TRIM(CAST(annual_leave_balance AS CHAR)) REGEXP '^-?[0-9]+$'
+        THEN CAST(TRIM(CAST(annual_leave_balance AS CHAR)) AS SIGNED)
+    ELSE 12
+END;
+
 ALTER TABLE employees
     MODIFY COLUMN annual_leave_balance INT NOT NULL DEFAULT 12;
-
-UPDATE employees
-SET annual_leave_balance = 12
-WHERE annual_leave_balance IS NULL;
 
 INSERT INTO leave_balances (
     created_at,
