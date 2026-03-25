@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { leaveService } from "@/services/leaveService";
 import type { LeaveRequest } from "../ApproveLeaveRequest";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { useAuth } from "@/contexts/AuthContext";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import {
   DATETIME_FORMAT,
@@ -36,7 +35,6 @@ export default function ApproveLeaveDialog({
 }: Props) {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
 
   if (!request) {
     return null;
@@ -69,10 +67,8 @@ export default function ApproveLeaveDialog({
       toast.success(msg);
       onOpenChange(false);
       setComment("");
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      toast.error(msg || SYSTEM_MESSAGES.API_ERROR);
+    } catch {
+      toast.error(SYSTEM_MESSAGES.API_ERROR);
     } finally {
       setLoading(false);
     }
@@ -108,7 +104,7 @@ export default function ApproveLeaveDialog({
     if (request.status === "RETURNED_TO_EMPLOYEE") {
       return "badge-warning";
     }
-    return "badge-gray";
+    return "badge-warning";
   };
 
   return (
@@ -193,14 +189,7 @@ export default function ApproveLeaveDialog({
             </div>
           </section>
 
-          {user?.id === request.requesterUserId ? (
-            <div className="bg-amber-50 text-amber-600 border border-amber-200 p-4 rounded-xl text-sm font-medium text-center">
-              Bạn không thể tự phê duyệt đơn của bản thân. Hãy chờ thành viên
-              khác trong phòng HR hoặc Trưởng phòng xử lý.
-            </div>
-          ) : (
-            <ReviewSheetFeedback value={comment} onChange={setComment} />
-          )}
+          <ReviewSheetFeedback value={comment} onChange={setComment} />
         </div>
 
         <ReviewSheetFooter

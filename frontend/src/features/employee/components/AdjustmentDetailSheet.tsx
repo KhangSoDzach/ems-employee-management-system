@@ -16,8 +16,8 @@ import {
   DATE_FORMAT,
   DATETIME_FORMAT,
   DATETIME_LOG_FORMAT,
-  type AdjustmentRequest,
-  type AuditEntry,
+  AdjustmentRequest,
+  AuditEntry,
 } from "../adjustment-request.constants";
 import { StatusBadge } from "./AdjustmentBadges";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
@@ -204,12 +204,6 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
               {request.reason}
               {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
             </blockquote>
-          </section>
-
-          {/* Lịch sử thao tác */}
-          <section>
-            <h4 className="section-title-muted mb-4">{SHEET_LABELS.history}</h4>
-            <AuditTimeline entries={request.auditTrail} />
           </section>
         </div>
       </SheetContent>
