@@ -236,7 +236,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <AppSidebar role="manager" variant="inset" />
+      <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
         <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">

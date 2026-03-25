@@ -191,18 +191,32 @@
    UTILITIES
    ========================================= */
 @layer base {
-  /* Scrollbar */
+  /* Scrollbar - Global Hidden visually but functional */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    display: none;
+  }
+
+  * {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
+    @apply rounded-full;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+    overscroll-behavior: contain;
   }
 }
 

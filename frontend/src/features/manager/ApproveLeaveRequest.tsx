@@ -220,7 +220,7 @@ export default function ApproveLeaveRequest() {
 
   return (
     <SidebarProvider>
-      <AppSidebar role="manager" variant="inset" />
+      <AppSidebar variant="inset" />
 
       <SidebarInset>
         <SiteHeader />

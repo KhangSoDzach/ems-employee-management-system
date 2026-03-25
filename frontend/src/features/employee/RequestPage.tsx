@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Loader2,
@@ -297,6 +298,17 @@ export default function RequestPage() {
     }
   }, [adjPage]);
 
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "adjustment") {
+      setActiveTab("adjustment");
+    } else if (tab === "leave") {
+      setActiveTab("leave");
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     fetchLeaves();
   }, [fetchLeaves]);
@@ -391,45 +403,33 @@ export default function RequestPage() {
         <main className="page-layout-wrapper">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
             <div>
-              <h1 className="page-heading">{SYSTEM_MESSAGES.REQUEST.TITLE}</h1>
+              <h1 className="page-heading">
+                {activeTab === "leave"
+                  ? SYSTEM_MESSAGES.LEAVE.TITLE
+                  : SYSTEM_MESSAGES.ADJUSTMENT.TITLE}
+              </h1>
               <p className="text-muted-foreground mt-1">
-                {SYSTEM_MESSAGES.REQUEST.DESC}
+                {activeTab === "leave"
+                  ? SYSTEM_MESSAGES.LEAVE.DESC
+                  : SYSTEM_MESSAGES.ADJUSTMENT.DESC}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="shadow-sm gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {SYSTEM_MESSAGES.REQUEST.BTN_CREATE}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                  <DropdownMenuItem
-                    className="cursor-pointer text-sm"
-                    onClick={() => {
-                      setActiveTab("leave");
-                      setIsLeaveModalOpen(true);
-                    }}
-                  >
-                    {SYSTEM_MESSAGES.REQUEST.CREATE_LEAVE}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer text-sm"
-                    onClick={() => {
-                      setActiveTab("adjustment");
-                      setIsAdjModalOpen(true);
-                    }}
-                  >
-                    {SYSTEM_MESSAGES.REQUEST.CREATE_ADJUSTMENT}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="default"
+                size="sm"
+                className="shadow-sm gap-2"
+                onClick={() => {
+                  if (activeTab === "leave") {
+                    setIsLeaveModalOpen(true);
+                  } else {
+                    setIsAdjModalOpen(true);
+                  }
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                {SYSTEM_MESSAGES.REQUEST.BTN_CREATE}
+              </Button>
             </div>
           </div>
 
