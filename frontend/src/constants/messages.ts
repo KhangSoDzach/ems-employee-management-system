@@ -60,6 +60,8 @@ export const SYSTEM_MESSAGES = {
     MENU_ASSET_INCIDENT: "Quản lý sự cố tài sản",
     MENU_APPROVE_REPORTS: "Duyệt báo cáo sự cố",
     MENU_APPROVE_ASSET_REQUESTS: "Duyệt yêu cầu tài sản",
+    MENU_ATTENDANCE: "Lịch sử điểm danh",
+    MENU_DASHBOARD: "Tổng quan",
     MENU_ANNOUNCEMENTS: "Thông báo nội bộ",
     MENU_MANAGE_ANNOUNCEMENTS: "Tạo thông báo",
     MENU_SALARY_HISTORY: "Lịch sử lương",
@@ -74,6 +76,10 @@ export const SYSTEM_MESSAGES = {
     SHARE: "Chia sẻ",
     HRMS: "HRMS",
     VERSION_PREFIX: "v",
+    SECTION_CREATE: "Tạo đơn",
+    SECTION_APPROVE: "Duyệt đơn",
+    SECTION_PERSONAL: "Cá nhân",
+    SECTION_MANAGEMENT: "Quản lý",
   },
 
   // Profile Page

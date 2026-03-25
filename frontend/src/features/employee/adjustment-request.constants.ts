@@ -17,6 +17,7 @@ export interface AuditEntry {
 
 export interface AdjustmentRequest {
   id: string;
+  employeeId?: number;
   dateCreated: Date;
   adjustmentDate: Date;
   type: AdjustmentType;

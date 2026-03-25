@@ -1,7 +1,7 @@
 import {
   Play,
   Square,
-  Coffee,
+  Plane,
   CalendarClock,
   Loader2,
   Info,
@@ -474,11 +474,11 @@ export default function CheckinPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    onClick={() => navigate("/request")}
+                    onClick={() => navigate("/request?tab=leave")}
                     className="btn-cancel"
                   >
-                    <Coffee className="w-5 h-5 text-muted-foreground" />
-                    {SYSTEM_MESSAGES.CHECKIN.BTN_ADJUST}
+                    <Plane className="w-5 h-5 text-muted-foreground" />
+                    {SYSTEM_MESSAGES.REQUEST.CREATE_LEAVE}
                   </Button>
                 </div>
               </div>
