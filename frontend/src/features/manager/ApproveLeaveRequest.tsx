@@ -320,7 +320,6 @@ export default function ApproveLeaveRequest() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-
             {/* Type Filter */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

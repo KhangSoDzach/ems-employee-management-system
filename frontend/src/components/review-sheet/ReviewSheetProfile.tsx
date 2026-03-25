@@ -7,7 +7,6 @@ interface ReviewSheetProfileProps {
   id?: string | number;
   isUrgent?: boolean;
 }
-
 export function ReviewSheetProfile({
   name,
   avatar,
