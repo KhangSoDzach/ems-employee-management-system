@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import {
   ChevronDown,
   ChevronRight,
@@ -46,10 +47,8 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar> & {
   role?: "admin" | "employee" | "manager" | "hr";
 }) {
-  const { user } = useAuth();
-  const authRoleRaw = user?.roles?.[0] || "ROLE_EMPLOYEE";
-  const authRole = authRoleRaw.replace("ROLE_", "").toLowerCase();
-  const role = propRole || (authRole as any) || "employee";
+  useAuth();
+  const role = useEffectiveRole(propRole);
   const location = useLocation();
   const [openCreate, setOpenCreate] = React.useState(() => {
     const saved = localStorage.getItem("sidebar_open_create");

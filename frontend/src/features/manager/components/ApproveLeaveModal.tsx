@@ -17,6 +17,7 @@ import {
   ReviewSheetFeedback,
   ReviewSheetFooter,
 } from "@/components/review-sheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 /* ================= TYPES ================= */
 
@@ -33,6 +34,7 @@ export default function ApproveLeaveDialog({
   onOpenChange,
   onUpdateStatus,
 }: Props) {
+  const { user } = useAuth();
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
