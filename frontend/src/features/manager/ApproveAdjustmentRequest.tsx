@@ -24,6 +24,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -56,15 +57,25 @@ import {
 
 // ── Mapper ────────────────────────────────────────────────────────────────────
 function deriveType(inT: string | null, outT: string | null): AdjustmentType {
-  if (inT && outT) {return "BOTH";}
-  if (inT) {return "CHECK_IN";}
+  if (inT && outT) {
+    return "BOTH";
+  }
+  if (inT) {
+    return "CHECK_IN";
+  }
   return "CHECK_OUT";
 }
 
 function mapStatus(s: AdjustmentRequestSummary["status"]) {
-  if (s === "APPROVED") {return "APPROVED" as const;}
-  if (s === "REJECTED") {return "REJECTED" as const;}
-  if (s === "RETURNED_TO_EMPLOYEE") {return "RETURNED" as const;}
+  if (s === "APPROVED") {
+    return "APPROVED" as const;
+  }
+  if (s === "REJECTED") {
+    return "REJECTED" as const;
+  }
+  if (s === "RETURNED_TO_EMPLOYEE") {
+    return "RETURNED" as const;
+  }
   return "PENDING" as const;
 }
 
@@ -94,10 +105,18 @@ function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
 }
 
 function mapHistoryAction(action: string): AuditEntry["action"] {
-  if (action === "APPROVED") {return "APPROVED";}
-  if (action === "REJECTED") {return "REJECTED";}
-  if (action === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
-  if (action === "RESUBMITTED") {return "EDITED";}
+  if (action === "APPROVED") {
+    return "APPROVED";
+  }
+  if (action === "REJECTED") {
+    return "REJECTED";
+  }
+  if (action === "RETURNED_TO_EMPLOYEE") {
+    return "RETURNED";
+  }
+  if (action === "RESUBMITTED") {
+    return "EDITED";
+  }
   return "CREATED";
 }
 
@@ -141,7 +160,9 @@ const ApproveAdjustmentRequest: React.FC = () => {
 
   // ── Fetch details when opening review sheet ──────────────────────────────
   useEffect(() => {
-    if (!detailRequest || detailRequest.auditTrail.length > 1) {return;} // already has more than initial
+    if (!detailRequest || detailRequest.auditTrail.length > 1) {
+      return;
+    } // already has more than initial
 
     const fetchDetail = async () => {
       try {
@@ -149,7 +170,9 @@ const ApproveAdjustmentRequest: React.FC = () => {
           Number(detailRequest.id),
         );
         setDetailRequest((prev) => {
-          if (!prev || prev.id !== String(fullDetail.id)) {return prev;}
+          if (!prev || prev.id !== String(fullDetail.id)) {
+            return prev;
+          }
           return {
             ...prev,
             auditTrail: fullDetail.history.map((h) => ({
@@ -241,27 +264,36 @@ const ApproveAdjustmentRequest: React.FC = () => {
           </div>
 
           {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-              <div className="relative flex-1 min-w-[180px] w-full sm:w-auto sm:max-w-xs">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+              <div className="relative w-full sm:w-auto sm:min-w-[320px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder={SYSTEM_MESSAGES.MGMT_ADJ.SEARCH_PLACEHOLDER}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 w-full text-sm"
+                  className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="h-9 gap-2 text-sm"
+                    className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
                   >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                    {SYSTEM_MESSAGES.MGMT_ADJ.FILTER_STATUS}
+                    <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-semibold text-slate-700">
+                      {SYSTEM_MESSAGES.MGMT_ADJ.FILTER_STATUS}
+                    </span>
                     {statusFilter !== "ALL" && (
                       <ActiveFilterBadge
                         value={
@@ -279,12 +311,13 @@ const ApproveAdjustmentRequest: React.FC = () => {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-44">
+                <DropdownMenuContent align="start" className="w-48 p-1">
                   <DropdownMenuItem
                     onClick={() => setStatusFilter("ALL")}
                     className={cn(
                       "cursor-pointer text-sm",
-                      statusFilter === "ALL" && "font-bold text-primary",
+                      statusFilter === "ALL" &&
+                        "bg-muted font-bold text-primary",
                     )}
                   >
                     {SYSTEM_MESSAGES.LABEL_ALL}
@@ -295,10 +328,12 @@ const ApproveAdjustmentRequest: React.FC = () => {
                       onClick={() => setStatusFilter(value)}
                       className={cn(
                         "cursor-pointer",
-                        statusFilter === value && "bg-muted font-medium",
+                        statusFilter === value
+                          ? "bg-muted font-medium"
+                          : "hover:bg-slate-50",
                       )}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5 py-1">
                         <span
                           className={cn(
                             "w-2 h-2 rounded-full inline-block shrink-0",
@@ -319,23 +354,12 @@ const ApproveAdjustmentRequest: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-9 text-sm text-muted-foreground"
+                  className="h-10 text-sm text-slate-500 hover:text-primary transition-colors hover:bg-transparent"
                   onClick={clearAllFilters}
                 >
                   {SYSTEM_MESSAGES.MGMT_ADJ.BTN_CLEAR_FILTER}
                 </Button>
               )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="h-9 font-medium">
-                <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                {SYSTEM_MESSAGES.MGMT_ADJ.BTN_CUSTOM_DATE}
-              </Button>
-              <Button size="sm" className="h-9 font-medium shadow-sm">
-                <Download className="mr-2 h-4 w-4" />
-                {SYSTEM_MESSAGES.MGMT_ADJ.BTN_EXPORT}
-              </Button>
             </div>
           </div>
 

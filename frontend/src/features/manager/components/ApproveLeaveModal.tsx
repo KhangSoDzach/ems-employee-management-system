@@ -1,31 +1,31 @@
-import { useState } from "react"
-import { format } from "date-fns"
-import {
-  Sheet,
-  SheetContent,
-} from "@/components/ui/sheet"
-import { toast } from "sonner"
+import { useState } from "react";
+import { format } from "date-fns";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { toast } from "sonner";
 
-import { leaveService } from "@/services/leaveService"
-import type { LeaveRequest } from "../ApproveLeaveRequest"
-import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
-import { DATETIME_FORMAT, DATE_FORMAT } from "../../employee/adjustment-request.constants"
+import { leaveService } from "@/services/leaveService";
+import type { LeaveRequest } from "../ApproveLeaveRequest";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+import {
+  DATETIME_FORMAT,
+  DATE_FORMAT,
+} from "../../employee/adjustment-request.constants";
 import {
   ReviewSheetHeader,
   ReviewSheetProfile,
   ReviewSheetFeedback,
-  ReviewSheetFooter
-} from "@/components/review-sheet"
+  ReviewSheetFooter,
+} from "@/components/review-sheet";
 
 /* ================= TYPES ================= */
 
 type Props = {
-  request: LeaveRequest | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onUpdateStatus?: (id: number, status: string) => void
-}
+  request: LeaveRequest | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdateStatus?: (id: number, status: string) => void;
+};
 
 export default function ApproveLeaveDialog({
   request,
@@ -33,76 +33,79 @@ export default function ApproveLeaveDialog({
   onOpenChange,
   onUpdateStatus,
 }: Props) {
-  const [comment, setComment] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (!request) {
-    return null
+    return null;
   }
 
   const doAction = async (action: "APPROVE" | "REJECT" | "SEND_BACK") => {
     if ((action === "REJECT" || action === "SEND_BACK") && !comment.trim()) {
-      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT)
-      return
+      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+      return;
     }
-    setLoading(true)
+    setLoading(true);
     try {
-      const updated = await leaveService.processAction(request.id, { action, comments: comment || undefined })
-      onUpdateStatus?.(request.id, updated.status)
+      const updated = await leaveService.processAction(request.id, {
+        action,
+        comments: comment || undefined,
+      });
+      onUpdateStatus?.(request.id, updated.status);
 
-      let msg = ""
+      let msg = "";
       if (action === "APPROVE") {
-        msg = SYSTEM_MESSAGES.APPROVE.TOAST_APPROVED
+        msg = SYSTEM_MESSAGES.APPROVE.TOAST_APPROVED;
       }
       if (action === "REJECT") {
-        msg = SYSTEM_MESSAGES.APPROVE.TOAST_REJECTED
+        msg = SYSTEM_MESSAGES.APPROVE.TOAST_REJECTED;
       }
       if (action === "SEND_BACK") {
-        msg = SYSTEM_MESSAGES.APPROVE.TOAST_RETURNED
+        msg = SYSTEM_MESSAGES.APPROVE.TOAST_RETURNED;
       }
 
-      toast.success(msg)
-      onOpenChange(false)
-      setComment("")
+      toast.success(msg);
+      onOpenChange(false);
+      setComment("");
     } catch {
-      toast.error(SYSTEM_MESSAGES.API_ERROR)
+      toast.error(SYSTEM_MESSAGES.API_ERROR);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleApprove = () => doAction("APPROVE")
-  const handleReject = () => doAction("REJECT")
-  const handleSendBack = () => doAction("SEND_BACK")
+  const handleApprove = () => doAction("APPROVE");
+  const handleReject = () => doAction("REJECT");
+  const handleSendBack = () => doAction("SEND_BACK");
 
   const getStatusLabel = () => {
     if (request.status === "APPROVED") {
-      return SYSTEM_MESSAGES.STATUS.APPROVED
+      return SYSTEM_MESSAGES.STATUS.APPROVED;
     }
     if (request.status === "REJECTED") {
-      return SYSTEM_MESSAGES.STATUS.REJECTED
+      return SYSTEM_MESSAGES.STATUS.REJECTED;
     }
     if (request.status === "RETURNED_TO_EMPLOYEE") {
-      return SYSTEM_MESSAGES.STATUS.RETURNED
+      return SYSTEM_MESSAGES.STATUS.RETURNED;
     }
     if (request.status.startsWith("PENDING")) {
-      return SYSTEM_MESSAGES.STATUS.PENDING
+      return SYSTEM_MESSAGES.STATUS.PENDING;
     }
-    return request.status
-  }
+    return request.status;
+  };
 
   const getStatusColor = () => {
     if (request.status === "APPROVED") {
-      return "badge-success"
+      return "badge-success";
     }
     if (request.status === "REJECTED") {
-      return "badge-error"
+      return "badge-error";
     }
     if (request.status === "RETURNED_TO_EMPLOYEE") {
-      return "badge-warning"
+      return "badge-warning";
     }
-    return "badge-gray"
-  }
+    return "badge-warning";
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -136,18 +139,36 @@ export default function ApproveLeaveDialog({
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-sm">
               <div className="grid grid-cols-2 divide-x divide-slate-100 border-b">
                 <div className="p-4 bg-muted/5">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">{SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START}</p>
-                  <p className="font-bold text-slate-900">{format(new Date(request.startDate + "T00:00:00"), DATE_FORMAT)}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
+                    {SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START}
+                  </p>
+                  <p className="font-bold text-slate-900">
+                    {format(
+                      new Date(request.startDate + "T00:00:00"),
+                      DATE_FORMAT,
+                    )}
+                  </p>
                 </div>
                 <div className="p-4">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">{SYSTEM_MESSAGES.LEAVE.SHEET_END_DATE}</p>
-                  <p className="font-bold text-slate-900">{format(new Date(request.endDate + "T00:00:00"), DATE_FORMAT)}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
+                    {SYSTEM_MESSAGES.LEAVE.SHEET_END_DATE}
+                  </p>
+                  <p className="font-bold text-slate-900">
+                    {format(
+                      new Date(request.endDate + "T00:00:00"),
+                      DATE_FORMAT,
+                    )}
+                  </p>
                 </div>
               </div>
               <div className="p-4">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">{SYSTEM_MESSAGES.LEAVE.SHEET_TOTAL_TIME}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
+                  {SYSTEM_MESSAGES.LEAVE.SHEET_TOTAL_TIME}
+                </p>
                 <p className="font-bold text-red-500">
-                  {request.duration !== null ? `${request.duration} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}` : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                  {request.duration !== null
+                    ? `${request.duration} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}`
+                    : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                 </p>
               </div>
             </div>
@@ -161,15 +182,14 @@ export default function ApproveLeaveDialog({
 
             <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm italic text-slate-600 font-medium text-sm">
               <p className="leading-relaxed">
-                {SYSTEM_MESSAGES.SYMBOLS.QUOTE}{request.reason}{SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                {request.reason}
+                {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
               </p>
             </div>
           </section>
 
-          <ReviewSheetFeedback
-            value={comment}
-            onChange={setComment}
-          />
+          <ReviewSheetFeedback value={comment} onChange={setComment} />
         </div>
 
         <ReviewSheetFooter
@@ -181,5 +201,5 @@ export default function ApproveLeaveDialog({
         />
       </SheetContent>
     </Sheet>
-  )
+  );
 }
