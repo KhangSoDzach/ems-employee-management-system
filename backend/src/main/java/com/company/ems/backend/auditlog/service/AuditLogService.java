@@ -1,8 +1,6 @@
 package com.company.ems.backend.auditlog.service;
 
 import java.time.LocalDateTime;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,7 +42,6 @@ import lombok.extern.slf4j.Slf4j;
 public class AuditLogService {
 
         private static final String ENTITY_TYPE_AUTH = "AUTHENTICATION";
-        private static final Pattern FORWARDED_FOR_PATTERN = Pattern.compile("(?i)(?:^|;)\\s*for=\\\"?([^;\\\",]+)");
 
         public record AuditValues(String oldValue, String newValue) {}
 
@@ -277,50 +274,7 @@ public class AuditLogService {
         }
 
         private String extractClientIp(HttpServletRequest request) {
-                String ip = firstNonBlank(
-                                firstIpFromHeader(request.getHeader("X-Forwarded-For")),
-                                firstIpFromForwardedHeader(request.getHeader("Forwarded")),
-                                request.getHeader("X-Real-IP"),
-                                request.getHeader("CF-Connecting-IP"),
-                                request.getHeader("True-Client-IP"),
-                                request.getRemoteAddr());
-                return normalizeIp(ip);
-        }
-
-        private String firstIpFromHeader(String value) {
-                String nonBlank = nullIfBlank(value);
-                if (nonBlank == null) {
-                        return null;
-                }
-                int commaIdx = nonBlank.indexOf(',');
-                String candidate = commaIdx >= 0 ? nonBlank.substring(0, commaIdx) : nonBlank;
-                return normalizeIp(candidate);
-        }
-
-        private String firstIpFromForwardedHeader(String forwarded) {
-                String nonBlank = nullIfBlank(forwarded);
-                if (nonBlank == null) {
-                        return null;
-                }
-                Matcher matcher = FORWARDED_FOR_PATTERN.matcher(nonBlank);
-                if (!matcher.find()) {
-                        return null;
-                }
-                return normalizeIp(matcher.group(1));
-        }
-
-        private String normalizeIp(String value) {
-                String candidate = nullIfBlank(value);
-                if (candidate == null) {
-                        return null;
-                }
-                if ("unknown".equalsIgnoreCase(candidate)) {
-                        return null;
-                }
-                if (candidate.startsWith("[") && candidate.endsWith("]") && candidate.length() > 2) {
-                        candidate = candidate.substring(1, candidate.length() - 1);
-                }
-                return candidate;
+                return com.company.ems.backend.common.utils.IpUtils.getClientIpAddress(request);
         }
 
         private String inferClientType(String userAgent) {

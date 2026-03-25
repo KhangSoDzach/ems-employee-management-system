@@ -127,10 +127,6 @@ public class AttendanceController {
     // ─── Private helpers ──────────────────────────────────────────────────────
 
     private String extractClientIp(HttpServletRequest req) {
-        String forwarded = req.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return req.getRemoteAddr();
+        return com.company.ems.backend.common.utils.IpUtils.getClientIpAddress(req);
     }
 }

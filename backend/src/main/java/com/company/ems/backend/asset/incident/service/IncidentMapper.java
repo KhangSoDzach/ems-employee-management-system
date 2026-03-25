@@ -30,6 +30,8 @@ public class IncidentMapper {
                         ReportStatus.RESOLVED, "bg-blue-50 text-blue-600 border border-blue-300");
 
         private static final Map<IncidentType, String> TYPE_LABEL = Map.of(
+                        IncidentType.HARDWARE_ISSUE, "Hư hỏng (Damaged)",
+                        IncidentType.LOST_ASSET, "Mất mát (Lost)",
                         IncidentType.DAMAGED, "Hư hỏng (Damaged)",
                         IncidentType.LOST, "Mất mát (Lost)");
 
@@ -69,6 +71,7 @@ public class IncidentMapper {
                                 .processNote(r.getProcessNote())
                                 .assetCondition(r.getAsset().getCondition().name())
                                 .assetStatus(r.getAsset().getStatus().name())
+                                .requesterUserId(r.getReportedBy() != null && r.getReportedBy().getUser() != null ? r.getReportedBy().getUser().getId() : null)
                                 .build();
         }
 
@@ -85,6 +88,7 @@ public class IncidentMapper {
                                 .status(r.getStatus().name())
                                 .statusLabel(STATUS_LABEL.get(r.getStatus()))
                                 .statusColor(STATUS_COLOR.get(r.getStatus()))
+                                .requesterUserId(r.getReportedBy() != null && r.getReportedBy().getUser() != null ? r.getReportedBy().getUser().getId() : null)
                                 .build();
         }
 }

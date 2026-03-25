@@ -216,10 +216,7 @@ public class AuthController {
          */
         private RequestContext buildRequestContext(HttpServletRequest request) {
                 String userAgent = request.getHeader("User-Agent");
-                String xff = request.getHeader("X-Forwarded-For");
-                String ip = (xff != null && !xff.isBlank())
-                                ? xff.split(",")[0].trim()
-                                : request.getRemoteAddr();
+                String ip = com.company.ems.backend.common.utils.IpUtils.getClientIpAddress(request);
                 String correlationId = request.getHeader("X-Correlation-ID");
 
                 // Determine client type from User-Agent (best-effort heuristic)

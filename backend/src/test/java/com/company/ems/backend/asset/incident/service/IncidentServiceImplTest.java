@@ -115,6 +115,47 @@ class IncidentServiceImplTest {
     }
 
     @Test
+    void approveReport_withLegacyLostAssetType_shouldPersistLostCondition() {
+        User processor = new User();
+        processor.setId(99L);
+        processor.setUsername("hr.user");
+
+        Employee emp = new Employee();
+        emp.setId(50L);
+
+        Asset asset = Asset.builder()
+                .id(123L)
+                .assetCode("ASSET-2026-0002")
+                .condition(AssetCondition.GOOD)
+                .build();
+
+        AssetIncidentReport report = AssetIncidentReport.builder()
+                .id(8L)
+                .reportCode("RPT-0008")
+                .asset(asset)
+                .incidentType(IncidentType.LOST_ASSET)
+                .status(ReportStatus.PENDING)
+                .reportedBy(emp)
+                .reportedAt(LocalDateTime.now())
+                .build();
+
+        when(incidentRepo.findById(8L)).thenReturn(Optional.of(report));
+        when(userRepo.findById(processor.getId())).thenReturn(Optional.of(processor));
+        when(assetRepo.save(any(Asset.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(incidentRepo.save(any(AssetIncidentReport.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CustomUserPrincipal principal = mock(CustomUserPrincipal.class);
+        when(principal.getUserId()).thenReturn(processor.getId());
+
+        incidentService.approveReport(8L, null, principal);
+
+        verify(assetRepo, times(1)).save(any(Asset.class));
+        verify(historyRepo, times(1)).save(historyCaptor.capture());
+        AssetHistory saved = historyCaptor.getValue();
+        assertThat(saved.getNewValue()).contains(AssetCondition.LOST.name());
+    }
+
+    @Test
     void submitReport_whenAssetNotAssignedToEmployee_shouldThrowAccessDenied() {
         // Arrange
         Employee emp = new Employee();

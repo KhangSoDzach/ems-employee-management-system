@@ -198,6 +198,9 @@ public class IncidentServiceImpl implements IncidentService {
         validateNotAlreadyProcessed(report);
 
         User processor = resolveUser(principal);
+        if (report.getReportedBy().getUser() != null && report.getReportedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt báo cáo của bản thân.");
+        }
         report.setStatus(ReportStatus.APPROVED);
         report.setProcessedBy(processor);
         report.setProcessedAt(LocalDateTime.now());
@@ -252,6 +255,9 @@ public class IncidentServiceImpl implements IncidentService {
         validateNotAlreadyProcessed(report);
 
         User processor = resolveUser(principal);
+        if (report.getReportedBy().getUser() != null && report.getReportedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt báo cáo của bản thân.");
+        }
 
         report.setStatus(ReportStatus.REJECTED);
         report.setProcessedBy(processor);
@@ -300,8 +306,8 @@ public class IncidentServiceImpl implements IncidentService {
 
     private AssetCondition resolveConditionOnApprove(IncidentType type) {
         return switch (type) {
-            case DAMAGED -> AssetCondition.DAMAGED;
-            case LOST -> AssetCondition.LOST;
+            case HARDWARE_ISSUE, DAMAGED -> AssetCondition.DAMAGED;
+            case LOST_ASSET, LOST -> AssetCondition.LOST;
         };
     }
 

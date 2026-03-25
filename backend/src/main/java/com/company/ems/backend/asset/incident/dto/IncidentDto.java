@@ -56,6 +56,7 @@ public class IncidentDto {
         private String processNote;
         private String assetCondition;
         private String assetStatus;
+        private Long requesterUserId;
     }
 
     @Data
@@ -87,5 +88,6 @@ public class IncidentDto {
         private String status;
         private String statusLabel;
         private String statusColor;
+        private Long requesterUserId;
     }
 }
