@@ -73,15 +73,7 @@ public class SecurityAuditService {
     }
 
     private String clientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
-        }
-        String xri = request.getHeader("X-Real-IP");
-        if (xri != null && !xri.isBlank()) {
-            return xri.trim();
-        }
-        return request.getRemoteAddr();
+        return com.company.ems.backend.common.utils.IpUtils.getClientIpAddress(request);
     }
 
     private String username() {
