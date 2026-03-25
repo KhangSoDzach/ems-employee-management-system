@@ -104,7 +104,7 @@ export function AssetRequestManagement() {
         rejected:
           statusFilter === "REJECTED" ? response.totalElements : rejected,
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error(SYSTEM_MESSAGES.ASSET_REQUEST.MSG_FETCH_ERROR);
     } finally {
       setLoading(false);
@@ -122,7 +122,7 @@ export function AssetRequestManagement() {
     try {
       const detail = await assetService.getAssetRequestDetailAdmin(id);
       setSelectedRequest(detail);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Không thể tải chi tiết yêu cầu.");
       setIsSheetOpen(false);
     } finally {
