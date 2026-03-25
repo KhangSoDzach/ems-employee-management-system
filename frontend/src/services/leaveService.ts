@@ -30,6 +30,7 @@ export interface LeaveResponseDTO {
   status: string; // "PENDING_LEVEL_1" | "APPROVED" | "REJECTED" | "RETURNED_TO_EMPLOYEE" | ...
   attachmentUrl: string | null;
   createdAt: string; // ISO datetime e.g. "2026-03-01T08:30:00"
+  requesterUserId?: number;
 }
 
 export interface CreateLeaveDTO {

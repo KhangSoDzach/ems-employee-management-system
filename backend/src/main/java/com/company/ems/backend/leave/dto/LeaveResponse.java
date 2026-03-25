@@ -33,4 +33,7 @@ public class LeaveResponse {
     private Integer currentApprovalLevel;
     private Integer maxApprovalLevel;
     private Boolean longLeaveHrRequired;
+
+    // Ownership for cross-approval logic
+    private Long requesterUserId;
 }

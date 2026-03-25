@@ -53,7 +53,7 @@ export function AssetRequestsTab() {
       setLoading(true);
       const res = await assetService.getMyAssetRequests(0, 50);
       setRequests(res.content);
-    } catch (error) {
+    } catch (_error) {
       toast.error(SYSTEM_MESSAGES.ASSET_REQUEST.MSG_FETCH_ERROR);
     } finally {
       setLoading(false);

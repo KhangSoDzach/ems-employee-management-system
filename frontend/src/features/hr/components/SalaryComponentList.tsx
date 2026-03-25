@@ -217,12 +217,13 @@ export function SalaryComponentList() {
                           row.nature}
                       </TableCell>
                       <TableCell>
-                        {row.amount == null
+                        {row.amount === null || row.amount === undefined
                           ? "-"
                           : Number(row.amount).toLocaleString("vi-VN")}
                       </TableCell>
                       <TableCell>
-                        {row.ratePercent == null
+                        {row.ratePercent === null ||
+                        row.ratePercent === undefined
                           ? "-"
                           : `${Number(row.ratePercent).toLocaleString("vi-VN")}%`}
                       </TableCell>

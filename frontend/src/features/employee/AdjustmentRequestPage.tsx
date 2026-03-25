@@ -9,6 +9,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,14 +34,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { ClipboardList } from "lucide-react";
-
-import type {
-  AdjustmentRequest,
-  AdjustmentStatus,
-  AdjustmentType,
-  AuditEntry,
-} from "./adjustment-request.constants";
 import {
   ADJUSTMENT_STATUS_CONFIG,
   ADJUSTMENT_STATUS_OPTIONS,
@@ -48,8 +41,12 @@ import {
   ADJUSTMENT_TYPE_OPTIONS,
   ALL_LABEL,
   DATE_FORMAT,
+  AdjustmentRequest,
+  AdjustmentStatus,
+  AdjustmentType,
+  AuditEntry,
+  type AdjustmentFormValues,
 } from "./adjustment-request.constants";
-import type { AdjustmentFormValues } from "./adjustment-request.constants";
 import {
   ActiveFilterBadge,
   StatusBadge,
@@ -71,9 +68,15 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 // ─── Backend ↔ UI mappers ─────────────────────────────────────────────────────
 
 function mapStatus(s: AdjustmentRequestSummary["status"]): AdjustmentStatus {
-  if (s === "APPROVED") {return "APPROVED";}
-  if (s === "REJECTED") {return "REJECTED";}
-  if (s === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
+  if (s === "APPROVED") {
+    return "APPROVED";
+  }
+  if (s === "REJECTED") {
+    return "REJECTED";
+  }
+  if (s === "RETURNED_TO_EMPLOYEE") {
+    return "RETURNED";
+  }
   return "PENDING";
 }
 
@@ -81,8 +84,12 @@ function deriveType(
   inTime: string | null,
   outTime: string | null,
 ): AdjustmentType {
-  if (inTime && outTime) {return "BOTH";}
-  if (inTime) {return "CHECK_IN";}
+  if (inTime && outTime) {
+    return "BOTH";
+  }
+  if (inTime) {
+    return "CHECK_IN";
+  }
   return "CHECK_OUT";
 }
 
@@ -105,16 +112,28 @@ function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
 }
 
 function mapHistoryAction(action: string): AuditEntry["action"] {
-  if (action === "APPROVED") {return "APPROVED";}
-  if (action === "REJECTED") {return "REJECTED";}
-  if (action === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
-  if (action === "RESUBMITTED") {return "EDITED";}
+  if (action === "APPROVED") {
+    return "APPROVED";
+  }
+  if (action === "REJECTED") {
+    return "REJECTED";
+  }
+  if (action === "RETURNED_TO_EMPLOYEE") {
+    return "RETURNED";
+  }
+  if (action === "RESUBMITTED") {
+    return "EDITED";
+  }
   return "CREATED";
 }
 
 function typeToReason(type: AdjustmentType): AdjustmentReason {
-  if (type === "CHECK_IN") {return "FORGOT_CHECKIN";}
-  if (type === "CHECK_OUT") {return "FORGOT_CHECKOUT";}
+  if (type === "CHECK_IN") {
+    return "FORGOT_CHECKIN";
+  }
+  if (type === "CHECK_OUT") {
+    return "FORGOT_CHECKOUT";
+  }
   return "OTHER";
 }
 
@@ -190,7 +209,9 @@ export default function AdjustmentRequestPage() {
 
   // ── Fetch details when opening sheet ───────────────────────────────────────
   useEffect(() => {
-    if (!detailRequest || detailRequest.auditTrail.length > 0) {return;}
+    if (!detailRequest || detailRequest.auditTrail.length > 0) {
+      return;
+    }
 
     const fetchDetail = async () => {
       try {
@@ -198,7 +219,9 @@ export default function AdjustmentRequestPage() {
           Number(detailRequest.id),
         );
         setDetailRequest((prev) => {
-          if (!prev || prev.id !== String(fullDetail.id)) {return prev;}
+          if (!prev || prev.id !== String(fullDetail.id)) {
+            return prev;
+          }
           return {
             ...prev,
             auditTrail: fullDetail.history.map((h) => ({

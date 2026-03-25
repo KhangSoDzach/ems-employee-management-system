@@ -69,6 +69,7 @@ public class AssetRequestDto {
         private String reviewedBy;
         private String reviewedAt;
         private String reviewNote;
+        private Long requesterUserId;
     }
 
     @Data
@@ -95,5 +96,6 @@ public class AssetRequestDto {
         private String status;
         private String statusLabel;
         private String statusColor;
+        private Long requesterUserId;
     }
 }
