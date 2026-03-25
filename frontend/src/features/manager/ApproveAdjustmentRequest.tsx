@@ -39,6 +39,7 @@ import {
   type AuditEntry,
   ADJUSTMENT_STATUS_CONFIG,
   ADJUSTMENT_STATUS_OPTIONS,
+  AdjustmentType,
 } from "../employee/adjustment-request.constants";
 import {
   StatusBadge,
@@ -52,7 +53,6 @@ import {
   attendanceService,
   type AdjustmentRequestSummary,
 } from "@/services/attendanceService";
-import type { AdjustmentType } from "../employee/adjustment-request.constants";
 
 // ── Mapper ────────────────────────────────────────────────────────────────────
 function deriveType(inT: string | null, outT: string | null): AdjustmentType {

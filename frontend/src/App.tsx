@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ThemeProvider from "@/contexts/ThemeProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/sonner";
 import { COMMON_TEXT } from "./constants/ui-texts";
@@ -77,6 +78,7 @@ function RouteFallback() {
 
 function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<RouteFallback />}>
@@ -235,6 +237,7 @@ function App() {
       </BrowserRouter>
       <Toaster richColors position="top-center" visibleToasts={1} />
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 
