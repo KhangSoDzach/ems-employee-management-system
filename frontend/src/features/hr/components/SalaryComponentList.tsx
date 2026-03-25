@@ -23,6 +23,9 @@ import {
   useUpdateSalaryComponent,
 } from "@/features/hr/hooks/useSalaryComponents";
 import { SalaryComponentForm } from "@/features/hr/components/SalaryComponentForm";
+import { RunPayrollPanel } from "@/features/hr/components/RunPayrollPanel";
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 type ModalState = {
   open: boolean;
@@ -76,6 +79,8 @@ function getApiErrorMessage(error: unknown): string {
     fallback
   );
 }
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function SalaryComponentList() {
   const [modal, setModal] = useState<ModalState>(INITIAL_MODAL_STATE);
@@ -151,101 +156,113 @@ export function SalaryComponentList() {
       <SidebarInset>
         <SiteHeader />
 
-        <main className="min-h-screen space-y-6 bg-background p-4 pt-6 md:p-8">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="page-heading">Cấu hình chính sách lương</h1>
-              <p className="text-sm text-muted-foreground">
-                Quản lý danh sách thành phần lương để phục vụ hệ thống tính
-                lương.
-              </p>
+        {/*
+         * ⚠️  RunPayrollPanel PHẢI nằm bên trong SidebarInset
+         *    để sidebar không đè lên nội dung.
+         *    KHÔNG đặt nó ở PayrollManagement.tsx bên ngoài component này.
+         */}
+        <main className="min-h-screen space-y-8 bg-background p-4 pt-6 md:p-8">
+
+          {/* ── SECTION 1: Run Payroll ─────────────────────────────────── */}
+          <RunPayrollPanel />
+
+          {/* ── SECTION 2: Salary Component Config ────────────────────── */}
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h1 className="page-heading">Cấu hình chính sách lương</h1>
+                <p className="text-sm text-muted-foreground">
+                  Quản lý danh sách thành phần lương để phục vụ hệ thống tính
+                  lương.
+                </p>
+              </div>
+              <Button onClick={openCreate} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Tạo mới
+              </Button>
             </div>
-            <Button onClick={openCreate} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Tạo mới
-            </Button>
-          </div>
 
-          <section className="rounded-lg border bg-white shadow-sm dark:bg-slate-900">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã</TableHead>
-                  <TableHead>Tên</TableHead>
-                  <TableHead>Loại</TableHead>
-                  <TableHead>Chịu thuế</TableHead>
-                  <TableHead>Đóng BHXH</TableHead>
-                  <TableHead>Tính chất</TableHead>
-                  <TableHead>Số tiền</TableHead>
-                  <TableHead>Hệ số (%)</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Hành động</TableHead>
-                </TableRow>
-              </TableHeader>
+            <section className="rounded-lg border bg-white shadow-sm dark:bg-slate-900">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Mã</TableHead>
+                    <TableHead>Tên</TableHead>
+                    <TableHead>Loại</TableHead>
+                    <TableHead>Chịu thuế</TableHead>
+                    <TableHead>Đóng BHXH</TableHead>
+                    <TableHead>Tính chất</TableHead>
+                    <TableHead>Số tiền</TableHead>
+                    <TableHead>Hệ số (%)</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-right">Hành động</TableHead>
+                  </TableRow>
+                </TableHeader>
 
-              <TableBody>
-                {salaryComponentsQuery.isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={10}
-                      className="text-center text-sm text-muted-foreground"
-                    >
-                      Đang tải dữ liệu...
-                    </TableCell>
-                  </TableRow>
-                ) : rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={10}
-                      className="text-center text-sm text-muted-foreground"
-                    >
-                      Chưa có thành phần lương nào.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  rows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="font-medium">{row.code}</TableCell>
-                      <TableCell>{row.name}</TableCell>
-                      <TableCell>
-                        {SALARY_COMPONENT_TYPE_LABELS[row.type] ?? row.type}
-                      </TableCell>
-                      <TableCell>{row.isTaxable ? "Có" : "Không"}</TableCell>
-                      <TableCell>{row.isInsurable ? "Có" : "Không"}</TableCell>
-                      <TableCell>
-                        {SALARY_COMPONENT_NATURE_LABELS[row.nature] ??
-                          row.nature}
-                      </TableCell>
-                      <TableCell>
-                        {row.amount == null
-                          ? "-"
-                          : Number(row.amount).toLocaleString("vi-VN")}
-                      </TableCell>
-                      <TableCell>
-                        {row.ratePercent == null
-                          ? "-"
-                          : `${Number(row.ratePercent).toLocaleString("vi-VN")}%`}
-                      </TableCell>
-                      <TableCell>
-                        {SALARY_COMPONENT_STATUS_LABELS[row.status] ??
-                          row.status}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEdit(row)}
-                          aria-label={`Chỉnh sửa ${row.code}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                <TableBody>
+                  {salaryComponentsQuery.isLoading ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={10}
+                        className="text-center text-sm text-muted-foreground"
+                      >
+                        Đang tải dữ liệu...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </section>
+                  ) : rows.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={10}
+                        className="text-center text-sm text-muted-foreground"
+                      >
+                        Chưa có thành phần lương nào.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    rows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell className="font-medium">{row.code}</TableCell>
+                        <TableCell>{row.name}</TableCell>
+                        <TableCell>
+                          {SALARY_COMPONENT_TYPE_LABELS[row.type] ?? row.type}
+                        </TableCell>
+                        <TableCell>{row.isTaxable ? "Có" : "Không"}</TableCell>
+                        <TableCell>{row.isInsurable ? "Có" : "Không"}</TableCell>
+                        <TableCell>
+                          {SALARY_COMPONENT_NATURE_LABELS[row.nature] ??
+                            row.nature}
+                        </TableCell>
+                        <TableCell>
+                          {row.amount == null
+                            ? "-"
+                            : Number(row.amount).toLocaleString("vi-VN")}
+                        </TableCell>
+                        <TableCell>
+                          {row.ratePercent == null
+                            ? "-"
+                            : `${Number(row.ratePercent).toLocaleString("vi-VN")}%`}
+                        </TableCell>
+                        <TableCell>
+                          {SALARY_COMPONENT_STATUS_LABELS[row.status] ??
+                            row.status}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEdit(row)}
+                            aria-label={`Chỉnh sửa ${row.code}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </section>
+          </div>
         </main>
 
         <SalaryComponentForm

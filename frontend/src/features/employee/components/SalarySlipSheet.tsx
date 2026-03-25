@@ -29,7 +29,6 @@ export type SalarySlip = {
   netPay: string
   status: "paid" | "pending"
 
-  // Employee + payment metadata (optional)
   employeeName?: string
   employeeId?: string
   department?: string
@@ -72,19 +71,21 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
   }
 
   const totalBonus = form.bonus.reduce((acc, cur) => {
-    const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
+    const parsed = Number(cur.amount.replace(/[^\d]/g, ""))
     return acc + (Number.isNaN(parsed) ? 0 : parsed)
   }, 0)
 
   const totalAllowances = form.allowances.reduce((acc, cur) => {
-    const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
+    const parsed = Number(cur.amount.replace(/[^\d]/g, ""))
     return acc + (Number.isNaN(parsed) ? 0 : parsed)
   }, 0)
 
-  const totalDeductions = form.deductions.reduce((acc, cur) => {
-    const parsed = Number(cur.amount.replace(/[^0-9.-]+/g, ""))
-    return acc + (Number.isNaN(parsed) ? 0 : parsed)
-  }, 0)
+  const totalDeductions = form.deductions
+    .filter(d => !d.label.toLowerCase().includes('thuế') && !d.label.toLowerCase().includes('tncn'))
+    .reduce((acc, cur) => {
+      const parsed = Number(cur.amount.replace(/[^\d]/g, ""))
+      return acc + (Number.isNaN(parsed) ? 0 : parsed)
+    }, 0)
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) {onOpenChange(false)} }}>
@@ -229,79 +230,6 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
               </div>
             </section>
 
-            {/* Bonus */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Gift className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">{"Thưởng"}</h3>
-              </div>
-              <div className="bg-muted/20 rounded-xl p-4 space-y-3">
-                {form.bonus.map((b, idx) => (
-                  <div key={b.label} className="flex justify-between items-center">
-                    {isEditing ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        <Input
-                          value={b.label}
-                          onChange={(e) => {
-                            const next = [...form.bonus]
-                            const current = next[idx]
-                            if (!current) {return}
-                            next[idx] = { ...current, label: e.target.value }
-                            setForm({ ...form, bonus: next })
-                          }}
-                          className="flex-1 text-sm"
-                          placeholder="Loại thưởng"
-                        />
-                        <Input
-                          value={b.amount}
-                          onChange={(e) => {
-                            const next = [...form.bonus]
-                            const current = next[idx]
-                            if (!current) {return}
-                            next[idx] = { ...current, amount: e.target.value }
-                            setForm({ ...form, bonus: next })
-                          }}
-                          className="w-28 text-right"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500"
-                          onClick={() => {
-                            const next = form.bonus.filter((_, i) => i !== idx)
-                            setForm({ ...form, bonus: next })
-                          }}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="text-sm text-muted-foreground">{b.label}</span>
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{"+"}{" "}{b.amount}</span>
-                      </>
-                    )}
-                  </div>
-                ))}
-                {isEditing && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setForm({ ...form, bonus: [...form.bonus, { label: "", amount: "" }] })
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {"Thêm thưởng"}
-                  </Button>
-                )}
-                <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
-                  <span>{"Tổng thưởng"}</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">{"+"}{" "}{totalBonus.toLocaleString("vi-VN")}{" đ"}</span>
-                </div>
-              </div>
-            </section>
 
             {/* Allowances */}
             <section className="space-y-3">
@@ -384,7 +312,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                 <h3 className="font-semibold text-lg">{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_DEDUCTIONS}</h3>
               </div>
               <div className="bg-muted/20 rounded-xl p-4 space-y-3">
-                {form.deductions.map((d, idx) => (
+                {form.deductions.filter(d => !d.label.toLowerCase().includes('thuế') && !d.label.toLowerCase().includes('tncn')).map((d, idx) => (
                   <div key={d.label} className="flex justify-between items-center">
                     {isEditing ? (
                       <div className="flex items-center gap-2 flex-1">
@@ -466,7 +394,50 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
             variant="secondary"
             className="flex-1 flex items-center justify-center gap-2"
             onClick={() => {
-              // TODO: implement PDF download
+              if (!form) return
+              const allowanceRows = (form.allowances ?? [])
+                .map(a => `<tr><td style="padding:5px 0 5px 8px;color:#444">${a.label}</td><td style="text-align:right;color:#16a34a">+ ${a.amount}</td></tr>`).join("")
+              const deductionRows = (form.deductions ?? [])
+                .filter((d: {label:string}) => !d.label.toLowerCase().includes('thuế') && !d.label.toLowerCase().includes('tncn'))
+                .map((d: {label:string;amount:string}) => `<tr><td style="padding:5px 0 5px 8px;color:#444">${d.label}</td><td style="text-align:right;color:#dc2626">- ${d.amount}</td></tr>`).join("")
+              const totalAllowancesNum = (form.allowances ?? []).reduce((s,a)=>s+Number(a.amount.replace(/[^\d]/g,"")||0),0)
+              const totalAllowancesStr = totalAllowancesNum.toLocaleString("vi-VN") + "đ"
+              const html = `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"/><title>Phieu luong - ${form.period}</title>
+              <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#111}
+              .page{max-width:600px;margin:32px auto;padding:0 16px}
+              .header{border-bottom:3px solid #e41b21;padding-bottom:12px;margin-bottom:20px}
+              .header h1{font-size:22px;color:#e41b21}.meta{color:#666;font-size:12px;margin-top:4px}
+              .badge{display:inline-block;background:#dcfce7;color:#15803d;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:bold}
+              .section{margin-bottom:16px}.section-title{font-size:11px;font-weight:bold;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+              table{width:100%;border-collapse:collapse}.base-row{display:flex;justify-content:space-between;padding:6px 8px;background:#f9fafb;border-radius:4px}
+              hr{border:none;border-top:1px solid #e5e7eb;margin:12px 0}
+              .total-row{display:flex;justify-content:space-between;padding:6px 8px;font-weight:bold}
+              .net-box{background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:24px;text-align:center;margin-top:20px}
+              .net-label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+              .net-amount{font-size:34px;font-weight:bold;color:#e41b21}
+              @media print{.page{margin:0;padding:16px}}</style></head><body>
+              <div class="page">
+                <div class="header"><h1>Phieu luong</h1>
+                  <div class="meta"><strong>${form.period}</strong> | Ngay thanh toan: ${form.paymentDate}
+                    <span class="badge">${form.status === "paid" ? "Da thanh toan" : "Cho thanh toan"}</span></div></div>
+                <div class="section"><div class="section-title">Luong co ban</div>
+                  <div class="base-row"><span>Luong co ban</span><strong>${form.baseSalary}</strong></div></div>
+                ${allowanceRows ? `<div class="section"><div class="section-title">Phu cap</div>
+                  <table><tbody>${allowanceRows}</tbody></table>
+                  <div class="total-row"><span>Tong phu cap</span><span style="color:#16a34a">+ ${totalAllowancesStr}</span></div></div>` : ""}
+                <hr/>
+                <div class="section"><div class="section-title">Khau tru</div>
+                  <table><tbody>${deductionRows}</tbody></table>
+                  <div class="total-row"><span>Tong khau tru</span><span style="color:#dc2626">- ${form.totalDeductions}</span></div></div>
+                <div class="net-box"><div class="net-label">TONG THUC LINH</div>
+                  <div class="net-amount">${form.netPay}</div></div>
+              </div></body></html>`
+              const blob = new Blob([html], { type: "text/html;charset=utf-8" })
+              const url  = URL.createObjectURL(blob)
+              const a    = document.createElement("a")
+              a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"
+              document.body.appendChild(a); a.click(); document.body.removeChild(a)
+              setTimeout(() => URL.revokeObjectURL(url), 15000)
             }}
           >
             <FileText className="w-4 h-4" />

@@ -46,11 +46,9 @@ const KpiOkrManagement = lazy(
 );
 const MemberList = lazy(() => import("./features/manager/MemberList"));
 const PayrollManagement = lazy(() => import("@/features/hr/PayrollManagement"));
+const HrPayrollPeriodPage = lazy(() => import("@/features/hr/HrPayrollPeriodPage"));
 const AssetReportManagement = lazy(
   () => import("./features/admin/AssetReportManagement"),
-);
-const AssetRequestManagement = lazy(
-  () => import("./features/admin/AssetRequestManagement"),
 );
 const AssetGroupManagement = lazy(
   () => import("./features/manager/AssetGroupManagement"),
@@ -68,7 +66,6 @@ const AnnouncementsPage = lazy(
 const AnnouncementManagementPage = lazy(
   () => import("./features/hr/AnnouncementManagementPage"),
 );
-const AuditLogsPage = lazy(() => import("./features/admin/AuditLogsPage"));
 
 function RouteFallback() {
   return (
@@ -109,10 +106,6 @@ function App() {
                 path="/asset-reports"
                 element={<AssetReportManagement />}
               />
-              <Route
-                path="/asset-requests"
-                element={<AssetRequestManagement />}
-              />
               <Route path="/hr-employees" element={<EmployeeManagement />} />
             </Route>
 
@@ -142,20 +135,15 @@ function App() {
             >
               <Route path="/assets" element={<AssetManagementPage />} />
               <Route path="/payroll" element={<PayrollManagement />} />
-              <Route path="/audit-logs" element={<AuditLogsPage />} />
               <Route
                 path="/announcements/manage"
                 element={<AnnouncementManagementPage />}
               />
             </Route>
 
-            {/* Admin + HR */}
+            {/* Admin only */}
             <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR]}
-                />
-              }
+              element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}
             >
               <Route
                 path="/attendance-settings"
@@ -236,6 +224,7 @@ function App() {
             {/* HR only */}
             <Route element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}>
               <Route path="/hr/employees" element={<Dashboard />} />
+              <Route path="/hr-payroll" element={<HrPayrollPeriodPage />} />
             </Route>
           </Routes>
         </Suspense>

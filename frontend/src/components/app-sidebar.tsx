@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import { VersionSwitcher } from "@/components/version-switcher";
 import {
@@ -56,10 +56,6 @@ export function AppSidebar({
               {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
                 url: "/payroll",
-              },
-              {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
-                url: "/audit-logs",
               },
               {
                 title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
@@ -124,7 +120,8 @@ export function AppSidebar({
                   url: "/my-assets",
                 },
                 {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
+                  title:
+                    SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                   url: "/asset-incidents",
                 },
                 {
@@ -142,10 +139,6 @@ export function AppSidebar({
                 {
                   title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_REPORTS,
                   url: "/asset-reports",
-                },
-                {
-                  title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ASSET_REQUESTS,
-                  url: "/asset-requests",
                 },
               ],
             },
@@ -169,10 +162,6 @@ export function AppSidebar({
                     url: "/hr-employees",
                   },
                   {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE_SETTINGS,
-                    url: "/attendance-settings",
-                  },
-                  {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
                     url: "/my-assets",
                   },
@@ -181,15 +170,12 @@ export function AppSidebar({
                     url: "/assets",
                   },
                   {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
-                    url: "/audit-logs",
-                  },
-                  {
                     title: SYSTEM_MESSAGES.SIDEBAR.MENU_REQUEST,
                     url: "/request",
                   },
                   {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
+                    title:
+                      SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
                     url: "/asset-incidents",
                   },
                   {
@@ -201,8 +187,8 @@ export function AppSidebar({
                     url: "/asset-reports",
                   },
                   {
-                    title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ASSET_REQUESTS,
-                    url: "/asset-requests",
+                    title: "Bảng lương theo kỳ",
+                    url: "/hr-payroll",
                   },
                 ],
               },
@@ -259,14 +245,14 @@ export function AppSidebar({
                       asChild
                       isActive={location.pathname === subItem.url}
                     >
-                      <Link
-                        to={subItem.url}
+                      <a
+                        href={subItem.url}
                         className="flex w-full items-center gap-2"
                       >
                         <span className="flex-1 truncate text-left">
                           {subItem.title}
                         </span>
-                      </Link>
+                      </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

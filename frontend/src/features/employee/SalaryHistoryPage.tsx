@@ -1,5 +1,6 @@
-import { useState } from "react"
-import { Calendar, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Calendar, Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -7,129 +8,83 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
+  Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from "@/components/ui/table"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 
 import { SalarySlipSheet, type SalarySlip } from "./components/SalarySlipSheet"
 import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { salaryHistoryApi, type PayrollSlipApi } from "@/services/salaryHistoryApi"
 
-const MOCK_SALARY_DATA: SalarySlip[] = [
-  {
-    id: 1,
-    period: "Tháng 04/2024",
-    paymentDate: "05/05/2024",
-    baseSalary: "23,000,000đ",
-    bonus: [],
-    allowances: [
-      { label: "Phụ cấp ăn trưa", amount: "730,000đ" },
-      { label: "Phụ cấp đi lại", amount: "500,000đ" },
-      { label: "Phụ cấp điện thoại", amount: "200,000đ" },
-    ],
-    deductions: [
-      { label: "BHXH (8%)", amount: "2,000,000đ" },
-      { label: "BHYT (1.5%)", amount: "375,000đ" },
-      { label: "BHTN (1%)", amount: "250,000đ" },
-      { label: "Thuế TNCN", amount: "1,150,000đ" },
-    ],
-    totalIncome: "25,000,000đ",
-    totalDeductions: "3,775,000đ",
-    netPay: "22,225,000đ",
-    status: "paid",
-  },
-  {
-    id: 2,
-    period: "Tháng 03/2024",
-    paymentDate: "05/04/2024",
-    baseSalary: "23,000,000đ",
-    bonus: [],
-    allowances: [
-      { label: "Phụ cấp ăn trưa", amount: "730,000đ" },
-      { label: "Phụ cấp đi lại", amount: "500,000đ" },
-    ],
-    deductions: [
-      { label: "BHXH (8%)", amount: "2,000,000đ" },
-      { label: "BHYT (1.5%)", amount: "375,000đ" },
-      { label: "BHTN (1%)", amount: "250,000đ" },
-      { label: "Thuế TNCN", amount: "1,150,000đ" },
-    ],
-    totalIncome: "24,230,000đ",
-    totalDeductions: "3,775,000đ",
-    netPay: "20,455,000đ",
-    status: "pending",
-  },
-  {
-    id: 3,
-    period: "Tháng 02/2024",
-    paymentDate: "05/03/2024",
-    baseSalary: "25,000,000đ",
-    bonus: [],
-    allowances: [
-      { label: "Phụ cấp ăn trưa", amount: "730,000đ" },
-      { label: "Phụ cấp đi lại", amount: "500,000đ" },
-      { label: "Phụ cấp điện thoại", amount: "200,000đ" },
-    ],
-    deductions: [
-      { label: "BHXH (8%)", amount: "2,000,000đ" },
-      { label: "BHYT (1.5%)", amount: "375,000đ" },
-      { label: "BHTN (1%)", amount: "250,000đ" },
-      { label: "Thuế TNCN", amount: "1,150,000đ" },
-    ],
-    totalIncome: "28,000,000đ",
-    totalDeductions: "3,775,000đ",
-    netPay: "24,225,000đ",
-    status: "paid",
-  },
-  {
-    id: 4,
-    period: "Tháng 01/2024",
-    paymentDate: "05/02/2024",
-    baseSalary: "23,000,000đ",
-    bonus: [],
-    allowances: [
-      { label: "Phụ cấp ăn trưa", amount: "730,000đ" },
-      { label: "Phụ cấp đi lại", amount: "500,000đ" },
-    ],
-    deductions: [
-      { label: "BHXH (8%)", amount: "2,000,000đ" },
-      { label: "BHYT (1.5%)", amount: "375,000đ" },
-      { label: "BHTN (1%)", amount: "250,000đ" },
-      { label: "Thuế TNCN", amount: "1,150,000đ" },
-    ],
-    totalIncome: "24,230,000đ",
-    totalDeductions: "3,775,000đ",
-    netPay: "20,455,000đ",
-    status: "pending",
-  },
-]
+const PAGE_SIZE = 4
+
+function toSlip(p: PayrollSlipApi, idx: number): SalarySlip {
+  return {
+    id: idx + 1,
+    period: p.period,
+    paymentDate: p.paymentDate,
+    baseSalary: p.baseSalary,
+    bonus: p.bonus ?? [],
+    allowances: p.allowances ?? [],
+    deductions: p.deductions ?? [],
+    totalIncome: p.totalIncome,
+    totalDeductions: p.totalDeductions,
+    netPay: p.netPay,
+    status: p.status,
+  }
+}
 
 export default function SalaryHistoryPage() {
-  const [selectedYear, setSelectedYear] = useState("2024")
-  const [selectedMonth, setSelectedMonth] = useState("all")
+  const [selectedYear, setSelectedYear]     = useState("all")
+  const [selectedMonth, setSelectedMonth]   = useState("all")
   const [selectedStatus, setSelectedStatus] = useState<"all" | "paid" | "pending">("all")
-  const [selectedSlip, setSelectedSlip] = useState<SalarySlip | null>(null)
+  const [selectedSlip, setSelectedSlip]     = useState<SalarySlip | null>(null)
+  const [currentPage, setCurrentPage]       = useState(1)
+
   const t = SYSTEM_MESSAGES.SALARY_HISTORY
 
-  const filteredData = MOCK_SALARY_DATA.filter((row) => {
-    const [, month, year] = row.paymentDate.split("/")
-
-    const matchesYear = selectedYear === "all" || year === selectedYear
-    const matchesMonth = selectedMonth === "all" || month === selectedMonth
-    const matchesStatus = selectedStatus === "all" || row.status === selectedStatus
-
-    return matchesYear && matchesMonth && matchesStatus
+  const { data: rawData = [], isLoading, isError } = useQuery({
+    queryKey: ["my-payroll-history"],
+    queryFn:  () => salaryHistoryApi.getMyHistory(),
+    staleTime: 30_000,
   })
+
+  const allSlips: SalarySlip[] = useMemo(() => rawData.map(toSlip), [rawData])
+
+  const filteredData = useMemo(() => {
+    return allSlips.filter(row => {
+      const parts    = row.period.replace("Tháng ", "").split("/")
+      const rowMonth = parts[0] ?? ""
+      const rowYear  = parts[1] ?? ""
+      return (selectedYear   === "all" || rowYear  === selectedYear)
+          && (selectedMonth  === "all" || rowMonth === selectedMonth.padStart(2, "0"))
+          && (selectedStatus === "all" || row.status === selectedStatus)
+    })
+  }, [allSlips, selectedYear, selectedMonth, selectedStatus])
+
+  const handleYearChange   = (v: string) => { setSelectedYear(v);   setCurrentPage(1) }
+  const handleMonthChange  = (v: string) => { setSelectedMonth(v);  setCurrentPage(1) }
+  const handleStatusChange = (v: string) => { setSelectedStatus(v as typeof selectedStatus); setCurrentPage(1) }
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE))
+  const safePage   = Math.min(currentPage, totalPages)
+  const pagedData  = filteredData.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const startItem  = filteredData.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
+  const endItem    = Math.min(safePage * PAGE_SIZE, filteredData.length)
+  const goTo       = (p: number) => setCurrentPage(Math.max(1, Math.min(p, totalPages)))
+
+  const totalIncome = useMemo(() => {
+    const s = filteredData.reduce((a, r) => a + Number(r.totalIncome.replace(/[^\d]/g, "") || 0), 0)
+    return s.toLocaleString("vi-VN") + "đ"
+  }, [filteredData])
+
+  const avgNet = useMemo(() => {
+    if (!filteredData.length) return "0đ"
+    const s = filteredData.reduce((a, r) => a + Number(r.netPay.replace(/[^\d]/g, "") || 0), 0)
+    return Math.round(s / filteredData.length).toLocaleString("vi-VN") + "đ"
+  }, [filteredData])
 
   return (
     <SidebarProvider>
@@ -140,45 +95,38 @@ export default function SalaryHistoryPage() {
         <main className="flex-1 space-y-6 lg:p-8 p-4 pt-6 bg-background min-h-screen">
           <div className="max-w-6xl mx-auto space-y-6">
 
-            {/* Header Section */}
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h1 className="page-heading">{t.TITLE}</h1>
-                <p className="text-muted-foreground mt-1">
-                  {t.DESC}
-                </p>
+                <p className="text-muted-foreground mt-1">{t.DESC}</p>
               </div>
-
-              <div className="flex items-center gap-3">
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-[120px] bg-background">
+              <div className="flex items-center gap-3 flex-wrap">
+                <Select value={selectedYear} onValueChange={handleYearChange}>
+                  <SelectTrigger className="w-[110px] bg-background">
                     <SelectValue placeholder={t.LABEL_YEAR} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả năm</SelectItem>
-                    <SelectItem value="2026">2026</SelectItem>
-                    <SelectItem value="2025">2025</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2022">2022</SelectItem>
+                    {["2026","2025","2024","2023"].map(y => (
+                      <SelectItem key={y} value={y}>{y}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <Select value={selectedMonth} onValueChange={handleMonthChange}>
                   <SelectTrigger className="w-[130px] bg-background">
                     <SelectValue placeholder="Chọn tháng" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả tháng</SelectItem>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                      <SelectItem key={month} value={month.toString()}>
-                        Tháng {month}
-                      </SelectItem>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                      <SelectItem key={m} value={String(m)}>Tháng {m}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
 
-                <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as "all" | "paid" | "pending")}>
+                <Select value={selectedStatus} onValueChange={handleStatusChange}>
                   <SelectTrigger className="w-[150px] bg-background">
                     <SelectValue placeholder="Trạng thái" />
                   </SelectTrigger>
@@ -190,15 +138,16 @@ export default function SalaryHistoryPage() {
                 </Select>
               </div>
             </div>
-            {/* Summary Cards */}
+
+            {/* Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
               <div className="card-soft p-6">
                 <p className="text-sm text-muted-foreground mb-2">{t.STATS_TOTAL_INCOME}</p>
-                <p className="text-2xl font-bold text-foreground">103,000,000đ</p>
+                <p className="text-2xl font-bold">{isLoading ? "—" : totalIncome}</p>
               </div>
               <div className="card-soft p-6">
                 <p className="text-sm text-muted-foreground mb-2">{t.STATS_AVG_NET}</p>
-                <p className="text-2xl font-bold text-foreground">23,125,000đ</p>
+                <p className="text-2xl font-bold">{isLoading ? "—" : avgNet}</p>
               </div>
               <div className="card-soft p-6">
                 <p className="text-sm text-muted-foreground mb-2">{t.STATS_NEXT_PERIOD}</p>
@@ -206,7 +155,7 @@ export default function SalaryHistoryPage() {
               </div>
             </div>
 
-            {/* Table Container */}
+            {/* Table */}
             <div className="card-soft">
               <Table>
                 <TableHeader>
@@ -219,15 +168,31 @@ export default function SalaryHistoryPage() {
                     <TableHead className="text-right">{SYSTEM_MESSAGES.LABEL_ACTION}</TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {filteredData.length === 0 ? (
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Đang tải dữ liệu lương...
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : isError ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-destructive text-sm">
+                        Không thể tải dữ liệu. Vui lòng thử lại.
+                      </TableCell>
+                    </TableRow>
+                  ) : pagedData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                         {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredData.map((row) => (
+                    pagedData.map(row => (
                       <TableRow
                         key={row.id}
                         className="hover:bg-muted/30 cursor-pointer"
@@ -235,38 +200,25 @@ export default function SalaryHistoryPage() {
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center shrink-0">
                               <Calendar className="w-4 h-4 text-primary" />
                             </div>
                             <span className="font-medium text-foreground">{row.period}</span>
                           </div>
                         </TableCell>
-
                         <TableCell className="text-muted-foreground">{row.paymentDate}</TableCell>
-
-                        <TableCell className="font-medium text-foreground">
-                          {row.totalIncome}
-                        </TableCell>
-
-                        <TableCell className="text-primary">
-                          {row.totalDeductions}
-                        </TableCell>
-
+                        <TableCell className="font-medium">{row.totalIncome}</TableCell>
+                        <TableCell className="text-primary">{row.totalDeductions}</TableCell>
                         <TableCell>
                           <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 pointer-events-none text-sm font-bold">
                             {row.netPay}
                           </Badge>
                         </TableCell>
-
                         <TableCell className="text-right">
                           <Button
-                            variant="ghost"
-                            size="icon"
+                            variant="ghost" size="icon"
                             className="text-muted-foreground hover:text-primary"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedSlip(row)
-                            }}
+                            onClick={e => { e.stopPropagation(); setSelectedSlip(row) }}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -278,29 +230,31 @@ export default function SalaryHistoryPage() {
               </Table>
 
               {/* Pagination */}
-              <div className="px-5 py-3 flex items-center justify-between border-t bg-muted/20">
-                <span className="text-sm text-muted-foreground">{t.PAGINATION_SHOW} 1-4 {t.PAGINATION_ON_TOTAL} 12 {t.PAGINATION_PERIODS}</span>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" disabled>
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <Button size="icon" className="bg-[#e41b21] hover:bg-[#c9181d] text-white w-8 h-8">
-                    1
-                  </Button>
-                  <Button variant="ghost" size="icon" className="w-8 h-8">
-                    2
-                  </Button>
-                  <Button variant="ghost" size="icon" className="w-8 h-8">
-                    3
-                  </Button>
-                  <Button variant="outline" size="icon">
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
+              <div className="px-5 py-3 flex items-center justify-between border-t bg-muted/20 flex-wrap gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {filteredData.length === 0
+                    ? "Không có dữ liệu"
+                    : `${t.PAGINATION_SHOW} ${startItem}–${endItem} ${t.PAGINATION_ON_TOTAL} ${filteredData.length} ${t.PAGINATION_PERIODS}`}
+                </span>
+                <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" disabled={safePage === 1}
+                            onClick={() => goTo(safePage - 1)} className="w-8 h-8">
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <Button key={page} variant={page === safePage ? "default" : "ghost"} size="icon"
+                              className={`w-8 h-8 ${page === safePage ? "bg-[#e41b21] hover:bg-[#c9181d] text-white" : ""}`}
+                              onClick={() => goTo(page)}>
+                        {page}
+                      </Button>
+                    ))}
+                    <Button variant="outline" size="icon" disabled={safePage === totalPages}
+                            onClick={() => goTo(safePage + 1)} className="w-8 h-8">
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
               </div>
             </div>
-
-
           </div>
         </main>
       </SidebarInset>
@@ -308,7 +262,7 @@ export default function SalaryHistoryPage() {
       <SalarySlipSheet
         slip={selectedSlip}
         open={!!selectedSlip}
-        onOpenChange={(open) => { if (!open) {setSelectedSlip(null)} }}
+        onOpenChange={open => { if (!open) setSelectedSlip(null) }}
       />
     </SidebarProvider>
   )

@@ -115,21 +115,21 @@ public class IncidentServiceImpl implements IncidentService {
                 .attachmentUrl(attachmentUrl)
                 .status(ReportStatus.PENDING)
                 .reportedBy(emp)
-            .reportedAt(LocalDateTime.now())
-            .build();
+                .reportedAt(LocalDateTime.now())
+                .build();
 
         @SuppressWarnings("null")
         AssetIncidentReport savedReport = incidentRepo.save(report);
 
         auditLogService.logEvent(
-            ENTITY_TYPE_ASSET_INCIDENT,
+                ENTITY_TYPE_ASSET_INCIDENT,
                 AuthActionType.ASSET_REPORT_SUBMITTED,
                 emp.getUser().getUsername(),
-            savedReport.getReportCode(),
-            null,
-            new AuditLogService.AuditValues(
+                savedReport.getReportCode(),
                 null,
-                "{\"asset\":\"" + asset.getAssetCode() + "\", \"type\":\"" + savedReport.getIncidentType() + "\"}"),
+                new AuditLogService.AuditValues(
+                        null,
+                        "{\"asset\":\"" + asset.getAssetCode() + "\", \"type\":\"" + savedReport.getIncidentType() + "\"}"),
                 null);
 
         log.info("Incident report created: {} by employee: {}", savedReport.getReportCode(), emp.getId());
@@ -195,6 +195,11 @@ public class IncidentServiceImpl implements IncidentService {
             CustomUserPrincipal principal) {
 
         AssetIncidentReport report = findReportById(id);
+        // FIX: Idempotent — concurrent/double request (React StrictMode) returns current state
+        if (report.getStatus() == ReportStatus.APPROVED) {
+            log.info("approveReport: report [{}] already APPROVED — idempotent return", id);
+            return ApiResponse.success(messages.get(MessageCode.INCIDENT_APPROVED), mapper.toDetail(report));
+        }
         validateNotAlreadyProcessed(report);
 
         User processor = resolveUser(principal);
@@ -211,22 +216,22 @@ public class IncidentServiceImpl implements IncidentService {
         historyRepo.save(AssetHistory.builder()
                 .asset(asset)
                 .actionType(AssetActionType.CHANGE_CONDITION)
-                .id(processor.getId())
+                .actorId(processor.getId())
                 .actorUsername(processor.getUsername())
-            .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
-            .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")
-            .newValue("{\"condition\":\"" + newCondition.name() + "\"}")
+                .detail("Phê duyệt báo cáo: " + report.getReportCode() + " — cập nhật tình trạng tài sản")
+                .oldValue("{\"condition\":\"" + oldCondition.name() + "\"}")
+                .newValue("{\"condition\":\"" + newCondition.name() + "\"}")
                 .build());
 
         incidentRepo.save(report);
 
         auditLogService.logEvent(
-            ENTITY_TYPE_ASSET_INCIDENT,
+                ENTITY_TYPE_ASSET_INCIDENT,
                 AuthActionType.ASSET_REPORT_APPROVED,
                 processor.getUsername(),
                 report.getReportCode(),
-            null,
-            new AuditLogService.AuditValues(oldCondition.name(), newCondition.name()),
+                null,
+                new AuditLogService.AuditValues(oldCondition.name(), newCondition.name()),
                 null);
 
         if (newCondition == AssetCondition.LOST) {
@@ -249,6 +254,11 @@ public class IncidentServiceImpl implements IncidentService {
             CustomUserPrincipal principal) {
 
         AssetIncidentReport report = findReportById(id);
+        // FIX: Idempotent — if already REJECTED, return current state
+        if (report.getStatus() == ReportStatus.REJECTED) {
+            log.info("rejectReport: report [{}] already REJECTED — idempotent return", id);
+            return ApiResponse.success(messages.get(MessageCode.INCIDENT_REJECTED), mapper.toDetail(report));
+        }
         validateNotAlreadyProcessed(report);
 
         User processor = resolveUser(principal);
@@ -261,12 +271,12 @@ public class IncidentServiceImpl implements IncidentService {
         incidentRepo.save(report);
 
         auditLogService.logEvent(
-            ENTITY_TYPE_ASSET_INCIDENT,
+                ENTITY_TYPE_ASSET_INCIDENT,
                 AuthActionType.ASSET_REPORT_REJECTED,
                 processor.getUsername(),
                 report.getReportCode(),
-            null,
-            new AuditLogService.AuditValues(null, "REJECTED: " + report.getProcessNote()),
+                null,
+                new AuditLogService.AuditValues(null, "REJECTED: " + report.getProcessNote()),
                 null);
 
         log.info("Report {} rejected by {}", report.getReportCode(), processor.getUsername());
