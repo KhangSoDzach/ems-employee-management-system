@@ -1,13 +1,14 @@
 package com.company.ems.backend.leave.repository;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.company.ems.backend.leave.entity.LeaveBalance;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import com.company.ems.backend.leave.enums.LeaveType;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.company.ems.backend.leave.entity.LeaveBalance;

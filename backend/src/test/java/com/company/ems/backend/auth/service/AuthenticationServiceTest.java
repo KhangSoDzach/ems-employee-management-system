@@ -29,7 +29,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.company.ems.backend.auditlog.dto.RequestContext;
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.auth.config.JwtProperties;
 import com.company.ems.backend.auth.dto.AuthResponse;
@@ -45,185 +45,179 @@ import com.company.ems.backend.user.repository.UserRepository;
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
 
-    @Mock
-    private AuthenticationManager authenticationManager;
+        @Mock
+        private AuthenticationManager authenticationManager;
 
-    @Mock
-    private MessageService messages;
+        @Mock
+        private MessageService messages;
 
-    @Mock
-    private UserRepository userRepository;
+        @Mock
+        private UserRepository userRepository;
 
-    @Mock
-    private JwtTokenUtil jwtTokenUtil;
+        @Mock
+        private JwtTokenUtil jwtTokenUtil;
 
-    @Mock
-    private RefreshTokenService refreshTokenService;
+        @Mock
+        private RefreshTokenService refreshTokenService;
 
-    @Mock
-    private CustomUserDetailsService userDetailsService;
+        @Mock
+        private CustomUserDetailsService userDetailsService;
 
-    @Mock
-    private JwtProperties jwtProperties;
+        @Mock
+        private JwtProperties jwtProperties;
 
-    @Mock
-    private AuditLogService auditLogService;
+        @Mock
+        private AuditLogService auditLogService;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+        @Mock
+        private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private TwoFactorAuthService twoFactorAuthService;
+        @Mock
+        private TwoFactorAuthService twoFactorAuthService;
 
-    @InjectMocks
-    private AuthenticationService authenticationService;
+        @InjectMocks
+        private AuthenticationService authenticationService;
 
-    private User user;
-    private RequestContext requestContext;
-    private ChangePasswordRequest changePasswordRequest;
+        private User user;
+        private RequestContext requestContext;
+        private ChangePasswordRequest changePasswordRequest;
 
-    @BeforeEach
-    void setUp() {
-        user = User.builder()
-                .username("testuser")
-                .password("encoded_old_password")
-                .enabled(true)
-                .accountNonLocked(true)
-                .build();
-        user.setId(1L);
+        @BeforeEach
+        void setUp() {
+                user = User.builder()
+                                .username("testuser")
+                                .password("encoded_old_password")
+                                .enabled(true)
+                                .accountNonLocked(true)
+                                .build();
+                user.setId(1L);
 
-        requestContext = RequestContext.builder().ipAddress("127.0.0.1").build();
+                requestContext = RequestContext.builder().ipAddress("127.0.0.1").build();
 
-        changePasswordRequest = new ChangePasswordRequest();
-        changePasswordRequest.setCurrentPassword("old_password");
-        changePasswordRequest.setNewPassword("new_password");
-    }
+                changePasswordRequest = new ChangePasswordRequest();
+                changePasswordRequest.setCurrentPassword("old_password");
+                changePasswordRequest.setNewPassword("new_password");
+        }
 
-    @Test
-    void changePassword_Success_WhenValidCurrentPassword() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("old_password", "encoded_old_password")).thenReturn(true);
-        when(passwordEncoder.matches("new_password", "encoded_old_password")).thenReturn(false);
-        when(passwordEncoder.encode("new_password")).thenReturn("encoded_new_password");
+        @Test
+        void changePassword_Success_WhenValidCurrentPassword() {
+                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+                when(passwordEncoder.matches("old_password", "encoded_old_password")).thenReturn(true);
+                when(passwordEncoder.matches("new_password", "encoded_old_password")).thenReturn(false);
+                when(passwordEncoder.encode("new_password")).thenReturn("encoded_new_password");
 
-        authenticationService.changePassword(1L, changePasswordRequest, requestContext);
+                authenticationService.changePassword(1L, changePasswordRequest, requestContext);
 
-        assertEquals("encoded_new_password", user.getPassword());
-        assertNotNull(user.getLastPasswordChange());
-        assertFalse(user.getForcePasswordChange());
+                assertEquals("encoded_new_password", user.getPassword());
+                assertNotNull(user.getLastPasswordChange());
+                assertFalse(user.getForcePasswordChange());
 
-        verify(userRepository).save(user);
-        verify(refreshTokenService).revokeAllUserTokens(1L);
-        verify(auditLogService).logAuthEvent(
-                eq(AuthActionType.PASSWORD_CHANGED), 
-                eq("testuser"), 
-                eq("1"), 
-                eq("testuser"), 
-                eq("JWT"), 
-                eq("SUCCESS"), 
-                eq(requestContext)
-        );
-    }
+                verify(userRepository).save(user);
+                verify(refreshTokenService).revokeAllUserTokens(1L);
+                verify(auditLogService).logAuthEvent(
+                                eq(AuditActionType.SYSTEM_PASSWORD_CHANGED),
+                                eq("testuser"),
+                                eq("1"),
+                                eq("testuser"),
+                                eq("JWT"),
+                                eq("SUCCESS"),
+                                eq(requestContext));
+        }
 
-    @Test
-    void changePassword_ThrowsException_WhenUserNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        @Test
+        void changePassword_ThrowsException_WhenUserNotFound() {
+                when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(BadCredentialsException.class, () -> 
-            authenticationService.changePassword(1L, changePasswordRequest, requestContext)
-        );
+                assertThrows(BadCredentialsException.class,
+                                () -> authenticationService.changePassword(1L, changePasswordRequest, requestContext));
 
-        verify(userRepository, never()).save(any());
-    }
+                verify(userRepository, never()).save(any());
+        }
 
-    @Test
-    void changePassword_ThrowsException_WhenInvalidCurrentPassword() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("old_password", "encoded_old_password")).thenReturn(false);
-        when(messages.get(any(MessageCode.class))).thenReturn("Invalid credentials");
+        @Test
+        void changePassword_ThrowsException_WhenInvalidCurrentPassword() {
+                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+                when(passwordEncoder.matches("old_password", "encoded_old_password")).thenReturn(false);
+                when(messages.get(any(MessageCode.class))).thenReturn("Invalid credentials");
 
-        assertThrows(BadCredentialsException.class, () -> 
-            authenticationService.changePassword(1L, changePasswordRequest, requestContext)
-        );
+                assertThrows(BadCredentialsException.class,
+                                () -> authenticationService.changePassword(1L, changePasswordRequest, requestContext));
 
-        verify(auditLogService).logAuthEvent(
-                eq(AuthActionType.LOGIN_FAILED), 
-                anyString(), 
-                anyString(), 
-                anyString(), 
-                anyString(), 
-                eq("FAILED"), 
-                any()
-        );
-        verify(userRepository, never()).save(any());
-    }
+                verify(auditLogService).logAuthEvent(
+                                eq(AuditActionType.AUTH_LOGIN_FAILED),
+                                anyString(),
+                                anyString(),
+                                anyString(),
+                                anyString(),
+                                eq("FAILED"),
+                                any());
+                verify(userRepository, never()).save(any());
+        }
 
-    @Test
-    void changePassword_ThrowsException_WhenNewPasswordSameAsCurrent() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("old_password", "encoded_old_password")).thenReturn(true);
-        when(passwordEncoder.matches("new_password", "encoded_old_password")).thenReturn(true);
+        @Test
+        void changePassword_ThrowsException_WhenNewPasswordSameAsCurrent() {
+                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+                when(passwordEncoder.matches("old_password", "encoded_old_password")).thenReturn(true);
+                when(passwordEncoder.matches("new_password", "encoded_old_password")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> 
-            authenticationService.changePassword(1L, changePasswordRequest, requestContext)
-        );
+                assertThrows(IllegalArgumentException.class,
+                                () -> authenticationService.changePassword(1L, changePasswordRequest, requestContext));
 
-        verify(userRepository, never()).save(any());
-    }
+                verify(userRepository, never()).save(any());
+        }
 
-    @Test
-    void login_ReturnsTwoFactorRequired_WhenEnabledAndCodeMissing() {
-        user.setTwoFactorEnabled(true);
+        @Test
+        void login_ReturnsTwoFactorRequired_WhenEnabledAndCodeMissing() {
+                user.setTwoFactorEnabled(true);
 
-        LoginRequest loginRequest = LoginRequest.builder()
-                .username("testuser")
-                .password("old_password")
-                .build();
+                LoginRequest loginRequest = LoginRequest.builder()
+                                .username("testuser")
+                                .password("old_password")
+                                .build();
 
-        Authentication authentication = mock(Authentication.class);
+                Authentication authentication = mock(Authentication.class);
 
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+                when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+                when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
-        AuthResponse response = authenticationService.login(loginRequest, requestContext);
+                AuthResponse response = authenticationService.login(loginRequest, requestContext);
 
-        assertTrue(Boolean.TRUE.equals(response.getTwoFactorRequired()));
-        assertNull(response.getAccessToken());
-        verify(twoFactorAuthService, never()).verifyCodeForLogin(anyString(), anyString());
-        verify(refreshTokenService, never()).createRefreshToken(any(), anyString());
-    }
+                assertTrue(Boolean.TRUE.equals(response.getTwoFactorRequired()));
+                assertNull(response.getAccessToken());
+                verify(twoFactorAuthService, never()).verifyCodeForLogin(anyString(), anyString());
+                verify(refreshTokenService, never()).createRefreshToken(any(), anyString());
+        }
 
-    @Test
-    void login_Success_WhenEnabledAndValidTwoFactorCode() {
-        user.setTwoFactorEnabled(true);
+        @Test
+        void login_Success_WhenEnabledAndValidTwoFactorCode() {
+                user.setTwoFactorEnabled(true);
 
-        LoginRequest loginRequest = LoginRequest.builder()
-                .username("testuser")
-                .password("old_password")
-                .twoFactorCode("123456")
-                .build();
+                LoginRequest loginRequest = LoginRequest.builder()
+                                .username("testuser")
+                                .password("old_password")
+                                .twoFactorCode("123456")
+                                .build();
 
-        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-                "testuser",
-                "encoded_old_password",
-                java.util.List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
-        );
+                UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                                "testuser",
+                                "encoded_old_password",
+                                java.util.List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
 
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(userDetails);
+                Authentication authentication = mock(Authentication.class);
+                when(authentication.getPrincipal()).thenReturn(userDetails);
 
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(authenticationManager.authenticate(any())).thenReturn(authentication);
-        when(twoFactorAuthService.verifyCodeForLogin("testuser", "123456")).thenReturn(true);
-        when(jwtTokenUtil.generateAccessToken(userDetails)).thenReturn("access-token");
-        when(refreshTokenService.createRefreshToken(eq(user), anyString())).thenReturn("refresh-token");
-        when(jwtProperties.getExpirationMs()).thenReturn(3_600_000L);
+                when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+                when(authenticationManager.authenticate(any())).thenReturn(authentication);
+                when(twoFactorAuthService.verifyCodeForLogin("testuser", "123456")).thenReturn(true);
+                when(jwtTokenUtil.generateAccessToken(userDetails)).thenReturn("access-token");
+                when(refreshTokenService.createRefreshToken(eq(user), anyString())).thenReturn("refresh-token");
+                when(jwtProperties.getExpirationMs()).thenReturn(3_600_000L);
 
-        AuthResponse response = authenticationService.login(loginRequest, requestContext);
+                AuthResponse response = authenticationService.login(loginRequest, requestContext);
 
-        assertFalse(Boolean.TRUE.equals(response.getTwoFactorRequired()));
-        assertEquals("access-token", response.getAccessToken());
-        assertEquals("refresh-token", response.getRefreshToken());
-        verify(twoFactorAuthService).verifyCodeForLogin("testuser", "123456");
-    }
+                assertFalse(Boolean.TRUE.equals(response.getTwoFactorRequired()));
+                assertEquals("access-token", response.getAccessToken());
+                assertEquals("refresh-token", response.getRefreshToken());
+                verify(twoFactorAuthService).verifyCodeForLogin("testuser", "123456");
+        }
 }

@@ -34,6 +34,7 @@ public class LeaveBalanceController {
     private final LeaveBalanceService leaveBalanceService;
     private final EmployeeRepository employeeRepository;
     private final DataScopeService dataScopeService;
+    // Force recompile to pick up updated RoleAuthorization constant
 
     @GetMapping
     @PreAuthorize(RoleAuthorization.HAS_PERM_LEAVE_BALANCE_READ)
@@ -75,12 +76,12 @@ public class LeaveBalanceController {
         }
 
         // If user has 'TEAM' data scope (Manager), check if target is a subordinate
-        if (principal.hasDataScope(com.company.ems.backend.user.enums.DataScope.TEAM) && targetEmployee.getReportingManager() != null
-                    && targetEmployee.getReportingManager().getUser() != null
-                    && targetEmployee.getReportingManager().getUser().getId().equals(principal.getUserId())) {
-                return;
-            }
-
+        if (principal.hasDataScope(com.company.ems.backend.user.enums.DataScope.TEAM)
+                && targetEmployee.getReportingManager() != null
+                && targetEmployee.getReportingManager().getUser() != null
+                && targetEmployee.getReportingManager().getUser().getId().equals(principal.getUserId())) {
+            return;
+        }
 
         throw new ForbiddenException();
     }

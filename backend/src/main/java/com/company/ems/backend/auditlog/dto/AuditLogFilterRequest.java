@@ -2,7 +2,7 @@ package com.company.ems.backend.auditlog.dto;
 
 import java.time.LocalDateTime;
 
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 
 import lombok.Builder;
 import lombok.Value;
@@ -19,7 +19,7 @@ public class AuditLogFilterRequest {
     String entityType;
 
     /** Specific action to filter on. */
-    AuthActionType actionType;
+    AuditActionType actionType;
 
     /** Partial match on actor (user_id). */
     String actor;

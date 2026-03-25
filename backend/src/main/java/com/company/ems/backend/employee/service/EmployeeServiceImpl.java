@@ -39,6 +39,11 @@ import com.company.ems.backend.user.entity.User;
 import com.company.ems.backend.user.enums.DataScope;
 import com.company.ems.backend.user.repository.RoleRepository;
 
+import com.company.ems.backend.auditlog.service.AuditLogService;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
+import com.company.ems.backend.common.utils.AuditContextUtils;
+import com.company.ems.backend.common.utils.AuditMaskingUtils;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,7 +53,10 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class EmployeeServiceImpl implements EmployeeService {
 
-        /** Date format for default password derivation: ddMMyy (e.g. 110299 for 11/02/1999). */
+        /**
+         * Date format for default password derivation: ddMMyy (e.g. 110299 for
+         * 11/02/1999).
+         */
         private static final DateTimeFormatter DOB_PASSWORD_FORMATTER = DateTimeFormatter.ofPattern("ddMMyy");
 
         private final EmployeeRepository employeeRepository;
@@ -57,10 +65,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         private final PositionRepository positionRepository;
         private final DataScopeService dataScopeService;
         private final EmployeeEmailNotificationService emailNotificationService;
+
         private final RoleRepository roleRepository;
         private final PasswordEncoder passwordEncoder;
         private final LeaveBalanceService leaveBalanceService;
         private final AttendanceService attendanceService;
+        private final AuditLogService auditLogService;
 
         @Override
         public EmployeeResponse createEmployee(EmployeeRequest request) {
@@ -106,7 +116,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 if (request.getDateOfBirth() != null) {
                         rawPassword = buildDefaultPassword(employeeCode, request.getDateOfBirth());
                         Role employeeRole = roleRepository.findByName("ROLE_EMPLOYEE")
-                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_EMPLOYEE"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name",
+                                                        "ROLE_EMPLOYEE"));
                         linkedUser = User.builder()
                                         .username(employeeCode)
                                         .email(request.getEmail())
@@ -177,6 +188,23 @@ public class EmployeeServiceImpl implements EmployeeService {
                         log.warn("[EMS-EMAIL] Skipping credentials email for employee [{}]: dateOfBirth is null",
                                         saved.getEmployeeCode());
                 }
+
+                String actor = "SYSTEM";
+                try {
+                        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+                        if (principal != null)
+                                actor = principal.getUsername();
+                } catch (Exception ignored) {
+                }
+
+                auditLogService.logEvent(
+                                "EMPLOYEE",
+                                AuditActionType.DATA_CREATE_EMPLOYEE,
+                                actor,
+                                String.valueOf(saved.getId()),
+                                saved.getEmployeeCode(),
+                                new AuditLogService.AuditValues(null, AuditMaskingUtils.serializeAndMask(request)),
+                                AuditContextUtils.getCurrentRequestContext());
 
                 return employeeMapper.toResponse(saved);
         }
@@ -280,6 +308,10 @@ public class EmployeeServiceImpl implements EmployeeService {
                 Employee employee = employeeRepository.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
+                // Store unmasked snapshot of the old data mapped to response dto for proper
+                // comparison
+                EmployeeResponse oldSnapshot = employeeMapper.toResponse(employee);
+
                 if (!employee.getEmail().equals(request.getEmail())
                                 && employeeRepository.existsByEmail(request.getEmail())) {
                         throw new BusinessException("DUPLICATE_EMAIL", "Email đã tồn tại trong hệ thống");
@@ -349,6 +381,43 @@ public class EmployeeServiceImpl implements EmployeeService {
                 Employee updated = employeeRepository.save(employee);
                 log.info("User [{}] updated employee [{}]", principal.getUsername(), id);
 
+                auditLogService.logEvent(
+                                "EMPLOYEE",
+                                AuditActionType.DATA_UPDATE_EMPLOYEE,
+                                principal.getUsername(),
+                                String.valueOf(updated.getId()),
+                                updated.getEmployeeCode(),
+                                new AuditLogService.AuditValues(
+                                                AuditMaskingUtils.serializeAndMask(oldSnapshot),
+                                                AuditMaskingUtils.serializeAndMask(request)),
+                                AuditContextUtils.getCurrentRequestContext());
+
+                if (request.getSalary() != null && !request.getSalary().equals(oldSnapshot.getSalary())) {
+                        auditLogService.logEvent("EMPLOYEE", AuditActionType.DATA_UPDATE_SALARY,
+                                        principal.getUsername(), String.valueOf(updated.getId()),
+                                        updated.getEmployeeCode(), null, AuditContextUtils.getCurrentRequestContext());
+                }
+
+                if (request.getNationalId() != null && !request.getNationalId().equals(oldSnapshot.getNationalId())) {
+                        auditLogService.logEvent("EMPLOYEE", AuditActionType.DATA_UPDATE_NATIONAL_ID,
+                                        principal.getUsername(), String.valueOf(updated.getId()),
+                                        updated.getEmployeeCode(), null, AuditContextUtils.getCurrentRequestContext());
+                }
+
+                if (request.getBankAccountNumber() != null
+                                && !request.getBankAccountNumber().equals(oldSnapshot.getBankAccountNumber())) {
+                        auditLogService.logEvent("EMPLOYEE", AuditActionType.DATA_UPDATE_BANK_INFO,
+                                        principal.getUsername(), String.valueOf(updated.getId()),
+                                        updated.getEmployeeCode(), null, AuditContextUtils.getCurrentRequestContext());
+                }
+
+                if (request.getContractType() != null
+                                && !request.getContractType().equals(oldSnapshot.getContractType())) {
+                        auditLogService.logEvent("EMPLOYEE", AuditActionType.DATA_UPDATE_CONTRACT,
+                                        principal.getUsername(), String.valueOf(updated.getId()),
+                                        updated.getEmployeeCode(), null, AuditContextUtils.getCurrentRequestContext());
+                }
+
                 return employeeMapper.toResponse(updated);
         }
 
@@ -366,10 +435,19 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                 employeeRepository.delete(employee);
                 log.info("User [{}] deleted employee [{}]", principal.getUsername(), id);
+
+                auditLogService.logEvent(
+                                "EMPLOYEE",
+                                AuditActionType.DATA_DELETE_EMPLOYEE,
+                                principal.getUsername(),
+                                String.valueOf(employee.getId()),
+                                employee.getEmployeeCode(),
+                                null,
+                                AuditContextUtils.getCurrentRequestContext());
         }
 
         @Override
-        @Transactional(readOnly = true)
+        @Transactional
         public PublicEmployeeResponse getMyProfile() {
                 CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
 
@@ -460,22 +538,27 @@ public class EmployeeServiceImpl implements EmployeeService {
          * Maps an Employee to a slim MemberResponse (no sensitive fields).
          */
         private MemberResponse mapToMemberResponse(Employee employee) {
-                if (employee == null) return null;
+                if (employee == null)
+                        return null;
                 return MemberResponse.builder()
                                 .id(employee.getId())
                                 .employeeCode(employee.getEmployeeCode())
                                 .fullName(employee.getFullName())
                                 .email(employee.getEmail())
                                 .avatarUrl(employee.getAvatarUrl())
-                                .positionTitle(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
-                                .departmentName(employee.getDepartment() != null ? employee.getDepartment().getName() : null)
+                                .positionTitle(employee.getPosition() != null ? employee.getPosition().getTitle()
+                                                : null)
+                                .departmentName(employee.getDepartment() != null ? employee.getDepartment().getName()
+                                                : null)
                                 .status(employee.getStatus() != null ? employee.getStatus().name() : null)
                                 .build();
         }
 
         /**
          * Derives the default login password: {@code employeeCode + DOB(ddMMyy)}.
-         * <p>Example: code {@code IT202600001} + DOB {@code 1999-02-11} => {@code IT202600001110299}.
+         * <p>
+         * Example: code {@code IT202600001} + DOB {@code 1999-02-11} =>
+         * {@code IT202600001110299}.
          */
         private String buildDefaultPassword(String employeeCode, LocalDate dateOfBirth) {
                 return employeeCode + dateOfBirth.format(DOB_PASSWORD_FORMATTER);

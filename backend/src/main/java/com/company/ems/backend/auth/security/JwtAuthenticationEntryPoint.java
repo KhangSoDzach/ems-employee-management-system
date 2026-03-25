@@ -26,24 +26,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper        objectMapper;
-    private final MessageService      messages;
+    private final ObjectMapper objectMapper;
+    private final MessageService messages;
     private final SecurityAuditService auditService;
 
     @Override
     public void commence(
-            HttpServletRequest      request,
-            HttpServletResponse     response,
+            HttpServletRequest request,
+            HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
 
         MessageCode errorCode = resolveErrorCode(request);
         log.warn("401 Unauthorized [{}]: path={}", errorCode.name(), request.getRequestURI());
 
-        switch (errorCode) {
-            case ERROR_TOKEN_EXPIRED -> auditService.logTokenExpired(request);
-            case ERROR_TOKEN_INVALID -> auditService.logTokenInvalid(request);
-            case ERROR_UNAUTHORIZED -> auditService.logAuthFailure(request);
-            default -> auditService.logAuthFailure(request);
+        if (errorCode == MessageCode.ERROR_TOKEN_EXPIRED) {
+            auditService.logTokenExpired(request);
         }
 
         String message = messages.get(errorCode);

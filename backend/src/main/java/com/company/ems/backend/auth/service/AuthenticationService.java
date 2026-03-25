@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.company.ems.backend.auditlog.dto.RequestContext;
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.auth.config.JwtProperties;
 import com.company.ems.backend.auth.dto.AuthResponse;
@@ -58,7 +58,7 @@ public class AuthenticationService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> {
                     auditLogService.logAuthEvent(
-                            AuthActionType.LOGIN_FAILED, "ANONYMOUS", null,
+                            AuditActionType.AUTH_LOGIN_FAILED, "ANONYMOUS", null,
                             request.getUsername(), "JWT", "FAILED", ctx);
                     return new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
                 });
@@ -66,8 +66,8 @@ public class AuthenticationService {
         if (user.isAccountLocked()) {
             log.warn("Login attempt for locked account: {}", request.getUsername());
             auditLogService.logAuthEvent(
-                    AuthActionType.LOGIN_FAILED,
-                    String.valueOf(user.getId()),
+                    AuditActionType.AUTH_LOGIN_FAILED,
+                    user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "FAILED", ctx);
             throw new LockedException(
@@ -109,8 +109,8 @@ public class AuthenticationService {
             String refreshToken = refreshTokenService.createRefreshToken(user, deviceInfo);
 
             auditLogService.logAuthEvent(
-                    AuthActionType.LOGIN_SUCCESS,
-                    String.valueOf(user.getId()),
+                    AuditActionType.AUTH_LOGIN_SUCCESS,
+                    user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "SUCCESS", ctx);
 
@@ -121,16 +121,16 @@ public class AuthenticationService {
         } catch (BadCredentialsException e) {
             handleFailedLoginAttempt(user);
             auditLogService.logAuthEvent(
-                    AuthActionType.LOGIN_FAILED,
-                    String.valueOf(user.getId()),
+                    AuditActionType.AUTH_LOGIN_FAILED,
+                    user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "FAILED", ctx);
             throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
         } catch (DisabledException e) {
             log.warn("Login attempt for disabled account: {}", request.getUsername());
             auditLogService.logAuthEvent(
-                    AuthActionType.LOGIN_FAILED,
-                    String.valueOf(user.getId()),
+                    AuditActionType.AUTH_LOGIN_FAILED,
+                    user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "FAILED", ctx);
             throw new DisabledException(messages.get(MessageCode.ERROR_ACCOUNT_DISABLED));
@@ -144,7 +144,7 @@ public class AuthenticationService {
         RefreshToken refreshToken = refreshTokenService.validateRefreshToken(refreshTokenString)
                 .orElseThrow(() -> {
                     auditLogService.logAuthEvent(
-                            AuthActionType.TOKEN_REFRESH_FAILED, "ANONYMOUS", null,
+                            AuditActionType.AUTH_TOKEN_REFRESH_FAILED, "ANONYMOUS", null,
                             null, "JWT", "FAILED", ctx);
                     return new BadCredentialsException(messages.get(MessageCode.ERROR_REFRESH_TOKEN_INVALID));
                 });
@@ -158,8 +158,8 @@ public class AuthenticationService {
         String deviceInfo = buildDeviceInfo(ctx);
         String newRefreshToken = refreshTokenService.createRefreshToken(user, deviceInfo);
         auditLogService.logAuthEvent(
-                AuthActionType.TOKEN_REFRESH_SUCCESS,
-                String.valueOf(user.getId()),
+                AuditActionType.AUTH_TOKEN_REFRESH_SUCCESS,
+                user.getUsername(),
                 String.valueOf(user.getId()),
                 user.getUsername(), "JWT", "SUCCESS", ctx);
 
@@ -174,7 +174,7 @@ public class AuthenticationService {
         boolean revoked = refreshTokenService.revokeRefreshToken(refreshToken);
         if (revoked) {
             auditLogService.logAuthEvent(
-                    AuthActionType.LOGOUT, actor, actor,
+                    AuditActionType.AUTH_LOGOUT, actor, actor,
                     actor, "JWT", "SUCCESS", ctx);
             log.info("User logged out successfully");
         } else {
@@ -187,7 +187,7 @@ public class AuthenticationService {
         log.debug("Logout all devices for user ID: {}", userId);
         refreshTokenService.revokeAllUserTokens(userId);
         auditLogService.logAuthEvent(
-                AuthActionType.TOKEN_REVOKED, actor, String.valueOf(userId),
+                AuditActionType.AUTH_TOKEN_REVOKED, actor, String.valueOf(userId),
                 actor, "JWT", "SUCCESS", ctx);
         log.info("User logged out from all devices: {}", userId);
     }
@@ -202,7 +202,7 @@ public class AuthenticationService {
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             log.warn("Change password failed: invalid current password for user: {}", user.getUsername());
             auditLogService.logAuthEvent(
-                    AuthActionType.LOGIN_FAILED, user.getUsername(), String.valueOf(user.getId()),
+                    AuditActionType.AUTH_LOGIN_FAILED, user.getUsername(), String.valueOf(user.getId()),
                     user.getUsername(), "JWT", "FAILED", ctx);
             throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
         }
@@ -220,7 +220,7 @@ public class AuthenticationService {
         refreshTokenService.revokeAllUserTokens(user.getId());
 
         auditLogService.logAuthEvent(
-                AuthActionType.PASSWORD_CHANGED, user.getUsername(), String.valueOf(user.getId()),
+                AuditActionType.SYSTEM_PASSWORD_CHANGED, user.getUsername(), String.valueOf(user.getId()),
                 user.getUsername(), "JWT", "SUCCESS", ctx);
         log.info("Password changed successfully for user: {}", user.getUsername());
     }

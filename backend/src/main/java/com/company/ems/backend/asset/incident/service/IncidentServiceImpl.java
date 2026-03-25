@@ -12,7 +12,7 @@ import com.company.ems.backend.asset.repository.AssetHistoryRepository;
 import com.company.ems.backend.asset.entity.AssetHistory;
 import com.company.ems.backend.asset.enums.AssetActionType;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
@@ -123,7 +123,7 @@ public class IncidentServiceImpl implements IncidentService {
 
         auditLogService.logEvent(
             ENTITY_TYPE_ASSET_INCIDENT,
-                AuthActionType.ASSET_REPORT_SUBMITTED,
+                AuditActionType.WORKFLOW_ASSET_REPORT_SUBMITTED,
                 emp.getUser().getUsername(),
             savedReport.getReportCode(),
             null,
@@ -222,7 +222,7 @@ public class IncidentServiceImpl implements IncidentService {
 
         auditLogService.logEvent(
             ENTITY_TYPE_ASSET_INCIDENT,
-                AuthActionType.ASSET_REPORT_APPROVED,
+                AuditActionType.WORKFLOW_ASSET_REPORT_APPROVED,
                 processor.getUsername(),
                 report.getReportCode(),
             null,
@@ -262,7 +262,7 @@ public class IncidentServiceImpl implements IncidentService {
 
         auditLogService.logEvent(
             ENTITY_TYPE_ASSET_INCIDENT,
-                AuthActionType.ASSET_REPORT_REJECTED,
+                AuditActionType.WORKFLOW_ASSET_REPORT_REJECTED,
                 processor.getUsername(),
                 report.getReportCode(),
             null,

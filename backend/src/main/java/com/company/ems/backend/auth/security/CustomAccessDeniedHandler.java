@@ -12,6 +12,7 @@ import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.company.ems.backend.common.audit.SecurityAuditService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,17 +25,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
-    private final ObjectMapper   objectMapper;
+    private final ObjectMapper objectMapper;
     private final MessageService messages;
+    private final SecurityAuditService auditService;
 
     @Override
     public void handle(
-            HttpServletRequest    request,
-            HttpServletResponse   response,
+            HttpServletRequest request,
+            HttpServletResponse response,
             AccessDeniedException accessDeniedException) throws IOException, ServletException {
 
         log.warn("403 Access Denied: path={} ex={}",
                 request.getRequestURI(), accessDeniedException.getMessage());
+
+        auditService.logAccessDenied(request);
 
         String message = messages.get(MessageCode.ERROR_FORBIDDEN);
 

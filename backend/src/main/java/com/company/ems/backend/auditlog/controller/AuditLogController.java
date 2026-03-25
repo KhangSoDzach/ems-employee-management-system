@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.company.ems.backend.auditlog.dto.AuditLogFilterRequest;
 import com.company.ems.backend.auditlog.dto.AuditLogResponse;
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.auditlog.service.AuditLogService;
@@ -41,7 +41,7 @@ public class AuditLogController {
     @Operation(summary = "List audit logs", description = "Returns paginated audit logs. Requires AUDIT_LOG_VIEW permission.")
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getAuditLogs(
             @RequestParam(required = false) String entityType,
-            @RequestParam(required = false) AuthActionType actionType,
+            @RequestParam(required = false) AuditActionType actionType,
             @RequestParam(required = false) String actor,
             @RequestParam(required = false) String identifierAttempted,
             @RequestParam(required = false) String ipAddress,

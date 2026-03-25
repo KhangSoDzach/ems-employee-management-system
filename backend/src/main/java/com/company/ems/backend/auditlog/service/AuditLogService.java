@@ -12,7 +12,7 @@ import com.company.ems.backend.auditlog.dto.AuditLogFilterRequest;
 import com.company.ems.backend.auditlog.dto.AuditLogResponse;
 import com.company.ems.backend.auditlog.dto.RequestContext;
 import com.company.ems.backend.auditlog.entity.AuditLog;
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 import com.company.ems.backend.auditlog.repository.AuditLogRepository;
 import com.company.ems.backend.common.dto.PageResponse;
 
@@ -39,7 +39,8 @@ public class AuditLogService {
 
         private static final String ENTITY_TYPE_AUTH = "AUTHENTICATION";
 
-        public record AuditValues(String oldValue, String newValue) {}
+        public record AuditValues(String oldValue, String newValue) {
+        }
 
         private final AuditLogRepository auditLogRepository;
 
@@ -65,20 +66,38 @@ public class AuditLogService {
          */
         @Transactional(propagation = Propagation.REQUIRES_NEW)
         public void logAuthEvent(
-                        AuthActionType actionType,
+                        AuditActionType actionType,
                         String actor,
                         String entityId,
                         String identifierAttempted,
                         String loginMethod,
-                        String result,
+                        String reason,
                         RequestContext ctx) {
 
                 try {
-                        String newValue = buildNewValue(loginMethod, result);
+                        String newValue = buildAuthPayload(loginMethod, reason);
                         writeAuditEvent(ENTITY_TYPE_AUTH, actionType, actor, entityId, identifierAttempted,
                                         new AuditValues(null, newValue), ctx);
                 } catch (Exception ex) {
                         log.warn("Failed to write audit log [action={}]: {}", actionType, ex.getMessage());
+                }
+        }
+
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        public void logAuthorizationEvent(
+                        AuditActionType actionType,
+                        String actor,
+                        String resource,
+                        String reason,
+                        String scope,
+                        RequestContext ctx) {
+
+                try {
+                        String newValue = buildAuthorizationPayload(resource, reason, scope);
+                        writeAuditEvent("AUTHORIZATION", actionType, actor, null, null,
+                                        new AuditValues(null, newValue), ctx);
+                } catch (Exception ex) {
+                        log.warn("Failed to write authz log [action={}]: {}", actionType, ex.getMessage());
                 }
         }
 
@@ -88,7 +107,7 @@ public class AuditLogService {
         @Transactional(propagation = Propagation.REQUIRES_NEW)
         public void logEvent(
                         String entityType,
-                        AuthActionType actionType,
+                        AuditActionType actionType,
                         String actor,
                         String entityId,
                         String identifierAttempted,
@@ -98,15 +117,65 @@ public class AuditLogService {
                 writeAuditEvent(entityType, actionType, actor, entityId, identifierAttempted, values, ctx);
         }
 
+        private static final java.util.Map<String, Long> rateLimitCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+        private boolean shouldDropLog(AuditActionType actionType, String actor, RequestContext ctx) {
+                // 1. ANONYMOUS Rules (FR-LOG-ANTI-SPAM-004)
+                if (actor == null || "ANONYMOUS".equalsIgnoreCase(actor) || "anonymous".equals(actor)) {
+                        if (actionType != AuditActionType.AUTH_LOGIN_FAILED
+                                        && actionType != AuditActionType.AUTH_TOKEN_EXPIRED) {
+                                return true; // Drop all other events for anonymous
+                        }
+                }
+
+                org.springframework.web.context.request.ServletRequestAttributes attrs = (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder
+                                .getRequestAttributes();
+
+                if (attrs != null && attrs.getRequest() != null) {
+                        jakarta.servlet.http.HttpServletRequest request = attrs.getRequest();
+
+                        // 2. Deduplication per request (FR-LOG-ANTI-SPAM-001)
+                        @SuppressWarnings("unchecked")
+                        java.util.Set<String> loggedEvents = (java.util.Set<String>) request
+                                        .getAttribute("AUDIT_LOGGED_EVENTS");
+                        if (loggedEvents == null) {
+                                loggedEvents = new java.util.HashSet<>();
+                                request.setAttribute("AUDIT_LOGGED_EVENTS", loggedEvents);
+                        }
+                        if (loggedEvents.contains(actionType.name())) {
+                                return true; // Already logged this event type in this request
+                        }
+                        loggedEvents.add(actionType.name());
+
+                        // 3. Rate Limiting per IP + Action + Endpoint (FR-LOG-ANTI-SPAM-003,
+                        // FR-LOG-ANTI-SPAM-005)
+                        if (ctx != null && ctx.getIpAddress() != null) {
+                                String endpoint = request.getRequestURI();
+                                String cacheKey = ctx.getIpAddress() + ":" + actionType.name() + ":" + endpoint;
+                                long now = System.currentTimeMillis();
+                                Long lastLogged = rateLimitCache.get(cacheKey);
+                                if (lastLogged != null && (now - lastLogged) < 5000) {
+                                        return true; // Rate limited (within 5 seconds)
+                                }
+                                rateLimitCache.put(cacheKey, now);
+                        }
+                }
+                return false;
+        }
+
         @SuppressWarnings("null")
         private void writeAuditEvent(
                         String entityType,
-                        AuthActionType actionType,
+                        AuditActionType actionType,
                         String actor,
                         String entityId,
                         String identifierAttempted,
                         AuditValues values,
                         RequestContext ctx) {
+
+                if (shouldDropLog(actionType, actor, ctx)) {
+                        return; // dropped by anti-spam policies
+                }
 
                 try {
                         AuditLog auditLog = AuditLog.builder()
@@ -149,11 +218,34 @@ public class AuditLogService {
                                 ? filter.getEntityType()
                                 : ENTITY_TYPE_AUTH;
 
-                // Parse dates – expand "to" to end-of-day if only a date (no time) was provided
+                // Parse dates
                 LocalDateTime from = filter.getFrom();
-                LocalDateTime to = filter.getTo() != null
-                                ? filter.getTo().withHour(23).withMinute(59).withSecond(59)
-                                : null;
+                LocalDateTime to = filter.getTo();
+
+                // AC-07: "From > To" validation
+                if (from != null && to != null && from.isAfter(to)) {
+                        throw new IllegalArgumentException("Khoảng thời gian không hợp lệ");
+                }
+
+                // BR-04: Default filter -> last 24h (performance + security)
+                if (from == null && to == null) {
+                        from = LocalDateTime.now().minusHours(24);
+                        to = LocalDateTime.now();
+                } else if (to != null) {
+                        // Inclusive boundary logic
+                        to = to.withHour(23).withMinute(59).withSecond(59);
+                }
+
+                // AC-07: Valid IP Check
+                if (filter.getIpAddress() != null && !filter.getIpAddress().isBlank()) {
+                        String ip = filter.getIpAddress();
+                        boolean isIpv4 = ip.matches(
+                                        "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+                        boolean isIpv6 = ip.contains(":");
+                        if (!isIpv4 && !isIpv6) {
+                                throw new IllegalArgumentException("Định dạng IP không hợp lệ");
+                        }
+                }
 
                 PageRequest pageable = PageRequest.of(filter.getPage(), filter.getSize());
 
@@ -210,16 +302,46 @@ public class AuditLogService {
                                 .build();
         }
 
-        private String buildNewValue(String loginMethod, String result) {
-                if (loginMethod == null && result == null)
-                        return null;
+        private String buildAuthPayload(String loginMethod, String reason) {
+                if (loginMethod == null && reason == null) {
+                        return "{}";
+                }
                 StringBuilder sb = new StringBuilder("{");
-                if (loginMethod != null)
+                boolean first = true;
+                if (loginMethod != null) {
                         sb.append("\"login_method\":\"").append(loginMethod).append("\"");
-                if (loginMethod != null && result != null)
-                        sb.append(",");
-                if (result != null)
-                        sb.append("\"result\":\"").append(result).append("\"");
+                        first = false;
+                }
+                if (reason != null) {
+                        if (!first)
+                                sb.append(",");
+                        sb.append("\"reason\":\"").append(reason).append("\"");
+                }
+                sb.append("}");
+                return sb.toString();
+        }
+
+        private String buildAuthorizationPayload(String resource, String reason, String scope) {
+                if (resource == null && reason == null && scope == null) {
+                        return "{}";
+                }
+                StringBuilder sb = new StringBuilder("{");
+                boolean first = true;
+                if (reason != null) {
+                        sb.append("\"reason\":\"").append(reason).append("\"");
+                        first = false;
+                }
+                if (resource != null) {
+                        if (!first)
+                                sb.append(",");
+                        sb.append("\"resource\":\"").append(resource).append("\"");
+                        first = false;
+                }
+                if (scope != null) {
+                        if (!first)
+                                sb.append(",");
+                        sb.append("\"scope\":\"").append(scope).append("\"");
+                }
                 sb.append("}");
                 return sb.toString();
         }

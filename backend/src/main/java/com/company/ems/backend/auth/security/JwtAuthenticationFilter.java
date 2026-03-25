@@ -61,9 +61,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_ACCOUNT_SUSPENDED);
                     auditService.logAccessDenied(request);
                 } else if (jwtTokenUtil.validateAccessToken(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
                     authentication.setDetails(
                             new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -72,29 +71,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 } else {
                     log.warn("Token validation failed for user: {}", username);
                     request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_INVALID);
-                    auditService.logTokenInvalid(request);
                 }
             }
 
         } catch (ExpiredJwtException ex) {
             log.warn("JWT token expired: {}", ex.getMessage());
             request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_EXPIRED);
-            auditService.logTokenExpired(request);
 
         } catch (SignatureException | MalformedJwtException | UnsupportedJwtException ex) {
             log.warn("JWT token invalid [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
             request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_INVALID);
-            auditService.logTokenInvalid(request);
 
         } catch (JwtException ex) {
             log.warn("JWT exception: {}", ex.getMessage());
             request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_TOKEN_INVALID);
-            auditService.logTokenInvalid(request);
 
         } catch (Exception ex) {
             log.error("Unexpected error during JWT processing: {}", ex.getMessage());
             request.setAttribute(AppConstant.JWT_ERROR_CODE_ATTR, MessageCode.ERROR_UNAUTHORIZED);
-            auditService.logAuthFailure(request);
         }
 
         filterChain.doFilter(request, response);

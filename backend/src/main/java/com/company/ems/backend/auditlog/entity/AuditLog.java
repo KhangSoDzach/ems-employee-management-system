@@ -2,7 +2,7 @@ package com.company.ems.backend.auditlog.entity;
 
 import java.time.LocalDateTime;
 
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -59,7 +59,7 @@ public class AuditLog {
     /** Specific action performed. */
     @Enumerated(EnumType.STRING)
     @Column(name = "action_type", nullable = false, length = 50, updatable = false)
-    private AuthActionType actionType;
+    private AuditActionType actionType;
 
     /** Resolved actor: user_id string or "ANONYMOUS". */
     @Column(name = "actor", length = 255, updatable = false)

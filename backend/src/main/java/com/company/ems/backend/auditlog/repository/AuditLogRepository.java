@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.company.ems.backend.auditlog.entity.AuditLog;
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 
 /**
  * Repository for AuditLog.
@@ -38,7 +38,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
             """)
     Page<AuditLog> findByFilters(
             @Param("entityType") String entityType,
-            @Param("actionType") AuthActionType actionType,
+            @Param("actionType") AuditActionType actionType,
             @Param("actor")      String actor,
             @Param("identifier") String identifier,
             @Param("ipAddress")  String ipAddress,

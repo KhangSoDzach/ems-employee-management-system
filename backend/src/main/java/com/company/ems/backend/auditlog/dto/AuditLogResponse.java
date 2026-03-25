@@ -2,7 +2,7 @@ package com.company.ems.backend.auditlog.dto;
 
 import java.time.LocalDateTime;
 
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditActionType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.Builder;
@@ -20,7 +20,7 @@ public class AuditLogResponse {
     Long id;
     String entityType;
     String entityId;
-    AuthActionType actionType;
+    AuditActionType actionType;
     String actor;
     String identifierAttempted;
     String oldValue;

@@ -1,6 +1,6 @@
 package com.company.ems.backend.auth.controller;
 
-        import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,6 +43,7 @@ public class AuthController {
         private final AuthenticationService authenticationService;
         private final PasswordResetService passwordResetService;
         private final MessageService messages;
+        private final com.company.ems.backend.common.audit.SecurityAuditService auditService;
 
         /**
          * User login endpoint
@@ -103,6 +104,7 @@ public class AuthController {
                 String actor = userDetails != null ? userDetails.getUsername() : "ANONYMOUS";
                 RequestContext ctx = buildRequestContext(httpRequest);
                 authenticationService.logout(request.getRefreshToken(), actor, ctx);
+                auditService.registerLogout(httpRequest);
 
                 return ResponseEntity.ok(
                                 ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
@@ -130,6 +132,7 @@ public class AuthController {
                 User user = authenticationService.getUserByUsername(userDetails.getUsername());
                 RequestContext ctx = buildRequestContext(httpRequest);
                 authenticationService.logoutAllDevices(user.getId(), userDetails.getUsername(), ctx);
+                auditService.registerLogout(httpRequest);
 
                 return ResponseEntity.ok(
                                 ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
@@ -216,10 +219,7 @@ public class AuthController {
          */
         private RequestContext buildRequestContext(HttpServletRequest request) {
                 String userAgent = request.getHeader("User-Agent");
-                String xff = request.getHeader("X-Forwarded-For");
-                String ip = (xff != null && !xff.isBlank())
-                                ? xff.split(",")[0].trim()
-                                : request.getRemoteAddr();
+                String ip = com.company.ems.backend.common.utils.IpUtils.getClientIpAddress(request);
                 String correlationId = request.getHeader("X-Correlation-ID");
 
                 // Determine client type from User-Agent (best-effort heuristic)

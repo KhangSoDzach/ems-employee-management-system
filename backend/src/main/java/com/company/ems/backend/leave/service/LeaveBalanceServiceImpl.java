@@ -81,7 +81,7 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
         }
 
         @Override
-        @Transactional(readOnly = true)
+        @Transactional
         public int getRemainingDays(Long employeeId, LeaveType leaveType) {
                 int year = LocalDate.now().getYear();
                 if (LeaveType.ANNUAL.equals(leaveType)) {
@@ -141,7 +141,7 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
         }
 
         @Override
-        @Transactional(readOnly = true)
+        @Transactional
         public boolean hasSufficientBalance(Long employeeId, LeaveType leaveType, int days) {
                 int year = LocalDate.now().getYear();
                 if (LeaveType.ANNUAL.equals(leaveType)) {

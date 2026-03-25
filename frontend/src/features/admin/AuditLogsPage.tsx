@@ -40,19 +40,45 @@ import {
 const PAGE_SIZE = 20;
 
 const ACTION_OPTIONS: Array<{ value: AuditActionType; label: string }> = [
-  { value: "LOGIN_SUCCESS", label: "Đăng nhập thành công" },
-  { value: "LOGIN_FAILED", label: "Đăng nhập thất bại" },
-  { value: "PASSWORD_CHANGED", label: "Đổi mật khẩu" },
-  { value: "TOKEN_REFRESH_SUCCESS", label: "Làm mới token thành công" },
-  { value: "TOKEN_REFRESH_FAILED", label: "Làm mới token thất bại" },
-  { value: "TOKEN_EXPIRED", label: "Token hết hạn" },
-  { value: "TOKEN_INVALID", label: "Token không hợp lệ" },
-  { value: "TOKEN_REVOKED", label: "Thu hồi token" },
-  { value: "LOGOUT", label: "Đăng xuất" },
-  { value: "ACCESS_DENIED", label: "Từ chối truy cập" },
-  { value: "ASSET_REPORT_SUBMITTED", label: "Gửi báo cáo sự cố" },
-  { value: "ASSET_REPORT_APPROVED", label: "Duyệt báo cáo sự cố" },
-  { value: "ASSET_REPORT_REJECTED", label: "Từ chối báo cáo sự cố" },
+  // --- AUTH ---
+  { value: "AUTH_LOGIN_SUCCESS", label: "Đăng nhập thành công" },
+  { value: "AUTH_LOGIN_FAILED", label: "Đăng nhập thất bại" },
+  { value: "AUTH_LOGOUT", label: "Đăng xuất" },
+  { value: "AUTH_TOKEN_EXPIRED", label: "Token hết hạn" },
+  { value: "AUTH_TOKEN_REFRESH_SUCCESS", label: "Làm mới token thành công" },
+  { value: "AUTH_TOKEN_REFRESH_FAILED", label: "Làm mới token thất bại" },
+  { value: "AUTH_TOKEN_REVOKED", label: "Thu hồi token" },
+  { value: "AUTH_TOKEN_INVALID", label: "Token không hợp lệ" },
+
+  // --- SECURITY ---
+  { value: "SECURITY_ACCESS_DENIED", label: "Từ chối truy cập" },
+  { value: "SECURITY_UNAUTHORIZED", label: "Chưa xác thực" },
+  { value: "SECURITY_RATE_LIMIT_EXCEEDED", label: "Vượt quá giới hạn rate limit" },
+  { value: "SECURITY_SUSPICIOUS_ACTIVITY", label: "Hành vi đáng ngờ" },
+
+  // --- SYSTEM ---
+  { value: "SYSTEM_SESSION_TIMEOUT", label: "Hết hạn phiên đăng nhập" },
+  { value: "SYSTEM_FORCE_LOGOUT", label: "Văng xuất bắt buộc" },
+  { value: "SYSTEM_PASSWORD_CHANGED", label: "Đổi mật khẩu" },
+
+  // --- DATA ---
+  { value: "DATA_CREATE_EMPLOYEE", label: "Tạo mới nhân viên" },
+  { value: "DATA_UPDATE_EMPLOYEE", label: "Cập nhật nhân viên" },
+  { value: "DATA_DELETE_EMPLOYEE", label: "Xóa nhân viên" },
+  { value: "DATA_IMPORT_EMPLOYEE", label: "Import dữ liệu nhân viên" },
+  { value: "DATA_EXPORT_EMPLOYEE", label: "Export dữ liệu nhân viên" },
+  { value: "DATA_UPDATE_NATIONAL_ID", label: "Cập nhật CCCD" },
+  { value: "DATA_UPDATE_SALARY", label: "Cập nhật mức lương" },
+  { value: "DATA_UPDATE_BANK_INFO", label: "Cập nhật thông tin ngân hàng" },
+  { value: "DATA_UPDATE_CONTRACT", label: "Cập nhật hợp đồng" },
+
+  // --- WORKFLOW ---
+  { value: "WORKFLOW_APPROVE_LEAVE", label: "Duyệt đơn nghỉ phép" },
+  { value: "WORKFLOW_REJECT_LEAVE", label: "Từ chối đơn nghỉ phép" },
+  { value: "WORKFLOW_ADJUST_ATTENDANCE", label: "Điều chỉnh chấm công" },
+  { value: "WORKFLOW_ASSET_REPORT_SUBMITTED", label: "Gửi báo cáo sự cố" },
+  { value: "WORKFLOW_ASSET_REPORT_APPROVED", label: "Duyệt báo cáo sự cố" },
+  { value: "WORKFLOW_ASSET_REPORT_REJECTED", label: "Từ chối báo cáo sự cố" },
 ];
 
 type FilterState = {
@@ -87,6 +113,9 @@ function maskIdentifier(identifier: string | null): string {
   }
   if (identifier.includes("@")) {
     const [left, right] = identifier.split("@");
+    if (!left) {
+      return `***@${right}`;
+    }
     if (left.length <= 2) {
       return `***@${right}`;
     }
@@ -98,18 +127,52 @@ function maskIdentifier(identifier: string | null): string {
   return `${identifier.slice(0, 2)}***${identifier.slice(-2)}`;
 }
 
-function actionBadgeClass(action: AuditActionType): string {
-  if (action.includes("FAILED") || action === "ACCESS_DENIED") {
+const LEGACY_ACTION_MAPPING: Record<string, AuditActionType> = {
+  "LOGIN_SUCCESS": "AUTH_LOGIN_SUCCESS",
+  "LOGIN_FAILED": "AUTH_LOGIN_FAILED",
+  "PASSWORD_CHANGED": "SYSTEM_PASSWORD_CHANGED",
+  "TOKEN_REFRESH_SUCCESS": "AUTH_TOKEN_REFRESH_SUCCESS",
+  "TOKEN_REFRESH_FAILED": "AUTH_TOKEN_REFRESH_FAILED",
+  "LOGOUT": "AUTH_LOGOUT",
+  "TOKEN_REVOKED": "AUTH_TOKEN_REVOKED",
+  "TOKEN_EXPIRED": "AUTH_TOKEN_EXPIRED",
+  "TOKEN_INVALID": "AUTH_TOKEN_INVALID",
+  "ACCESS_DENIED": "SECURITY_ACCESS_DENIED",
+  "ASSET_REPORT_SUBMITTED": "WORKFLOW_ASSET_REPORT_SUBMITTED",
+  "ASSET_REPORT_APPROVED": "WORKFLOW_ASSET_REPORT_APPROVED",
+  "ASSET_REPORT_REJECTED": "WORKFLOW_ASSET_REPORT_REJECTED"
+};
+
+function actionBadgeClass(action: string): string {
+  const normalizedAction = LEGACY_ACTION_MAPPING[action] || action;
+  if (
+    normalizedAction.includes("FAILED") ||
+    normalizedAction === "SECURITY_ACCESS_DENIED" ||
+    normalizedAction === "SECURITY_UNAUTHORIZED" ||
+    normalizedAction === "SECURITY_RATE_LIMIT_EXCEEDED" ||
+    normalizedAction === "WORKFLOW_REJECT_LEAVE" ||
+    normalizedAction === "WORKFLOW_ASSET_REPORT_REJECTED" ||
+    normalizedAction === "DATA_DELETE_EMPLOYEE" ||
+    normalizedAction === "SYSTEM_FORCE_LOGOUT"
+  ) {
     return "bg-red-100 text-red-700 border-red-200";
   }
-  if (action.includes("SUCCESS") || action === "PASSWORD_CHANGED") {
+  if (
+    normalizedAction.includes("SUCCESS") ||
+    normalizedAction === "SYSTEM_PASSWORD_CHANGED" ||
+    normalizedAction === "WORKFLOW_APPROVE_LEAVE" ||
+    normalizedAction === "WORKFLOW_ASSET_REPORT_APPROVED" ||
+    normalizedAction === "DATA_CREATE_EMPLOYEE" ||
+    normalizedAction === "DATA_IMPORT_EMPLOYEE"
+  ) {
     return "bg-emerald-100 text-emerald-700 border-emerald-200";
   }
   return "bg-slate-100 text-slate-700 border-slate-200";
 }
 
-function actionLabel(action: AuditActionType): string {
-  const found = ACTION_OPTIONS.find((item) => item.value === action);
+function actionLabel(action: string): string {
+  const normalizedAction = LEGACY_ACTION_MAPPING[action] || action;
+  const found = ACTION_OPTIONS.find((item) => item.value === normalizedAction);
   return found?.label ?? action;
 }
 
