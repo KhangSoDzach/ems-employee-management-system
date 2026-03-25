@@ -1,5 +1,24 @@
 package com.company.ems.backend.asset.incident.service;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+import org.springframework.security.access.AccessDeniedException;
+
 import com.company.ems.backend.asset.entity.Asset;
 import com.company.ems.backend.asset.entity.AssetHistory;
 import com.company.ems.backend.asset.enums.AssetActionType;
@@ -10,29 +29,13 @@ import com.company.ems.backend.asset.incident.entity.ReportStatus;
 import com.company.ems.backend.asset.incident.repository.AssetIncidentReportRepository;
 import com.company.ems.backend.asset.repository.AssetHistoryRepository;
 import com.company.ems.backend.asset.repository.AssetRepository;
-import com.company.ems.backend.employee.entity.Employee;
-import com.company.ems.backend.user.entity.User;
-import com.company.ems.backend.user.repository.UserRepository;
-import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.message.MessageService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.security.access.AccessDeniedException;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.employee.repository.EmployeeRepository;
+import com.company.ems.backend.user.entity.User;
+import com.company.ems.backend.user.repository.UserRepository;
 
 class IncidentServiceImplTest {
 
