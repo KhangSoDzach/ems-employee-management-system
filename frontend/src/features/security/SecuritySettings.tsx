@@ -40,6 +40,7 @@ import {
     PopoverArrow,
 } from "@/components/ui/popover";
 import { SECURITY_CONSTANTS as TEXT } from "./security.constants";
+import { useTheme } from "@/contexts/useTheme";
 import {
     disable2FA,
     get2FAStatus,
@@ -160,9 +161,13 @@ export default function SidebarSettings() {
         toast.success(msg);
     };
 
-    const [isDarkMode, setIsDarkMode] = React.useState(false);
+    const { isDark, setTheme } = useTheme();
     const [isNotificationsEnabled, setIsNotificationsEnabled] =
         React.useState(true);
+
+    const handleDarkModeToggle = (checked: boolean) => {
+        setTheme(checked ? "dark" : "light");
+    };
 
     const handleLogout = async () => {
         try {
@@ -389,7 +394,7 @@ export default function SidebarSettings() {
                             {TEXT.SIDEBAR_SETTINGS.DARK_MODE}
                         </span>
                     </div>
-                    <Switch checked={isDarkMode} onCheckedChange={setIsDarkMode} />
+                    <Switch checked={isDark} onCheckedChange={handleDarkModeToggle} />
                 </div>
             </div>
 

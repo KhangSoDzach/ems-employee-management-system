@@ -15,6 +15,12 @@ interface Props {
   onSuccess?: () => void
 }
 
+// Inline error component defined outside the main component to avoid Rules of Hooks violation
+function FieldError({ message }: { message?: string }) {
+  if (!message) { return null };
+  return <p className="text-xs text-red-500 mt-1">{message}</p>
+}
+
 export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
   const t = SYSTEM_MESSAGES.KPI_OKR
 
@@ -31,17 +37,15 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  if (!open) {return null}
-
   const validate = (): boolean => {
     const e: Record<string, string> = {}
-    if (!name.trim()) {e.name = "Tên mục tiêu không được để trống"}
-    if (!targetValue || Number(targetValue) <= 0) {e.targetValue = "Giá trị mục tiêu phải lớn hơn 0"}
-    if (!weight || Number(weight) <= 0 || Number(weight) > 100) {e.weight = "Trọng số phải từ 0.01 đến 100"}
-    if (!periodStart) {e.periodStart = "Chọn ngày bắt đầu"}
-    if (!periodEnd) {e.periodEnd = "Chọn ngày kết thúc"}
-    if (periodStart && periodEnd && periodStart >= periodEnd) {e.periodEnd = "Ngày kết thúc phải sau ngày bắt đầu"}
-    if ((scopeType === "DEPARTMENT" || scopeType === "EMPLOYEE") && !scopeId) {e.scopeId = "Bắt buộc khi chọn Phòng ban / Nhân viên"}
+    if (!name.trim()) { e.name = "Tên mục tiêu không được để trống" }
+    if (!targetValue || Number(targetValue) <= 0) { e.targetValue = "Giá trị mục tiêu phải lớn hơn 0" }
+    if (!weight || Number(weight) <= 0 || Number(weight) > 100) { e.weight = "Trọng số phải từ 0.01 đến 100" }
+    if (!periodStart) { e.periodStart = "Chọn ngày bắt đầu" }
+    if (!periodEnd) { e.periodEnd = "Chọn ngày kết thúc" }
+    if (periodStart && periodEnd && periodStart >= periodEnd) { e.periodEnd = "Ngày kết thúc phải sau ngày bắt đầu" }
+    if ((scopeType === "DEPARTMENT" || scopeType === "EMPLOYEE") && !scopeId) { e.scopeId = "Bắt buộc khi chọn Phòng ban / Nhân viên" }
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -69,8 +73,8 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string; errors?: Record<string, string> } } }
       const data = axiosError?.response?.data
-      if (data?.errors) {setErrors(data.errors)}
-      else {toast.error(data?.message || "Có lỗi xảy ra, vui lòng thử lại")}
+      if (data?.errors) { setErrors(data.errors) }
+      else { toast.error(data?.message || "Có lỗi xảy ra, vui lòng thử lại") }
     } finally {
       setLoading(false)
     }
@@ -84,13 +88,17 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
     onClose()
   }
 
-  const inputCls = (f: string) => `flex h-10 w-full rounded border ${errors[f] ? "border-red-400" : "border-slate-200"} bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary`
-  const selectCls = (f: string) => `flex h-10 w-full rounded border ${errors[f] ? "border-red-400" : "border-slate-200"} bg-white px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary`
-  const Err = ({ f }: { f: string }) => errors[f] ? <p className="text-xs text-red-500 mt-1">{errors[f]}</p> : null
+  const inputCls = (f: string) =>
+    `flex h-10 w-full rounded border ${errors[f] ? "border-red-400" : "border-slate-200"} bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary`
+
+  const selectCls = (f: string) =>
+    `flex h-10 w-full rounded border ${errors[f] ? "border-red-400" : "border-slate-200"} bg-white px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary`
+
+  if (!open) { return null }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-8px" onClick={handleClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
       <div className="relative w-full max-w-lg bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
 
         {/* Header */}
@@ -109,7 +117,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-900">{t.LABEL_NAME}</label>
             <input className={inputCls("name")} placeholder={t.PLACEHOLDER_NAME} value={name} onChange={e => setName(e.target.value)} />
-            <Err f="name" />
+            <FieldError message={errors.name} />
           </div>
 
           {/* Loại + Chỉ số */}
@@ -136,12 +144,12 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-900">{t.LABEL_TARGET}</label>
               <input className={inputCls("targetValue")} placeholder="0" type="number" min="0.01" value={targetValue} onChange={e => setTargetValue(e.target.value)} />
-              <Err f="targetValue" />
+              <FieldError message={errors.targetValue} />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-900">{t.LABEL_WEIGHT} (1–100)</label>
               <input className={inputCls("weight")} placeholder="0" type="number" min="0.01" max="100" value={weight} onChange={e => setWeight(e.target.value)} />
-              <Err f="weight" />
+              <FieldError message={errors.weight} />
             </div>
           </div>
 
@@ -159,7 +167,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-900">{scopeType === "DEPARTMENT" ? "ID Phòng ban" : "ID Nhân viên"}</label>
                 <input className={inputCls("scopeId")} placeholder="Nhập ID" type="number" value={scopeId} onChange={e => setScopeId(e.target.value)} />
-                <Err f="scopeId" />
+                <FieldError message={errors.scopeId} />
               </div>
             )}
           </div>
@@ -169,12 +177,12 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-900">Ngày bắt đầu</label>
               <input className={inputCls("periodStart")} type="date" value={periodStart} onChange={e => setPeriodStart(e.target.value)} />
-              <Err f="periodStart" />
+              <FieldError message={errors.periodStart} />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-900">Ngày kết thúc</label>
               <input className={inputCls("periodEnd")} type="date" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} />
-              <Err f="periodEnd" />
+              <FieldError message={errors.periodEnd} />
             </div>
           </div>
 

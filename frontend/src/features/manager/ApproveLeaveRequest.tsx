@@ -234,7 +234,7 @@ export default function ApproveLeaveRequest() {
                       <TableCell className="text-sm">
                         {format(new Date(row.startDate + "T00:00:00"), "dd/MM")}
                         {row.startDate !== row.endDate && `${SYSTEM_MESSAGES.SYMBOLS.DASH}${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
-                        {row.duration != null && (
+                        {row.duration !== null && (
                           <span className="ml-1 text-muted-foreground">{SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}{row.duration}{SYSTEM_MESSAGES.APPROVE.UNIT_DAYS}{SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}</span>
                         )}
                       </TableCell>
