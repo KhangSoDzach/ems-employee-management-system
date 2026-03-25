@@ -37,11 +37,13 @@ export const payrollPeriodApi = {
     const token = localStorage.getItem("access_token");
     const url   = `${import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1"}/payroll/period/${period}/export`;
 
+    // Use hidden anchor with Authorization header workaround
+    // For streaming CSV the cleanest approach is fetch + blob
     fetch(url, {
       headers: { Authorization: `Bearer ${token ?? ""}` },
     })
       .then(res => {
-        if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+        if (!res.ok) { throw new Error(`Export failed: ${res.status}`) }
         return res.blob();
       })
       .then(blob => {

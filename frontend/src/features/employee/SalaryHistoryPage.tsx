@@ -81,7 +81,7 @@ export default function SalaryHistoryPage() {
   }, [filteredData])
 
   const avgNet = useMemo(() => {
-    if (!filteredData.length) return "0đ"
+    if (!filteredData.length) { return "0đ" }
     const s = filteredData.reduce((a, r) => a + Number(r.netPay.replace(/[^\d]/g, "") || 0), 0)
     return Math.round(s / filteredData.length).toLocaleString("vi-VN") + "đ"
   }, [filteredData])
@@ -262,7 +262,7 @@ export default function SalaryHistoryPage() {
       <SalarySlipSheet
         slip={selectedSlip}
         open={!!selectedSlip}
-        onOpenChange={open => { if (!open) setSelectedSlip(null) }}
+        onOpenChange={open => { if (!open) { setSelectedSlip(null) } }}
       />
     </SidebarProvider>
   )

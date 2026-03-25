@@ -3,7 +3,6 @@ import { Play, RefreshCw, CheckCircle2, AlertCircle, Users, Wallet } from "lucid
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   useRunPayroll,
   useRecalculatePayroll,
@@ -26,7 +25,7 @@ function formatVND(amount: number): string {
 }
 
 function getApiErrorMessage(error: unknown): string {
-  if (!error || typeof error !== "object") return "Có lỗi xảy ra. Vui lòng thử lại.";
+  if (!error || typeof error !== "object") { return "Có lỗi xảy ra. Vui lòng thử lại." }
   const e = error as { response?: { data?: { message?: string } }; message?: string };
   return e.response?.data?.message ?? e.message ?? "Có lỗi xảy ra. Vui lòng thử lại.";
 }
@@ -89,7 +88,7 @@ export function RunPayrollPanel() {
   const isLoading = runMutation.isPending || recalculateMutation.isPending;
 
   const handleRun = () => {
-    if (!period) return;
+    if (!period) { return }
     runMutation.mutate(period, {
       onSuccess: (result) => {
         setLastResult(result);
@@ -102,7 +101,7 @@ export function RunPayrollPanel() {
   };
 
   const handleRecalculate = () => {
-    if (!period) return;
+    if (!period) { return }
     recalculateMutation.mutate(period, {
       onSuccess: (result) => {
         setLastResult(result);
@@ -113,6 +112,7 @@ export function RunPayrollPanel() {
       },
     });
   };
+
 
   return (
     <Card className="shadow-sm">

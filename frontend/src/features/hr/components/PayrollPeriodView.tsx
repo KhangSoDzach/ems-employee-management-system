@@ -12,8 +12,6 @@ import {
 
 import { payrollPeriodApi, type PayrollSummaryRow } from "@/services/payrollPeriodApi"
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 const PERIOD_REGEX = /^\d{4}-\d{2}$/
 
 function getCurrentPeriod() {
@@ -22,7 +20,7 @@ function getCurrentPeriod() {
 }
 
 function fmtVND(value: number | null | undefined) {
-  if (value == null) return "0đ"
+  if (value === null || value === undefined) { return "0đ" }
   return Math.round(value).toLocaleString("vi-VN") + "đ"
 }
 

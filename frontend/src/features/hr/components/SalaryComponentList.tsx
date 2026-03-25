@@ -25,8 +25,6 @@ import {
 import { SalaryComponentForm } from "@/features/hr/components/SalaryComponentForm";
 import { RunPayrollPanel } from "@/features/hr/components/RunPayrollPanel";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
 type ModalState = {
   open: boolean;
   mode: "create" | "edit";
@@ -79,8 +77,6 @@ function getApiErrorMessage(error: unknown): string {
     fallback
   );
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export function SalaryComponentList() {
   const [modal, setModal] = useState<ModalState>(INITIAL_MODAL_STATE);
@@ -155,12 +151,6 @@ export function SalaryComponentList() {
       <AppSidebar role="admin" variant="inset" />
       <SidebarInset>
         <SiteHeader />
-
-        {/*
-         * ⚠️  RunPayrollPanel PHẢI nằm bên trong SidebarInset
-         *    để sidebar không đè lên nội dung.
-         *    KHÔNG đặt nó ở PayrollManagement.tsx bên ngoài component này.
-         */}
         <main className="min-h-screen space-y-8 bg-background p-4 pt-6 md:p-8">
 
           {/* ── SECTION 1: Run Payroll ─────────────────────────────────── */}
@@ -233,12 +223,12 @@ export function SalaryComponentList() {
                             row.nature}
                         </TableCell>
                         <TableCell>
-                          {row.amount == null
+                          {row.amount === null || row.amount === undefined
                             ? "-"
                             : Number(row.amount).toLocaleString("vi-VN")}
                         </TableCell>
                         <TableCell>
-                          {row.ratePercent == null
+                          {row.ratePercent === null || row.ratePercent === undefined
                             ? "-"
                             : `${Number(row.ratePercent).toLocaleString("vi-VN")}%`}
                         </TableCell>

@@ -29,6 +29,7 @@ export type SalarySlip = {
   netPay: string
   status: "paid" | "pending"
 
+  // Employee + payment metadata (optional)
   employeeName?: string
   employeeId?: string
   department?: string
@@ -62,18 +63,16 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
   const [form, setForm] = useState<SalarySlip | null>(normalizeSlip(slip))
 
   useEffect(() => {
-    setForm(normalizeSlip(slip))
-    setIsEditing(false)
+    const t = setTimeout(() => {
+      setForm(normalizeSlip(slip))
+      setIsEditing(false)
+    }, 0)
+    return () => clearTimeout(t)
   }, [slip])
 
   if (!form) {
     return null
   }
-
-  const totalBonus = form.bonus.reduce((acc, cur) => {
-    const parsed = Number(cur.amount.replace(/[^\d]/g, ""))
-    return acc + (Number.isNaN(parsed) ? 0 : parsed)
-  }, 0)
 
   const totalAllowances = form.allowances.reduce((acc, cur) => {
     const parsed = Number(cur.amount.replace(/[^\d]/g, ""))
@@ -278,10 +277,10 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                         </Button>
                       </div>
                     ) : (
-                      <>
+                      <div className="flex justify-between w-full">
                         <span className="text-sm text-muted-foreground">{a.label}</span>
                         <span className="font-medium text-emerald-600 dark:text-emerald-400">{"+"}{" "}{a.amount}</span>
-                      </>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -394,7 +393,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
             variant="secondary"
             className="flex-1 flex items-center justify-center gap-2"
             onClick={() => {
-              if (!form) return
+              if (!form) { return }
               const allowanceRows = (form.allowances ?? [])
                 .map(a => `<tr><td style="padding:5px 0 5px 8px;color:#444">${a.label}</td><td style="text-align:right;color:#16a34a">+ ${a.amount}</td></tr>`).join("")
               const deductionRows = (form.deductions ?? [])
