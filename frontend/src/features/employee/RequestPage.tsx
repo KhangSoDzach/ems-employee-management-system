@@ -42,6 +42,7 @@ import {
   LEAVE_STATUS_CONFIG,
   LEAVE_STATUS_OPTIONS,
   LEAVE_TYPE_CONFIG,
+  LEAVE_TYPE_OPTIONS,
   type LeaveFormValues,
   type LeaveRequest,
   type LeaveStatus,
@@ -464,21 +465,23 @@ export default function RequestPage() {
                       <SlidersHorizontal className="w-4 h-4" />
                       {SYSTEM_MESSAGES.REQUEST.FILTER_STATUS}
                       {leaveStatus !== "ALL" && (
-                        <>
-                          <div className="w-px h-4 bg-border mx-1" />
-                          <ActiveFilterBadge
-                            value={LEAVE_STATUS_CONFIG[leaveStatus].label}
-                            colorClass="text-foreground bg-muted border-none"
-                            onClear={() => setLeaveStatus("ALL")}
-                          />
-                        </>
+                        <ActiveFilterBadge
+                          value={LEAVE_STATUS_CONFIG[leaveStatus].label}
+                          colorClass={
+                            LEAVE_STATUS_CONFIG[leaveStatus].filterClass
+                          }
+                          onClear={() => setLeaveStatus("ALL")}
+                        />
                       )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px]">
                     <DropdownMenuItem
                       onClick={() => setLeaveStatus("ALL")}
-                      className="font-medium cursor-pointer"
+                      className={cn(
+                        "font-medium cursor-pointer",
+                        leaveStatus === "ALL" && "font-bold text-primary",
+                      )}
                     >
                       {SYSTEM_MESSAGES.REQUEST.FILTER_ALL_STATUS}
                     </DropdownMenuItem>
@@ -504,6 +507,50 @@ export default function RequestPage() {
                           />
                           {config.label}
                         </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap"
+                    >
+                      <SlidersHorizontal className="w-4 h-4" />
+                      {SYSTEM_MESSAGES.REQUEST.FILTER_TYPE}
+                      {leaveType !== "ALL" && (
+                        <ActiveFilterBadge
+                          value={LEAVE_TYPE_CONFIG[leaveType].label}
+                          colorClass={LEAVE_TYPE_CONFIG[leaveType].filterClass}
+                          onClear={() => setLeaveType("ALL")}
+                        />
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuItem
+                      onClick={() => setLeaveType("ALL")}
+                      className={cn(
+                        "font-medium cursor-pointer",
+                        leaveType === "ALL" && "font-bold text-primary",
+                      )}
+                    >
+                      {SYSTEM_MESSAGES.REQUEST.FILTER_ALL_TYPE}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {LEAVE_TYPE_OPTIONS.map(([value, config]) => (
+                      <DropdownMenuItem
+                        key={value}
+                        onClick={() => setLeaveType(value)}
+                        className={cn(
+                          "cursor-pointer",
+                          leaveType === value && "bg-muted font-medium",
+                        )}
+                      >
+                        {config.label}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>

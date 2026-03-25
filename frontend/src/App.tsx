@@ -213,7 +213,7 @@ function App() {
               <Route path="/members" element={<MemberList />} />
             </Route>
 
-            {/* Manager only */}
+            {/* Manager + HR */}
             <Route
               element={
                 <ProtectedRoute

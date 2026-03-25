@@ -34,6 +34,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ApproveLeaveDialog from "./components/ApproveLeaveModal";
 import { leaveService, type LeaveResponseDTO } from "@/services/leaveService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges";
+import { cn } from "@/lib/utils";
 
 /* ================= TYPES ================= */
 
@@ -94,16 +96,72 @@ const renderLeaveType = (type: string) => {
   return <Badge className={cfg.cls}>{cfg.label}</Badge>;
 };
 
-const isPending = (status: string) => status.startsWith("PENDING");
+/* ================= STATUS BADGE ================= */
+
+const STATUS_MAP = {
+  PENDING: {
+    label: SYSTEM_MESSAGES.STATUS.PENDING,
+    cls: "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100",
+    filterClass: "bg-amber-100 text-amber-700 border-amber-200",
+  },
+  APPROVED: {
+    label: SYSTEM_MESSAGES.STATUS.APPROVED,
+    cls: "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+    filterClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  },
+  REJECTED: {
+    label: SYSTEM_MESSAGES.STATUS.REJECTED,
+    cls: "bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-100",
+    filterClass: "bg-rose-100 text-rose-700 border-rose-200",
+  },
+  RETURNED_TO_EMPLOYEE: {
+    label: SYSTEM_MESSAGES.STATUS.RETURNED,
+    cls: "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100",
+    filterClass: "bg-slate-100 text-slate-700 border-slate-200",
+  },
+} as const;
+
+const LEAVE_TYPE_FILTER_CONFIG: Record<
+  string,
+  { label: string; filterClass: string }
+> = {
+  ANNUAL: {
+    label: SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL,
+    filterClass: "bg-blue-100 text-blue-700 border-blue-200",
+  },
+  SICK: {
+    label: SYSTEM_MESSAGES.LEAVE.TYPE_SICK,
+    filterClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  },
+  UNPAID: {
+    label: SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID,
+    filterClass: "bg-rose-100 text-rose-700 border-rose-200",
+  },
+  PERSONAL: {
+    label: SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL,
+    filterClass: "bg-violet-100 text-violet-700 border-violet-200",
+  },
+};
+
+const renderStatus = (status: string) => {
+  const isPendingStatus = status.startsWith("PENDING");
+  const cfg = isPendingStatus
+    ? STATUS_MAP.PENDING
+    : ((STATUS_MAP as Record<string, { label: string; cls: string }>)[
+        status
+      ] ?? {
+        label: status,
+        cls: "bg-muted text-muted-foreground hover:bg-muted",
+      });
+  return <Badge className={cfg.cls}>{cfg.label}</Badge>;
+};
 
 /* ================= EMPTY STATE ================= */
 
 const EmptyState = () => (
   <TableRow>
     <TableCell colSpan={6} className="h-64 text-center">
-      <p className="text-muted-foreground">
-        {SYSTEM_MESSAGES.LEAVE.EMPTY_PENDING}
-      </p>
+      <p className="text-muted-foreground">{SYSTEM_MESSAGES.NO_DATA}</p>
     </TableCell>
   </TableRow>
 );
@@ -112,7 +170,8 @@ const EmptyState = () => (
 
 export default function ApproveLeaveRequest() {
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("PENDING");
   const [data, setData] = useState<LeaveRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(
@@ -131,14 +190,23 @@ export default function ApproveLeaveRequest() {
 
   /* ================= FILTER LOGIC ================= */
 
-  const filtered = data
-    .filter((r) => isPending(r.status))
-    .filter((r) => {
-      const matchSearch = r.name.toLowerCase().includes(search.toLowerCase());
-      const matchType =
-        filterType === "all" ? true : r.leaveType === filterType.toUpperCase();
-      return matchSearch && matchType;
-    });
+  const filtered = data.filter((r) => {
+    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase());
+    const matchType = filterType === "ALL" ? true : r.leaveType === filterType;
+    const matchStatus =
+      statusFilter === "ALL"
+        ? true
+        : statusFilter === "PENDING"
+          ? r.status.startsWith("PENDING")
+          : r.status === statusFilter;
+    return matchSearch && matchType && matchStatus;
+  });
+
+  const clearAllFilters = () => {
+    setSearch("");
+    setFilterType("ALL");
+    setStatusFilter("ALL");
+  };
 
   /* ================= UPDATE STATUS LOCALLY ================= */
 
@@ -157,71 +225,178 @@ export default function ApproveLeaveRequest() {
 
         <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
           {/* HEADER */}
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <h1 className="page-heading">
-                {SYSTEM_MESSAGES.APPROVE.LEAVE_LIST_TITLE}
-              </h1>
+              <h1 className="page-heading">{SYSTEM_MESSAGES.MGMT_ADJ.TITLE}</h1>
               <p className="text-muted-foreground mt-1">
                 {SYSTEM_MESSAGES.APPROVE.LEAVE_LIST_DESC}
               </p>
             </div>
-            <Button variant="outline">
-              {SYSTEM_MESSAGES.APPROVE.BTN_EXPORT}
-            </Button>
           </div>
 
           {/* FILTER BAR */}
-          <div className="flex gap-3 items-center">
-            <div className="relative w-72">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="relative w-full sm:w-auto sm:min-w-[320px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder={SYSTEM_MESSAGES.APPROVE.SEARCH_EMP}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
               />
               {search && (
                 <button
                   onClick={() => setSearch("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <X className="w-4 h-4 text-muted-foreground" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
+            {/* Status Filter */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <SlidersHorizontal className="w-4 h-4" />
-                  {{
-                    all: SYSTEM_MESSAGES.APPROVE.FILTER_ALL,
-                    annual: SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL,
-                    sick: SYSTEM_MESSAGES.LEAVE.TYPE_SICK,
-                    unpaid: SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID,
-                    personal: SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL,
-                  }[filterType] ?? SYSTEM_MESSAGES.APPROVE.FILTER_ALL}
+                <Button
+                  variant="outline"
+                  className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-semibold text-slate-700">
+                    {SYSTEM_MESSAGES.LEAVE.FILTER_STATUS}
+                  </span>
+                  {statusFilter !== "ALL" && (
+                    <ActiveFilterBadge
+                      value={
+                        statusFilter === "PENDING"
+                          ? SYSTEM_MESSAGES.STATUS.PENDING
+                          : (STATUS_MAP as any)[statusFilter]?.label ||
+                            statusFilter
+                      }
+                      colorClass={
+                        (STATUS_MAP as any)[
+                          statusFilter === "PENDING" ? "PENDING" : statusFilter
+                        ]?.filterClass || ""
+                      }
+                      onClear={() => setStatusFilter("ALL")}
+                    />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setFilterType("all")}>
-                  {SYSTEM_MESSAGES.APPROVE.FILTER_ALL}
+              <DropdownMenuContent align="start" className="w-48 p-1">
+                <DropdownMenuItem
+                  onClick={() => setStatusFilter("ALL")}
+                  className={cn(
+                    "cursor-pointer text-sm",
+                    statusFilter === "ALL" && "bg-muted font-bold text-primary",
+                  )}
+                >
+                  {SYSTEM_MESSAGES.LABEL_ALL}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("annual")}>
-                  {SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("sick")}>
-                  {SYSTEM_MESSAGES.LEAVE.TYPE_SICK}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("unpaid")}>
-                  {SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterType("personal")}>
-                  {SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL}
-                </DropdownMenuItem>
+                {Object.entries(STATUS_MAP).map(([key, cfg]) => (
+                  <DropdownMenuItem
+                    key={key}
+                    onClick={() => setStatusFilter(key)}
+                    className={cn(
+                      "cursor-pointer",
+                      statusFilter === key
+                        ? "bg-muted font-medium"
+                        : "hover:bg-slate-50",
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 py-1">
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full inline-block shrink-0",
+                          key === "PENDING" && "bg-amber-500",
+                          key === "APPROVED" && "bg-emerald-500",
+                          key === "REJECTED" && "bg-rose-500",
+                          key === "RETURNED_TO_EMPLOYEE" && "bg-orange-500",
+                        )}
+                      />
+                      {cfg.label}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Type Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-semibold text-slate-700">
+                    {SYSTEM_MESSAGES.LEAVE.FILTER_TYPE}
+                  </span>
+                  {filterType !== "ALL" && (
+                    <ActiveFilterBadge
+                      value={
+                        LEAVE_TYPE_FILTER_CONFIG[filterType]?.label ||
+                        filterType
+                      }
+                      colorClass={
+                        LEAVE_TYPE_FILTER_CONFIG[filterType]?.filterClass || ""
+                      }
+                      onClear={() => setFilterType("ALL")}
+                    />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 p-1">
+                <DropdownMenuItem
+                  onClick={() => setFilterType("ALL")}
+                  className={cn(
+                    "cursor-pointer text-sm",
+                    filterType === "ALL" && "bg-muted font-bold text-primary",
+                  )}
+                >
+                  {SYSTEM_MESSAGES.LABEL_ALL}
+                </DropdownMenuItem>
+                {Object.entries(LEAVE_TYPE_FILTER_CONFIG).map(([key, cfg]) => (
+                  <DropdownMenuItem
+                    key={key}
+                    onClick={() => setFilterType(key)}
+                    className={cn(
+                      "cursor-pointer",
+                      filterType === key
+                        ? "bg-muted font-medium"
+                        : "hover:bg-slate-50",
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 py-1">
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full inline-block shrink-0",
+                          key === "ANNUAL" && "bg-blue-500",
+                          key === "SICK" && "bg-emerald-500",
+                          key === "UNPAID" && "bg-rose-500",
+                          key === "PERSONAL" && "bg-violet-500",
+                        )}
+                      />
+                      {cfg.label}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {(statusFilter !== "ALL" ||
+              filterType !== "ALL" ||
+              search !== "") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-10 text-sm text-slate-500 hover:text-primary transition-colors hover:bg-transparent"
+                onClick={clearAllFilters}
+              >
+                {SYSTEM_MESSAGES.LEAVE.BTN_CLEAR}
+              </Button>
+            )}
+
+            <div className="flex-1" />
           </div>
 
           {/* TABLE */}
@@ -292,11 +467,7 @@ export default function ApproveLeaveRequest() {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <Badge className="bg-amber-100 text-amber-700 border border-amber-200">
-                          {SYSTEM_MESSAGES.STATUS.PENDING}
-                        </Badge>
-                      </TableCell>
+                      <TableCell>{renderStatus(row.status)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
