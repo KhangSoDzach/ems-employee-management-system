@@ -15,16 +15,11 @@ interface Props {
   onSuccess?: () => void;
 }
 
-function FieldError({
-  field,
-  errors,
-}: {
-  field: string;
-  errors: Record<string, string>;
-}) {
-  return errors[field] ? (
-    <p className="text-xs text-red-500 mt-1">{errors[field]}</p>
-  ) : null;
+function FieldError({ message }: { message?: string }) {
+  if (!message) {
+    return null;
+  }
+  return <p className="text-xs text-red-500 mt-1">{message}</p>;
 }
 
 export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
@@ -42,10 +37,6 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  if (!open) {
-    return null;
-  }
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
@@ -134,10 +125,14 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
   const selectCls = (f: string) =>
     `flex h-10 w-full rounded border ${errors[f] ? "border-red-400" : "border-slate-200"} bg-white px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary`;
 
+  if (!open) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-8px"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={handleClose}
       />
       <div className="relative w-full max-w-lg bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
@@ -170,7 +165,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
-            <FieldError field="name" errors={errors} />
+            <FieldError message={errors.name} />
           </div>
 
           {/* Loại + Chỉ số */}
@@ -216,7 +211,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
                 value={targetValue}
                 onChange={(e) => setTargetValue(e.target.value)}
               />
-              <FieldError field="targetValue" errors={errors} />
+              <FieldError message={errors.targetValue} />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-900">
@@ -231,7 +226,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
               />
-              <FieldError field="weight" errors={errors} />
+              <FieldError message={errors.weight} />
             </div>
           </div>
 
@@ -266,7 +261,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
                   value={scopeId}
                   onChange={(e) => setScopeId(e.target.value)}
                 />
-                <FieldError field="scopeId" errors={errors} />
+                <FieldError message={errors.scopeId} />
               </div>
             )}
           </div>
@@ -283,7 +278,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
                 value={periodStart}
                 onChange={(e) => setPeriodStart(e.target.value)}
               />
-              <FieldError field="periodStart" errors={errors} />
+              <FieldError message={errors.periodStart} />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-900">
@@ -295,7 +290,7 @@ export function AddKpiOkrModal({ open, onClose, onSuccess }: Props) {
                 value={periodEnd}
                 onChange={(e) => setPeriodEnd(e.target.value)}
               />
-              <FieldError field="periodEnd" errors={errors} />
+              <FieldError message={errors.periodEnd} />
             </div>
           </div>
 
