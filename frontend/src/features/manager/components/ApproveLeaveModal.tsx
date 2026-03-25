@@ -198,6 +198,7 @@ export default function ApproveLeaveDialog({
           onReturn={handleSendBack}
           isPending={request.status.startsWith("PENDING")}
           processing={loading}
+          actionDisabled={user?.id === request.requesterUserId}
         />
       </SheetContent>
     </Sheet>

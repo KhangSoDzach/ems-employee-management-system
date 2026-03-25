@@ -50,6 +50,7 @@ public class RequestMapper {
                 .reviewedBy(request.getReviewedBy() != null ? request.getReviewedBy().getUsername() : null)
                 .reviewedAt(formatDate(request.getReviewedAt()))
                 .reviewNote(request.getReviewNote())
+                .requesterUserId(request.getRequestedBy() != null && request.getRequestedBy().getUser() != null ? request.getRequestedBy().getUser().getId() : null)
                 .build();
     }
 
@@ -66,6 +67,7 @@ public class RequestMapper {
                 .status(request.getStatus().name())
                 .statusLabel(toStatusLabel(request.getStatus()))
                 .statusColor(toStatusColor(request.getStatus()))
+                .requesterUserId(request.getRequestedBy() != null && request.getRequestedBy().getUser() != null ? request.getRequestedBy().getUser().getId() : null)
                 .build();
     }
 

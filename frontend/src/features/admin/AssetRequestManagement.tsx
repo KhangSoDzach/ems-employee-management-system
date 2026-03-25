@@ -46,9 +46,11 @@ import {
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AssetRequestManagement() {
   const effectiveRole = useEffectiveRole();
+  const { user } = useAuth();
 
   const [requests, setRequests] = useState<AssetRequestAdminItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +106,7 @@ export function AssetRequestManagement() {
         rejected:
           statusFilter === "REJECTED" ? response.totalElements : rejected,
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error(SYSTEM_MESSAGES.ASSET_REQUEST.MSG_FETCH_ERROR);
     } finally {
       setLoading(false);
@@ -122,7 +124,7 @@ export function AssetRequestManagement() {
     try {
       const detail = await assetService.getAssetRequestDetailAdmin(id);
       setSelectedRequest(detail);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Không thể tải chi tiết yêu cầu.");
       setIsSheetOpen(false);
     } finally {
@@ -415,37 +417,45 @@ export function AssetRequestManagement() {
               </div>
 
               {selectedRequest.status === "PENDING" ? (
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <h4 className="text-sm font-semibold">
-                    {SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_REVIEW_NOTE}
-                  </h4>
-                  <Textarea
-                    placeholder="Ghi chú thêm hoặc lý do từ chối..."
-                    value={processNote}
-                    onChange={(e) => setProcessNote(e.target.value)}
-                    className="resize-none h-24"
-                  />
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                      onClick={() => handleProcess("REJECT")}
-                      disabled={processing}
-                    >
-                      {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_REJECT}
-                    </Button>
-                    <Button
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => handleProcess("APPROVE")}
-                      disabled={processing}
-                    >
-                      {processing && (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      )}
-                      {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_APPROVE}
-                    </Button>
+                user?.id === selectedRequest.requesterUserId ? (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="bg-amber-50 text-amber-600 border border-amber-200 p-3 rounded-md text-sm text-center">
+                      Bạn không thể tự duyệt yêu cầu cấp phát của bản thân.
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2 pt-4 border-t border-border">
+                    <h4 className="text-sm font-semibold">
+                      {SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_REVIEW_NOTE}
+                    </h4>
+                    <Textarea
+                      placeholder="Ghi chú thêm hoặc lý do từ chối..."
+                      value={processNote}
+                      onChange={(e) => setProcessNote(e.target.value)}
+                      className="resize-none h-24"
+                    />
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => handleProcess("REJECT")}
+                        disabled={processing}
+                      >
+                        {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_REJECT}
+                      </Button>
+                      <Button
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleProcess("APPROVE")}
+                        disabled={processing}
+                      >
+                        {processing && (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        )}
+                        {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_APPROVE}
+                      </Button>
+                    </div>
+                  </div>
+                )
               ) : (
                 <div className="space-y-4 pt-4 border-t border-border">
                   <h4 className="text-sm font-semibold bg-muted/40 p-2 rounded-t-lg border border-b-0 border-border">

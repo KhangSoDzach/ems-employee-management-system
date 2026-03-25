@@ -185,7 +185,7 @@ export default function ProfilePage() {
     0;
 
   function onSubmit(data: ProfileFormValues) {
-    console.log("Form submitted: ", data);
+    void data;
     alert(SYSTEM_MESSAGES.PROFILE.MODAL_SUCCESS);
   }
 

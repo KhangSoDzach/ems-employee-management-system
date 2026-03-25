@@ -1,5 +1,4 @@
 import api from "@/lib/axios";
-import { MOCK_ASSET_REPORTS, MOCK_ASSET_REPORT_DETAILS } from "./mockData";
 
 export type AssetStatus = "AVAILABLE" | "ASSIGNED" | "RETIRED";
 export type AssetCondition = "NEW" | "GOOD" | "DAMAGED" | "LOST" | "DISPOSED";
@@ -141,6 +140,7 @@ export interface AssetRequestDetail {
   reviewedBy?: string;
   reviewedAt?: string;
   reviewNote?: string;
+  requesterUserId?: number;
 }
 
 export interface AssetRequestAdminItem {
@@ -155,6 +155,7 @@ export interface AssetRequestAdminItem {
   status: string;
   statusLabel: string;
   statusColor: string;
+  requesterUserId?: number;
 }
 
 export interface AssetRequestProcess {
@@ -199,6 +200,7 @@ export interface IncidentReportDetail {
   processNote: string | null;
   assetCondition: string;
   assetStatus: string;
+  requesterUserId?: number;
 }
 export interface AdminIncidentListItem {
   id: number;
@@ -211,6 +213,7 @@ export interface AdminIncidentListItem {
   status: string;
   statusLabel: string;
   statusColor: string;
+  requesterUserId?: number;
 }
 
 interface ApiResponse<T> {
@@ -284,31 +287,12 @@ export const assetService = {
   }): Promise<PageResponse<AdminIncidentListItem>> =>
     wrap<ApiResponse<PageResponse<AdminIncidentListItem>>>(
       api.get("/admin/asset-reports", { params }),
-    )
-      .then((res) => {
-        const data = res.data;
-        return {
-          ...data,
-          content: [...MOCK_ASSET_REPORTS, ...data.content],
-          totalElements: data.totalElements + MOCK_ASSET_REPORTS.length,
-        };
-      })
-      .catch(() => ({
-        content: MOCK_ASSET_REPORTS,
-        page: 0,
-        size: 100,
-        totalElements: MOCK_ASSET_REPORTS.length,
-        totalPages: 1,
-      })),
+    ).then((res) => res.data),
 
   getAdminReportDetail: (id: number): Promise<IncidentReportDetail> =>
     wrap<ApiResponse<IncidentReportDetail>>(
       api.get(`/admin/asset-reports/${id}`),
-    )
-      .then((res) => res.data)
-      .catch(
-        () => MOCK_ASSET_REPORT_DETAILS[id] || Promise.reject("Not found"),
-      ),
+    ).then((res) => res.data),
 
   approveReport: (id: number, note?: string): Promise<IncidentReportDetail> =>
     wrap<ApiResponse<IncidentReportDetail>>(

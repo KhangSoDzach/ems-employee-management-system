@@ -40,7 +40,7 @@ import {
   type AuditEntry,
   ADJUSTMENT_STATUS_CONFIG,
   ADJUSTMENT_STATUS_OPTIONS,
-  AdjustmentType,
+  type AdjustmentType,
 } from "../employee/adjustment-request.constants";
 import {
   StatusBadge,

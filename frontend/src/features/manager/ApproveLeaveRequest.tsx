@@ -50,6 +50,7 @@ export type LeaveRequest = {
   reason: string;
   status: string;
   createdAt: string;
+  requesterUserId?: number;
 };
 
 function mapDto(dto: LeaveResponseDTO): LeaveRequest {
@@ -64,6 +65,7 @@ function mapDto(dto: LeaveResponseDTO): LeaveRequest {
     reason: dto.reason,
     status: dto.status,
     createdAt: dto.createdAt,
+    requesterUserId: dto.requesterUserId,
   };
 }
 
