@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ReviewType {
-    SELF, PEER, MANAGER;
+    SELF, PEER, MANAGER, UPWARD;
 
     @JsonValue
     public String toJson() { return name(); }

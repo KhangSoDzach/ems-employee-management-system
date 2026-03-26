@@ -24,6 +24,7 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 // Import Modals
 import EmployeeDetailModal from "./EmployeeDetailModal";
 import EmployeeFormModal from "./components/EmployeeFormModal";
+import ConfirmOfficialModal from "./ConfirmOfficialModal";
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
@@ -41,6 +42,7 @@ export default function EmployeeManagementPage() {
   const [openDetail, setOpenDetail] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
+  const [openConfirmOfficial, setOpenConfirmOfficial] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedEmployee, setSelectedEmployee] =
     useState<EmployeeResponse | null>(null);
@@ -149,6 +151,38 @@ export default function EmployeeManagementPage() {
     setOpenEdit(true);
   };
 
+  const handleOpenConfirmOfficial = (emp: EmployeeResponse) => {
+    setSelectedId(emp.id);
+    setSelectedEmployee(emp);
+    setOpenConfirmOfficial(true);
+  };
+
+  const getWorkStatus = (emp: EmployeeResponse) =>
+    emp.workStatus ?? (emp.status as "PROBATION" | "ACTIVE" | "TERMINATED");
+
+  const getWorkStatusMeta = (status: string | null) => {
+    if (status === "PROBATION") {
+      return {
+        label: "Thử việc",
+        className:
+          "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+      };
+    }
+
+    if (status === "ACTIVE") {
+      return {
+        label: SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE,
+        className:
+          "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      };
+    }
+
+    return {
+      label: SYSTEM_MESSAGES.EMPLOYEE.STATUS_INACTIVE,
+      className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    };
+  };
+
   const from = totalElements === 0 ? 0 : page * PAGE_SIZE + 1;
   const to = Math.min((page + 1) * PAGE_SIZE, totalElements);
 
@@ -214,14 +248,14 @@ export default function EmployeeManagementPage() {
                 {SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE}
               </button>
               <button
-                onClick={() => setStatusFilter("INACTIVE")}
+                onClick={() => setStatusFilter("PROBATION")}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-                  statusFilter === "INACTIVE"
-                    ? "bg-red-50 text-red-600 border border-red-200"
+                  statusFilter === "PROBATION"
+                    ? "bg-amber-50 text-amber-700 border border-amber-200"
                     : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-50"
                 }`}
               >
-                {SYSTEM_MESSAGES.EMPLOYEE.STATUS_INACTIVE}
+                Thử việc
               </button>
 
               {(statusFilter || search) && (
@@ -301,86 +335,94 @@ export default function EmployeeManagementPage() {
                       </td>
                     </tr>
                   ) : (
-                    employees.map((emp) => (
-                      <tr
-                        key={emp.id}
-                        className="group hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors"
-                      >
-                        <td className="px-6 py-4 font-bold text-primary">
-                          {emp.employeeCode}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0 border border-gray-200 dark:border-gray-700">
-                              {emp.avatarUrl ? (
-                                <img
-                                  src={emp.avatarUrl}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">
-                                  {emp.firstName.charAt(0)}
-                                  {emp.lastName.charAt(0)}
-                                </div>
+                    employees.map((emp) => {
+                      const workStatus = getWorkStatus(emp);
+                      const statusMeta = getWorkStatusMeta(workStatus);
+
+                      return (
+                        <tr
+                          key={emp.id}
+                          className="group hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <td className="px-6 py-4 font-bold text-primary">
+                            {emp.employeeCode}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0 border border-gray-200 dark:border-gray-700">
+                                {emp.avatarUrl ? (
+                                  <img
+                                    src={emp.avatarUrl}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">
+                                    {emp.firstName.charAt(0)}
+                                    {emp.lastName.charAt(0)}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                                  {emp.firstName} {emp.lastName}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {emp.email}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                            {emp.department}
+                          </td>
+                          <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                            {emp.position}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${statusMeta.className}`}
+                            >
+                              {statusMeta.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {workStatus === "PROBATION" && (
+                                <button
+                                  onClick={() => handleOpenConfirmOfficial(emp)}
+                                  className="px-2.5 py-1.5 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition"
+                                  title="Xác nhận chính thức"
+                                >
+                                  Xác nhận chính thức
+                                </button>
                               )}
+                              <button
+                                onClick={() => handleOpenDetail(emp)}
+                                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition"
+                                title={SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
+                              >
+                                <Eye size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleOpenEdit(emp)}
+                                className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                                title={SYSTEM_MESSAGES.BTN_EDIT}
+                              >
+                                <Pencil size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(emp.id)}
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                                title={SYSTEM_MESSAGES.BTN_DELETE}
+                              >
+                                <Trash2 size={18} />
+                              </button>
                             </div>
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
-                                {emp.firstName} {emp.lastName}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {emp.email}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
-                          {emp.department}
-                        </td>
-                        <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
-                          {emp.position}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                              emp.status === "ACTIVE"
-                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                            }`}
-                          >
-                            {emp.status === "ACTIVE"
-                              ? SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE
-                              : SYSTEM_MESSAGES.EMPLOYEE.STATUS_INACTIVE}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleOpenDetail(emp)}
-                              className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition"
-                              title={SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
-                            >
-                              <Eye size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleOpenEdit(emp)}
-                              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
-                              title={SYSTEM_MESSAGES.BTN_EDIT}
-                            >
-                              <Pencil size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(emp.id)}
-                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                              title={SYSTEM_MESSAGES.BTN_DELETE}
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -464,6 +506,15 @@ export default function EmployeeManagementPage() {
           onSuccess={() => {
             fetchList();
             setOpenEdit(false);
+          }}
+        />
+        <ConfirmOfficialModal
+          open={openConfirmOfficial}
+          employee={selectedEmployee}
+          onClose={() => setOpenConfirmOfficial(false)}
+          onSuccess={() => {
+            fetchList();
+            setOpenConfirmOfficial(false);
           }}
         />
       </SidebarInset>

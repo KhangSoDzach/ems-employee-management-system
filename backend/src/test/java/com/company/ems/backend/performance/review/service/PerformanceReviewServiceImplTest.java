@@ -1,18 +1,26 @@
 package com.company.ems.backend.performance.review.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -25,21 +33,28 @@ import com.company.ems.backend.common.enums.ErrorCode;
 import com.company.ems.backend.common.exception.AppException;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.common.service.NotificationService;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
+import com.company.ems.backend.performance.review.dto.PerformanceReviewCycleDto;
 import com.company.ems.backend.performance.review.dto.PerformanceReviewDto;
 import com.company.ems.backend.performance.review.entity.PerformanceReview;
+import com.company.ems.backend.performance.review.entity.PerformanceReviewCycle;
+import com.company.ems.backend.performance.review.enums.ReviewCycleStatus;
 import com.company.ems.backend.performance.review.enums.ReviewType;
 import com.company.ems.backend.performance.review.mapper.PerformanceReviewMapper;
+import com.company.ems.backend.performance.review.repository.PerformanceReviewCycleRepository;
 import com.company.ems.backend.performance.review.repository.PerformanceReviewRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PerformanceReviewServiceImplTest {
 
     @Mock private PerformanceReviewRepository reviewRepo;
+    @Mock private PerformanceReviewCycleRepository cycleRepo;
     @Mock private EmployeeRepository employeeRepo;
     @Mock private PerformanceReviewMapper mapper;
     @Mock private MessageService messages;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private PerformanceReviewServiceImpl service;
@@ -72,9 +87,17 @@ class PerformanceReviewServiceImplTest {
         mockAuthentication("manager1");
         Employee managerEmp = new Employee();
         managerEmp.setId(1L);
+        reviewee.setReportingManager(managerEmp);
 
         when(employeeRepo.findById(10L)).thenReturn(Optional.of(reviewee));
         when(employeeRepo.findByUserUsername("manager1")).thenReturn(Optional.of(managerEmp));
+        PerformanceReviewCycle activeCycle = PerformanceReviewCycle.builder()
+                .managerId(1L)
+                .reviewPeriod("2026-Q1")
+                .build();
+        activeCycle.setId(100L);
+        when(cycleRepo.findActiveCycleByManagerAndPeriod(eq(1L), eq("2026-Q1"), eq(ReviewCycleStatus.OPEN), any()))
+            .thenReturn(Optional.of(activeCycle));
         when(reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(1L, 10L, "2026-Q1"))
                 .thenReturn(false);
 
@@ -116,9 +139,17 @@ class PerformanceReviewServiceImplTest {
         mockAuthentication("manager1");
         Employee managerEmp = new Employee();
         managerEmp.setId(1L);
+        reviewee.setReportingManager(managerEmp);
 
         when(employeeRepo.findById(10L)).thenReturn(Optional.of(reviewee));
         when(employeeRepo.findByUserUsername("manager1")).thenReturn(Optional.of(managerEmp));
+        PerformanceReviewCycle activeCycle = PerformanceReviewCycle.builder()
+                .managerId(1L)
+                .reviewPeriod("2026-Q1")
+                .build();
+        activeCycle.setId(100L);
+        when(cycleRepo.findActiveCycleByManagerAndPeriod(eq(1L), eq("2026-Q1"), eq(ReviewCycleStatus.OPEN), any()))
+            .thenReturn(Optional.of(activeCycle));
         when(reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(1L, 10L, "2026-Q1"))
                 .thenReturn(true);
         when(messages.get(eq(MessageCode.REVIEW_DUPLICATE), any())).thenReturn("Duplicate review");
@@ -139,22 +170,29 @@ class PerformanceReviewServiceImplTest {
     }
 
     @Test
-    void saveReview_selfReview_byNonSelf_throws() {
-        // Given – reviewer (id=1) tries to submit SELF review for reviewee (id=10)
+    void saveReview_peerReview_betweenDifferentTeams_throws() {
+        // Given – reviewer and reviewee are not in same manager group
         mockAuthentication("manager1");
-        Employee managerEmp = new Employee();
-        managerEmp.setId(1L);
+        Employee reviewerEmp = new Employee();
+        reviewerEmp.setId(1L);
+
+        Employee reviewerManager = new Employee();
+        reviewerManager.setId(7L);
+        reviewerEmp.setReportingManager(reviewerManager);
+
+        Employee revieweeManager = new Employee();
+        revieweeManager.setId(8L);
+        reviewee.setReportingManager(revieweeManager);
 
         when(employeeRepo.findById(10L)).thenReturn(Optional.of(reviewee));
-        when(employeeRepo.findByUserUsername("manager1")).thenReturn(Optional.of(managerEmp));
-        when(messages.get(MessageCode.REVIEW_SELF_ONLY)).thenReturn("Self review only");
+        when(employeeRepo.findByUserUsername("manager1")).thenReturn(Optional.of(reviewerEmp));
 
         PerformanceReviewDto.ScoresRequest scores = new PerformanceReviewDto.ScoresRequest();
         scores.setExpertise(80); scores.setCommunication(80); scores.setAttitude(80);
 
         PerformanceReviewDto.CreateRequest req = new PerformanceReviewDto.CreateRequest();
-        req.setRevieweeId(10L);  // different from reviewer (1L)
-        req.setReviewType(ReviewType.SELF);
+        req.setRevieweeId(10L);
+        req.setReviewType(ReviewType.PEER);
         req.setReviewPeriod("2026-Q1");
         req.setScores(scores);
 
@@ -162,6 +200,88 @@ class PerformanceReviewServiceImplTest {
         AppException ex = assertThrows(AppException.class, () -> service.saveReview(req));
         assertEquals(ErrorCode.ACCESS_DENIED, ex.getErrorCode());
     }
+
+    @Test
+    void openReviewCycle_success() {
+        mockAuthentication("manager1");
+
+        Employee managerEmp = new Employee();
+        managerEmp.setId(1L);
+
+        Employee report = new Employee();
+        report.setId(2L);
+        com.company.ems.backend.user.entity.User reportUser = new com.company.ems.backend.user.entity.User();
+        reportUser.setId(20L);
+        report.setUser(reportUser);
+
+        when(employeeRepo.findByUserUsername("manager1")).thenReturn(Optional.of(managerEmp));
+        when(cycleRepo.findActiveCycleByManager(eq(1L), eq(ReviewCycleStatus.OPEN), any())).thenReturn(Optional.empty());
+        when(cycleRepo.save(any(PerformanceReviewCycle.class))).thenAnswer(inv -> {
+            PerformanceReviewCycle c = inv.getArgument(0);
+            c.setId(100L);
+            return c;
+        });
+        when(employeeRepo.findDirectReportsByManagerId(1L)).thenReturn(List.of(report));
+
+        PerformanceReviewCycleDto.OpenRequest request = new PerformanceReviewCycleDto.OpenRequest();
+        request.setReviewPeriod("2026-Q1");
+
+        PerformanceReviewCycleDto.Response response = service.openReviewCycle(request);
+
+        assertNotNull(response);
+        assertEquals("2026-Q1", response.getReviewPeriod());
+        assertEquals(1, response.getNotifiedMemberCount());
+    }
+
+        @Test
+        void saveReview_upwardFeedback_success() {
+        mockAuthentication("employee1");
+
+        Employee manager = new Employee();
+        manager.setId(7L);
+        manager.setFirstName("Lead");
+        manager.setLastName("One");
+
+        Employee reviewerEmp = new Employee();
+        reviewerEmp.setId(1L);
+        reviewerEmp.setFirstName("Emp");
+        reviewerEmp.setLastName("A");
+        reviewerEmp.setReportingManager(manager);
+
+        when(employeeRepo.findByUserUsername("employee1")).thenReturn(Optional.of(reviewerEmp));
+        when(employeeRepo.findById(7L)).thenReturn(Optional.of(manager));
+
+        PerformanceReviewCycle activeCycle = PerformanceReviewCycle.builder()
+            .managerId(7L)
+            .reviewPeriod("2026-Q1")
+            .build();
+        activeCycle.setId(200L);
+        when(cycleRepo.findActiveCycleByManagerAndPeriod(eq(7L), eq("2026-Q1"), eq(ReviewCycleStatus.OPEN), any()))
+            .thenReturn(Optional.of(activeCycle));
+
+        when(reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(1L, 7L, "2026-Q1"))
+            .thenReturn(false);
+
+        when(reviewRepo.save(any(PerformanceReview.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mapper.toResponse(any(PerformanceReview.class))).thenReturn(PerformanceReviewDto.Response.builder().build());
+
+        PerformanceReviewDto.ScoresRequest scores = new PerformanceReviewDto.ScoresRequest();
+        scores.setExpertise(85);
+        scores.setCommunication(84);
+        scores.setAttitude(83);
+
+        PerformanceReviewDto.CreateRequest req = new PerformanceReviewDto.CreateRequest();
+        req.setRevieweeId(7L);
+        req.setReviewType(ReviewType.PEER);
+        req.setReviewPeriod("2026-Q1");
+        req.setScores(scores);
+
+        service.saveReview(req);
+
+        ArgumentCaptor<PerformanceReview> savedCaptor = ArgumentCaptor.forClass(PerformanceReview.class);
+        verify(reviewRepo, times(1)).save(savedCaptor.capture());
+        assertEquals(ReviewType.UPWARD, savedCaptor.getValue().getReviewType());
+        }
 
     @Test
     void getReview_notFound_throws() {

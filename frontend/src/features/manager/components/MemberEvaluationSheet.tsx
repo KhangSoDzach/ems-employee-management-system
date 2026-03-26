@@ -44,7 +44,7 @@ type MemberEvaluationSheetProps = {
   onSubmit?: (data: {
     scores: Record<string, number>;
     comment: string;
-  }) => void;
+  }) => Promise<void> | void;
 };
 
 function getEvaluationForMember(
@@ -174,11 +174,11 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
     }
     setSubmitting(true);
     try {
-      // Backend evaluation API not yet implemented — simulate success
-      // When ready: await evaluationService.submit({ memberId: member.id, scores, comment })
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      toast.success(t.SHEET_SUBMIT_SUCCESS)
-      onSubmit?.({ scores, comment })
+      if (onSubmit) {
+        await onSubmit({ scores, comment });
+      }
+      toast.success(t.SHEET_SUBMIT_SUCCESS);
+      onOpenChange(false);
     } catch {
       toast.error(t.SHEET_SUBMIT_ERROR)
     } finally {

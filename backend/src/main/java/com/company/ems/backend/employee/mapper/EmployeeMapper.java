@@ -16,6 +16,7 @@ public interface EmployeeMapper {
     @Mapping(target = "reportingManagerName", source = "reportingManager.fullName")
     @Mapping(target = "contractType",         expression = "java(employee.getContractType() != null ? employee.getContractType().name() : null)")
     @Mapping(target = "status",               expression = "java(employee.getStatus() != null ? employee.getStatus().name() : null)")
+    @Mapping(target = "workStatus",           expression = "java(employee.getWorkStatus() != null ? employee.getWorkStatus().name() : null)")
     @Mapping(target = "employeeCode",         source = "employeeCode")
     EmployeeResponse toResponse(Employee employee);
 

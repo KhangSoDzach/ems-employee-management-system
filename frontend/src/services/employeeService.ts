@@ -57,8 +57,12 @@ export interface EmployeeResponse {
   reportingManagerId: number | null;
   reportingManagerName: string | null;
   contractType: string | null;
+  contractStartDate: string | null;
   probationEndDate: string | null;
   contractEndDate: string | null;
+  contractDurationMonths: number | null;
+  probationSalary: number | null;
+  officialSalary: number | null;
   workLocation: string | null;
   nationality: string | null;
   bloodGroup: string | null;
@@ -70,6 +74,7 @@ export interface EmployeeResponse {
   terminationDate: string | null;
   notes: string | null;
   status: string;
+  workStatus: "PROBATION" | "ACTIVE" | "TERMINATED" | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -100,14 +105,34 @@ export interface EmployeeRequest {
   bankBranch?: string;
   reportingManagerId?: number;
   contractType?: string;
+  contractStartDate?: string;
   probationEndDate?: string;
   contractEndDate?: string;
+  contractDurationMonths?: number;
+  workStatus?: "PROBATION" | "ACTIVE" | "TERMINATED";
+  probationSalary?: number;
+  officialSalary?: number;
   workLocation?: string;
   nationality?: string;
   bloodGroup?: string;
   gender?: string;
   avatarUrl?: string;
   notes?: string;
+}
+
+export interface OfficialContractRequest {
+  contractStartDate: string;
+  contractTerm: "ONE_YEAR" | "TWO_YEARS" | "THREE_YEARS" | "INDEFINITE";
+  officialSalary: number;
+}
+
+export interface EmployeeAttachmentResponse {
+  id: number;
+  originalFileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  createdAt: string;
 }
 
 export interface PageParams {
@@ -133,6 +158,66 @@ interface ApiResponse<T> {
   data: T;
 }
 
+const getApiOrigin = (): string => {
+  const currentOrigin = globalThis.location?.origin ?? "http://localhost:8080";
+  const baseURL = api.defaults.baseURL;
+  if (typeof baseURL !== "string" || !baseURL.trim()) {
+    return currentOrigin;
+  }
+
+  try {
+    return new URL(baseURL, currentOrigin).origin;
+  } catch {
+    return currentOrigin;
+  }
+};
+
+const resolveEmployeeFileUrl = (
+  url: string | null | undefined,
+): string | null => {
+  if (!url) {
+    return null;
+  }
+
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("blob:") ||
+    trimmed.startsWith("data:")
+  ) {
+    return trimmed;
+  }
+
+  const normalizedPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return `${getApiOrigin()}${normalizedPath}`;
+};
+
+const normalizeEmployeeResponse = (
+  employee: EmployeeResponse,
+): EmployeeResponse => ({
+  ...employee,
+  avatarUrl: resolveEmployeeFileUrl(employee.avatarUrl),
+});
+
+const normalizePublicProfile = (
+  profile: PublicEmployeeProfile,
+): PublicEmployeeProfile => ({
+  ...profile,
+  avatarUrl: resolveEmployeeFileUrl(profile.avatarUrl),
+});
+
+const normalizeAttachment = (
+  attachment: EmployeeAttachmentResponse,
+): EmployeeAttachmentResponse => ({
+  ...attachment,
+  fileUrl: resolveEmployeeFileUrl(attachment.fileUrl) ?? attachment.fileUrl,
+});
+
 export const employeeService = {
   /**
    * GET /api/v1/employees/me
@@ -143,7 +228,7 @@ export const employeeService = {
       api.get<unknown, ApiResponse<PublicEmployeeProfile>>(
         "/employees/me",
       ) as Promise<ApiResponse<PublicEmployeeProfile>>
-    ).then((res) => res.data),
+    ).then((res) => normalizePublicProfile(res.data)),
 
   /**
    * GET /api/v1/employees
@@ -157,7 +242,10 @@ export const employeeService = {
         "/employees",
         { params },
       ) as Promise<ApiResponse<PageResponse<EmployeeResponse>>>
-    ).then((res) => res.data),
+    ).then((res) => ({
+      ...res.data,
+      content: res.data.content.map(normalizeEmployeeResponse),
+    })),
 
   /**
    * GET /api/v1/employees/:id
@@ -167,7 +255,7 @@ export const employeeService = {
       api.get<unknown, ApiResponse<EmployeeResponse>>(
         `/employees/${id}`,
       ) as Promise<ApiResponse<EmployeeResponse>>
-    ).then((res) => res.data),
+    ).then((res) => normalizeEmployeeResponse(res.data)),
 
   /**
    * POST /api/v1/employees
@@ -178,7 +266,7 @@ export const employeeService = {
         "/employees",
         data,
       ) as Promise<ApiResponse<EmployeeResponse>>
-    ).then((res) => res.data),
+    ).then((res) => normalizeEmployeeResponse(res.data)),
 
   /**
    * PUT /api/v1/employees/:id
@@ -192,7 +280,7 @@ export const employeeService = {
         `/employees/${id}`,
         data,
       ) as Promise<ApiResponse<EmployeeResponse>>
-    ).then((res) => res.data),
+    ).then((res) => normalizeEmployeeResponse(res.data)),
 
   /**
    * DELETE /api/v1/employees/:id
@@ -202,5 +290,56 @@ export const employeeService = {
       api.delete<unknown, ApiResponse<void>>(`/employees/${id}`) as Promise<
         ApiResponse<void>
       >
+    ).then(() => {}),
+
+  convertToOfficial: (
+    id: number,
+    data: OfficialContractRequest,
+  ): Promise<EmployeeResponse> =>
+    (
+      api.patch<unknown, ApiResponse<EmployeeResponse>>(
+        `/employees/${id}/official-contract`,
+        data,
+      ) as Promise<ApiResponse<EmployeeResponse>>
+    ).then((res) => normalizeEmployeeResponse(res.data)),
+
+  uploadEmployeeFile: (
+    id: number,
+    file: File,
+    fileType: "AVATAR" | "DOCUMENT" = "DOCUMENT",
+  ): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", fileType);
+    return (
+      api.post<unknown, ApiResponse<string>>(
+        `/employees/${id}/files`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      ) as Promise<ApiResponse<string>>
+    ).then((res) => resolveEmployeeFileUrl(res.data) ?? res.data);
+  },
+
+  getEmployeeFiles: (id: number): Promise<EmployeeAttachmentResponse[]> =>
+    (
+      api.get<unknown, ApiResponse<EmployeeAttachmentResponse[]>>(
+        `/employees/${id}/files`,
+      ) as Promise<ApiResponse<EmployeeAttachmentResponse[]>>
+    ).then((res) => res.data.map(normalizeAttachment)),
+
+  getMyEmployeeFiles: (): Promise<EmployeeAttachmentResponse[]> =>
+    (
+      api.get<unknown, ApiResponse<EmployeeAttachmentResponse[]>>(
+        "/employees/me/files",
+      ) as Promise<ApiResponse<EmployeeAttachmentResponse[]>>
+    ).then((res) => res.data.map(normalizeAttachment)),
+
+  deleteEmployeeFile: (id: number, fileId: number): Promise<void> =>
+    (
+      api.delete<unknown, ApiResponse<void>>(
+        `/employees/${id}/files/${fileId}`,
+      ) as Promise<ApiResponse<void>>
     ).then(() => {}),
 };

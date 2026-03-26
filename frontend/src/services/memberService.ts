@@ -30,7 +30,7 @@ export interface GetTeamMembersParams {
 
 // ─── Performance Review Types ─────────────────────────────────────────────────
 
-export type ReviewType = "MANAGER" | "SELF" | "PEER";
+export type ReviewType = "MANAGER" | "SELF" | "PEER" | "UPWARD";
 
 export interface ScoresRequest {
   expertise: number;
@@ -65,6 +65,20 @@ export interface PerformanceReviewResponse {
   updatedAt: string | null;
 }
 
+export interface PerformanceReviewCycleResponse {
+  id: number;
+  managerId: number;
+  reviewPeriod: string;
+  startAt: string;
+  endAt: string;
+  status: "OPEN" | "CLOSED";
+  notifiedMemberCount: number;
+}
+
+export interface OpenReviewCycleRequest {
+  reviewPeriod: string;
+}
+
 // ─── Internal wrapper ─────────────────────────────────────────────────────────
 
 interface ApiResponse<T> {
@@ -78,9 +92,10 @@ interface ApiResponse<T> {
 export const memberService = {
   /**
    * GET /api/v1/employees/team
-   * Returns the paginated list of employees under the logged-in Manager's team.
-   * Managers only see their direct reports (DataScope=TEAM).
-   * HR/Admin see all employees.
+   * Returns the paginated list of evaluable members for current user scope.
+   * Employee (SELF): same manager group (manager + peers).
+   * Manager (TEAM): direct reports.
+   * HR/Admin (ALL): all employees.
    */
   getTeamMembers: (
     params: GetTeamMembersParams = {},
@@ -116,5 +131,22 @@ export const memberService = {
         "/performance/reviews",
         payload,
       ) as Promise<ApiResponse<PerformanceReviewResponse>>
+    ).then((res) => res.data),
+
+  openReviewCycle: (
+    payload: OpenReviewCycleRequest,
+  ): Promise<PerformanceReviewCycleResponse> =>
+    (
+      api.post<unknown, ApiResponse<PerformanceReviewCycleResponse>>(
+        "/performance/reviews/cycles/open",
+        payload,
+      ) as Promise<ApiResponse<PerformanceReviewCycleResponse>>
+    ).then((res) => res.data),
+
+  getActiveReviewCycle: (): Promise<PerformanceReviewCycleResponse | null> =>
+    (
+      api.get<unknown, ApiResponse<PerformanceReviewCycleResponse | null>>(
+        "/performance/reviews/cycles/active",
+      ) as Promise<ApiResponse<PerformanceReviewCycleResponse | null>>
     ).then((res) => res.data),
 };

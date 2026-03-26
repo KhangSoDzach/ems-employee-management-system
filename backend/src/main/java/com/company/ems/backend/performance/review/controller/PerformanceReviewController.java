@@ -1,21 +1,30 @@
 package com.company.ems.backend.performance.review.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.company.ems.backend.common.constant.RoleAuthorization;
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.performance.review.dto.PerformanceReviewCycleDto;
 import com.company.ems.backend.performance.review.dto.PerformanceReviewDto;
 import com.company.ems.backend.performance.review.service.PerformanceReviewService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/performance/reviews")
@@ -70,4 +79,21 @@ public class PerformanceReviewController {
         return ResponseEntity.ok(
                 ApiResponse.success(service.getLatestForEmployee(employeeId)));
     }
+
+        @PostMapping("/cycles/open")
+        @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+        @Operation(summary = "Open review cycle", description = "Manager opens a review cycle that lasts exactly 3 days and notifies team members")
+        public ResponseEntity<ApiResponse<PerformanceReviewCycleDto.Response>> openCycle(
+                        @Valid @RequestBody PerformanceReviewCycleDto.OpenRequest request) {
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), service.openReviewCycle(request)));
+        }
+
+        @GetMapping("/cycles/active")
+        @PreAuthorize(RoleAuthorization.HAS_ANY)
+        @Operation(summary = "Get active review cycle", description = "Returns currently active review cycle of current manager/team, if any")
+        public ResponseEntity<ApiResponse<PerformanceReviewCycleDto.Response>> getActiveCycle() {
+                return ResponseEntity.ok(
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), service.getMyActiveCycle()));
+        }
 }

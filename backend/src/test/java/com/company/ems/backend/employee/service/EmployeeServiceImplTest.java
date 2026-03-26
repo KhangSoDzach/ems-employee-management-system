@@ -15,10 +15,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
@@ -43,8 +43,10 @@ import com.company.ems.backend.department.entity.Department;
 import com.company.ems.backend.department.repository.DepartmentRepository;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import com.company.ems.backend.employee.dto.OfficialContractRequest;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
+import com.company.ems.backend.employee.enums.WorkStatus;
 import com.company.ems.backend.employee.mapper.EmployeeMapper;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.leave.enums.LeaveType;
@@ -116,6 +118,8 @@ class EmployeeServiceImplTest {
         employee.setDepartment(department);
         employee.setPosition(position);
         employee.setStatus(EmployeeStatus.ACTIVE);
+        employee.setWorkStatus(WorkStatus.PROBATION);
+        employee.setSalary(10000000.0);
 
         adminPrincipal = new CustomUserPrincipal(1L, "admin", "password", true, true, true, true,
                 Collections.emptyList(), Set.of(DataScope.ALL));
@@ -289,6 +293,64 @@ class EmployeeServiceImplTest {
     }
 
     @Test
+    void getTeamMembers_SelfScope_WithManager_ShouldReturnSameManagerGroup() {
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(employeePrincipal);
+
+        Employee manager = new Employee();
+        manager.setId(10L);
+        manager.setFirstName("Lead");
+        manager.setLastName("One");
+        manager.setEmail("lead.one@example.com");
+
+        Employee self = new Employee();
+        self.setId(3L);
+        self.setFirstName("Emp");
+        self.setLastName("Self");
+        self.setEmail("emp.self@example.com");
+        self.setReportingManager(manager);
+
+        Employee peer = new Employee();
+        peer.setId(4L);
+        peer.setFirstName("Emp");
+        peer.setLastName("Peer");
+        peer.setEmail("emp.peer@example.com");
+        peer.setReportingManager(manager);
+
+        when(employeeRepository.findByUserId(3L)).thenReturn(Optional.of(self));
+
+        Page<Employee> page = new PageImpl<>(List.of(manager, self, peer));
+        when(employeeRepository.searchEmployeesFor360ByManagerGroup(
+            eq(10L), any(), eq(null), eq(null), eq(null), any(PageRequest.class))).thenReturn(page);
+
+        PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response =
+                employeeService.getTeamMembers(0, 10, null);
+
+        assertNotNull(response);
+        assertEquals(3, response.getContent().size());
+        assertTrue(response.getContent().stream().anyMatch(m -> "lead.one@example.com".equals(m.getEmail())));
+    }
+
+    @Test
+    void getTeamMembers_SelfScope_NoManager_ShouldReturnSelfOnly() {
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(employeePrincipal);
+
+        Employee self = new Employee();
+        self.setId(3L);
+        self.setFirstName("Emp");
+        self.setLastName("Solo");
+        self.setEmail("emp.solo@example.com");
+        self.setReportingManager(null);
+
+        when(employeeRepository.findByUserId(3L)).thenReturn(Optional.of(self));
+
+        PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response =
+                employeeService.getTeamMembers(0, 10, null);
+
+        assertNotNull(response);
+        assertEquals(1, response.getContent().size());
+    }
+
+    @Test
     void updateEmployee_Success() {
         when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
         doNothing().when(dataScopeService).assertCanAccessEmployee(adminPrincipal, 1L);
@@ -309,6 +371,87 @@ class EmployeeServiceImplTest {
         assertNotNull(response);
         assertEquals("John Updated", employee.getFirstName());
         verify(employeeRepository, times(1)).save(employee);
+    }
+
+    @Test
+    void convertToOfficial_Success() {
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
+        doNothing().when(dataScopeService).assertCanAccessEmployee(adminPrincipal, 1L);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OfficialContractRequest request = OfficialContractRequest.builder()
+                .contractStartDate(LocalDate.of(2026, 4, 1))
+                .contractTerm("ONE_YEAR")
+                .officialSalary(13000000.0)
+                .build();
+
+        employeeService.convertToOfficial(1L, request);
+
+        assertEquals(WorkStatus.ACTIVE, employee.getWorkStatus());
+        assertEquals(EmployeeStatus.ACTIVE, employee.getStatus());
+        assertEquals(13000000.0, employee.getOfficialSalary());
+        assertEquals(13000000.0, employee.getSalary());
+        assertNotNull(employee.getContractEndDate());
+        assertEquals(12, employee.getContractDurationMonths());
+    }
+
+    @Test
+    void convertToOfficial_ThreeYears_ShouldSet36Months() {
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
+        doNothing().when(dataScopeService).assertCanAccessEmployee(adminPrincipal, 1L);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OfficialContractRequest request = OfficialContractRequest.builder()
+                .contractStartDate(LocalDate.of(2026, 4, 1))
+                .contractTerm("THREE_YEARS")
+                .officialSalary(15000000.0)
+                .build();
+
+        employeeService.convertToOfficial(1L, request);
+
+        assertEquals(36, employee.getContractDurationMonths());
+    }
+
+    @Test
+    void updateEmployee_ContractDurationInvalid_ShouldThrowBusinessException() {
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
+        doNothing().when(dataScopeService).assertCanAccessEmployee(adminPrincipal, 1L);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        when(positionRepository.findById(1L)).thenReturn(Optional.of(position));
+
+        EmployeeRequest request = new EmployeeRequest();
+        request.setFirstName("John");
+        request.setLastName("Doe");
+        request.setEmail("john.doe@example.com");
+        request.setDepartmentId(1L);
+        request.setPositionId(1L);
+        request.setContractType(com.company.ems.backend.employee.enums.ContractType.CONTRACT);
+        request.setContractStartDate(LocalDate.of(2026, 4, 1));
+        request.setContractDurationMonths(18);
+
+        assertThrows(com.company.ems.backend.common.exception.BusinessException.class,
+                () -> employeeService.updateEmployee(1L, request));
+    }
+
+    @Test
+    void convertToOfficial_ShouldFail_WhenNotProbation() {
+        employee.setWorkStatus(WorkStatus.ACTIVE);
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
+        doNothing().when(dataScopeService).assertCanAccessEmployee(adminPrincipal, 1L);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+        OfficialContractRequest request = OfficialContractRequest.builder()
+                .contractStartDate(LocalDate.of(2026, 4, 1))
+                .contractTerm("INDEFINITE")
+                .officialSalary(13000000.0)
+                .build();
+
+        assertThrows(com.company.ems.backend.common.exception.BusinessException.class,
+                () -> employeeService.convertToOfficial(1L, request));
+        verify(employeeRepository, never()).save(any(Employee.class));
     }
 
     @Test
