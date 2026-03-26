@@ -57,7 +57,7 @@ function roleColor(positionTitle: string | null): string {
   return "bg-gray-100 text-gray-700 hover:bg-gray-100";
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 export default function MemberList() {
   const t = SYSTEM_MESSAGES.MEMBER_LIST;
@@ -77,12 +77,12 @@ export default function MemberList() {
     clearTimeout(
       (
         window as Window &
-        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+          typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
       )._searchTimer,
     );
     (
       window as Window &
-      typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
     )._searchTimer = setTimeout(() => {
       setDebouncedSearch(value);
     }, 400);

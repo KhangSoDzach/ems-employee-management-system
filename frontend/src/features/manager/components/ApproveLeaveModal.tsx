@@ -37,16 +37,26 @@ export default function ApproveLeaveDialog({
   const { user } = useAuth();
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!request) {
     return null;
   }
 
   const doAction = async (action: "APPROVE" | "REJECT" | "SEND_BACK") => {
-    if ((action === "REJECT" || action === "SEND_BACK") && !comment.trim()) {
-      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
-      return;
+    if (action === "REJECT" || action === "SEND_BACK") {
+      if (!comment.trim()) {
+        setError(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+        toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+        return;
+      }
+      if (comment.trim().length < 5) {
+        setError(FORM_VALIDATION_MESSAGES.MIN_LENGTH(5));
+        toast.error(FORM_VALIDATION_MESSAGES.MIN_LENGTH(5));
+        return;
+      }
     }
+    setError(null);
     setLoading(true);
     try {
       const updated = await leaveService.processAction(request.id, {
@@ -191,7 +201,16 @@ export default function ApproveLeaveDialog({
             </div>
           </section>
 
-          <ReviewSheetFeedback value={comment} onChange={setComment} />
+          <ReviewSheetFeedback
+            value={comment}
+            onChange={(v) => {
+              setComment(v);
+              if (error) {
+                setError(null);
+              }
+            }}
+            error={error ?? undefined}
+          />
         </div>
 
         <ReviewSheetFooter

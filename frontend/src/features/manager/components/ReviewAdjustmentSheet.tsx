@@ -6,11 +6,11 @@ import {
   type AdjustmentRequest,
   DATETIME_FORMAT,
   DATE_FORMAT,
-  AUDIT_ACTION_CONFIG,
   ADJUSTMENT_STATUS_CONFIG,
-  DATETIME_LOG_FORMAT,
 } from "../../employee/adjustment-request.constants";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { toast } from "sonner";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import {
   ReviewSheetHeader,
   ReviewSheetProfile,
@@ -39,11 +39,26 @@ export function ReviewAdjustmentSheet({
   const [submitting, setSubmitting] = useState<
     "approve" | "reject" | "return" | null
   >(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAction = async (action: "approve" | "reject" | "return") => {
     if (!request) {
       return;
     }
+    if (action === "reject" || action === "return") {
+      if (!note.trim()) {
+        setError(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+        toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+        return;
+      }
+      if (note.trim().length < 5) {
+        setError(FORM_VALIDATION_MESSAGES.MIN_LENGTH(5));
+        toast.error(FORM_VALIDATION_MESSAGES.MIN_LENGTH(5));
+        return;
+      }
+    }
+    setError(null);
+
     const handler =
       action === "approve"
         ? onApprove
@@ -167,7 +182,16 @@ export function ReviewAdjustmentSheet({
                 </div>
               </section>
 
-              <ReviewSheetFeedback value={note} onChange={setNote} />
+              <ReviewSheetFeedback
+                value={note}
+                onChange={(v) => {
+                  setNote(v);
+                  if (error) {
+                    setError(null);
+                  }
+                }}
+                error={error ?? undefined}
+              />
 
               {/* Activity History */}
               {/* <section className="space-y-6 pt-2 pb-8">

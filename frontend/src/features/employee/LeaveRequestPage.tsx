@@ -3,11 +3,13 @@ import { format } from "date-fns";
 import {
   Loader2,
   MoreHorizontal,
-  Plane,
   Plus,
   Search,
   SlidersHorizontal,
   X,
+  ChevronLeft,
+  ChevronRight,
+  Plane,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -98,6 +100,9 @@ export default function LeaveRequestPage() {
   const [typeFilter, setTypeFilter] = useState<LeaveType | "ALL">("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null);
+  const [page, setPage] = useState(0);
+
+  const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
   /* ── Backend status → frontend union ── */
   const mapBackendStatus = (status: string): LeaveStatus => {
@@ -158,6 +163,13 @@ export default function LeaveRequestPage() {
 
   const hasFilter =
     statusFilter !== "ALL" || typeFilter !== "ALL" || searchQuery !== "";
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, statusFilter, typeFilter]);
 
   /* ── Handlers ── */
   const handleCreate = async (data: LeaveFormValues) => {
@@ -411,10 +423,10 @@ export default function LeaveRequestPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : filtered.length === 0 ? (
+                  ) : paginated.length === 0 ? (
                     <EmptyState hasFilter={hasFilter} />
                   ) : (
-                    filtered.map((req) => (
+                    paginated.map((req) => (
                       <TableRow
                         key={req.id}
                         className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
@@ -499,11 +511,13 @@ export default function LeaveRequestPage() {
             </div>
 
             {/* Summary footer */}
-            {filtered.length > 0 && (
-              <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex flex-col gap-1">
                 <span>
-                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_SHOW} {filtered.length}{" "}
-                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_DIVIDER} {requests.length}{" "}
+                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_SHOW}{" "}
+                  {filtered.length > 0 ? page * PAGE_SIZE + 1 : 0}-
+                  {Math.min((page + 1) * PAGE_SIZE, filtered.length)}{" "}
+                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_DIVIDER} {filtered.length}{" "}
                   {SYSTEM_MESSAGES.LEAVE.SUMMARY_UNIT}
                 </span>
                 <div className="flex gap-4">
@@ -527,7 +541,35 @@ export default function LeaveRequestPage() {
                   })}
                 </div>
               </div>
-            )}
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="font-medium px-2">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page >= totalPages - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </SidebarInset>

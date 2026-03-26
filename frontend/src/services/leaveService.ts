@@ -61,10 +61,14 @@ export const leaveService = {
   /**
    * GET /api/v1/leaves/me – always returns current authenticated user's own leaves.
    */
-  getMyLeaves: (): Promise<PageResponse<LeaveResponseDTO>> =>
+  getMyLeaves: (params?: {
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<LeaveResponseDTO>> =>
     (
       api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>(
-        "/leaves/me?size=100",
+        "/leaves/me",
+        { params },
       ) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
     ).then((res) => res.data),
 
@@ -79,13 +83,16 @@ export const leaveService = {
     ).then((res) => res.data),
 
   /**
-   * GET /api/v1/leaves?size=100 – for manager: backend scopes to team automatically.
+   * GET /api/v1/leaves – for manager: backend scopes to team automatically.
    */
-  getTeamLeaves: (): Promise<PageResponse<LeaveResponseDTO>> =>
+  getTeamLeaves: (params?: {
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<LeaveResponseDTO>> =>
     (
-      api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>(
-        "/leaves?size=100",
-      ) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
+      api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>("/leaves", {
+        params,
+      }) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
     ).then((res) => res.data),
 
   /**

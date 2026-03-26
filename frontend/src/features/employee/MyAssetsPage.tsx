@@ -7,6 +7,8 @@ import {
   Mouse,
   XCircle,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -129,15 +131,24 @@ export default function MyAssetsPage() {
   }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [showAll, setShowAll] = useState(false);
-  const PREVIEW_COUNT = 3;
-  const displayedReports = showAll ? reports : reports.slice(0, PREVIEW_COUNT);
+  const [reportPage, setReportPage] = useState(0);
+  const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
+
+  const totalReportPages = Math.ceil(reports.length / PAGE_SIZE);
+  const paginatedReports = reports.slice(
+    reportPage * PAGE_SIZE,
+    (reportPage + 1) * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setReportPage(0);
+  }, [reports]);
 
   const fetchContent = useCallback(async () => {
     try {
       const [assetList, reportList] = await Promise.all([
         assetService.getMyAssets(),
-        assetService.getMyReports(0, 50),
+        assetService.getMyReports(0, 1000),
       ]);
       setAssets(assetList);
       setReports(reportList.content);
@@ -327,8 +338,8 @@ export default function MyAssetsPage() {
                             <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
                           </TableCell>
                         </TableRow>
-                      ) : displayedReports.length > 0 ? (
-                        displayedReports.map((report) => (
+                      ) : paginatedReports.length > 0 ? (
+                        paginatedReports.map((report) => (
                           <TableRow
                             key={report.id}
                             className="hover:bg-muted/20 transition-colors border-border"
@@ -379,24 +390,44 @@ export default function MyAssetsPage() {
                     </TableBody>
                   </Table>
 
-                  {/* Footer toggle */}
-                  {reports.length > PREVIEW_COUNT && (
-                    <div className="border-t border-border px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-muted/10">
-                      <span>
-                        {showAll
-                          ? `Đang hiển thị toàn bộ ${reports.length} báo cáo`
-                          : `Đang hiển thị ${PREVIEW_COUNT} trên tổng số ${reports.length} báo cáo`}
-                      </span>
-                      <button
-                        className="text-blue-600 font-medium hover:underline"
-                        onClick={() => setShowAll((v) => !v)}
-                      >
-                        {showAll
-                          ? SYSTEM_MESSAGES.BTN_CLOSE
-                          : `${SYSTEM_MESSAGES.BTN_ADD}${SYSTEM_MESSAGES.SYMBOLS.SPACE}${SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}${reports.length}${SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}`}
-                      </button>
-                    </div>
-                  )}
+                  {/* Pagination footer */}
+                  <div className="border-t border-border px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-muted/10">
+                    <span>
+                      {SYSTEM_MESSAGES.MY_ASSETS.LABEL_REPORT_COUNT}{" "}
+                      {reports.length}
+                    </span>
+                    {totalReportPages > 1 && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={reportPage === 0}
+                          onClick={() =>
+                            setReportPage((p) => Math.max(0, p - 1))
+                          }
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <span className="font-medium px-1">
+                          {reportPage + 1} / {totalReportPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={reportPage >= totalReportPages - 1}
+                          onClick={() =>
+                            setReportPage((p) =>
+                              Math.min(totalReportPages - 1, p + 1),
+                            )
+                          }
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </section>
             </TabsContent>
