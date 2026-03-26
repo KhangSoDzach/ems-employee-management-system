@@ -187,6 +187,10 @@ export default function ApproveLeaveRequest() {
     null,
   );
 
+  const pendingCount = data.filter((r) =>
+    r.status.startsWith("PENDING"),
+  ).length;
+
   /* ================= LOAD TEAM LEAVES ================= */
 
   useEffect(() => {
@@ -254,10 +258,25 @@ export default function ApproveLeaveRequest() {
           {/* HEADER */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <h1 className="page-heading">{SYSTEM_MESSAGES.MGMT_ADJ.TITLE}</h1>
+              <h1 className="page-heading">
+                {SYSTEM_MESSAGES.APPROVE.LEAVE_TITLE}
+              </h1>
               <p className="text-muted-foreground mt-1">
                 {SYSTEM_MESSAGES.APPROVE.LEAVE_LIST_DESC}
               </p>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1 pl-1">
+                {SYSTEM_MESSAGES.MGMT_ADJ.PENDING_STATS_LABEL}
+              </span>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-black text-foreground">
+                  {pendingCount}
+                </span>
+                {isLoading && (
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
             </div>
           </div>
 

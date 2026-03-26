@@ -120,8 +120,8 @@ export default function AssetReportManagement() {
       fetchReports();
     } catch (error) {
       toast.error(SYSTEM_MESSAGES.ASSET_REPORT.MSG_PROCESS_ERROR, {
-        // @ts-expect-error - Expected error type from axios
         description:
+          // @ts-expect-error - axios-style error property access on unknown error type
           error.response?.data?.message ||
           SYSTEM_MESSAGES.ASSET_REPORT.MSG_TRY_AGAIN,
       });

@@ -34,7 +34,6 @@ import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
-
 const loginSchema = z.object({
   email: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.EMAIL_REQUIRED),
   password: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.PASSWORD_REQUIRED),
@@ -46,7 +45,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 function getRedirectByRole(): string {
   return "/profile";
 }
-
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -205,7 +203,9 @@ export const LoginPage = () => {
               alt="Logo"
             />
           </div>
-          <CardTitle className="text-2xl font-bold">{SYSTEM_MESSAGES.LOGIN.TITLE}</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {SYSTEM_MESSAGES.LOGIN.TITLE}
+          </CardTitle>
           <CardDescription>{SYSTEM_MESSAGES.LOGIN.DESC}</CardDescription>
         </CardHeader>
 
@@ -350,26 +350,70 @@ export const LoginPage = () => {
                     maxLength={1}
                     className="w-12 h-14 text-center border-2 border-slate-100 rounded-2xl font-bold text-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none bg-slate-50/50"
                     value={otpValue[i] || ""}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      if (val) {
-                        const newOtp = otpValue.split("");
-                        newOtp[i] = val;
-                        const finalOtp = newOtp.join("");
-                        setOtpValue(finalOtp);
-                        if (i < 5) {
-                          (e.target.nextSibling as HTMLInputElement)?.focus();
-                        }
-                      }
-                    }}
                     onKeyDown={(e) => {
-                      if (e.key === "Backspace" && !otpValue[i] && i > 0) {
-                        const newOtp = otpValue.split("");
-                        newOtp[i - 1] = "";
-                        setOtpValue(newOtp.join(""));
+                      if (e.key === "Backspace") {
+                        e.preventDefault();
+                        const newOtpArr = otpValue.split("");
+                        if (otpValue[i]) {
+                          // Clear current
+                          newOtpArr[i] = "";
+                          setOtpValue(newOtpArr.join(""));
+                        } else if (i > 0) {
+                          // Move back and clear previous
+                          newOtpArr[i - 1] = "";
+                          setOtpValue(newOtpArr.join(""));
+                          (
+                            e.currentTarget.previousSibling as HTMLInputElement
+                          )?.focus();
+                        }
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (otpValue.length === 6) {
+                          handleVerify2fa();
+                        }
+                      } else if (e.key === "ArrowLeft" && i > 0) {
                         (
                           e.currentTarget.previousSibling as HTMLInputElement
                         )?.focus();
+                      } else if (e.key === "ArrowRight" && i < 5) {
+                        (
+                          e.currentTarget.nextSibling as HTMLInputElement
+                        )?.focus();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val) {
+                        const char = val.charAt(val.length - 1);
+                        const newOtpArr = otpValue.padEnd(6, " ").split("");
+                        newOtpArr[i] = char;
+                        const finalOtp = newOtpArr.join("").replace(/\s/g, "");
+                        setOtpValue(finalOtp);
+
+                        if (i < 5) {
+                          (
+                            e.currentTarget.nextSibling as HTMLInputElement
+                          )?.focus();
+                        }
+
+                        // Auto-submit if complete
+                        if (finalOtp.length === 6) {
+                          setTimeout(() => handleVerify2fa(), 10);
+                        }
+                      }
+                    }}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pasteData = e.clipboardData
+                        .getData("text")
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
+                      if (pasteData) {
+                        setOtpValue(pasteData);
+                        // Auto submit if 6 digits are pasted
+                        if (pasteData.length === 6) {
+                          setTimeout(() => handleVerify2fa(), 0);
+                        }
                       }
                     }}
                   />
