@@ -158,6 +158,49 @@ export interface AdminIncidentListItem {
   requesterUserId: number;
 }
 
+export interface AssetRequestRow {
+  id: number;
+  requestId: string;
+  assetType: string;
+  priorityLabel: string;
+  priorityColor: string;
+  dateRequested: string;
+  status: string;
+  statusLabel: string;
+  statusColor: string;
+}
+
+export interface AssetRequestDetail {
+  id: number;
+  requestId: string;
+  requestedBy: string;
+  requesterUserId: number;
+  assetType: string;
+  priorityLabel: string;
+  priorityColor: string;
+  requestedAt: string;
+  status: string;
+  statusLabel: string;
+  statusColor: string;
+  reason: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewNote?: string;
+}
+
+export interface AssetRequestAdminItem {
+  id: number;
+  requestId: string;
+  employeeName: string;
+  assetType: string;
+  priorityLabel: string;
+  priorityColor: string;
+  requestedAt: string;
+  status: string;
+  statusLabel: string;
+  statusColor: string;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -246,6 +289,55 @@ export const assetService = {
   rejectReport: (id: number, note?: string): Promise<IncidentReportDetail> =>
     wrap<ApiResponse<IncidentReportDetail>>(
       api.post(`/admin/asset-reports/${id}/reject`, { note }),
+    ).then((res) => res.data),
+
+  // Asset Request APIs
+  getAllAssetRequests: (params: {
+    keyword?: string;
+    status?: string;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<AssetRequestAdminItem>> =>
+    wrap<ApiResponse<PageResponse<AssetRequestAdminItem>>>(
+      api.get("/admin/asset-requests", { params }),
+    ).then((res) => res.data),
+
+  submitAssetRequest: (payload: {
+    assetType: string;
+    reason: string;
+    priority: string;
+  }): Promise<AssetRequestDetail> =>
+    wrap<ApiResponse<AssetRequestDetail>>(
+      api.post("/my/asset-requests", payload),
+    ).then((res) => res.data),
+
+  getMyAssetRequests: (
+    page = 0,
+    size = 10,
+  ): Promise<PageResponse<AssetRequestRow>> =>
+    wrap<ApiResponse<PageResponse<AssetRequestRow>>>(
+      api.get("/my/asset-requests", { params: { page, size } }),
+    ).then((res) => res.data),
+
+  getAssetRequestDetailAdmin: (id: number): Promise<AssetRequestDetail> =>
+    wrap<ApiResponse<AssetRequestDetail>>(
+      api.get(`/admin/asset-requests/${id}`),
+    ).then((res) => res.data),
+
+  approveAssetRequest: (
+    id: number,
+    payload: { note?: string },
+  ): Promise<AssetRequestDetail> =>
+    wrap<ApiResponse<AssetRequestDetail>>(
+      api.post(`/admin/asset-requests/${id}/approve`, payload),
+    ).then((res) => res.data),
+
+  rejectAssetRequest: (
+    id: number,
+    payload: { note?: string },
+  ): Promise<AssetRequestDetail> =>
+    wrap<ApiResponse<AssetRequestDetail>>(
+      api.post(`/admin/asset-requests/${id}/reject`, payload),
     ).then((res) => res.data),
 
   // Asset Management

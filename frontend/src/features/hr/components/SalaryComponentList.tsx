@@ -32,6 +32,9 @@ import {
   useUpdateSalaryComponent,
 } from "@/features/hr/hooks/useSalaryComponents";
 import { SalaryComponentForm } from "@/features/hr/components/SalaryComponentForm";
+import { RunPayrollPanel } from "@/features/hr/components/RunPayrollPanel";
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 type ModalState = {
   open: boolean;
@@ -87,6 +90,8 @@ function getApiErrorMessage(error: unknown): string {
     fallback
   );
 }
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function SalaryComponentList() {
   const [modal, setModal] = useState<ModalState>(INITIAL_MODAL_STATE);
@@ -180,20 +185,13 @@ export function SalaryComponentList() {
       <SidebarInset>
         <SiteHeader />
 
+        {/*
+         * ⚠️  RunPayrollPanel PHẢI nằm bên trong SidebarInset
+         *    để sidebar không đè lên nội dung.
+         *    KHÔNG đặt nó ở PayrollManagement.tsx bên ngoài component này.
+         */}
+        {/* No min-h-screen: flex column fills viewport, no page scroll */}
         <main className="min-h-screen space-y-6 bg-background p-4 pt-6 md:p-8">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="page-heading">Cấu hình chính sách lương</h1>
-              <p className="text-sm text-muted-foreground">
-                Quản lý danh sách thành phần lương để phục vụ hệ thống tính
-                lương.
-              </p>
-            </div>
-            <Button onClick={openCreate} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Tạo mới
-            </Button>
-          </div>
 
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -286,15 +284,14 @@ export function SalaryComponentList() {
                         {SALARY_COMPONENT_STATUS_LABELS[row.status] ??
                           row.status}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEdit(row)}
-                          aria-label={`Chỉnh sửa ${row.code}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                    </TableRow>
+                  ) : rows.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={8}
+                        className="text-center text-sm text-muted-foreground"
+                      >
+                        Chưa có thành phần lương nào.
                       </TableCell>
                     </TableRow>
                   ))
