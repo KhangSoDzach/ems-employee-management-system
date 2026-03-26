@@ -47,8 +47,12 @@ public class EmployeeResponse {
     private String reportingManagerName;
 
     private String contractType;
+    private LocalDate contractStartDate;
     private LocalDate probationEndDate;
     private LocalDate contractEndDate;
+    private Integer contractDurationMonths;
+    private Double probationSalary;
+    private Double officialSalary;
     private String workLocation;
 
     private String nationality;
@@ -63,6 +67,7 @@ public class EmployeeResponse {
     private LocalDate terminationDate;
     private String notes;
     private String status;
+    private String workStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

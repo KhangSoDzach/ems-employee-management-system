@@ -67,7 +67,7 @@ public class AuthenticationService {
             log.warn("Login attempt for locked account: {}", request.getUsername());
             auditLogService.logAuthEvent(
                     AuthActionType.LOGIN_FAILED,
-                    String.valueOf(user.getId()),
+                user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "FAILED", ctx);
             throw new LockedException(
@@ -110,7 +110,7 @@ public class AuthenticationService {
 
             auditLogService.logAuthEvent(
                     AuthActionType.LOGIN_SUCCESS,
-                    String.valueOf(user.getId()),
+                    user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "SUCCESS", ctx);
 
@@ -122,7 +122,7 @@ public class AuthenticationService {
             handleFailedLoginAttempt(user);
             auditLogService.logAuthEvent(
                     AuthActionType.LOGIN_FAILED,
-                    String.valueOf(user.getId()),
+                    user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "FAILED", ctx);
             throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
@@ -130,7 +130,7 @@ public class AuthenticationService {
             log.warn("Login attempt for disabled account: {}", request.getUsername());
             auditLogService.logAuthEvent(
                     AuthActionType.LOGIN_FAILED,
-                    String.valueOf(user.getId()),
+                    user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "FAILED", ctx);
             throw new DisabledException(messages.get(MessageCode.ERROR_ACCOUNT_DISABLED));
@@ -159,7 +159,7 @@ public class AuthenticationService {
         String newRefreshToken = refreshTokenService.createRefreshToken(user, deviceInfo);
         auditLogService.logAuthEvent(
                 AuthActionType.TOKEN_REFRESH_SUCCESS,
-                String.valueOf(user.getId()),
+            user.getUsername(),
                 String.valueOf(user.getId()),
                 user.getUsername(), "JWT", "SUCCESS", ctx);
 

@@ -4,10 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.company.ems.backend.common.dto.PageResponse;
+import com.company.ems.backend.employee.dto.EmployeeAttachmentResponse;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
 import com.company.ems.backend.employee.dto.MemberResponse;
+import com.company.ems.backend.employee.dto.OfficialContractRequest;
 import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface EmployeeService {
     EmployeeResponse createEmployee(EmployeeRequest request);
@@ -26,6 +29,14 @@ public interface EmployeeService {
     EmployeeResponse getEmployeeById(Long id);
 
     EmployeeResponse updateEmployee(Long id, EmployeeRequest request);
+
+    EmployeeResponse convertToOfficial(Long id, OfficialContractRequest request);
+
+    String uploadEmployeeFile(Long id, MultipartFile file, String fileType);
+
+    List<EmployeeAttachmentResponse> getEmployeeAttachments(Long id);
+
+    void deleteEmployeeAttachment(Long id, Long attachmentId);
 
     void deleteEmployee(Long id);
 

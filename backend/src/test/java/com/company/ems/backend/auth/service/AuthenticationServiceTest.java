@@ -225,5 +225,14 @@ class AuthenticationServiceTest {
         assertEquals("access-token", response.getAccessToken());
         assertEquals("refresh-token", response.getRefreshToken());
         verify(twoFactorAuthService).verifyCodeForLogin("testuser", "123456");
+        verify(auditLogService).logAuthEvent(
+            eq(AuthActionType.LOGIN_SUCCESS),
+            eq("testuser"),
+            eq("1"),
+            eq("testuser"),
+            eq("JWT"),
+            eq("SUCCESS"),
+            eq(requestContext)
+        );
     }
 }

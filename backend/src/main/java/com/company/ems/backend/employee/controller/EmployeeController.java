@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +23,9 @@ import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.employee.dto.EmployeeRequest;
 import com.company.ems.backend.employee.dto.EmployeeResponse;
+import com.company.ems.backend.employee.dto.EmployeeAttachmentResponse;
 import com.company.ems.backend.employee.dto.MemberResponse;
+import com.company.ems.backend.employee.dto.OfficialContractRequest;
 import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
 import com.company.ems.backend.employee.service.EmployeeService;
 
@@ -114,6 +117,16 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_UPDATED), response));
     }
 
+    @PatchMapping("/{id}/official-contract")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_UPDATE)
+    @Operation(summary = "Convert probation employee to official", description = "Confirms employee from PROBATION to ACTIVE, updates official salary and official contract info")
+    public ResponseEntity<ApiResponse<EmployeeResponse>> convertToOfficial(
+            @PathVariable Long id,
+            @Valid @RequestBody OfficialContractRequest request) {
+        EmployeeResponse response = employeeService.convertToOfficial(id, request);
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), response));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_DELETE)
     @Operation(summary = "Delete employee", description = "Soft-deletes an employee: marks isDeleted=true, sets status to TERMINATED. The record is preserved for audit/history purposes but excluded from all list queries.")
@@ -128,7 +141,28 @@ public class EmployeeController {
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String fileType) {
-        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_FILE_UPLOADED), null));
+        String fileUrl = employeeService.uploadEmployeeFile(id, file, fileType);
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_FILE_UPLOADED), fileUrl));
+    }
+
+    @GetMapping("/{id}/files")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_VIEW)
+    @Operation(summary = "Get employee attachments", description = "Returns list of uploaded document attachments for an employee")
+    public ResponseEntity<ApiResponse<java.util.List<EmployeeAttachmentResponse>>> getEmployeeFiles(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                messages.get(MessageCode.COMMON_SUCCESS),
+                employeeService.getEmployeeAttachments(id)));
+    }
+
+    @DeleteMapping("/{id}/files/{fileId}")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_UPDATE)
+    @Operation(summary = "Delete employee attachment", description = "Soft-deletes an attachment and removes file from storage")
+    public ResponseEntity<ApiResponse<Void>> deleteEmployeeFile(
+            @PathVariable Long id,
+            @PathVariable Long fileId) {
+        employeeService.deleteEmployeeAttachment(id, fileId);
+        return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

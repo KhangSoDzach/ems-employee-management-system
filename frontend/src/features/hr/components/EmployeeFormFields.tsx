@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Info, UploadCloud } from "lucide-react";
 import { EmployeeRequest } from "@/services/employeeService";
 import {
@@ -24,6 +24,9 @@ interface EmployeeFormFieldsProps {
   inputClass: (field: string) => string;
   selectClass: (field: string) => string;
   handleImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  attachments?: File[];
+  onAttachmentsSelected?: (files: FileList | null) => void;
+  onRemoveAttachment?: (index: number) => void;
 }
 
 type Props = Readonly<EmployeeFormFieldsProps>;
@@ -41,19 +44,10 @@ export default function EmployeeFormFields(props: Props) {
     inputClass,
     selectClass,
     handleImageUpload,
+    attachments = [],
+    onAttachmentsSelected,
+    onRemoveAttachment,
   } = props;
-
-  const [attachments, setAttachments] = useState<File[]>([]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
 
   let positionLabel = "";
 
@@ -341,7 +335,7 @@ export default function EmployeeFormFields(props: Props) {
             <input
               type="file"
               multiple
-              onChange={handleFileChange}
+              onChange={(e) => onAttachmentsSelected?.(e.target.files)}
               className="absolute inset-0 opacity-0 cursor-pointer"
               title={SYSTEM_MESSAGES.EMPLOYEE.TXT_CLICK_OR_DRAG_TO_UPLOAD}
             />
@@ -358,7 +352,9 @@ export default function EmployeeFormFields(props: Props) {
                   </span>
                   <button
                     type="button"
-                    onClick={() => removeFile(attachments.indexOf(file))}
+                    onClick={() =>
+                      onRemoveAttachment?.(attachments.indexOf(file))
+                    }
                     className="text-red-500 hover:text-red-700 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-lg text-[10px] uppercase tracking-wider font-bold transition-colors"
                   >
                     Xóa
@@ -507,6 +503,55 @@ export default function EmployeeFormFields(props: Props) {
                 </option>
               </select>
             </div>
+            {formData.contractType === "CONTRACT" && (
+              <>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="contractDurationMonths"
+                    className="text-xs font-bold text-gray-500 uppercase"
+                  >
+                    Kỳ hạn hợp đồng có thời hạn
+                  </label>
+                  <select
+                    id="contractDurationMonths"
+                    name="contractDurationMonths"
+                    value={formData.contractDurationMonths ?? 12}
+                    onChange={handleChange}
+                    className={selectClass("contractDurationMonths")}
+                  >
+                    <option value={12}>12 tháng</option>
+                    <option value={24}>24 tháng</option>
+                    <option value={36}>36 tháng</option>
+                  </select>
+                  {errors.contractDurationMonths && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.contractDurationMonths}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="contractStartDate"
+                    className="text-xs font-bold text-gray-500 uppercase"
+                  >
+                    Ngày bắt đầu hợp đồng
+                  </label>
+                  <input
+                    id="contractStartDate"
+                    type="date"
+                    name="contractStartDate"
+                    value={formData.contractStartDate || ""}
+                    onChange={handleChange}
+                    className={inputClass("contractStartDate")}
+                  />
+                  {errors.contractStartDate && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.contractStartDate}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_JOIN_DATE}{" "}

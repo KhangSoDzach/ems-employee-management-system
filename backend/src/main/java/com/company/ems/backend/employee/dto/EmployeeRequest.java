@@ -6,6 +6,7 @@ import com.company.ems.backend.common.validation.ValidAge;
 import com.company.ems.backend.common.validation.ValidationMessages;
 import com.company.ems.backend.employee.enums.ContractType;
 import com.company.ems.backend.employee.enums.Gender;
+import com.company.ems.backend.employee.enums.WorkStatus;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -72,8 +73,13 @@ public class EmployeeRequest {
 
     private Long reportingManagerId;
     private ContractType contractType;
+    private LocalDate contractStartDate;
     private LocalDate probationEndDate;
     private LocalDate contractEndDate;
+    private Integer contractDurationMonths;
+    private WorkStatus workStatus;
+    private Double probationSalary;
+    private Double officialSalary;
     private String workLocation;
 
     private String nationality;
