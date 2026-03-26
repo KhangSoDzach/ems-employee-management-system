@@ -216,7 +216,6 @@ export function AnnouncementList({
                   </span>
                 </DialogDescription>
               </DialogHeader>
-
               <div className="rounded-xl border bg-slate-50/50 p-4 dark:bg-slate-900/20">
                 <div className="max-h-[450px] overflow-y-auto break-all whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90 pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                   {selectedAnnouncement.content}

@@ -31,7 +31,6 @@ export interface LeaveRequest {
   status: LeaveStatus;
   reason: string;
   auditTrail: AuditEntry[];
-
   // Real employee info
   employeeName?: string;
   employeeCode?: string;
