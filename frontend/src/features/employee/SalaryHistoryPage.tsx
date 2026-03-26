@@ -51,7 +51,7 @@ export default function SalaryHistoryPage() {
     staleTime: 30_000,
   })
 
-  const allSlips: SalarySlip[] = useMemo(() => rawData.map(toSlip), [rawData])
+  const allSlips: SalarySlip[] = useMemo(() => rawData.map((element) => toSlip(element)), [rawData])
 
   const filteredData = useMemo(() => {
     return allSlips.filter(row => {
@@ -76,13 +76,13 @@ export default function SalaryHistoryPage() {
   const goTo       = (p: number) => setCurrentPage(Math.max(1, Math.min(p, totalPages)))
 
   const totalIncome = useMemo(() => {
-    const s = filteredData.reduce((a, r) => a + Number(r.totalIncome.replace(/[^\d]/g, "") || 0), 0)
+    const s = filteredData.reduce((a, r) => a + Number(r.totalIncome.replaceAll(/[^\d]/g, "") || 0), 0)
     return s.toLocaleString("vi-VN") + "đ"
   }, [filteredData])
 
   const avgNet = useMemo(() => {
     if (!filteredData.length) { return "0đ" }
-    const s = filteredData.reduce((a, r) => a + Number(r.netPay.replace(/[^\d]/g, "") || 0), 0)
+    const s = filteredData.reduce((a, r) => a + Number(r.netPay.replaceAll(/[^\d]/g, "") || 0), 0)
     return Math.round(s / filteredData.length).toLocaleString("vi-VN") + "đ"
   }, [filteredData])
 

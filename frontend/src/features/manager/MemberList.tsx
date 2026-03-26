@@ -81,12 +81,12 @@ export default function MemberList() {
     // we accept a brief delay by setting debouncedSearch only when the value changes.
     clearTimeout(
       (
-        window as Window &
+        globalThis as Window &
         typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
       )._searchTimer,
     );
     (
-      window as Window &
+      globalThis as Window &
       typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
     )._searchTimer = setTimeout(() => {
       setDebouncedSearch(value);
