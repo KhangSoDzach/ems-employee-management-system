@@ -49,6 +49,7 @@ export default function EmployeeCreateModal({
     positionId: 0,
     salary: 0,
     gender: "MALE",
+    workStatus: "PROBATION",
     contractType: "FULL_TIME",
     nationality: "Việt Nam",
     address: "",

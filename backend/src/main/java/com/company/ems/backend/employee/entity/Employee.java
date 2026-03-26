@@ -10,6 +10,7 @@ import com.company.ems.backend.department.entity.Department;
 import com.company.ems.backend.employee.enums.ContractType;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
 import com.company.ems.backend.employee.enums.Gender;
+import com.company.ems.backend.employee.enums.WorkStatus;
 import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.position.entity.Position;
 import com.company.ems.backend.user.entity.User;
@@ -118,6 +119,11 @@ public class Employee extends BaseEntity {
     @Builder.Default
     private EmployeeStatus status = EmployeeStatus.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "work_status", length = 20, nullable = false)
+    @Builder.Default
+    private WorkStatus workStatus = WorkStatus.PROBATION;
+
     // Emergency Contact Information
     @Size(max = 100, message = "Emergency contact name must not exceed 100 characters")
     @Column(length = 100)
@@ -167,10 +173,16 @@ public class Employee extends BaseEntity {
     private ContractType contractType;
 
     @Column
+    private LocalDate contractStartDate;
+
+    @Column
     private LocalDate probationEndDate;
 
     @Column
     private LocalDate contractEndDate;
+
+    @Column
+    private Integer contractDurationMonths;
 
     @Size(max = 100, message = "Work location must not exceed 100 characters")
     @Column(length = 100)
@@ -202,6 +214,12 @@ public class Employee extends BaseEntity {
     @Column(name = "salary", columnDefinition = "DECIMAL(15,2) DEFAULT 0.00")
     @Builder.Default
     private Double salary = 0.0;
+
+    @Column(name = "probation_salary", columnDefinition = "DECIMAL(15,2)")
+    private Double probationSalary;
+
+    @Column(name = "official_salary", columnDefinition = "DECIMAL(15,2)")
+    private Double officialSalary;
 
     @Size(max = 500, message = "Avatar URL must not exceed 500 characters")
     @Column(length = 500)
@@ -283,7 +301,7 @@ public class Employee extends BaseEntity {
      * Check if employee is on probation
      */
     public boolean isOnProbation() {
-        return EmployeeStatus.ON_PROBATION.equals(status);
+        return WorkStatus.PROBATION.equals(workStatus);
     }
 
     /**
@@ -291,13 +309,15 @@ public class Employee extends BaseEntity {
      */
     public void activate() {
         this.status = EmployeeStatus.ACTIVE;
+        this.workStatus = WorkStatus.ACTIVE;
     }
 
     /**
      * Put employee on probation
      */
     public void putOnProbation(LocalDate probationEndDate) {
-        this.status = EmployeeStatus.ON_PROBATION;
+        this.status = EmployeeStatus.ACTIVE;
+        this.workStatus = WorkStatus.PROBATION;
         this.probationEndDate = probationEndDate;
     }
 
@@ -306,6 +326,7 @@ public class Employee extends BaseEntity {
      */
     public void terminate(LocalDate terminationDate) {
         this.status = EmployeeStatus.TERMINATED;
+        this.workStatus = WorkStatus.TERMINATED;
         this.terminationDate = terminationDate;
     }
 

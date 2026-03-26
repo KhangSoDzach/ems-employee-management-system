@@ -46,7 +46,10 @@ const INITIAL_FORM_STATE: EmployeeRequest = {
   positionId: 0,
   salary: 0,
   gender: "MALE",
+  workStatus: "PROBATION",
   contractType: "FULL_TIME",
+  contractStartDate: new Date().toISOString().slice(0, 10),
+  contractDurationMonths: 12,
   nationality: "Việt Nam",
   address: "",
   city: "",
@@ -79,6 +82,8 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
   const [formData, setFormData] = useState<EmployeeRequest>(INITIAL_FORM_STATE);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const normalizeValidationMessage = (message: string): string => {
     const parts = message
@@ -182,6 +187,19 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
       newErrors.salary = FORM_VALIDATION_MESSAGES.SALARY_REQUIRED;
     }
 
+    if (formData.contractType === "CONTRACT") {
+      if (!formData.contractStartDate) {
+        newErrors.contractStartDate = "Vui lòng chọn ngày bắt đầu hợp đồng";
+      }
+      if (
+        !formData.contractDurationMonths ||
+        ![12, 24, 36].includes(formData.contractDurationMonths)
+      ) {
+        newErrors.contractDurationMonths =
+          "Hợp đồng có thời hạn chỉ được 12, 24 hoặc 36 tháng";
+      }
+    }
+
     if (!formData.bankName?.trim()) {
       newErrors.bankName = FORM_VALIDATION_MESSAGES.BANK_NAME_REQUIRED;
     }
@@ -235,6 +253,8 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
       if (mode === "create") {
         setFormData(INITIAL_FORM_STATE);
         setErrors({});
+        setAttachments([]);
+        setAvatarFile(null);
       } else if (mode === "edit" && employee) {
         setFormData({
           firstName: employee.firstName,
@@ -262,8 +282,11 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
           bankBranch: employee.bankBranch || "",
           reportingManagerId: employee.reportingManagerId || undefined,
           contractType: employee.contractType || "FULL_TIME",
+          contractStartDate:
+            employee.contractStartDate || employee.hireDate || undefined,
           probationEndDate: employee.probationEndDate || undefined,
           contractEndDate: employee.contractEndDate || undefined,
+          contractDurationMonths: employee.contractDurationMonths || 12,
           workLocation: employee.workLocation || "",
           nationality: employee.nationality || "Việt Nam",
           bloodGroup: employee.bloodGroup || "",
@@ -272,6 +295,8 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
           notes: employee.notes || "",
         });
         setErrors({});
+        setAttachments([]);
+        setAvatarFile(null);
       }
     }
   }, [open, mode, employee]);
@@ -324,7 +349,10 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
       const updated = {
         ...prev,
         [name]:
-          name === "departmentId" || name === "positionId" || name === "salary"
+          name === "departmentId" ||
+          name === "positionId" ||
+          name === "salary" ||
+          name === "contractDurationMonths"
             ? Number(value)
             : name === "reportingManagerId"
               ? value === ""
@@ -336,6 +364,9 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
         updated.positionId = 0;
         updated.reportingManagerId = undefined;
         setPositions([]);
+      }
+      if (name === "contractType" && value !== "CONTRACT") {
+        updated.contractDurationMonths = undefined;
       }
       return updated;
     });
@@ -350,9 +381,21 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setAvatarFile(file);
       const url = URL.createObjectURL(file);
       setFormData((prev) => ({ ...prev, avatarUrl: url }));
     }
+  };
+
+  const handleAttachmentsSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) {
+      return;
+    }
+    setAttachments((prev) => [...prev, ...Array.from(files)]);
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -367,6 +410,22 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
     const payload: EmployeeRequest = {
       ...formData,
+      avatarUrl: formData.avatarUrl?.startsWith("blob:")
+        ? undefined
+        : formData.avatarUrl?.trim() || undefined,
+      contractEndDate:
+        formData.contractType === "CONTRACT" &&
+        formData.contractStartDate &&
+        formData.contractDurationMonths
+          ? new Date(
+              new Date(formData.contractStartDate).getFullYear(),
+              new Date(formData.contractStartDate).getMonth() +
+                formData.contractDurationMonths,
+              new Date(formData.contractStartDate).getDate() - 1,
+            )
+              .toISOString()
+              .slice(0, 10)
+          : formData.contractEndDate,
       phone: formData.phone?.trim() || undefined,
       nationalId: formData.nationalId?.trim() || undefined,
       address: formData.address?.trim() || undefined,
@@ -391,13 +450,40 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
     setLoading(true);
     try {
+      let savedEmployee: EmployeeResponse;
       if (mode === "create") {
-        await employeeService.createEmployee(payload);
+        savedEmployee = await employeeService.createEmployee(payload);
         toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_SUCCESS);
       } else {
-        await employeeService.updateEmployee(employeeId!, payload);
+        savedEmployee = await employeeService.updateEmployee(
+          employeeId!,
+          payload,
+        );
         toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_SUCCESS);
       }
+
+      const targetEmployeeId = savedEmployee.id;
+
+      if (avatarFile) {
+        await employeeService.uploadEmployeeFile(
+          targetEmployeeId,
+          avatarFile,
+          "AVATAR",
+        );
+      }
+
+      if (attachments.length > 0) {
+        await Promise.all(
+          attachments.map((file) =>
+            employeeService.uploadEmployeeFile(
+              targetEmployeeId,
+              file,
+              "DOCUMENT",
+            ),
+          ),
+        );
+      }
+
       onSuccess();
     } catch (error: unknown) {
       console.error(error);
@@ -493,6 +579,9 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
             inputClass={inputClass}
             selectClass={selectClass}
             handleImageUpload={handleImageUpload}
+            attachments={attachments}
+            onAttachmentsSelected={handleAttachmentsSelected}
+            onRemoveAttachment={handleRemoveAttachment}
           />
 
           {/* ACTIONS */}

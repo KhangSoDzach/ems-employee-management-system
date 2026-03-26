@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import com.company.ems.backend.department.entity.Department;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
+import com.company.ems.backend.employee.enums.WorkStatus;
 import com.company.ems.backend.position.entity.Position;
 
 @Repository
@@ -47,12 +48,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
                 "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
                 "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
                 "AND (:positionId IS NULL OR e.position.id = :positionId) " +
-                "AND (:status IS NULL OR e.status = :status)")
+                "AND (:status IS NULL OR e.workStatus = :status)")
         Page<Employee> searchEmployees(
                 @Param("search") String search,
                 @Param("departmentId") Long departmentId,
                 @Param("positionId") Long positionId,
-                @Param("status") EmployeeStatus status,
+                @Param("status") WorkStatus status,
                 Pageable pageable);
 
         @Query("SELECT e FROM Employee e WHERE " +
@@ -63,13 +64,13 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
                 "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
                 "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
                 "AND (:positionId IS NULL OR e.position.id = :positionId) " +
-                "AND (:status IS NULL OR e.status = :status)")
+                "AND (:status IS NULL OR e.workStatus = :status)")
         Page<Employee> searchEmployeesByManager(
                 @Param("managerId") Long managerId,
                 @Param("search") String search,
                 @Param("departmentId") Long departmentId,
                 @Param("positionId") Long positionId,
-                @Param("status") EmployeeStatus status,
+                @Param("status") WorkStatus status,
                 Pageable pageable);
 
         @Query("SELECT e FROM Employee e WHERE e.hireDate BETWEEN :startDate AND :endDate")
