@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react"
-import { Download, MessageCircle, Star, UserCheck, X } from "lucide-react"
-import { toast } from "sonner"
+import { Download, MessageCircle, Star, UserCheck, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import {
   Sheet,
@@ -8,11 +8,11 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
+} from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 export type Member = {
   id: number;
@@ -39,12 +39,10 @@ type MemberEvaluationSheetProps = {
   open: boolean;
   mode?: "view" | "edit";
   onOpenChange: (open: boolean) => void;
-  initialScores?: Record<string, number>;
-  initialComment?: string;
   onSubmit?: (data: {
     scores: Record<string, number>;
     comment: string;
-  }) => void;
+  }) => Promise<void> | void;
 };
 
 function getEvaluationForMember(
@@ -112,85 +110,110 @@ function getEvaluationForMember(
   return { criteria, totalScore, rank, radarPoints };
 }
 
-export function MemberEvaluationSheet({ member, open, mode = "view", initialScores, initialComment, onOpenChange, onSubmit }: Readonly<MemberEvaluationSheetProps>) {
-  const t = SYSTEM_MESSAGES.MEMBER_LIST
+export function MemberEvaluationSheet({
+  member,
+  open,
+  mode = "view",
+  onOpenChange,
+  onSubmit,
+}: Readonly<MemberEvaluationSheetProps>) {
+  const t = SYSTEM_MESSAGES.MEMBER_LIST;
   const baseline = useMemo(() => {
-    if (!member) { return { criteria: [], totalScore: 0, rank: "", radarPoints: "" }; }
+    if (!member) {
+      return { criteria: [], totalScore: 0, rank: "", radarPoints: "" };
+    }
     return getEvaluationForMember(member, t);
-  }, [member, t])
+  }, [member, t]);
 
   const [scores, setScores] = useState<Record<string, number>>(() =>
-    initialScores ?? Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score]))
+    Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])),
   );
-  const [comment, setComment] = useState<string>(initialComment ?? t.SHEET_COMMENT_TEXT);
+  const [comment, setComment] = useState<string>(t.SHEET_COMMENT_TEXT);
 
-  const prevMemberIdRef = React.useRef<number | null>(null)
   useEffect(() => {
-    // Reset scores only when switching to a DIFFERENT employee, not on mode flip
-    if (member?.id !== prevMemberIdRef.current) {
-      prevMemberIdRef.current = member?.id ?? null
-      // Use parent-stored scores if available (most recent submission), else baseline
-      setScores(initialScores ?? Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])))
-      setComment(initialComment ?? t.SHEET_COMMENT_TEXT)
-    }
-  }, [member?.id, initialScores, baseline.criteria, t.SHEET_COMMENT_TEXT])
+    setScores(
+      Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])),
+    );
+    setComment(t.SHEET_COMMENT_TEXT);
+  }, [baseline.criteria, member?.id, t.SHEET_COMMENT_TEXT]);
 
   const totalScore = useMemo(() => {
-    const values = Object.values(scores)
-    if (!values.length) { return 0; }
-    const sum = values.reduce((acc, cur) => acc + cur, 0)
-    return Math.round(sum / values.length)
-  }, [scores])
+    const values = Object.values(scores);
+    if (!values.length) {
+      return 0;
+    }
+    const sum = values.reduce((acc, cur) => acc + cur, 0);
+    return Math.round(sum / values.length);
+  }, [scores]);
 
   const rank = useMemo(() => {
-    if (totalScore >= 90) { return t.SHEET_RANK_A; }
-    if (totalScore >= 80) { return t.SHEET_RANK_B; }
-    return t.SHEET_RANK_C
-  }, [totalScore, t])
+    if (totalScore >= 90) {
+      return t.SHEET_RANK_A;
+    }
+    if (totalScore >= 80) {
+      return t.SHEET_RANK_B;
+    }
+    return t.SHEET_RANK_C;
+  }, [totalScore, t]);
 
   const getRating = (value: number) => {
-    if (value >= 90) { return t.SHEET_RATING_EXCELLENT; }
-    if (value >= 80) { return t.SHEET_RATING_GOOD; }
-    return t.SHEET_RATING_NEEDS_IMPROVEMENT
-  }
+    if (value >= 90) {
+      return t.SHEET_RATING_EXCELLENT;
+    }
+    if (value >= 80) {
+      return t.SHEET_RATING_GOOD;
+    }
+    return t.SHEET_RATING_NEEDS_IMPROVEMENT;
+  };
 
   const getRatingClass = (value: number) => {
-    if (value >= 90) { return "bg-emerald-100 text-emerald-700"; }
-    if (value >= 80) { return "bg-primary/10 text-primary"; }
-    return "bg-amber-100 text-amber-700"
+    if (value >= 90) {
+      return "bg-emerald-100 text-emerald-700";
+    }
+    if (value >= 80) {
+      return "bg-primary/10 text-primary";
+    }
+    return "bg-amber-100 text-amber-700";
+  };
+
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!member) {
+    return null;
   }
-
-  const [submitting, setSubmitting] = useState(false)
-
-  if (!member) { return null; }
 
   const handleSubmit = async () => {
     const hasEmpty = Object.values(scores).some(
       (s) => s === null || s === undefined || Number.isNaN(Number(s)),
     );
     if (hasEmpty) {
-      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT)
-      return
+      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+      return;
     }
     setSubmitting(true);
     try {
-      // Backend evaluation API not yet implemented — simulate success
-      // When ready: await evaluationService.submit({ memberId: member.id, scores, comment })
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      toast.success(t.SHEET_SUBMIT_SUCCESS)
-      onSubmit?.({ scores, comment })
+      if (onSubmit) {
+        await onSubmit({ scores, comment });
+      }
+      toast.success(t.SHEET_SUBMIT_SUCCESS);
+      onOpenChange(false);
     } catch {
-      toast.error(t.SHEET_SUBMIT_ERROR)
+      toast.error(t.SHEET_SUBMIT_ERROR);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleExportPDF = () => {
-    if (!member) { return; }
-    const rows = baseline.criteria.map((c) =>
-      `<div class="score-row"><span class="label">${c.label}</span><span class="score">${scores[c.key] ?? c.score}/100</span></div>`
-    ).join("")
+    if (!member) {
+      return;
+    }
+    const rows = baseline.criteria
+      .map(
+        (c) =>
+          `<div class="score-row"><span class="label">${c.label}</span><span class="score">${scores[c.key] ?? c.score}/100</span></div>`,
+      )
+      .join("");
     const html = `<html><head><title>Danh gia - ${member.name}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:32px;color:#1e293b}
@@ -216,20 +239,33 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
       <div class="total"><strong>Tổng điểm: ${totalScore}/100 — Xếp loại: ${rank}</strong></div>
       ${rows}
       <div class="comment"><strong>Nhận xét:</strong><br/>${comment}</div>
-      </body></html>`
-    const win = window.open("", "_blank")
-    if (!win) { toast.error(t.SHEET_EXPORT_POPUP_ERROR); return; }
-    win.document.write(html)
-    win.document.close()
-    win.focus()
-    setTimeout(() => { win.print(); win.close() }, 300)
-    toast.success(t.SHEET_EXPORT_SUCCESS)
-  }
+      </body></html>`;
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error(t.SHEET_EXPORT_POPUP_ERROR);
+      return;
+    }
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+      win.print();
+      win.close();
+    }, 300);
+    toast.success(t.SHEET_EXPORT_SUCCESS);
+  };
 
   const canEdit = mode === "edit";
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) { onOpenChange(false); } }}>
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          onOpenChange(false);
+        }
+      }}
+    >
       <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl">
         <div className="px-5 py-4 border-b bg-muted/10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
@@ -257,8 +293,13 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
                   {member.name}
                 </p>
                 <p className="text-xs text-muted-foreground">{member.email}</p>
-                <p className="text-sm font-medium text-primary mt-1">{member.role}</p>
-                <p className="text-xs text-muted-foreground">{t.SHEET_EMP_CODE_LABEL}{":"} {member.id}</p>
+                <p className="text-sm font-medium text-primary mt-1">
+                  {member.role}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t.SHEET_EMP_CODE_LABEL}
+                  {":"} {member.id}
+                </p>
               </div>
             </div>
 
@@ -291,8 +332,12 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
                   {t.SHEET_TOTAL_SCORE}
                 </p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-primary text-3xl font-bold leading-tight">{totalScore}</span>
-                  <span className="text-slate-400 text-lg font-medium">{"/100"}</span>
+                  <span className="text-primary text-3xl font-bold leading-tight">
+                    {totalScore}
+                  </span>
+                  <span className="text-slate-400 text-lg font-medium">
+                    {"/100"}
+                  </span>
                 </div>
               </div>
               <div className="flex flex-col gap-1 rounded-lg p-3 bg-white dark:bg-slate-900 shadow-sm border-l-4 border-emerald-500">
@@ -341,8 +386,10 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
             <div className="space-y-3">
               {baseline.criteria.map((criterion) => {
                 const score = scores[criterion.key] ?? criterion.score;
-                const rating = getRating(score);
-                const ratingClass = getRatingClass(score);
+                const rating = canEdit ? getRating(score) : criterion.rating;
+                const ratingClass = canEdit
+                  ? getRatingClass(score)
+                  : criterion.ratingClass;
 
                 return (
                   <div
@@ -383,11 +430,14 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
                             placeholder={t.SHEET_SCORE_PLACEHOLDER}
                             className="w-20 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-9 px-2 text-sm font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                           />
-                          <span className="text-sm font-semibold text-slate-500">{"/ 100"}</span>
+                          <span className="text-sm font-semibold text-slate-500">
+                            {"/ 100"}
+                          </span>
                         </div>
                       ) : (
                         <p className="text-slate-900 dark:text-white font-bold text-base">
-                          {score}{"/100"}
+                          {criterion.score}
+                          {"/100"}
                         </p>
                       )}
                       <span
@@ -420,9 +470,11 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
               </div>
             ) : (
               <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 italic relative">
-                <span className="absolute -top-3 -left-1 text-4xl text-primary/10 font-serif">{'"'}</span>
+                <span className="absolute -top-3 -left-1 text-4xl text-primary/10 font-serif">
+                  {'"'}
+                </span>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-                  {comment}
+                  {t.SHEET_COMMENT_TEXT}
                 </p>
                 <div className="mt-4 flex items-center gap-2 not-italic">
                   <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold">

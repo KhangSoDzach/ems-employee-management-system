@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   memberService,
+  type OpenReviewCycleRequest,
   type SaveReviewRequest,
 } from "@/services/memberService";
 import { TEAM_MEMBERS_QUERY_KEY } from "./useTeamMembers";
 
 /** React Query key prefix for performance review queries */
 export const REVIEW_QUERY_KEY = "performance-review" as const;
+export const REVIEW_CYCLE_QUERY_KEY = "performance-review-cycle" as const;
 
 /**
  * Fetches the latest performance review for a specific employee.
@@ -44,6 +46,30 @@ export function useSaveReview() {
     },
     onError: (error: Error) => {
       toast.error(error?.message ?? "Có lỗi xảy ra khi lưu đánh giá");
+    },
+  });
+}
+
+export function useActiveReviewCycle() {
+  return useQuery({
+    queryKey: [REVIEW_CYCLE_QUERY_KEY, "active"],
+    queryFn: memberService.getActiveReviewCycle,
+    staleTime: 30_000,
+  });
+}
+
+export function useOpenReviewCycle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: OpenReviewCycleRequest) =>
+      memberService.openReviewCycle(payload),
+    onSuccess: () => {
+      toast.success("Đã mở đợt đánh giá trong 3 ngày");
+      queryClient.invalidateQueries({ queryKey: [REVIEW_CYCLE_QUERY_KEY] });
+    },
+    onError: (error: Error) => {
+      toast.error(error?.message ?? "Không thể mở đợt đánh giá");
     },
   });
 }

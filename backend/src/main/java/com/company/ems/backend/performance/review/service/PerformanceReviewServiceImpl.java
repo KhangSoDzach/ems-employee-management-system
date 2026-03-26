@@ -1,19 +1,9 @@
 package com.company.ems.backend.performance.review.service;
 
-import com.company.ems.backend.common.dto.PageResponse;
-import com.company.ems.backend.common.enums.ErrorCode;
-import com.company.ems.backend.common.exception.AppException;
-import com.company.ems.backend.common.message.MessageCode;
-import com.company.ems.backend.common.message.MessageService;
-import com.company.ems.backend.employee.entity.Employee;
-import com.company.ems.backend.employee.repository.EmployeeRepository;
-import com.company.ems.backend.performance.review.dto.PerformanceReviewDto;
-import com.company.ems.backend.performance.review.entity.PerformanceReview;
-import com.company.ems.backend.performance.review.enums.ReviewType;
-import com.company.ems.backend.performance.review.mapper.PerformanceReviewMapper;
-import com.company.ems.backend.performance.review.repository.PerformanceReviewRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,7 +12,27 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.company.ems.backend.common.dto.PageResponse;
+import com.company.ems.backend.common.enums.ErrorCode;
+import com.company.ems.backend.common.event.NotificationEvent;
+import com.company.ems.backend.common.exception.AppException;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.common.service.NotificationService;
+import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.employee.repository.EmployeeRepository;
+import com.company.ems.backend.performance.review.dto.PerformanceReviewCycleDto;
+import com.company.ems.backend.performance.review.dto.PerformanceReviewDto;
+import com.company.ems.backend.performance.review.entity.PerformanceReview;
+import com.company.ems.backend.performance.review.entity.PerformanceReviewCycle;
+import com.company.ems.backend.performance.review.enums.ReviewCycleStatus;
+import com.company.ems.backend.performance.review.enums.ReviewType;
+import com.company.ems.backend.performance.review.mapper.PerformanceReviewMapper;
+import com.company.ems.backend.performance.review.repository.PerformanceReviewCycleRepository;
+import com.company.ems.backend.performance.review.repository.PerformanceReviewRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -31,9 +41,13 @@ import java.util.List;
 public class PerformanceReviewServiceImpl implements PerformanceReviewService {
 
     private final PerformanceReviewRepository reviewRepo;
+    private final PerformanceReviewCycleRepository cycleRepo;
     private final EmployeeRepository          employeeRepo;
     private final PerformanceReviewMapper     mapper;
     private final MessageService              messages;
+    private final NotificationService         notificationService;
+
+    private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @Override
     public PerformanceReviewDto.Response saveReview(PerformanceReviewDto.CreateRequest req) {
@@ -43,21 +57,48 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
         if (revieweeId == null) {
             throw new AppException(ErrorCode.VALID_PARAM_MISSING, "Reviewee ID is required");
         }
+
+        Employee reviewer = employeeRepo.findByUserUsername(reviewerUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Không tìm thấy hồ sơ nhân viên của người đánh giá"));
+
         Employee reviewee = employeeRepo.findById(revieweeId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
                         messages.get(MessageCode.REVIEW_EMPLOYEE_NOT_FOUND, revieweeId)));
 
-        Long reviewerId = resolveReviewerId(reviewerUsername);
-        String reviewerDisplayName = reviewerUsername;
+        Long reviewerId = reviewer.getId();
+        String reviewerDisplayName = reviewer.getFullName();
 
-        if (req.getReviewType() == ReviewType.SELF && (reviewerId == null || !reviewerId.equals(req.getRevieweeId()))) {
+        Long cycleManagerId;
+        if (isManagerReviewingDirectReport(reviewer, reviewee)) {
+            if (req.getReviewType() != ReviewType.MANAGER) {
                 throw new AppException(ErrorCode.ACCESS_DENIED,
-                        messages.get(MessageCode.REVIEW_SELF_ONLY));
+                        "Manager chỉ được gửi đánh giá loại MANAGER cho nhân viên trực tiếp");
             }
+            cycleManagerId = reviewerId;
+        } else if (isEmployeePeerReview(reviewer, reviewee)) {
+            if (req.getReviewType() != ReviewType.PEER) {
+                throw new AppException(ErrorCode.ACCESS_DENIED,
+                        "Nhân viên chỉ được gửi đánh giá ngang hàng loại PEER");
+            }
+            cycleManagerId = reviewer.getReportingManager().getId();
+        } else {
+            throw new AppException(ErrorCode.ACCESS_DENIED,
+                    "Bạn không có quyền đánh giá nhân sự này");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        cycleRepo.findActiveCycleByManagerAndPeriod(
+                        cycleManagerId,
+                        req.getReviewPeriod(),
+                        ReviewCycleStatus.OPEN,
+                        now)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCESS_DENIED,
+                        "Đợt đánh giá chưa mở hoặc đã hết hạn cho kỳ này"));
 
 
         if (reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(
-                reviewerId != null ? reviewerId : 0L,
+                reviewerId,
                 req.getRevieweeId(),
                 req.getReviewPeriod())) {
             throw new AppException(ErrorCode.RESOURCE_CONFLICT,
@@ -66,7 +107,7 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
 
         PerformanceReviewDto.ScoresRequest scores = req.getScores();
         PerformanceReview review = PerformanceReview.builder()
-                .reviewerId(reviewerId != null ? reviewerId : 0L)
+            .reviewerId(reviewerId)
                 .revieweeId(req.getRevieweeId())
                 .reviewerUsername(reviewerDisplayName)
                 .revieweeUsername(reviewee.getFullName())
@@ -130,6 +171,78 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
         return mapper.toResponse(results.get(0));
     }
 
+    @Override
+    public PerformanceReviewCycleDto.Response openReviewCycle(PerformanceReviewCycleDto.OpenRequest request) {
+        String username = currentUsername();
+        Employee manager = employeeRepo.findByUserUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Không tìm thấy hồ sơ nhân viên của manager"));
+
+        LocalDateTime now = LocalDateTime.now();
+        cycleRepo.findActiveCycleByManager(manager.getId(), ReviewCycleStatus.OPEN, now)
+                .ifPresent(existing -> {
+                    throw new AppException(ErrorCode.RESOURCE_CONFLICT,
+                            "Đã có đợt đánh giá đang mở đến " + existing.getEndAt().format(DISPLAY_DATE));
+                });
+
+        PerformanceReviewCycle cycle = PerformanceReviewCycle.builder()
+                .managerId(manager.getId())
+                .reviewPeriod(request.getReviewPeriod())
+                .startAt(now)
+                .endAt(now.plusDays(3))
+                .status(ReviewCycleStatus.OPEN)
+                .build();
+
+        PerformanceReviewCycle savedCycle = cycleRepo.save(cycle);
+
+        List<Employee> directReports = employeeRepo.findDirectReportsByManagerId(manager.getId());
+        int notifiedCount = 0;
+        String notifyMessage = String.format(
+                "Quản lý đã mở đợt đánh giá %s. Hạn kết thúc: %s",
+                savedCycle.getReviewPeriod(),
+                savedCycle.getEndAt().format(DISPLAY_DATE));
+
+        for (Employee report : directReports) {
+            if (report.getUser() == null || report.getUser().getId() == null) {
+                continue;
+            }
+            notificationService.send(NotificationEvent.builder()
+                    .eventType("PERFORMANCE_REVIEW_CYCLE_OPENED")
+                    .recipientUserId(report.getUser().getId())
+                    .message(notifyMessage)
+                    .referenceId(savedCycle.getId())
+                    .referenceType("PERFORMANCE_REVIEW_CYCLE")
+                    .build());
+            notifiedCount++;
+        }
+
+        return toCycleResponse(savedCycle, notifiedCount);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PerformanceReviewCycleDto.Response getMyActiveCycle() {
+        String username = currentUsername();
+        Employee me = employeeRepo.findByUserUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Không tìm thấy hồ sơ nhân viên hiện tại"));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Long managerIdForCycle = me.getId();
+        boolean hasDirectReports = !employeeRepo.findDirectReportsByManagerId(me.getId()).isEmpty();
+        if (!hasDirectReports) {
+            if (me.getReportingManager() == null) {
+                return null;
+            }
+            managerIdForCycle = me.getReportingManager().getId();
+        }
+
+        return cycleRepo.findActiveCycleByManager(managerIdForCycle, ReviewCycleStatus.OPEN, now)
+                .map(cycle -> toCycleResponse(cycle, 0))
+                .orElse(null);
+    }
+
     private String currentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -138,9 +251,33 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
         return auth.getName();
     }
 
-    private Long resolveReviewerId(String username) {
-        return employeeRepo.findByUserUsername(username)
-                .map(Employee::getId)
-                .orElse(null);
+    private boolean isManagerReviewingDirectReport(Employee reviewer, Employee reviewee) {
+        return reviewee.getReportingManager() != null
+                && reviewee.getReportingManager().getId() != null
+                && reviewee.getReportingManager().getId().equals(reviewer.getId());
+    }
+
+    private boolean isEmployeePeerReview(Employee reviewer, Employee reviewee) {
+        if (reviewer.getId().equals(reviewee.getId())) {
+            return false;
+        }
+        if (reviewer.getReportingManager() == null || reviewee.getReportingManager() == null) {
+            return false;
+        }
+        Long reviewerManagerId = reviewer.getReportingManager().getId();
+        Long revieweeManagerId = reviewee.getReportingManager().getId();
+        return reviewerManagerId != null && reviewerManagerId.equals(revieweeManagerId);
+    }
+
+    private PerformanceReviewCycleDto.Response toCycleResponse(PerformanceReviewCycle cycle, int notifiedMemberCount) {
+        return PerformanceReviewCycleDto.Response.builder()
+                .id(cycle.getId())
+                .managerId(cycle.getManagerId())
+                .reviewPeriod(cycle.getReviewPeriod())
+                .startAt(cycle.getStartAt())
+                .endAt(cycle.getEndAt())
+                .status(cycle.getStatus())
+                .notifiedMemberCount(notifiedMemberCount)
+                .build();
     }
 }

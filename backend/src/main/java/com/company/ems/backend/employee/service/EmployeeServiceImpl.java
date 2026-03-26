@@ -638,8 +638,32 @@ public class EmployeeServiceImpl implements EmployeeService {
                         employees = employeeRepository.searchEmployeesByManager(
                                         managerEmployee.getId(), search, null, null, null, pageable);
 
+                } else if (principal.hasDataScope(DataScope.SELF)) {
+                        // Employee: thấy các thành viên cùng nhóm (cùng reporting manager)
+                        Employee self = employeeRepository.findByUserId(principal.getUserId())
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Employee record không tồn tại cho userId: "
+                                                                        + principal.getUserId()));
+
+                        if (self.getReportingManager() == null) {
+                                return PageResponse.<MemberResponse>builder()
+                                                .content(List.of(mapToMemberResponse(self)))
+                                                .page(0)
+                                                .size(1)
+                                                .totalElements(1L)
+                                                .totalPages(1)
+                                                .build();
+                        }
+
+                        employees = employeeRepository.searchEmployeesByManager(
+                                        self.getReportingManager().getId(),
+                                        search,
+                                        null,
+                                        null,
+                                        null,
+                                        pageable);
+
                 } else {
-                        // SELF scope không được dùng endpoint này
                         throw new ForbiddenException();
                 }
 
