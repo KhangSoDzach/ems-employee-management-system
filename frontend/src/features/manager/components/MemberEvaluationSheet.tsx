@@ -1,6 +1,5 @@
-import React from "react"
-import { Download, Info, MessageCircle, Star, UserCheck, X } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
+import { Download, MessageCircle, Star, UserCheck, X } from "lucide-react"
 import { toast } from "sonner"
 
 import {
