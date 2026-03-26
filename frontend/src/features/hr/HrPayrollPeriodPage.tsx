@@ -7,16 +7,22 @@ export default function HrPayrollPeriodPage() {
   return (
     <SidebarProvider>
       <AppSidebar role="hr" variant="inset" />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col overflow-hidden">
         <SiteHeader />
-        <main className="min-h-screen space-y-6 bg-background p-4 pt-6 md:p-8">
-          <div>
+
+        {/* Main: fills remaining height, no page scroll */}
+        <main className="flex flex-col flex-1 overflow-hidden bg-background p-4 pt-6 md:p-6 gap-4">
+          <div className="flex-shrink-0">
             <h1 className="page-heading">Bảng lương theo kỳ</h1>
             <p className="text-sm text-muted-foreground">
               Xem và xuất file bảng lương toàn bộ nhân viên theo kỳ.
             </p>
           </div>
-          <PayrollPeriodView />
+
+          {/* PayrollPeriodView fills the rest of the height */}
+          <div className="flex-1 overflow-hidden">
+            <PayrollPeriodView />
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>

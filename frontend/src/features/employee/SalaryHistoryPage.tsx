@@ -95,8 +95,8 @@ export default function SalaryHistoryPage() {
         <main className="flex-1 space-y-6 lg:p-8 p-4 pt-6 bg-background min-h-screen">
           <div className="max-w-6xl mx-auto space-y-6">
 
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Sticky header */}
+            <div className="sticky top-0 z-20 bg-background pb-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h1 className="page-heading">{t.TITLE}</h1>
                 <p className="text-muted-foreground mt-1">{t.DESC}</p>
