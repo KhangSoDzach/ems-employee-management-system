@@ -148,6 +148,10 @@ function App() {
                   element={<AssetRequestManagement />}
                 />
                 <Route path="/hr-employees" element={<EmployeeManagement />} />
+                <Route
+                  path="/hr-payroll-period"
+                  element={<HrPayrollPeriodPage />}
+                />
               </Route>
 
               {/* Admin only */}

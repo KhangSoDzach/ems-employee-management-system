@@ -278,6 +278,11 @@ export function AppSidebar({
           icon: Package,
         },
         {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_HR_PAYROLL_PERIOD,
+          url: "/hr-payroll-period",
+          icon: CreditCard,
+        },
+        {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
           url: "/audit-logs",
           icon: ShieldCheck,
