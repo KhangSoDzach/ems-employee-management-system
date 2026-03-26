@@ -155,6 +155,15 @@ public class EmployeeController {
                 employeeService.getEmployeeAttachments(id)));
     }
 
+    @GetMapping("/me/files")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get my attachments", description = "Returns uploaded document attachments for currently authenticated employee")
+    public ResponseEntity<ApiResponse<java.util.List<EmployeeAttachmentResponse>>> getMyEmployeeFiles() {
+        return ResponseEntity.ok(ApiResponse.success(
+                messages.get(MessageCode.COMMON_SUCCESS),
+                employeeService.getMyEmployeeAttachments()));
+    }
+
     @DeleteMapping("/{id}/files/{fileId}")
     @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_UPDATE)
     @Operation(summary = "Delete employee attachment", description = "Soft-deletes an attachment and removes file from storage")

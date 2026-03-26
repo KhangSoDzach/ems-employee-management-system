@@ -36,6 +36,8 @@ public interface EmployeeService {
 
     List<EmployeeAttachmentResponse> getEmployeeAttachments(Long id);
 
+    List<EmployeeAttachmentResponse> getMyEmployeeAttachments();
+
     void deleteEmployeeAttachment(Long id, Long attachmentId);
 
     void deleteEmployee(Long id);

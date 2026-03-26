@@ -327,6 +327,13 @@ export const employeeService = {
       ) as Promise<ApiResponse<EmployeeAttachmentResponse[]>>
     ).then((res) => res.data.map(normalizeAttachment)),
 
+  getMyEmployeeFiles: (): Promise<EmployeeAttachmentResponse[]> =>
+    (
+      api.get<unknown, ApiResponse<EmployeeAttachmentResponse[]>>(
+        "/employees/me/files",
+      ) as Promise<ApiResponse<EmployeeAttachmentResponse[]>>
+    ).then((res) => res.data.map(normalizeAttachment)),
+
   deleteEmployeeFile: (id: number, fileId: number): Promise<void> =>
     (
       api.delete<unknown, ApiResponse<void>>(
