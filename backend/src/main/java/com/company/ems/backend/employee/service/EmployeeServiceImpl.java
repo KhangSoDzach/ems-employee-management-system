@@ -512,14 +512,22 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                 return employeeAttachmentRepository.findByEmployeeIdAndIsDeletedFalseOrderByCreatedAtDesc(id)
                                 .stream()
-                                .map(a -> EmployeeAttachmentResponse.builder()
-                                                .id(a.getId())
-                                                .originalFileName(a.getOriginalFileName())
-                                                .fileUrl(a.getFileUrl())
-                                                .fileType(a.getFileType())
-                                                .fileSize(a.getFileSize())
-                                                .createdAt(a.getCreatedAt())
-                                                .build())
+                                .map(this::toAttachmentResponse)
+                                .toList();
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<EmployeeAttachmentResponse> getMyEmployeeAttachments() {
+                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+                Employee employee = employeeRepository.findByUserId(principal.getUserId())
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Không tìm thấy hồ sơ nhân viên cho tài khoản hiện tại"));
+
+                return employeeAttachmentRepository
+                                .findByEmployeeIdAndIsDeletedFalseOrderByCreatedAtDesc(employee.getId())
+                                .stream()
+                                .map(this::toAttachmentResponse)
                                 .toList();
         }
 
@@ -662,6 +670,17 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .positionTitle(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
                                 .departmentName(employee.getDepartment() != null ? employee.getDepartment().getName() : null)
                                 .status(employee.getStatus() != null ? employee.getStatus().name() : null)
+                                .build();
+        }
+
+        private EmployeeAttachmentResponse toAttachmentResponse(EmployeeAttachment attachment) {
+                return EmployeeAttachmentResponse.builder()
+                                .id(attachment.getId())
+                                .originalFileName(attachment.getOriginalFileName())
+                                .fileUrl(attachment.getFileUrl())
+                                .fileType(attachment.getFileType())
+                                .fileSize(attachment.getFileSize())
+                                .createdAt(attachment.getCreatedAt())
                                 .build();
         }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -146,6 +146,12 @@ export default function ProfilePage() {
     enabled: !!profileQuery.data,
   });
 
+  const employeeFilesQuery = useQuery({
+    queryKey: ["profile", "me", "files"],
+    queryFn: employeeService.getMyEmployeeFiles,
+    enabled: !!profileQuery.data,
+  });
+
   useEffect(() => {
     const data = profileQuery.data;
     if (!data) {
@@ -184,31 +190,72 @@ export default function ProfilePage() {
     profileQuery.data?.attendancePercentage ??
     0;
 
+  let documentsContent: ReactNode;
+
+  if (employeeFilesQuery.isLoading) {
+    documentsContent = (
+      <p className="text-sm text-muted-foreground">{SYSTEM_MESSAGES.LOADING}</p>
+    );
+  } else if (employeeFilesQuery.data && employeeFilesQuery.data.length > 0) {
+    documentsContent = employeeFilesQuery.data.map((doc) => {
+      const lowerFileName = doc.originalFileName.toLowerCase();
+      const lowerFileType = (doc.fileType || "").toLowerCase();
+      const isPdf =
+        lowerFileType.includes("pdf") || lowerFileName.endsWith(".pdf");
+      const createdDate = doc.createdAt
+        ? format(new Date(doc.createdAt), "dd/MM/yyyy")
+        : "";
+
+      return (
+        <div
+          key={doc.id}
+          className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100/70 dark:hover:bg-gray-800 transition-colors"
+        >
+          <div className="flex items-center gap-3 overflow-hidden">
+            {isPdf ? (
+              <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4 text-red-500" />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                <ImageIcon className="w-4 h-4 text-blue-500" />
+              </div>
+            )}
+            <div className="truncate">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+                {doc.originalFileName}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {SYSTEM_MESSAGES.DOCUMENTS.STATUS_VERIFIED}
+                {createdDate ? ` • ${createdDate}` : ""}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="ml-2 p-1.5 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+            title={SYSTEM_MESSAGES.DOWNLOAD_TOOLTIP}
+            onClick={() => {
+              if (doc.fileUrl) {
+                globalThis.open(doc.fileUrl, "_blank", "noopener,noreferrer");
+              }
+            }}
+          >
+            <Download className="w-4 h-4" />
+          </button>
+        </div>
+      );
+    });
+  } else {
+    documentsContent = (
+      <p className="text-sm text-muted-foreground">{SYSTEM_MESSAGES.NO_DATA}</p>
+    );
+  }
+
   function onSubmit(data: ProfileFormValues) {
     void data;
     alert(SYSTEM_MESSAGES.PROFILE.MODAL_SUCCESS);
   }
-
-  const hrDocuments = [
-    {
-      name: SYSTEM_MESSAGES.DOCUMENTS.DOC_1_NAME || "Hợp đồng lao động",
-      type: "pdf",
-      date: "Thg 8, 2021",
-      status: SYSTEM_MESSAGES.DOCUMENTS.STATUS_SIGNED,
-    },
-    {
-      name: SYSTEM_MESSAGES.DOCUMENTS.DOC_2_NAME || "Thư mời nhận việc",
-      type: "pdf",
-      date: "Thg 7, 2021",
-      status: SYSTEM_MESSAGES.DOCUMENTS.STATUS_VERIFIED,
-    },
-    {
-      name: SYSTEM_MESSAGES.DOCUMENTS.DOC_3_NAME || "Bảng mô tả công việc",
-      type: "pdf",
-      date: "Thg 8, 2021",
-      status: SYSTEM_MESSAGES.DOCUMENTS.STATUS_VERIFIED,
-    },
-  ];
 
   // Loading skeleton
   if (profileQuery.isLoading) {
@@ -308,12 +355,6 @@ export default function ProfilePage() {
                   {SYSTEM_MESSAGES.PROFILE.DEPARTMENT_PREFIX}
                   {form.watch("department")}
                 </p>
-                <div className="flex items-center justify-center md:justify-start gap-4 mt-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4" />{" "}
-                    {SYSTEM_MESSAGES.PROFILE.OFFICE_LOCATION}
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -894,41 +935,7 @@ export default function ProfilePage() {
                   <h3 className="section-title">
                     {SYSTEM_MESSAGES.PROFILE.DOCS_SECTION}
                   </h3>
-                  <div className="space-y-3">
-                    {hrDocuments.map((doc, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100/70 dark:hover:bg-gray-800 transition-colors"
-                      >
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          {doc.type === "pdf" ? (
-                            <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                              <FileText className="w-4 h-4 text-red-500" />
-                            </div>
-                          ) : (
-                            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                              <ImageIcon className="w-4 h-4 text-blue-500" />
-                            </div>
-                          )}
-                          <div className="truncate">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
-                              {doc.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {doc.status} • {doc.date}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="ml-2 p-1.5 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
-                          title={SYSTEM_MESSAGES.DOWNLOAD_TOOLTIP}
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="space-y-3">{documentsContent}</div>
                 </div>
 
                 <div className="content-card">
