@@ -1,5 +1,8 @@
 import { LeaveResponseDTO } from "./leaveService";
-import { AdjustmentRequestSummary, AdjustmentRequestDetail } from "./attendanceService";
+import {
+  AdjustmentRequestSummary,
+  AdjustmentRequestDetail,
+} from "./attendanceService";
 import { AdminIncidentListItem, IncidentReportDetail } from "./assetService";
 
 export const MOCK_LEAVE_REQUESTS: LeaveResponseDTO[] = [
@@ -90,52 +93,53 @@ export const MOCK_ADJUSTMENT_REQUESTS: AdjustmentRequestSummary[] = [
   },
 ];
 
-export const MOCK_ADJUSTMENT_DETAILS: Record<number, AdjustmentRequestDetail> = {
-  201: {
-    ...(MOCK_ADJUSTMENT_REQUESTS[0] as AdjustmentRequestSummary),
-    attendanceId: null,
-    incidentGeoLog: "10.762622, 106.660172",
-    incidentPhotoUrl: "https://picsum.photos/seed/adj1/400/300",
-    requiresManualReview: true,
-    resolvedAt: null,
-    resolvedByName: null,
-    history: [
-      {
-        id: 1,
-        actionByName: "Nguyễn Văn A",
-        actionByUserId: 1,
-        action: "CREATED",
-        levelActedOn: null,
-        comment: "Gửi yêu cầu điều chỉnh",
-        actionAt: "2026-03-19T18:00:00",
-        statusBefore: null,
-        statusAfter: "PENDING_LEVEL_1",
-      },
-    ],
-  },
-  202: {
-    ...(MOCK_ADJUSTMENT_REQUESTS[1] as AdjustmentRequestSummary),
-    attendanceId: null,
-    incidentGeoLog: "10.762622, 106.660172",
-    incidentPhotoUrl: "https://picsum.photos/seed/adj2/400/300",
-    requiresManualReview: true,
-    resolvedAt: null,
-    resolvedByName: null,
-    history: [
-      {
-        id: 2,
-        actionByName: "Hoàng Văn E",
-        actionByUserId: 5,
-        action: "CREATED",
-        levelActedOn: null,
-        comment: "Báo lỗi thiết bị",
-        actionAt: "2026-03-18T19:00:00",
-        statusBefore: null,
-        statusAfter: "PENDING_LEVEL_1",
-      },
-    ],
-  },
-};
+export const MOCK_ADJUSTMENT_DETAILS: Record<number, AdjustmentRequestDetail> =
+  {
+    201: {
+      ...(MOCK_ADJUSTMENT_REQUESTS[0] as AdjustmentRequestSummary),
+      attendanceId: null,
+      incidentGeoLog: "10.762622, 106.660172",
+      incidentPhotoUrl: "https://picsum.photos/seed/adj1/400/300",
+      requiresManualReview: true,
+      resolvedAt: null,
+      resolvedByName: null,
+      history: [
+        {
+          id: 1,
+          actionByName: "Nguyễn Văn A",
+          actionByUserId: 1,
+          action: "CREATED",
+          levelActedOn: null,
+          comment: "Gửi yêu cầu điều chỉnh",
+          actionAt: "2026-03-19T18:00:00",
+          statusBefore: null,
+          statusAfter: "PENDING_LEVEL_1",
+        },
+      ],
+    },
+    202: {
+      ...(MOCK_ADJUSTMENT_REQUESTS[1] as AdjustmentRequestSummary),
+      attendanceId: null,
+      incidentGeoLog: "10.762622, 106.660172",
+      incidentPhotoUrl: "https://picsum.photos/seed/adj2/400/300",
+      requiresManualReview: true,
+      resolvedAt: null,
+      resolvedByName: null,
+      history: [
+        {
+          id: 2,
+          actionByName: "Hoàng Văn E",
+          actionByUserId: 5,
+          action: "CREATED",
+          levelActedOn: null,
+          comment: "Báo lỗi thiết bị",
+          actionAt: "2026-03-18T19:00:00",
+          statusBefore: null,
+          statusAfter: "PENDING_LEVEL_1",
+        },
+      ],
+    },
+  };
 
 export const MOCK_ASSET_REPORTS: AdminIncidentListItem[] = [
   {
@@ -149,6 +153,7 @@ export const MOCK_ASSET_REPORTS: AdminIncidentListItem[] = [
     status: "PENDING",
     statusLabel: "Chờ duyệt",
     statusColor: "bg-amber-100 text-amber-700",
+    requesterUserId: 1,
   },
   {
     id: 302,
@@ -161,6 +166,7 @@ export const MOCK_ASSET_REPORTS: AdminIncidentListItem[] = [
     status: "PENDING",
     statusLabel: "Chờ duyệt",
     statusColor: "bg-amber-100 text-amber-700",
+    requesterUserId: 2,
   },
 ];
 
@@ -173,7 +179,8 @@ export const MOCK_ASSET_REPORT_DETAILS: Record<number, IncidentReportDetail> = {
     assetTag: "LAPTOP",
     incidentType: "DAMAGED",
     incidentTypeLabel: "Hư hỏng",
-    description: "Màn hình bị sọc sau khi vô tình để máy trong balo bị ép mạnh.",
+    description:
+      "Màn hình bị sọc sau khi vô tình để máy trong balo bị ép mạnh.",
     attachmentUrl: "https://picsum.photos/seed/asset1/800/600",
     status: "PENDING",
     statusLabel: "Chờ duyệt",
@@ -185,6 +192,7 @@ export const MOCK_ASSET_REPORT_DETAILS: Record<number, IncidentReportDetail> = {
     processNote: null,
     assetCondition: "GOOD",
     assetStatus: "ASSIGNED",
+    requesterUserId: 1,
   },
   302: {
     id: 302,
@@ -206,5 +214,6 @@ export const MOCK_ASSET_REPORT_DETAILS: Record<number, IncidentReportDetail> = {
     processNote: null,
     assetCondition: "GOOD",
     assetStatus: "ASSIGNED",
+    requesterUserId: 2,
   },
 };
