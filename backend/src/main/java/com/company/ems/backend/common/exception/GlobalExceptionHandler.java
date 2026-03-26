@@ -133,7 +133,11 @@ public class GlobalExceptionHandler {
         public ResponseEntity<ApiErrorResponse> handleNotFound(
                 ResourceNotFoundException ex, HttpServletRequest req) {
                 log.warn("[{}] ResourceNotFound path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
-                return responseFromCode(ErrorCode.RESOURCE_NOT_FOUND, req);
+                if (ex.getResource() != null) {
+                        return responseFromCode(ErrorCode.RESOURCE_NOT_FOUND, req, ex.getResource());
+                }
+                return response(ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus(),
+                        ErrorCode.RESOURCE_NOT_FOUND, ex.getMessage(), req);
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -216,6 +220,15 @@ public class GlobalExceptionHandler {
                         ex.getMessage(), req);
         }
 
+        @ExceptionHandler(IllegalStateException.class)
+        public ResponseEntity<ApiErrorResponse> handleIllegalState(
+                IllegalStateException ex, HttpServletRequest req) {
+                log.warn("[{}] IllegalState path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                // Incident already processed, payroll already finalized, etc.
+                return response(HttpStatus.CONFLICT, ErrorCode.RESOURCE_CONFLICT,
+                        ex.getMessage(), req);
+        }
+
         @ExceptionHandler(IllegalArgumentException.class)
         public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
                 IllegalArgumentException ex, HttpServletRequest req) {
@@ -233,6 +246,12 @@ public class GlobalExceptionHandler {
 
         private ResponseEntity<ApiErrorResponse> responseFromCode(ErrorCode code, HttpServletRequest req) {
                 return response(code.getHttpStatus(), code, messageService.get(code), req);
+        }
+
+        private ResponseEntity<ApiErrorResponse> responseFromCode(
+                ErrorCode code, HttpServletRequest req, Object... args) {
+                return response(code.getHttpStatus(), code,
+                        messageService.get(code, args), req);
         }
 
         private ResponseEntity<ApiErrorResponse> response(
