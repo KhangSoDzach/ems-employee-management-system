@@ -323,8 +323,9 @@ export default function CheckinPage() {
         toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
       }
       await fetchAll();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : SYSTEM_MESSAGES.ERROR;
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.message || err.message || SYSTEM_MESSAGES.ERROR;
       toast.error(msg);
     } finally {
       setActionLoading(false);
