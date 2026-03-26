@@ -60,6 +60,7 @@ export const SYSTEM_MESSAGES = {
     MENU_ASSET_INCIDENT: "Quản lý sự cố tài sản",
     MENU_APPROVE_REPORTS: "Duyệt báo cáo sự cố",
     MENU_APPROVE_ASSET_REQUESTS: "Duyệt yêu cầu tài sản",
+    MENU_HR_PAYROLL_PERIOD: "Bảng lương theo kì",
     MENU_ATTENDANCE: "Lịch sử điểm danh",
     MENU_DASHBOARD: "Tổng quan",
     MENU_ANNOUNCEMENTS: "Thông báo nội bộ",
@@ -91,6 +92,7 @@ export const SYSTEM_MESSAGES = {
     OFFICE_LOCATION: "Văn phòng Hà Nội",
     EMP_CODE: "Mã nhân viên",
     MANAGER: "Quản lý",
+    NO_MANAGER: "Chưa có quản lý",
     CONTACT_SECTION: "Thông tin liên hệ & Cá nhân",
     FULL_NAME: "Họ và tên",
     EMAIL: "Email công ty",
@@ -560,6 +562,7 @@ export const SYSTEM_MESSAGES = {
     TXT_SUPPORTED_FILE_TYPES: "Hỗ trợ PDF, DOCX, JPG, PNG (Tối đa 10MB)",
     MSG_DELETE_DESC:
       "Hành động này có thể bị chặn nếu nhân viên có dữ liệu ràng buộc.",
+    TXT_REMOVE: "Xóa",
   },
 
   // Common Toast Messages
@@ -835,6 +838,7 @@ export const SYSTEM_MESSAGES = {
 
     LABEL_FEEDBACK_NOTE: "Ghi chú phản hồi",
     PLACEHOLDER_FEEDBACK: "Nhập phản hồi hoặc lý do xử lý cho nhân viên...",
+    UNIT_REPORT: "báo cáo",
   },
 
   // Asset Incident Management
@@ -910,6 +914,7 @@ export const SYSTEM_MESSAGES = {
     MAX_FILE_SIZE_ERROR: "File quá lớn. Vui lòng chọn file dưới 5MB.",
     UNIT_MB: "MB",
     LABEL_ASSET_TAG: "Asset Tag",
+    LABEL_REPORT_COUNT: "Tổng số báo cáo: ",
   },
 
   // Asset Request (Employee & Admin)
@@ -965,6 +970,7 @@ export const SYSTEM_MESSAGES = {
     EMPTY_DESC: "Bạn chưa gửi yêu cầu cấp phát tài sản nào.",
     EMPTY_ADMIN_DESC: "Không có yêu cầu cấp phát tài sản nào chờ xử lý.",
     MSG_FETCH_ERROR: "Không thể tải danh sách yêu cầu.",
+    UNIT_REQUEST: "yêu cầu",
   },
 
   // Review Adjustment Sheet
@@ -1024,7 +1030,7 @@ export const SYSTEM_MESSAGES = {
     PLACEHOLDER_OTP: "000000",
     BTN_VERIFY: "Xác thực & Đăng nhập",
     BTN_BACK: "Quay lại",
-    TOAST_INVALID: "Mã xác thực không đúng. Vui lòng thử lại.",
+    TOAST_INVALID: "Mã OTP không đúng. Vui lòng thử lại.",
   },
 
   // Profile Reset Password
@@ -1101,6 +1107,7 @@ export const SYSTEM_MESSAGES = {
     METHOD_CAMERA_GPS: "Camera+GPS",
     METHOD_MANUAL: "Thủ công",
     CURRENCY_VND: " VNĐ",
+    DEFAULT_PAGE_SIZE: 5,
   },
 
   // KPI/OKR Management

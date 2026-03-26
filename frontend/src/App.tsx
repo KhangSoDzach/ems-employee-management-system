@@ -6,6 +6,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/sonner";
 import { COMMON_TEXT } from "./constants/ui-texts";
 import { AUTH_ROLES } from "./constants/auth";
+import SalaryHistoryPage from "./features/employee/SalaryHistoryPage";
 
 const LoginPage = lazy(() =>
   import("@/features/auth/LoginPage").then((module) => ({
@@ -44,11 +45,11 @@ const KpiOkrManagement = lazy(
 );
 const MemberList = lazy(() => import("./features/manager/MemberList"));
 const PayrollManagement = lazy(() => import("@/features/hr/PayrollManagement"));
+const HrPayrollPeriodPage = lazy(
+  () => import("@/features/hr/HrPayrollPeriodPage"),
+);
 const AssetReportManagement = lazy(
   () => import("./features/admin/AssetReportManagement"),
-);
-const AssetRequestManagement = lazy(
-  () => import("./features/admin/AssetRequestManagement"),
 );
 const AssetGroupManagement = lazy(
   () => import("./features/manager/AssetGroupManagement"),
@@ -62,6 +63,9 @@ const AnnouncementsPage = lazy(
 );
 const AnnouncementManagementPage = lazy(
   () => import("./features/hr/AnnouncementManagementPage"),
+);
+const AssetRequestManagement = lazy(
+  () => import("./features/admin/AssetRequestManagement"),
 );
 const AuditLogsPage = lazy(() => import("./features/admin/AuditLogsPage"));
 
@@ -144,6 +148,10 @@ function App() {
                   element={<AssetRequestManagement />}
                 />
                 <Route path="/hr-employees" element={<EmployeeManagement />} />
+                <Route
+                  path="/hr-payroll-period"
+                  element={<HrPayrollPeriodPage />}
+                />
               </Route>
 
               {/* Admin only */}
@@ -173,6 +181,7 @@ function App() {
                 <Route path="/attendance" element={<AttendanceHistoryPage />} />
                 <Route path="/adjustment-requests" element={<RequestPage />} />
                 <Route path="/request" element={<RequestPage />} />
+                <Route path="/salary-history" element={<SalaryHistoryPage />} />
               </Route>
 
               {/* Manager + HR */}

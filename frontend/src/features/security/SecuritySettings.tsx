@@ -128,10 +128,9 @@ export default function SidebarSettings() {
         queryKey: ["security", "2fa", "status"],
       });
       toast.success(TEXT.TWO_FACTOR.MSG_ENABLE_SUCCESS);
-    } catch (error) {
-      const message = (error as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      toast.error(message ?? TEXT.TWO_FACTOR.ALERT_DISABLE_DESC);
+    } catch (_) {
+      toast.dismiss();
+      toast.error(TEXT.TWO_FACTOR.MSG_INVALID_OTP);
     }
   };
 
@@ -591,18 +590,79 @@ export default function SidebarSettings() {
                           type="text"
                           maxLength={1}
                           className="w-8 h-10 text-center border-2 rounded-lg font-bold text-lg focus:border-primary outline-none"
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (i < 5 && val) {
+                          value={otpValue[i] || ""}
+                          onKeyDown={(e) => {
+                            if (e.key === "Backspace") {
+                              e.preventDefault();
+                              const newOtpArr = otpValue.split("");
+                              if (otpValue[i]) {
+                                // Clear current
+                                newOtpArr[i] = "";
+                                setOtpValue(newOtpArr.join(""));
+                              } else if (i > 0) {
+                                // Move back and clear previous
+                                newOtpArr[i - 1] = "";
+                                setOtpValue(newOtpArr.join(""));
+                                (
+                                  e.currentTarget
+                                    .previousSibling as HTMLInputElement
+                                )?.focus();
+                              }
+                            } else if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (otpValue.length === 6) {
+                                handleVerifyOTP();
+                              }
+                            } else if (e.key === "ArrowLeft" && i > 0) {
                               (
-                                e.target.nextSibling as HTMLInputElement
+                                e.currentTarget
+                                  .previousSibling as HTMLInputElement
+                              )?.focus();
+                            } else if (e.key === "ArrowRight" && i < 5) {
+                              (
+                                e.currentTarget.nextSibling as HTMLInputElement
                               )?.focus();
                             }
-                            setOtpValue((prev) => {
-                              const arr = prev.split("");
-                              arr[i] = val;
-                              return arr.join("");
-                            });
+                          }}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "");
+                            if (val) {
+                              const char = val.charAt(val.length - 1);
+                              const newOtpArr = otpValue
+                                .padEnd(6, " ")
+                                .split("");
+                              newOtpArr[i] = char;
+                              const finalOtp = newOtpArr
+                                .join("")
+                                .replace(/\s/g, "");
+                              setOtpValue(finalOtp);
+
+                              if (i < 5) {
+                                (
+                                  e.currentTarget
+                                    .nextSibling as HTMLInputElement
+                                )?.focus();
+                              }
+
+                              // Auto-submit if complete
+                              if (finalOtp.length === 6) {
+                                setTimeout(() => handleVerifyOTP(), 10);
+                              }
+                            }
+                          }}
+                          onPaste={(e) => {
+                            e.preventDefault();
+                            const pasteData = e.clipboardData
+                              .getData("text")
+                              .replace(/\D/g, "")
+                              .slice(0, 6);
+                            if (pasteData) {
+                              setOtpValue(pasteData);
+                              // Auto submit if 6 digits are pasted
+                              if (pasteData.length === 6) {
+                                setTimeout(() => handleVerifyOTP(), 0);
+                              }
+                            }
                           }}
                         />
                       ))}

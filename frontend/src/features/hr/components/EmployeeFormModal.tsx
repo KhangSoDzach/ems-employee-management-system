@@ -210,6 +210,10 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
       newErrors.bankAccountNumber = FORM_VALIDATION_MESSAGES.BANK_ACC_FORMAT;
     }
 
+    if (!isManagerPosition && !formData.reportingManagerId) {
+      newErrors.reportingManagerId = FORM_VALIDATION_MESSAGES.MANAGER_REQUIRED;
+    }
+
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
       toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);

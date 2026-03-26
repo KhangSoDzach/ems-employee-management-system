@@ -18,13 +18,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import {
   Search,
-  Calendar,
-  Download,
   SlidersHorizontal,
+  X,
   Loader2,
   ChevronLeft,
   ChevronRight,
-  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -120,7 +118,7 @@ function mapHistoryAction(action: string): AuditEntry["action"] {
   return "CREATED";
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 const ApproveAdjustmentRequest: React.FC = () => {
   const [openReview, setOpenReview] = useState(false);
@@ -132,31 +130,56 @@ const ApproveAdjustmentRequest: React.FC = () => {
   const [page, setPage] = useState(0);
 
   const [requests, setRequests] = useState<AdjustmentRequest[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // ── Fetch pending adjustments ──────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      // Fetch a large batch to support client-side filtering/pagination
       const res = await attendanceService.getPendingAdjustments({
-        page,
-        size: PAGE_SIZE,
+        page: 0,
+        size: 1000,
       });
       setRequests(res.content.map(mapToFrontend));
-      setTotalElements(res.totalElements);
-      setTotalPages(res.totalPages);
     } catch {
       toast.error(SYSTEM_MESSAGES.MGMT_ADJ.MSG_FETCH_ERROR);
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // ── Filter & Paginate ──────────────────────────────────────────────────────
+  const filtered = requests.filter((row) => {
+    const actor = row.auditTrail[0]?.actor?.toLowerCase() || "";
+    const matchesSearch =
+      searchQuery === "" ||
+      actor.includes(searchQuery.toLowerCase()) ||
+      row.id.toString().includes(searchQuery);
+
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "PENDING"
+        ? row.status === "PENDING"
+        : row.status === statusFilter);
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalElementsFiltered = filtered.length;
+  const totalPagesFiltered = Math.ceil(totalElementsFiltered / PAGE_SIZE);
+  const paginatedData = filtered.slice(
+    page * PAGE_SIZE,
+    (page + 1) * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, statusFilter]);
 
   // ── Fetch details when opening review sheet ──────────────────────────────
   useEffect(() => {
@@ -190,18 +213,6 @@ const ApproveAdjustmentRequest: React.FC = () => {
     };
     fetchDetail();
   }, [detailRequest]);
-
-  // ── Client-side filter ─────────────────────────────────────────────────────
-  const filtered = requests.filter((r) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      (statusFilter === "ALL" || r.status === statusFilter) &&
-      (q === "" ||
-        r.id.includes(q) ||
-        r.reason.toLowerCase().includes(q) ||
-        r.auditTrail[0]?.actor?.toLowerCase().includes(q))
-    );
-  });
 
   const pendingCount = requests.filter((r) => r.status === "PENDING").length;
 
@@ -393,7 +404,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                       </TableCell>
                     </TableRow>
-                  ) : filtered.length === 0 ? (
+                  ) : paginatedData.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={5}
@@ -403,7 +414,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filtered.map((row) => (
+                    paginatedData.map((row) => (
                       <TableRow
                         key={row.id}
                         className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
@@ -486,29 +497,32 @@ const ApproveAdjustmentRequest: React.FC = () => {
             {/* Footer */}
             <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_TOTAL} {totalElements}{" "}
+                {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_TOTAL} {totalElementsFiltered}{" "}
                 {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_UNIT}
               </span>
-              {totalPages > 1 && (
+              {totalPagesFiltered > 1 && (
                 <div className="flex items-center gap-2">
                   <Button
                     size="icon"
                     variant="outline"
                     className="h-7 w-7"
                     disabled={page === 0}
-                    onClick={() => setPage((p) => p - 1)}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <span>
-                    {page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH} {totalPages}
+                  <span className="text-sm font-medium">
+                    {page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH}{" "}
+                    {totalPagesFiltered}
                   </span>
                   <Button
                     size="icon"
                     variant="outline"
                     className="h-7 w-7"
-                    disabled={page >= totalPages - 1}
-                    onClick={() => setPage((p) => p + 1)}
+                    disabled={page >= totalPagesFiltered - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPagesFiltered - 1, p + 1))
+                    }
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>

@@ -64,7 +64,7 @@ function roleColor(positionTitle: string | null): string {
   return "bg-gray-100 text-gray-700 hover:bg-gray-100";
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 export default function MemberList() {
   const t = SYSTEM_MESSAGES.MEMBER_LIST;
@@ -72,6 +72,11 @@ export default function MemberList() {
   const { user } = useAuth();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [sheetMode, setSheetMode] = useState<"view" | "edit">("view");
+  // Store submitted scores per employee so view mode shows latest results
+  const [savedReviews, setSavedReviews] = useState<Record<number, {
+    scores: Record<string, number>;
+    comment: string;
+  }>>({});
   const [search, setSearch] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState(0);
@@ -84,13 +89,13 @@ export default function MemberList() {
     // we accept a brief delay by setting debouncedSearch only when the value changes.
     clearTimeout(
       (
-        window as Window &
-          typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+        globalThis as Window &
+        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
       )._searchTimer,
     );
     (
-      window as Window &
-        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+      globalThis as Window &
+      typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
     )._searchTimer = setTimeout(() => {
       setDebouncedSearch(value);
     }, 400);
@@ -364,6 +369,8 @@ export default function MemberList() {
           member={selectedMember}
           open={!!selectedMember}
           mode={sheetMode}
+          initialScores={selectedMember ? savedReviews[selectedMember.id]?.scores : undefined}
+          initialComment={selectedMember ? savedReviews[selectedMember.id]?.comment : undefined}
           onOpenChange={(open) => {
             if (!open) {
               setSelectedMember(null);

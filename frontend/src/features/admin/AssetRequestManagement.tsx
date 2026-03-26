@@ -7,6 +7,8 @@ import {
   Search,
   XCircle,
   FileCheck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -58,7 +60,9 @@ export function AssetRequestManagement() {
   // Filters
   const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const size = 10;
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
   // Stats
   const [stats, setStats] = useState({
@@ -82,8 +86,8 @@ export function AssetRequestManagement() {
       const response = await assetService.getAllAssetRequests({
         keyword,
         status: statusFilter !== "ALL" ? statusFilter : undefined,
-        page: 0,
-        size,
+        page,
+        size: PAGE_SIZE,
       });
       setRequests(response.content);
 
@@ -106,12 +110,17 @@ export function AssetRequestManagement() {
         rejected:
           statusFilter === "REJECTED" ? response.totalElements : rejected,
       });
+      setTotalPages(response.totalPages);
     } catch (_error) {
       toast.error(SYSTEM_MESSAGES.ASSET_REQUEST.MSG_FETCH_ERROR);
     } finally {
       setLoading(false);
     }
-  }, [keyword, statusFilter, size]);
+  }, [keyword, statusFilter, page, PAGE_SIZE]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [keyword, statusFilter]);
 
   useEffect(() => {
     fetchRequests();
@@ -345,7 +354,42 @@ export function AssetRequestManagement() {
                 </TableBody>
               </Table>
             </div>
-            {/* Pagination placeholder if needed */}
+            {/* Pagination */}
+            <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {stats.total > 0 ? page * PAGE_SIZE + 1 : 0}-
+                {Math.min((page + 1) * PAGE_SIZE, stats.total)}{" "}
+                {SYSTEM_MESSAGES.SYMBOLS.SLASH} {stats.total}{" "}
+                {SYSTEM_MESSAGES.ASSET_REQUEST.UNIT_REQUEST}
+              </span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="font-medium px-1">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                    disabled={page >= totalPages - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </SidebarInset>

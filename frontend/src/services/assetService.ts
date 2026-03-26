@@ -104,64 +104,6 @@ export interface ReturnPayload {
   readyToReuse: boolean;
   notes?: string;
 }
-// --- ASSET REQUEST MODELS ---
-export interface AssetRequestSubmit {
-  assetType: string;
-  reason: string;
-  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
-}
-
-export interface AssetRequestRow {
-  id: number;
-  requestId: string;
-  assetType: string;
-  priority: string;
-  priorityLabel: string;
-  priorityColor: string;
-  dateRequested: string;
-  status: string;
-  statusLabel: string;
-  statusColor: string;
-}
-
-export interface AssetRequestDetail {
-  id: number;
-  requestId: string;
-  assetType: string;
-  priority: string;
-  priorityLabel: string;
-  priorityColor: string;
-  reason: string;
-  status: string;
-  statusLabel: string;
-  statusColor: string;
-  requestedBy: string;
-  requestedAt: string;
-  reviewedBy?: string;
-  reviewedAt?: string;
-  reviewNote?: string;
-  requesterUserId?: number;
-}
-
-export interface AssetRequestAdminItem {
-  id: number;
-  requestId: string;
-  employeeName: string;
-  assetType: string;
-  priority: string;
-  priorityLabel: string;
-  priorityColor: string;
-  requestedAt: string;
-  status: string;
-  statusLabel: string;
-  statusColor: string;
-  requesterUserId?: number;
-}
-
-export interface AssetRequestProcess {
-  note?: string;
-}
-
 export interface MyAsset {
   id: number;
   name: string;
@@ -200,7 +142,7 @@ export interface IncidentReportDetail {
   processNote: string | null;
   assetCondition: string;
   assetStatus: string;
-  requesterUserId?: number;
+  requesterUserId: number;
 }
 export interface AdminIncidentListItem {
   id: number;
@@ -213,7 +155,7 @@ export interface AdminIncidentListItem {
   status: string;
   statusLabel: string;
   statusColor: string;
-  requesterUserId?: number;
+  requesterUserId: number;
 }
 
 interface ApiResponse<T> {
@@ -276,19 +218,21 @@ export const assetService = {
     ),
 
   // Admin / HR APIs
-  getAllReports: (params: {
-    status?: string;
-    employeeId?: number;
-    fromDate?: string;
-    toDate?: string;
-    keyword?: string;
-    page?: number;
-    size?: number;
-  }): Promise<PageResponse<AdminIncidentListItem>> =>
+  getAllReports: (
+    params: {
+      status?: string;
+      employeeId?: number;
+      fromDate?: string;
+      toDate?: string;
+      keyword?: string;
+      page?: number;
+      size?: number;
+    },
+    signal?: AbortSignal,
+  ): Promise<PageResponse<AdminIncidentListItem>> =>
     wrap<ApiResponse<PageResponse<AdminIncidentListItem>>>(
-      api.get("/admin/asset-reports", { params }),
+      api.get("/admin/asset-reports", { params, signal }),
     ).then((res) => res.data),
-
   getAdminReportDetail: (id: number): Promise<IncidentReportDetail> =>
     wrap<ApiResponse<IncidentReportDetail>>(
       api.get(`/admin/asset-reports/${id}`),
@@ -391,84 +335,4 @@ export const assetService = {
     wrap<ApiResponse<PageResponse<EmployeeOption>>>(
       api.get("/employees", { params: { search: keyword, page, size } }),
     ).then((res) => res.data),
-  // --- ASSET REQUEST ENDPOINTS (EMPLOYEE) ---
-
-  async submitAssetRequest(
-    data: AssetRequestSubmit,
-  ): Promise<AssetRequestDetail> {
-    const response = await api.post("/my/asset-requests", data);
-    return response.data;
-  },
-
-  async getMyAssetRequests(
-    page: number = 0,
-    size: number = 10,
-  ): Promise<{
-    content: AssetRequestRow[];
-    totalElements: number;
-    totalPages: number;
-  }> {
-    const response = await api.get("/my/asset-requests", {
-      params: { page, size },
-    });
-    return response.data;
-  },
-
-  async getMyAssetRequestDetail(id: number): Promise<AssetRequestDetail> {
-    const response = await api.get(`/my/asset-requests/${id}`);
-    return response.data;
-  },
-
-  async cancelAssetRequest(id: number): Promise<AssetRequestDetail> {
-    const response = await api.post(`/my/asset-requests/${id}/cancel`);
-    return response.data;
-  },
-
-  // --- ASSET REQUEST ENDPOINTS (ADMIN/HR) ---
-
-  async getAllAssetRequests(
-    params: {
-      status?: string;
-      employeeId?: number;
-      fromDate?: string;
-      toDate?: string;
-      keyword?: string;
-      page?: number;
-      size?: number;
-    } = {},
-  ): Promise<{
-    content: AssetRequestAdminItem[];
-    totalElements: number;
-    totalPages: number;
-  }> {
-    const response = await api.get("/admin/asset-requests", { params });
-    return response.data;
-  },
-
-  async getAssetRequestDetailAdmin(id: number): Promise<AssetRequestDetail> {
-    const response = await api.get(`/admin/asset-requests/${id}`);
-    return response.data;
-  },
-
-  async approveAssetRequest(
-    id: number,
-    data?: AssetRequestProcess,
-  ): Promise<AssetRequestDetail> {
-    const response = await api.post(
-      `/admin/asset-requests/${id}/approve`,
-      data || {},
-    );
-    return response.data;
-  },
-
-  async rejectAssetRequest(
-    id: number,
-    data?: AssetRequestProcess,
-  ): Promise<AssetRequestDetail> {
-    const response = await api.post(
-      `/admin/asset-requests/${id}/reject`,
-      data || {},
-    );
-    return response.data;
-  },
 };

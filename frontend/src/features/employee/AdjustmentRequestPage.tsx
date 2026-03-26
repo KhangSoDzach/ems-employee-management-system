@@ -182,7 +182,7 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
   </TableRow>
 );
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 /* ══════════════ MAIN PAGE ══════════════ */
 export default function AdjustmentRequestPage() {
@@ -597,7 +597,9 @@ export default function AdjustmentRequestPage() {
             {/* Footer */}
             <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                {SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_TOTAL} {totalElements}{" "}
+                {totalElements > 0 ? page * PAGE_SIZE + 1 : 0}-
+                {Math.min((page + 1) * PAGE_SIZE, totalElements)}{" "}
+                {SYSTEM_MESSAGES.SYMBOLS.SLASH} {totalElements}{" "}
                 {SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_UNIT}
               </span>
               {totalPages > 1 && (
@@ -607,21 +609,21 @@ export default function AdjustmentRequestPage() {
                     variant="outline"
                     className="h-7 w-7"
                     disabled={page === 0}
-                    onClick={() => setPage((p) => p - 1)}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <span>
-                    {page + 1}
-                    {SYSTEM_MESSAGES.SYMBOLS.SLASH}
-                    {totalPages}
+                  <span className="font-medium px-1">
+                    {page + 1} / {totalPages}
                   </span>
                   <Button
                     size="icon"
                     variant="outline"
                     className="h-7 w-7"
                     disabled={page >= totalPages - 1}
-                    onClick={() => setPage((p) => p + 1)}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>

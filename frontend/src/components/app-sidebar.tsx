@@ -187,6 +187,11 @@ export function AppSidebar({
 
     if (role === "manager") {
       commonSection.items.push({
+        title: SYSTEM_MESSAGES.SIDEBAR.MENU_SALARY_HISTORY,
+        url: "/salary-history",
+        icon: CreditCard,
+      });
+      commonSection.items.push({
         title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
         url: "/my-assets",
         icon: Package,
@@ -230,6 +235,11 @@ export function AppSidebar({
 
     if (role === "hr") {
       commonSection.items.push({
+        title: SYSTEM_MESSAGES.SIDEBAR.MENU_SALARY_HISTORY,
+        url: "/salary-history",
+        icon: CreditCard,
+      });
+      commonSection.items.push({
         title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
         url: "/my-assets",
         icon: Package,
@@ -266,6 +276,11 @@ export function AppSidebar({
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
           url: "/assets",
           icon: Package,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_HR_PAYROLL_PERIOD,
+          url: "/hr-payroll-period",
+          icon: CreditCard,
         },
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,

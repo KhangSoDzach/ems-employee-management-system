@@ -19,3 +19,5 @@ CI_SETUP_COMPLETE.md
 /docs/postman
 /node_modules
 /backend/uploads
+/.idea
+/.idea

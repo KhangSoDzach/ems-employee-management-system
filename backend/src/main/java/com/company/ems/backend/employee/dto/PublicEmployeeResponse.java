@@ -40,6 +40,8 @@ public class PublicEmployeeResponse {
     private Double attendancePercentage;
 
     private String avatarUrl;
+    private Long reportingManagerId;
+    private String reportingManagerName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

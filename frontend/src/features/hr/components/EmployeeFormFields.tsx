@@ -204,6 +204,9 @@ export default function EmployeeFormFields(props: Props) {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">
                 {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SOCIAL_WARRANTY_NUMBER}
+                <span className="text-red-500">
+                  {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
+                </span>
               </label>
               <input
                 name="socialSecurityNumber"
@@ -357,7 +360,7 @@ export default function EmployeeFormFields(props: Props) {
                     }
                     className="text-red-500 hover:text-red-700 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-lg text-[10px] uppercase tracking-wider font-bold transition-colors"
                   >
-                    Xóa
+                    {SYSTEM_MESSAGES.EMPLOYEE.TXT_REMOVE}
                   </button>
                 </div>
               ))}
@@ -575,9 +578,13 @@ export default function EmployeeFormFields(props: Props) {
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1.5">
                   {SYSTEM_MESSAGES.EMPLOYEE.LABEL_REPORTING_MANAGER}
-                  {!formData.positionId && (
+                  {!formData.positionId ? (
                     <span className="text-[10px] font-normal text-gray-400 italic normal-case">
                       {SYSTEM_MESSAGES.EMPLOYEE.HINT_CHOOSE_POSITION}
+                    </span>
+                  ) : (
+                    <span className="text-red-500">
+                      {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
                     </span>
                   )}
                 </label>
@@ -586,7 +593,10 @@ export default function EmployeeFormFields(props: Props) {
                   value={formData.reportingManagerId ?? ""}
                   onChange={handleChange}
                   disabled={!formData.positionId}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-medium bg-white dark:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:ring-2 focus:ring-primary/20"
+                  className={
+                    selectClass("reportingManagerId") +
+                    " disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:ring-2 focus:ring-primary/20"
+                  }
                 >
                   <option value="">
                     {SYSTEM_MESSAGES.EMPLOYEE.OPTION_NO_MANAGER}
@@ -597,6 +607,11 @@ export default function EmployeeFormFields(props: Props) {
                     </option>
                   ))}
                 </select>
+                {errors.reportingManagerId && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.reportingManagerId}
+                  </p>
+                )}
                 {managers.length === 0 && formData.positionId > 0 && (
                   <p className="text-[10px] text-amber-500 italic mt-1">
                     {SYSTEM_MESSAGES.EMPLOYEE.MSG_NO_MANAGERS}
