@@ -37,7 +37,7 @@ import {
   type AuditLogItem,
 } from "@/services/auditLogService";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 const ACTION_OPTIONS: Array<{ value: AuditActionType; label: string }> = [
   { value: "LOGIN_SUCCESS", label: "Đăng nhập thành công" },
@@ -89,7 +89,7 @@ function maskIdentifier(identifier: string | null): string {
     const parts = identifier.split("@");
     const left = parts[0] || "";
     const right = parts.length > 1 ? parts.slice(1).join("@") : "";
-    
+
     if (left.length <= 2) {
       return `***@${right}`;
     }

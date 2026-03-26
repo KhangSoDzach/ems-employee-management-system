@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  AlertTriangle,
   CheckCircle2,
   XCircle,
   Search,
   Calendar,
   Package,
-  FileText,
   Filter,
   Eye,
   MoreHorizontal,
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
+  Clock,
+  FileCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,6 +30,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   assetService,
   AdminIncidentListItem,
@@ -51,7 +58,7 @@ export default function AssetReportManagement() {
   const [reports, setReports] = useState<AdminIncidentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
-  const [status] = useState<string>("");
+  const [status, setStatus] = useState<string>("ALL");
 
   const [selectedReport, setSelectedReport] =
     useState<IncidentReportDetail | null>(null);
@@ -74,7 +81,7 @@ export default function AssetReportManagement() {
     try {
       const data = await assetService.getAllReports({
         keyword: keyword || undefined,
-        status: status || undefined,
+        status: status === "ALL" ? undefined : status,
         page: 0,
         size: 1000,
       });
@@ -129,99 +136,139 @@ export default function AssetReportManagement() {
     }
   };
 
+  const getReportStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.PENDING;
+      case "APPROVED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.APPROVED;
+      case "REJECTED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.REJECTED;
+      default:
+        return status;
+    }
+  };
+
+  const getIssueTypeLabel = (type: string) => {
+    switch (type) {
+      case "DAMAGED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.TXT_DAMAGED;
+      case "LOST":
+        return SYSTEM_MESSAGES.ASSET_REPORT.TXT_LOST;
+      default:
+        return type;
+    }
+  };
+
   return (
     <SidebarProvider>
       <AppSidebar role={effectiveRole} variant="inset" />
       <SidebarInset>
         <SiteHeader />
 
-        <main className="page-layout-wrapper">
+        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background">
           {/* ── Page Header ── */}
-          <div className="page-header mb-6">
-            <div className="space-y-1">
-              <h1 className="page-heading">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {SYSTEM_MESSAGES.ASSET_REPORT.TITLE}
               </h1>
-              <p className="text-muted-foreground text-sm font-medium">
+              <p className="text-sm text-muted-foreground mt-1">
                 {SYSTEM_MESSAGES.ASSET_REPORT.DESC}
               </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="relative group w-full md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <Input
-                  placeholder={SYSTEM_MESSAGES.ASSET_REPORT.SEARCH_PLACEHOLDER}
-                  className="pl-9 h-10 w-full bg-white dark:bg-slate-900 border-slate-200 shadow-sm rounded-xl text-sm font-medium"
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                />
-              </div>
-              <Button
-                variant="outline"
-                className="h-10 w-10 p-0 rounded-xl bg-white dark:bg-slate-900 border-slate-200 shadow-sm hover:bg-slate-50"
-              >
-                <Filter className="w-4 h-4 text-slate-600" />
-              </Button>
             </div>
           </div>
 
           {/* ── Dashboard Stats ── */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            {[
-              {
-                label: SYSTEM_MESSAGES.ASSET_REPORT.STATS.TOTAL,
-                value: reports.length,
-                icon: FileText,
-                color: "blue",
-              },
-              {
-                label: SYSTEM_MESSAGES.ASSET_REPORT.STATS.PENDING,
-                value: reports.filter((r) => r.status === "PENDING").length,
-                icon: AlertTriangle,
-                color: "amber",
-              },
-              {
-                label: SYSTEM_MESSAGES.ASSET_REPORT.STATS.APPROVED,
-                value: reports.filter((r) => r.status === "APPROVED").length,
-                icon: CheckCircle2,
-                color: "emerald",
-              },
-              {
-                label: SYSTEM_MESSAGES.ASSET_REPORT.STATS.REJECTED,
-                value: reports.filter((r) => r.status === "REJECTED").length,
-                icon: XCircle,
-                color: "rose",
-              },
-            ].map((stat, i) => (
-              <div
-                key={i}
-                className="stat-card-default flex items-center justify-between group transition-all hover:shadow-md"
-              >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex justify-between items-center">
                 <div>
-                  <p className="stat-label-default">{stat.label}</p>
-                  <p className="stat-value-lg text-slate-900 dark:text-slate-100">
-                    {stat.value}
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REPORT.STATS.TOTAL}
+                  </p>
+                  <p className="text-2xl font-bold mt-1 text-foreground">
+                    {reports.length}
                   </p>
                 </div>
-                <div
-                  className={`w-12 h-12 rounded-xl bg-${stat.color}-50 dark:bg-${stat.color}-900/20 flex items-center justify-center group-hover:scale-110 transition-transform`}
-                >
-                  <stat.icon
-                    className={`w-6 h-6 text-${stat.color}-600 dark:text-${stat.color}-400`}
-                  />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                  <FileCheck className="w-5 h-5" />
                 </div>
               </div>
-            ))}
+            </div>
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REPORT.STATS.PENDING}
+                  </p>
+                  <p className="text-2xl font-bold mt-1 text-yellow-600">
+                    {reports.filter((r) => r.status === "PENDING").length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100 text-yellow-600">
+                  <Clock className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REPORT.STATS.APPROVED}
+                  </p>
+                  <p className="text-2xl font-bold mt-1 text-emerald-600">
+                    {reports.filter((r) => r.status === "APPROVED").length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REPORT.STATS.REJECTED}
+                  </p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">
+                    {reports.filter((r) => r.status === "REJECTED").length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-600">
+                  <XCircle className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* ── Reports List ── */}
-          <div className="data-table-container">
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-              <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-                {SYSTEM_MESSAGES.ASSET_REPORT.INCOMING_REPORTS}
-              </h3>
+          <div className="bg-background border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-border bg-muted/10 flex items-center justify-between gap-4">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={SYSTEM_MESSAGES.ASSET_REPORT.SEARCH_PLACEHOLDER}
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  className="pl-9 h-9 bg-white"
+                  onKeyDown={(e) => e.key === "Enter" && fetchReports()}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground hidden sm:block" />
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="w-[140px] h-9 bg-white">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả</SelectItem>
+                    <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                    <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+                    <SelectItem value="REJECTED">Từ chối</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <Table className="data-table">
@@ -289,9 +336,9 @@ export default function AssetReportManagement() {
                       <TableCell className="data-table-cell">
                         <Badge
                           variant="outline"
-                          className="border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-slate-50"
+                          className="border-slate-200 text-slate-600 font-bold text-[10px] tracking-widest px-2.5 py-0.5 rounded-full bg-slate-50"
                         >
-                          {report.issueTypeLabel}
+                          {getIssueTypeLabel(report.issueType)}
                         </Badge>
                       </TableCell>
                       <TableCell className="data-table-cell">
@@ -303,9 +350,9 @@ export default function AssetReportManagement() {
                       <TableCell className="data-table-cell text-center">
                         <div className="flex justify-center">
                           <Badge
-                            className={`status-badge-pill ${report.statusColor} border-none shadow-sm`}
+                            className={`status-badge-pill ${report.statusColor} border-none shadow-sm normal-case`}
                           >
-                            {report.statusLabel}
+                            {getReportStatusLabel(report.status)}
                           </Badge>
                         </div>
                       </TableCell>
@@ -356,8 +403,8 @@ export default function AssetReportManagement() {
             </Table>
 
             {/* Pagination footer */}
-            <div className="px-8 py-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500 bg-slate-50/20 font-bold">
-              <span className="uppercase tracking-widest text-[10px]">
+            <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground font-medium">
+              <span>
                 {reports.length > 0 ? page * PAGE_SIZE + 1 : 0}-
                 {Math.min((page + 1) * PAGE_SIZE, reports.length)}{" "}
                 {SYSTEM_MESSAGES.SYMBOLS.SLASH} {reports.length}{" "}
@@ -368,25 +415,25 @@ export default function AssetReportManagement() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 rounded-xl border-slate-200 bg-white shadow-sm"
+                    className="h-7 w-7"
                     disabled={page === 0}
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                   >
-                    <ChevronLeft className="w-4 h-4 text-slate-600" />
+                    <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <span className="px-2">
+                  <span className="font-medium px-1">
                     {page + 1} / {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 rounded-xl border-slate-200 bg-white shadow-sm"
+                    className="h-7 w-7"
                     disabled={page >= totalPages - 1}
                     onClick={() =>
                       setPage((p) => Math.min(totalPages - 1, p + 1))
                     }
                   >
-                    <ChevronRight className="w-4 h-4 text-slate-600" />
+                    <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               )}

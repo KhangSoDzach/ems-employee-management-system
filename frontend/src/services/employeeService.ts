@@ -21,6 +21,8 @@ export interface PublicEmployeeProfile {
   sickLeaveBalance?: number;
   attendancePercentage?: number;
   avatarUrl: string | null;
+  reportingManagerId: number | null;
+  reportingManagerName: string | null;
   createdAt: string;
   updatedAt: string;
 }

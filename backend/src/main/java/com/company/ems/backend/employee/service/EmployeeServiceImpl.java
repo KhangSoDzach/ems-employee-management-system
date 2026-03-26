@@ -394,6 +394,10 @@ public class EmployeeServiceImpl implements EmployeeService {
                 if (employee.getSickLeaveBalance() != null) {
                         response.setSickLeaveBalance(employee.getSickLeaveBalance());
                 }
+                if (employee.getReportingManager() != null) {
+                        response.setReportingManagerId(employee.getReportingManager().getId());
+                        response.setReportingManagerName(employee.getReportingManager().getFullName());
+                }
 
                 LocalDate today = LocalDate.now();
                 LocalDate firstDayOfMonth = today.with(TemporalAdjusters.firstDayOfMonth());

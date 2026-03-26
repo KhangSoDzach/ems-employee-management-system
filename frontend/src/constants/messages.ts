@@ -91,6 +91,7 @@ export const SYSTEM_MESSAGES = {
     OFFICE_LOCATION: "Văn phòng Hà Nội",
     EMP_CODE: "Mã nhân viên",
     MANAGER: "Quản lý",
+    NO_MANAGER: "Chưa có quản lý",
     CONTACT_SECTION: "Thông tin liên hệ & Cá nhân",
     FULL_NAME: "Họ và tên",
     EMAIL: "Email công ty",
@@ -560,6 +561,7 @@ export const SYSTEM_MESSAGES = {
     TXT_SUPPORTED_FILE_TYPES: "Hỗ trợ PDF, DOCX, JPG, PNG (Tối đa 10MB)",
     MSG_DELETE_DESC:
       "Hành động này có thể bị chặn nếu nhân viên có dữ liệu ràng buộc.",
+    TXT_REMOVE: "Xóa",
   },
 
   // Common Toast Messages
@@ -1027,7 +1029,7 @@ export const SYSTEM_MESSAGES = {
     PLACEHOLDER_OTP: "000000",
     BTN_VERIFY: "Xác thực & Đăng nhập",
     BTN_BACK: "Quay lại",
-    TOAST_INVALID: "Mã xác thực không đúng. Vui lòng thử lại.",
+    TOAST_INVALID: "Mã OTP không đúng. Vui lòng thử lại.",
   },
 
   // Profile Reset Password
