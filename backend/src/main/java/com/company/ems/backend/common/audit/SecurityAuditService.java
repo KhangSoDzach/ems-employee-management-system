@@ -12,6 +12,7 @@ import java.time.Instant;
 
 import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.dto.RequestContext;
+import com.company.ems.backend.auth.security.CustomUserPrincipal;
 
 @Slf4j
 @Service
@@ -38,7 +39,7 @@ public class SecurityAuditService {
 
         auditLogService.logAuthEvent(
                 AuthActionType.TOKEN_EXPIRED,
-                username(), username(), null, "JWT", "FAILED",
+                username(), null, fullName(), "JWT", "FAILED",
                 toCtx(request));
     }
 
@@ -49,7 +50,7 @@ public class SecurityAuditService {
 
         auditLogService.logAuthEvent(
                 AuthActionType.TOKEN_INVALID,
-                username(), username(), null, "JWT", "FAILED",
+                username(), null, fullName(), "JWT", "FAILED",
                 toCtx(request));
     }
 
@@ -60,7 +61,7 @@ public class SecurityAuditService {
 
         auditLogService.logAuthEvent(
                 AuthActionType.ACCESS_DENIED,
-                username(), null, null, "JWT", "FAILED",
+                username(), null, fullName(), "JWT", "FAILED",
                 toCtx(request));
     }
 
@@ -78,7 +79,15 @@ public class SecurityAuditService {
 
     private String username() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return (auth != null && auth.isAuthenticated()) ? auth.getName() : "anonymous";
+        return (auth != null && auth.isAuthenticated()) ? auth.getName() : "ANONYMOUS";
+    }
+
+    private String fullName() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserPrincipal principal) {
+            return principal.getFullName();
+        }
+        return null;
     }
 
     private String traceId() {

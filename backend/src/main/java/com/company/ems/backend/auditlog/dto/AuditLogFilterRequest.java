@@ -2,45 +2,51 @@ package com.company.ems.backend.auditlog.dto;
 
 import java.time.LocalDateTime;
 
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditAction;
+import com.company.ems.backend.auditlog.enums.ResourceType;
 
 import lombok.Builder;
 import lombok.Value;
 
 /**
- * Filter criteria for querying the Audit Log.
- * All fields are optional – null means "no filter".
+ * Filter criteria for querying the standardized Audit Log.
+ * Updated to use specialized ResourceType enum.
  */
 @Value
 @Builder
 public class AuditLogFilterRequest {
 
-    /** e.g. "AUTHENTICATION" – defaults to AUTHENTICATION on the controller if absent. */
-    String entityType;
+    /** Domain resource (e.g. AUTH, EMPLOYEE). */
+    ResourceType resource;
 
-    /** Specific action to filter on. */
-    AuthActionType actionType;
+    /** Specific action. */
+    AuditAction action;
 
-    /** Partial match on actor (user_id). */
+    /** Partial match on actor username. */
     String actor;
 
-    /** Partial match on identifier_attempted (email / username). */
-    String identifierAttempted;
+    /** Partial match on target identifier (full name). */
+    String identifier;
 
     /** Exact IP address filter. */
     String ipAddress;
 
-    /** Start of time range (inclusive). */
+    /**
+     * Whether to show anonymous logs (e.g. LOGIN_FAILED).
+     * Hidden by default in UI per production requirements.
+     */
+    @Builder.Default
+    boolean showAnonymous = false;
+
+    /** Start of time range. */
     LocalDateTime from;
 
-    /** End of time range (inclusive). */
+    /** End of time range. */
     LocalDateTime to;
 
-    /** Page number (0-based). */
     @Builder.Default
     int page = 0;
 
-    /** Page size. */
     @Builder.Default
     int size = 20;
 }

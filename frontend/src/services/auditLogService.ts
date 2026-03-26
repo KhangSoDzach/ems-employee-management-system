@@ -14,28 +14,43 @@ export interface PageResponse<T> {
   totalPages: number;
 }
 
-export type AuditActionType =
-  | "LOGIN_SUCCESS"
-  | "PASSWORD_CHANGED"
+export type AuditResource =
+  | "AUTH"
+  | "EMPLOYEE"
+  | "PAYROLL"
+  | "LEAVE"
+  | "ATTENDANCE"
+  | "ASSET"
+  | "SYSTEM";
+
+export type AuditCategory =
+  | "AUTHENTICATION"
+  | "AUTHORIZATION"
+  | "DATA_CHANGE"
+  | "SECURITY";
+
+export type AuditAction =
+  | "LOGIN"
   | "LOGIN_FAILED"
-  | "TOKEN_REFRESH_SUCCESS"
-  | "TOKEN_REFRESH_FAILED"
   | "LOGOUT"
-  | "TOKEN_REVOKED"
-  | "TOKEN_EXPIRED"
-  | "TOKEN_INVALID"
+  | "TOKEN_REFRESH"
+  | "TOKEN_REFRESH_FAILED"
+  | "PASSWORD_CHANGE"
   | "ACCESS_DENIED"
-  | "ASSET_REPORT_SUBMITTED"
-  | "ASSET_REPORT_APPROVED"
-  | "ASSET_REPORT_REJECTED";
+  | "RATE_LIMIT_EXCEEDED"
+  | "SUSPICIOUS_ACTIVITY"
+  | "CREATE"
+  | "UPDATE"
+  | "DELETE";
 
 export interface AuditLogItem {
   id: number;
-  entityType: string;
-  entityId: string | null;
-  actionType: AuditActionType;
+  resource: AuditResource;
+  category: AuditCategory;
+  action: AuditAction;
+  targetId: string | null;
+  identifier: string | null;
   actor: string | null;
-  identifierAttempted: string | null;
   oldValue: string | null;
   newValue: string | null;
   ipAddress: string | null;
@@ -43,14 +58,20 @@ export interface AuditLogItem {
   clientType: string | null;
   correlationId: string | null;
   createdAt: string;
+  target?: {
+    id: string | null;
+    name: string | null;
+    type: string | null;
+  };
 }
 
 export interface AuditLogFilters {
-  entityType?: string;
-  actionType?: AuditActionType;
+  resource?: AuditResource;
+  action?: AuditAction;
   actor?: string;
-  identifierAttempted?: string;
+  identifier?: string;
   ipAddress?: string;
+  showAnonymous?: boolean;
   from?: string;
   to?: string;
   page?: number;

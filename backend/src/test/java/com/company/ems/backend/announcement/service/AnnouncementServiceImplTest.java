@@ -43,199 +43,203 @@ import com.company.ems.backend.user.repository.UserRepository;
 @ExtendWith(MockitoExtension.class)
 class AnnouncementServiceImplTest {
 
-    @Mock
-    private AnnouncementRepository announcementRepository;
+        @Mock
+        private AnnouncementRepository announcementRepository;
 
-    @Mock
-    private AnnouncementTargetRepository announcementTargetRepository;
+        @Mock
+        private AnnouncementTargetRepository announcementTargetRepository;
 
-    @Mock
-    private AnnouncementReadRepository announcementReadRepository;
+        @Mock
+        private AnnouncementReadRepository announcementReadRepository;
 
-    @Mock
-    private DepartmentRepository departmentRepository;
+        @Mock
+        private DepartmentRepository departmentRepository;
 
-    @Mock
-    private RoleRepository roleRepository;
+        @Mock
+        private RoleRepository roleRepository;
 
-    @Mock
-    private UserRepository userRepository;
+        @Mock
+        private UserRepository userRepository;
 
-    @Mock
-    private EmployeeRepository employeeRepository;
+        @Mock
+        private EmployeeRepository employeeRepository;
 
         @Mock
         private EmailPort emailPort;
 
-    @InjectMocks
-    private AnnouncementServiceImpl announcementService;
+        @InjectMocks
+        private AnnouncementServiceImpl announcementService;
 
-    @BeforeEach
-    void setUp() {
-        SecurityContextHolder.clearContext();
-    }
+        @BeforeEach
+        void setUp() {
+                SecurityContextHolder.clearContext();
+        }
 
-    @Test
-    void createAnnouncement_allCompany_shouldCreateReadReceipts() {
-        CustomUserPrincipal principal = new CustomUserPrincipal(
-                99L,
-                "hr.user",
-                "pwd",
-                true,
-                true,
-                true,
-                true,
-                List.of(new SimpleGrantedAuthority("ROLE_HR")),
-                Set.of());
+        @Test
+        void createAnnouncement_allCompany_shouldCreateReadReceipts() {
+                CustomUserPrincipal principal = new CustomUserPrincipal(
+                                99L,
+                                "hr.user",
+                                "pwd",
+                                "HR User",
+                                true,
+                                true,
+                                true,
+                                true,
+                                List.of(new SimpleGrantedAuthority("ROLE_HR")),
+                                Set.of());
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+                SecurityContextHolder.getContext().setAuthentication(
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
 
-        CreateAnnouncementRequest request = CreateAnnouncementRequest.builder()
-                .title("Policy update")
-                .content("New internal policy")
-                .announcementType(AnnouncementType.POLICY)
-                .targetAudience(TargetAudience.ALL_COMPANY)
-                .targetIds(List.of())
-                .sendEmail(false)
-                .build();
+                CreateAnnouncementRequest request = CreateAnnouncementRequest.builder()
+                                .title("Policy update")
+                                .content("New internal policy")
+                                .announcementType(AnnouncementType.POLICY)
+                                .targetAudience(TargetAudience.ALL_COMPANY)
+                                .targetIds(List.of())
+                                .sendEmail(false)
+                                .build();
 
-        Announcement savedAnnouncement = Announcement.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .announcementType(request.getAnnouncementType())
-                .targetAudience(request.getTargetAudience())
-                .publishedAt(LocalDateTime.now())
-                .build();
-        savedAnnouncement.setId(1L);
+                Announcement savedAnnouncement = Announcement.builder()
+                                .title(request.getTitle())
+                                .content(request.getContent())
+                                .announcementType(request.getAnnouncementType())
+                                .targetAudience(request.getTargetAudience())
+                                .publishedAt(LocalDateTime.now())
+                                .build();
+                savedAnnouncement.setId(1L);
 
-        when(announcementRepository.save(any(Announcement.class))).thenReturn(savedAnnouncement);
-        when(userRepository.findAllEnabledUserIds()).thenReturn(List.of(1L, 2L));
+                when(announcementRepository.save(any(Announcement.class))).thenReturn(savedAnnouncement);
+                when(userRepository.findAllEnabledUserIds()).thenReturn(List.of(1L, 2L));
 
-        User u1 = User.builder().username("u1").email("u1@ems.com").password("x").enabled(true).build();
-        u1.setId(1L);
-        User u2 = User.builder().username("u2").email("u2@ems.com").password("x").enabled(true).build();
-        u2.setId(2L);
-        when(userRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(u1, u2));
+                User u1 = User.builder().username("u1").email("u1@ems.com").password("x").enabled(true).build();
+                u1.setId(1L);
+                User u2 = User.builder().username("u2").email("u2@ems.com").password("x").enabled(true).build();
+                u2.setId(2L);
+                when(userRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(u1, u2));
 
-        var response = announcementService.createAnnouncement(request);
+                var response = announcementService.createAnnouncement(request);
 
-        assertEquals(1L, response.getAnnouncementId());
-        assertEquals(2, response.getRecipientCount());
-        assertEquals(false, response.getEmailDeliveryRequested());
-        assertEquals(0, response.getEmailedRecipientCount());
-        verify(emailPort, never()).sendAnnouncementEmail(any(), any(), any(), any());
-    }
+                assertEquals(1L, response.getAnnouncementId());
+                assertEquals(2, response.getRecipientCount());
+                assertEquals(false, response.getEmailDeliveryRequested());
+                assertEquals(0, response.getEmailedRecipientCount());
+                verify(emailPort, never()).sendAnnouncementEmail(any(), any(), any(), any());
+        }
 
-    @Test
-    void createAnnouncement_sendEmailTrue_shouldSendEmailsToRecipients() {
-        CustomUserPrincipal principal = new CustomUserPrincipal(
-                99L,
-                "admin.user",
-                "pwd",
-                true,
-                true,
-                true,
-                true,
-                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")),
-                Set.of());
+        @Test
+        void createAnnouncement_sendEmailTrue_shouldSendEmailsToRecipients() {
+                CustomUserPrincipal principal = new CustomUserPrincipal(
+                                99L,
+                                "admin.user",
+                                "pwd",
+                                "Admin User",
+                                true,
+                                true,
+                                true,
+                                true,
+                                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")),
+                                Set.of());
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+                SecurityContextHolder.getContext().setAuthentication(
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
 
-        CreateAnnouncementRequest request = CreateAnnouncementRequest.builder()
-                .title("Email update")
-                .content("Please read this update")
-                .announcementType(AnnouncementType.EVENT)
-                .targetAudience(TargetAudience.ALL_COMPANY)
-                .targetIds(List.of())
-                .sendEmail(true)
-                .build();
+                CreateAnnouncementRequest request = CreateAnnouncementRequest.builder()
+                                .title("Email update")
+                                .content("Please read this update")
+                                .announcementType(AnnouncementType.EVENT)
+                                .targetAudience(TargetAudience.ALL_COMPANY)
+                                .targetIds(List.of())
+                                .sendEmail(true)
+                                .build();
 
-        Announcement savedAnnouncement = Announcement.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .announcementType(request.getAnnouncementType())
-                .targetAudience(request.getTargetAudience())
-                .publishedAt(LocalDateTime.now())
-                .build();
-        savedAnnouncement.setId(2L);
+                Announcement savedAnnouncement = Announcement.builder()
+                                .title(request.getTitle())
+                                .content(request.getContent())
+                                .announcementType(request.getAnnouncementType())
+                                .targetAudience(request.getTargetAudience())
+                                .publishedAt(LocalDateTime.now())
+                                .build();
+                savedAnnouncement.setId(2L);
 
-        when(announcementRepository.save(any(Announcement.class))).thenReturn(savedAnnouncement);
-        when(userRepository.findAllEnabledUserIds()).thenReturn(List.of(1L, 2L));
+                when(announcementRepository.save(any(Announcement.class))).thenReturn(savedAnnouncement);
+                when(userRepository.findAllEnabledUserIds()).thenReturn(List.of(1L, 2L));
 
-        User u1 = User.builder().username("u1").email("u1@ems.com").password("x").enabled(true).build();
-        u1.setId(1L);
-        User u2 = User.builder().username("u2").email("u2@ems.com").password("x").enabled(true).build();
-        u2.setId(2L);
-        when(userRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(u1, u2));
+                User u1 = User.builder().username("u1").email("u1@ems.com").password("x").enabled(true).build();
+                u1.setId(1L);
+                User u2 = User.builder().username("u2").email("u2@ems.com").password("x").enabled(true).build();
+                u2.setId(2L);
+                when(userRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(u1, u2));
 
-        var response = announcementService.createAnnouncement(request);
+                var response = announcementService.createAnnouncement(request);
 
-        assertEquals(2, response.getRecipientCount());
-        assertEquals(true, response.getEmailDeliveryRequested());
-        assertEquals(2, response.getEmailedRecipientCount());
-        verify(emailPort, times(1)).sendAnnouncementEmail(eq("u1@ems.com"), any(), any(), any());
-        verify(emailPort, times(1)).sendAnnouncementEmail(eq("u2@ems.com"), any(), any(), any());
-    }
+                assertEquals(2, response.getRecipientCount());
+                assertEquals(true, response.getEmailDeliveryRequested());
+                assertEquals(2, response.getEmailedRecipientCount());
+                verify(emailPort, times(1)).sendAnnouncementEmail(eq("u1@ems.com"), any(), any(), any());
+                verify(emailPort, times(1)).sendAnnouncementEmail(eq("u2@ems.com"), any(), any(), any());
+        }
 
-    @Test
-    void getAnnouncementsForUser_shouldThrowForbidden_forDifferentNonAdminUser() {
-        CustomUserPrincipal principal = new CustomUserPrincipal(
-                3L,
-                "employee",
-                "pwd",
-                true,
-                true,
-                true,
-                true,
-                List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE")),
-                Set.of());
+        @Test
+        void getAnnouncementsForUser_shouldThrowForbidden_forDifferentNonAdminUser() {
+                CustomUserPrincipal principal = new CustomUserPrincipal(
+                                3L,
+                                "employee",
+                                "pwd",
+                                "Employee User",
+                                true,
+                                true,
+                                true,
+                                true,
+                                List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE")),
+                                Set.of());
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+                SecurityContextHolder.getContext().setAuthentication(
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
 
-        assertThrows(ForbiddenException.class, () -> announcementService.getAnnouncementsForUser(10L));
-    }
+                assertThrows(ForbiddenException.class, () -> announcementService.getAnnouncementsForUser(10L));
+        }
 
-    @Test
-    void markAnnouncementAsRead_shouldSetReadFlag() {
-        CustomUserPrincipal principal = new CustomUserPrincipal(
-                7L,
-                "employee",
-                "pwd",
-                true,
-                true,
-                true,
-                true,
-                List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE")),
-                Set.of());
+        @Test
+        void markAnnouncementAsRead_shouldSetReadFlag() {
+                CustomUserPrincipal principal = new CustomUserPrincipal(
+                                7L,
+                                "employee",
+                                "pwd",
+                                "Employee User",
+                                true,
+                                true,
+                                true,
+                                true,
+                                List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE")),
+                                Set.of());
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+                SecurityContextHolder.getContext().setAuthentication(
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
 
-        Announcement ann = Announcement.builder()
-                .title("Event")
-                .content("Townhall")
-                .announcementType(AnnouncementType.EVENT)
-                .targetAudience(TargetAudience.ALL_COMPANY)
-                .publishedAt(LocalDateTime.now())
-                .build();
-        ann.setId(4L);
+                Announcement ann = Announcement.builder()
+                                .title("Event")
+                                .content("Townhall")
+                                .announcementType(AnnouncementType.EVENT)
+                                .targetAudience(TargetAudience.ALL_COMPANY)
+                                .publishedAt(LocalDateTime.now())
+                                .build();
+                ann.setId(4L);
 
-        User user = User.builder().username("e1").email("e1@ems.com").password("x").enabled(true).build();
-        user.setId(7L);
+                User user = User.builder().username("e1").email("e1@ems.com").password("x").enabled(true).build();
+                user.setId(7L);
 
-        AnnouncementRead read = AnnouncementRead.builder()
-                .announcement(ann)
-                .user(user)
-                .isRead(false)
-                .build();
+                AnnouncementRead read = AnnouncementRead.builder()
+                                .announcement(ann)
+                                .user(user)
+                                .isRead(false)
+                                .build();
 
-        when(announcementReadRepository.findByAnnouncementAndUser(4L, 7L)).thenReturn(Optional.of(read));
+                when(announcementReadRepository.findByAnnouncementAndUser(4L, 7L)).thenReturn(Optional.of(read));
 
-        var response = announcementService.markAnnouncementAsRead(4L, 7L);
+                var response = announcementService.markAnnouncementAsRead(4L, 7L);
 
-        assertEquals(true, response.getIsRead());
-    }
+                assertEquals(true, response.getIsRead());
+        }
 }
