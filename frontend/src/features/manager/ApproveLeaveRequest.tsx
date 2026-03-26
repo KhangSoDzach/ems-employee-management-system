@@ -38,6 +38,10 @@ import { leaveService, type LeaveResponseDTO } from "@/services/leaveService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges";
 import { cn } from "@/lib/utils";
+import {
+  employeeService,
+  type EmployeeResponse,
+} from "@/services/employeeService";
 
 /* ================= TYPES ================= */
 
@@ -55,11 +59,15 @@ export type LeaveRequest = {
   requesterUserId?: number;
 };
 
-function mapDto(dto: LeaveResponseDTO): LeaveRequest {
+function mapDto(
+  dto: LeaveResponseDTO,
+  empList: EmployeeResponse[] = [],
+): LeaveRequest {
+  const employee = empList.find((e) => e.id === dto.employeeId);
   return {
     id: dto.id,
     name: dto.employeeName ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
-    dept: SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
+    dept: employee?.department ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
     leaveType: dto.leaveType,
     startDate: dto.startDate,
     endDate: dto.endDate,
@@ -194,15 +202,29 @@ export default function ApproveLeaveRequest() {
   /* ================= LOAD TEAM LEAVES ================= */
 
   useEffect(() => {
-    setIsLoading(true);
-    // Fetch a large enough batch (e.g. 1000) to support client-side filtering and pagination for now.
-    leaveService
-      .getTeamLeaves({ page: 0, size: 1000 })
-      .then((res) => {
-        setData(res.content.map(mapDto));
-      })
-      .catch(() => toast.error(SYSTEM_MESSAGES.MGMT_ADJ.MSG_FETCH_ERROR))
-      .finally(() => setIsLoading(false));
+    async function loadAll() {
+      setIsLoading(true);
+      try {
+        // Fetch employees to get dept info
+        const empRes = await employeeService.getAllEmployees({
+          page: 0,
+          size: 1000,
+        });
+        const allEmps = empRes.content;
+
+        // Fetch leaves
+        const leaveRes = await leaveService.getTeamLeaves({
+          page: 0,
+          size: 1000,
+        });
+        setData(leaveRes.content.map((dto) => mapDto(dto, allEmps)));
+      } catch (err) {
+        toast.error(SYSTEM_MESSAGES.MGMT_ADJ.MSG_FETCH_ERROR);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadAll();
   }, []);
 
   /* ================= FILTER LOGIC ================= */

@@ -81,7 +81,8 @@
   html,
   body,
   #root {
-    @apply h-full;
+    @apply h-full overflow-x-hidden;
+    overscroll-behavior: none;
   }
 
   * {

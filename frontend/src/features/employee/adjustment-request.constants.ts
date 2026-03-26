@@ -27,6 +27,9 @@ export interface AdjustmentRequest {
   status: AdjustmentStatus;
   reason: string;
   auditTrail: AuditEntry[];
+  employeeName?: string;
+  employeeCode?: string;
+  department?: string;
 }
 
 /* ══════════════ DATE FORMATS ══════════════ */
@@ -35,10 +38,8 @@ export const DATE_FORMAT = "dd/MM/yyyy";
 export const DATETIME_FORMAT = "HH:mm · dd/MM/yyyy";
 export const DATETIME_LOG_FORMAT = "dd/MM/yyyy HH:mm";
 
-/* ══════════════ USER PLACEHOLDER ══════════════ */
-
 /** Replace with real auth context once backend is integrated */
-export const CURRENT_USER = { name: "Nguyễn Văn An", initials: "NA" } as const;
+// export const CURRENT_USER = { name: "Nguyễn Văn An", initials: "NA" } as const;
 
 /* ══════════════ FORM DEFAULTS ══════════════ */
 

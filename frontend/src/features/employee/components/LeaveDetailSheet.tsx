@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   AuditEntry,
   AUDIT_ACTION_CONFIG,
-  CURRENT_USER,
   DATE_FORMAT,
   DATETIME_FORMAT,
   DATETIME_LOG_FORMAT,
@@ -167,20 +166,24 @@ export const LeaveDetailSheet = ({
                   <p className="text-xs font-medium text-muted-foreground mb-1">
                     {SYSTEM_MESSAGES.LABEL_EMPLOYEE}
                   </p>
-                  <p className="text-sm font-semibold">{CURRENT_USER.name}</p>
+                  <p className="text-sm font-semibold">
+                    {request.employeeName ?? "-"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-1">
                     {SYSTEM_MESSAGES.PROFILE.EMP_CODE}
                   </p>
-                  <p className="text-sm font-semibold">{CURRENT_USER.id}</p>
+                  <p className="text-sm font-semibold">
+                    {request.employeeCode ?? "-"}
+                  </p>
                 </div>
                 <div className="col-span-2 pt-2 border-t border-border/50">
                   <p className="text-xs font-medium text-muted-foreground mb-1">
                     {SYSTEM_MESSAGES.LABEL_DEPARTMENT}
                   </p>
                   <p className="text-sm font-semibold">
-                    {CURRENT_USER.department}
+                    {request.department ?? "-"}
                   </p>
                 </div>
               </div>

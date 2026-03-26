@@ -164,6 +164,8 @@ function mapAdjustmentToFrontend(
     status: mapAdjustmentStatus(s.status),
     reason: s.reasonText,
     auditTrail: [],
+    employeeName: s.employeeName,
+    employeeCode: s.employeeCode,
   };
 }
 
@@ -271,6 +273,9 @@ export default function RequestPage() {
           status: mapBackendStatus(dto.status),
           reason: dto.reason,
           auditTrail: [],
+          employeeName: `${profile.firstName} ${profile.lastName}`,
+          employeeCode: profile.employeeCode ?? "N/A",
+          department: profile.department ?? "N/A",
         })),
       );
     } catch {
@@ -283,11 +288,18 @@ export default function RequestPage() {
   const fetchAdjustments = useCallback(async () => {
     setAdjLoading(true);
     try {
-      const res = await attendanceService.getMyAdjustments({
-        page: 0,
-        size: 1000,
-      });
-      setAdjRequests(res.content.map(mapAdjustmentToFrontend));
+      const [adjRes, profile] = await Promise.all([
+        attendanceService.getMyAdjustments({ page: 0, size: 1000 }),
+        employeeService.getMyProfile(),
+      ]);
+      setAdjRequests(
+        adjRes.content.map((s) => ({
+          ...mapAdjustmentToFrontend(s),
+          employeeName: `${profile.firstName} ${profile.lastName}`,
+          employeeCode: profile.employeeCode ?? "N/A",
+          department: profile.department ?? "N/A",
+        })),
+      );
     } catch {
       toast.error(SYSTEM_MESSAGES.ADJUSTMENT.MSG_FETCH_ERROR);
     } finally {

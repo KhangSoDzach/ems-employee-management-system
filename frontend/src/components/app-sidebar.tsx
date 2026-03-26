@@ -150,11 +150,6 @@ export function AppSidebar({
           icon: User,
         },
         {
-          title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
-          url: "/my-assets",
-          icon: Package,
-        },
-        {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
           url: "/announcements",
           icon: Bell,
