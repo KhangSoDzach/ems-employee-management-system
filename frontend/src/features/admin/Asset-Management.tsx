@@ -41,7 +41,7 @@ const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
   { label: SYSTEM_MESSAGES.ASSET.FILTER_RETURNED, value: "RETIRED" },
 ];
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 export default function AssetManagementPage() {
   const effectiveRole = useEffectiveRole();
@@ -260,10 +260,11 @@ export default function AssetManagementPage() {
               <button
                 key={tab.value}
                 onClick={() => setStatusFilter(tab.value)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${statusFilter === tab.value
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  statusFilter === tab.value
                     ? "bg-primary text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                }`}
               >
                 {tab.label}
               </button>
@@ -411,10 +412,11 @@ export default function AssetManagementPage() {
                     <button
                       key={pg}
                       onClick={() => setPage(pg)}
-                      className={`w-8 h-8 rounded-full font-bold ${pg === page
+                      className={`w-8 h-8 rounded-full font-bold ${
+                        pg === page
                           ? "bg-primary text-white"
                           : "hover:bg-gray-200"
-                        }`}
+                      }`}
                     >
                       {pg + 1}
                     </button>
