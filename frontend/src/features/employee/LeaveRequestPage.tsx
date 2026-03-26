@@ -37,7 +37,6 @@ import { cn } from "@/lib/utils";
 
 import {
   ALL_LABEL,
-  CURRENT_USER,
   DATE_FORMAT,
   LEAVE_STATUS_CONFIG,
   LEAVE_STATUS_OPTIONS,
@@ -100,6 +99,7 @@ export default function LeaveRequestPage() {
   const [typeFilter, setTypeFilter] = useState<LeaveType | "ALL">("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [page, setPage] = useState(0);
 
   const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
@@ -127,6 +127,7 @@ export default function LeaveRequestPage() {
           employeeService.getMyProfile(),
         ]);
         setEmployeeId(profile.id);
+        setProfile(profile);
         setRequests(
           leavePage.content.map((dto) => ({
             id: String(dto.id),
@@ -137,6 +138,11 @@ export default function LeaveRequestPage() {
             status: mapBackendStatus(dto.status),
             reason: dto.reason,
             auditTrail: [],
+
+            // From profile profile
+            employeeName: `${profile.firstName} ${profile.lastName}`,
+            employeeCode: profile.employeeCode ?? "N/A",
+            department: profile.department ?? "N/A",
           })),
         );
       } catch {
@@ -192,10 +198,13 @@ export default function LeaveRequestPage() {
         {
           id: "a1",
           action: "CREATED",
-          actor: CURRENT_USER.name,
+          actor: profile ? `${profile.firstName} ${profile.lastName}` : "Me",
           timestamp: new Date(),
         },
       ],
+      employeeName: profile ? `${profile.firstName} ${profile.lastName}` : "-",
+      employeeCode: profile?.employeeCode ?? "N/A",
+      department: profile?.department ?? "N/A",
     };
     setRequests((prev) => [newReq, ...prev]);
   };

@@ -52,6 +52,10 @@ import {
   attendanceService,
   type AdjustmentRequestSummary,
 } from "@/services/attendanceService";
+import {
+  employeeService,
+  type EmployeeResponse,
+} from "@/services/employeeService";
 
 // ── Mapper ────────────────────────────────────────────────────────────────────
 function deriveType(inT: string | null, outT: string | null): AdjustmentType {
@@ -77,26 +81,33 @@ function mapStatus(s: AdjustmentRequestSummary["status"]) {
   return "PENDING" as const;
 }
 
-function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
+function mapSummaryToAdjustmentRequest(
+  summary: AdjustmentRequestSummary,
+  empList: EmployeeResponse[] = [],
+): AdjustmentRequest {
+  const employeeData = empList.find((e) => e.id === summary.employeeId);
   return {
-    id: String(s.id),
-    dateCreated: new Date(s.createdAt),
-    adjustmentDate: new Date(s.requestDate),
-    type: deriveType(s.proposedCheckInTime, s.proposedCheckOutTime),
-    proposedTimeIn: s.proposedCheckInTime
-      ? format(new Date(s.proposedCheckInTime), "HH:mm")
+    id: String(summary.id),
+    employeeName: summary.employeeName ?? "Nhân viên",
+    employeeCode: employeeData?.employeeCode,
+    department: employeeData?.department ?? "-",
+    dateCreated: new Date(summary.createdAt),
+    adjustmentDate: new Date(summary.requestDate),
+    type: deriveType(summary.proposedCheckInTime, summary.proposedCheckOutTime),
+    proposedTimeIn: summary.proposedCheckInTime
+      ? format(new Date(summary.proposedCheckInTime), "HH:mm")
       : undefined,
-    proposedTimeOut: s.proposedCheckOutTime
-      ? format(new Date(s.proposedCheckOutTime), "HH:mm")
+    proposedTimeOut: summary.proposedCheckOutTime
+      ? format(new Date(summary.proposedCheckOutTime), "HH:mm")
       : undefined,
-    status: mapStatus(s.status),
-    reason: s.reasonText,
+    status: mapStatus(summary.status),
+    reason: summary.reasonText,
     auditTrail: [
       {
         id: "0",
         action: "CREATED",
-        actor: s.employeeName,
-        timestamp: new Date(s.createdAt),
+        actor: summary.employeeName,
+        timestamp: new Date(summary.createdAt),
       },
     ],
   };
@@ -133,16 +144,19 @@ const ApproveAdjustmentRequest: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // ── Fetch pending adjustments ──────────────────────────────────────────────
-  const fetchData = useCallback(async () => {
+  const fetchAdjustments = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch a large batch to support client-side filtering/pagination
-      const res = await attendanceService.getPendingAdjustments({
-        page: 0,
-        size: 1000,
-      });
-      setRequests(res.content.map(mapToFrontend));
-    } catch {
+      const [empRes, adjRes] = await Promise.all([
+        employeeService.getAllEmployees({ page: 0, size: 1000 }),
+        attendanceService.getPendingAdjustments({ page: 0, size: 1000 }),
+      ]);
+
+      const allEmps = empRes.content;
+      setRequests(
+        adjRes.content.map((s) => mapSummaryToAdjustmentRequest(s, allEmps)),
+      );
+    } catch (err: any) {
       toast.error(SYSTEM_MESSAGES.MGMT_ADJ.MSG_FETCH_ERROR);
     } finally {
       setLoading(false);
@@ -150,12 +164,12 @@ const ApproveAdjustmentRequest: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchAdjustments();
+  }, [fetchAdjustments]);
 
   // ── Filter & Paginate ──────────────────────────────────────────────────────
   const filtered = requests.filter((row) => {
-    const actor = row.auditTrail[0]?.actor?.toLowerCase() || "";
+    const actor = row.employeeName?.toLowerCase() || "";
     const matchesSearch =
       searchQuery === "" ||
       actor.includes(searchQuery.toLowerCase()) ||
@@ -230,169 +244,138 @@ const ApproveAdjustmentRequest: React.FC = () => {
   const handleApprove = async (id: string, reason: string) => {
     await attendanceService.approveAdjustment(Number(id), { reason });
     toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_APPROVE_SUCCESS);
-    await fetchData();
+    await fetchAdjustments();
   };
 
   const handleReject = async (id: string, reason: string) => {
     await attendanceService.rejectAdjustment(Number(id), { reason });
     toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_REJECT_SUCCESS);
-    await fetchData();
+    await fetchAdjustments();
   };
 
   const handleReturn = async (id: string, reason: string) => {
     await attendanceService.returnAdjustment(Number(id), { reason });
     toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_RETURN_SUCCESS);
-    await fetchData();
+    await fetchAdjustments();
   };
 
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" role="manager" />
       <SidebarInset>
         <SiteHeader />
-        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+
+        <main className="flex-1 p-6 space-y-6 bg-slate-50/50">
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="page-heading">{SYSTEM_MESSAGES.MGMT_ADJ.TITLE}</h1>
-              <p className="text-muted-foreground mt-1">
+              <h1 className="page-heading">
+                {SYSTEM_MESSAGES.APPROVE.ADJUSTMENT_TITLE}
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
                 {SYSTEM_MESSAGES.MGMT_ADJ.DESC}
               </p>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1 pl-1">
-                {SYSTEM_MESSAGES.MGMT_ADJ.PENDING_STATS_LABEL}
-              </span>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-foreground">
-                  {pendingCount}
-                </span>
-                {loading && (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                )}
-              </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="outline" className="rounded-xl border-slate-200">
+                {SYSTEM_MESSAGES.MGMT_ADJ.BTN_EXPORT}
+              </Button>
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-              <div className="relative w-full sm:w-auto sm:min-w-[320px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          {/* Stats Bar */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+              <span className="text-sm font-bold text-slate-700">
+                {pendingCount} {SYSTEM_MESSAGES.MGMT_ADJ.PENDING_STATS_LABEL}
+              </span>
+            </div>
+
+            <div className="h-4 w-[1px] bg-slate-200 hidden md:block"></div>
+
+            <div className="flex items-center gap-1">
+              <ActiveFilterBadge
+                value="ALL"
+                colorClass="bg-slate-100 text-slate-700"
+                isActive={statusFilter === "ALL"}
+                onClick={() => setStatusFilter("ALL")}
+                onClear={() => setStatusFilter("ALL")}
+              />
+              <ActiveFilterBadge
+                value="PENDING"
+                colorClass="bg-yellow-100 text-yellow-800"
+                isActive={statusFilter === "PENDING"}
+                onClick={() => setStatusFilter("PENDING")}
+                onClear={() => setStatusFilter("ALL")}
+              />
+              {ADJUSTMENT_STATUS_OPTIONS.filter((o) => o[0] !== "PENDING").map(
+                ([val, cfg]) => (
+                  <ActiveFilterBadge
+                    key={val}
+                    value={val}
+                    colorClass={cfg.filterClass}
+                    isActive={statusFilter === val}
+                    onClick={() => setStatusFilter(val)}
+                    onClear={() => setStatusFilter("ALL")}
+                  />
+                ),
+              )}
+            </div>
+          </div>
+
+          {/* Search Table Section */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+            {/* Table Search Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder={SYSTEM_MESSAGES.MGMT_ADJ.SEARCH_PLACEHOLDER}
+                  className="pl-10 h-10 rounded-xl border-slate-200 focus:ring-primary/20 transition-all text-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
-                  >
-                    <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-semibold text-slate-700">
-                      {SYSTEM_MESSAGES.MGMT_ADJ.FILTER_STATUS}
-                    </span>
-                    {statusFilter !== "ALL" && (
-                      <ActiveFilterBadge
-                        value={
-                          ADJUSTMENT_STATUS_CONFIG[
-                            statusFilter as keyof typeof ADJUSTMENT_STATUS_CONFIG
-                          ]?.label
-                        }
-                        colorClass={
-                          ADJUSTMENT_STATUS_CONFIG[
-                            statusFilter as keyof typeof ADJUSTMENT_STATUS_CONFIG
-                          ]?.filterClass
-                        }
-                        onClear={() => setStatusFilter("ALL")}
-                      />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 p-1">
-                  <DropdownMenuItem
-                    onClick={() => setStatusFilter("ALL")}
-                    className={cn(
-                      "cursor-pointer text-sm",
-                      statusFilter === "ALL" &&
-                        "bg-muted font-bold text-primary",
-                    )}
-                  >
-                    {SYSTEM_MESSAGES.LABEL_ALL}
-                  </DropdownMenuItem>
-                  {ADJUSTMENT_STATUS_OPTIONS.map(([value, cfg]) => (
-                    <DropdownMenuItem
-                      key={value}
-                      onClick={() => setStatusFilter(value)}
-                      className={cn(
-                        "cursor-pointer",
-                        statusFilter === value
-                          ? "bg-muted font-medium"
-                          : "hover:bg-slate-50",
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5 py-1">
-                        <span
-                          className={cn(
-                            "w-2 h-2 rounded-full inline-block shrink-0",
-                            value === "PENDING" && "bg-amber-500",
-                            value === "APPROVED" && "bg-emerald-500",
-                            value === "REJECTED" && "bg-rose-500",
-                            value === "RETURNED" && "bg-orange-500",
-                          )}
-                        />
-                        {cfg.label}
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {(statusFilter !== "ALL" || searchQuery !== "") && (
+              {(searchQuery || statusFilter !== "PENDING") && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-10 text-sm text-slate-500 hover:text-primary transition-colors hover:bg-transparent"
                   onClick={clearAllFilters}
+                  className="text-slate-500 hover:text-red-500 text-xs font-bold"
                 >
                   {SYSTEM_MESSAGES.MGMT_ADJ.BTN_CLEAR_FILTER}
                 </Button>
               )}
             </div>
-          </div>
 
-          {/* Table */}
-          <div className="card-soft mt-2">
-            <div className="overflow-x-auto">
+            <div className="flex-1 overflow-auto">
               <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40 hover:bg-muted/40">
-                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                <TableHeader className="bg-white sticky top-0 z-10 shadow-sm">
+                  <TableRow className="hover:bg-transparent border-b-slate-100">
+                    <TableHead className="py-4 font-semibold text-foreground px-6 text-xs uppercase tracking-wider">
                       {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_EMP}
                     </TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                    <TableHead className="py-4 font-semibold text-foreground text-xs uppercase tracking-wider">
                       {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_ADJ_DATE}
                     </TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                    <TableHead className="py-4 font-semibold text-foreground text-xs uppercase tracking-wider">
                       {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_TYPE}
                     </TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                    <TableHead className="py-4 font-semibold text-foreground text-xs uppercase tracking-wider">
                       {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_STATUS}
                     </TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6 text-right">
+                    <TableHead className="py-4 font-semibold text-right text-xs uppercase tracking-wider px-6">
                       {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_ACTIONS}
                     </TableHead>
                   </TableRow>
@@ -400,92 +383,88 @@ const ApproveAdjustmentRequest: React.FC = () => {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-32 text-center">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                      <TableCell colSpan={5} className="h-96 text-center">
+                        <div className="flex flex-col items-center justify-center gap-4 text-slate-400">
+                          <Loader2 className="h-10 w-10 animate-spin text-primary/40" />
+                          <p className="text-sm font-medium animate-pulse">
+                            {SYSTEM_MESSAGES.APPROVE.LOADING_DATA}
+                          </p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : paginatedData.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="h-48 text-center text-muted-foreground"
-                      >
-                        {SYSTEM_MESSAGES.MGMT_ADJ.EMPTY_DATA}
+                      <TableCell colSpan={5} className="h-96 text-center">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
+                            <Search className="h-8 w-8 text-slate-200" />
+                          </div>
+                          <p className="text-slate-400 font-medium">
+                            {SYSTEM_MESSAGES.MGMT_ADJ.EMPTY_DATA}
+                          </p>
+                          {(searchQuery || statusFilter !== "ALL") && (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="text-primary font-bold"
+                              onClick={clearAllFilters}
+                            >
+                              {SYSTEM_MESSAGES.MGMT_ADJ.BTN_CLEAR_FILTER}
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
                     paginatedData.map((row) => (
                       <TableRow
                         key={row.id}
-                        className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
+                        className="group hover:bg-slate-50/80 cursor-pointer transition-colors border-b-slate-50"
                         onClick={() => handleRowClick(row)}
                       >
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="py-4 px-6">
                           <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9 border border-border">
+                            <Avatar className="h-10 w-10 ring-2 ring-slate-100 group-hover:ring-white transition-all">
                               <AvatarImage src={undefined} />
-                              <AvatarFallback className="bg-muted text-muted-foreground font-semibold text-sm">
-                                {row.auditTrail[0]?.actor?.charAt(0) || "U"}
+                              <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold uppercase transition-colors group-hover:bg-primary group-hover:text-white">
+                                {row.employeeName?.slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col">
-                              <span className="font-semibold text-sm text-foreground">
-                                {row.auditTrail[0]?.actor ||
-                                  SYSTEM_MESSAGES.STATUS.UNKNOWN}
+                              <span className="font-bold text-slate-800 text-sm group-hover:text-primary transition-colors">
+                                {row.employeeName}
                               </span>
-                              <span className="text-[11px] font-medium text-muted-foreground">
-                                {SYSTEM_MESSAGES.SYMBOLS.HASH}
-                                {row.id}
+                              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-tight">
+                                {row.department}
                               </span>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="px-6 py-4 font-medium text-foreground">
-                          {format(row.adjustmentDate, DATE_FORMAT)}
+                        <TableCell className="py-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-700 text-sm">
+                              {format(row.adjustmentDate, DATE_FORMAT)}
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-medium">
+                              {row.proposedTimeIn || "--:--"} ·{" "}
+                              {row.proposedTimeOut || "--:--"}
+                            </span>
+                          </div>
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="py-4">
                           <TypeBadge type={row.type} />
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="py-4">
                           <StatusBadge status={row.status} />
                         </TableCell>
-                        <TableCell className="px-6 py-4 text-right">
-                          <div
-                            className="flex items-center justify-end gap-2"
-                            onClick={(e) => e.stopPropagation()}
+                        <TableCell className="py-4 px-6 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="bg-slate-50 text-slate-600 hover:bg-primary hover:text-white rounded-xl font-bold h-9 px-4 transition-all"
                           >
-                            {(row.status === "PENDING" ||
-                              row.status === "RETURNED") && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  className="h-8 shadow-sm tracking-wide text-xs"
-                                  onClick={() => handleRowClick(row)}
-                                >
-                                  {SYSTEM_MESSAGES.MGMT_ADJ.BTN_APPROVE}
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 shadow-sm font-medium tracking-wide text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-                                  onClick={() => handleRowClick(row)}
-                                >
-                                  {SYSTEM_MESSAGES.MGMT_ADJ.BTN_REJECT}
-                                </Button>
-                              </>
-                            )}
-                            {row.status !== "PENDING" &&
-                              row.status !== "RETURNED" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 font-medium text-muted-foreground"
-                                  onClick={() => handleRowClick(row)}
-                                >
-                                  {SYSTEM_MESSAGES.MGMT_ADJ.BTN_DETAIL}
-                                </Button>
-                              )}
-                          </div>
+                            {SYSTEM_MESSAGES.MGMT_ADJ.BTN_DETAIL}
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -494,53 +473,64 @@ const ApproveAdjustmentRequest: React.FC = () => {
               </Table>
             </div>
 
-            {/* Footer */}
-            <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_TOTAL} {totalElementsFiltered}{" "}
-                {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_UNIT}
-              </span>
-              {totalPagesFiltered > 1 && (
-                <div className="flex items-center gap-2">
+            {/* Pagination */}
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between text-sm bg-slate-50/20">
+              <div className="text-slate-500 font-medium">
+                {SYSTEM_MESSAGES.APPROVE.DISPLAY_PREFIX}{" "}
+                <span className="text-slate-900 font-bold">
+                  {Math.min(paginatedData.length, PAGE_SIZE)}
+                </span>{" "}
+                {SYSTEM_MESSAGES.APPROVE.DISPLAY_UNIT}
+              </div>
+
+              <div className="flex items-center gap-1.5 font-bold">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 border-slate-200 rounded-xl disabled:opacity-30"
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {Array.from({ length: totalPagesFiltered }).map((_, i) => (
                   <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-7 w-7"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    key={i}
+                    variant={page === i ? "default" : "outline"}
+                    className={cn(
+                      "h-9 w-9 rounded-xl border-slate-200",
+                      page === i && "shadow-md shadow-primary/20",
+                    )}
+                    onClick={() => setPage(i)}
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    {i + 1}
                   </Button>
-                  <span className="text-sm font-medium">
-                    {page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH}{" "}
-                    {totalPagesFiltered}
-                  </span>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-7 w-7"
-                    disabled={page >= totalPagesFiltered - 1}
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPagesFiltered - 1, p + 1))
-                    }
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
+                ))}
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 border-slate-200 rounded-xl disabled:opacity-30"
+                  onClick={() => setPage(page + 1)}
+                  disabled={page >= totalPagesFiltered - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </main>
-      </SidebarInset>
 
-      <ReviewAdjustmentSheet
-        open={openReview}
-        onOpenChange={setOpenReview}
-        request={detailRequest}
-        onApprove={handleApprove}
-        onReject={handleReject}
-        onReturn={handleReturn}
-      />
+        <ReviewAdjustmentSheet
+          open={openReview}
+          onOpenChange={setOpenReview}
+          request={detailRequest}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onReturn={handleReturn}
+        />
+      </SidebarInset>
     </SidebarProvider>
   );
 };

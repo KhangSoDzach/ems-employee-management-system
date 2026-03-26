@@ -168,6 +168,7 @@ export const SYSTEM_MESSAGES = {
     SHEET_NET_PAY: "Tổng thực lĩnh",
     SHEET_DOWNLOAD: "Tải phiếu lương (PDF)",
     SHEET_CLOSE: "Đóng",
+    BTN_VIEW_SLIP: "Xem chi tiết",
   },
 
   // Check-in Page
