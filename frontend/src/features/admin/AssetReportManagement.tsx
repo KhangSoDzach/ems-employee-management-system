@@ -15,6 +15,9 @@ import {
   ChevronRight,
   Clock,
   FileCheck,
+  AlertTriangle,
+  FileText,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -72,42 +75,15 @@ export default function AssetReportManagement() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [processNote, setProcessNote] = useState("");
-  const processingRef = useRef(false); // guard against StrictMode double-invoke
+  const processingRef = useRef(false);
 
-  const fetchReports = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      try {
-        const data = await assetService.getAllReports(
-          {
-            keyword: keyword || undefined,
-            status: status || undefined,
-            page: 0,
-            size: 100,
-          },
-          signal,
-        );
-        if (signal?.aborted) {
-          return;
-        }
-        setReports(data.content);
-      } catch (err: unknown) {
-        const status = (err as { response?: { status?: number } })?.response
-          ?.status;
-        if (status !== 403) {
-          toast.error(SYSTEM_MESSAGES.ASSET_REPORT.MSG_FETCH_LIST_ERROR);
-        }
-        setReports([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [keyword, status],
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
+  const totalPages = Math.ceil(reports.length / PAGE_SIZE);
+  const paginatedItems = reports.slice(
+    page * PAGE_SIZE,
+    (page + 1) * PAGE_SIZE,
   );
-
-  useEffect(() => {
-    setPage(0);
-  }, [keyword, status, reports]);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -346,8 +322,8 @@ export default function AssetReportManagement() {
                       ></TableCell>
                     </TableRow>
                   ))
-                ) : reports.length > 0 ? (
-                  reports.map((report) => (
+                ) : paginatedItems.length > 0 ? (
+                  paginatedItems.map((report) => (
                     <TableRow
                       key={report.id}
                       className="hover:bg-slate-50/80 transition-all border-b border-slate-50 last:border-0 group"

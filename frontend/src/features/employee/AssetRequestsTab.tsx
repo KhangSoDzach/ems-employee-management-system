@@ -142,19 +142,19 @@ export function AssetRequestsTab() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
                 {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_REQUEST_ID}
               </TableHead>
-              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
                 {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_ASSET_TYPE}
               </TableHead>
-              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
                 {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_PRIORITY}
               </TableHead>
-              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
                 {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_DATE}
               </TableHead>
-              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
                 {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_STATUS}
               </TableHead>
             </TableRow>
