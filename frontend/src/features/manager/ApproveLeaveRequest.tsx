@@ -5,6 +5,8 @@ import {
   MoreHorizontal,
   X,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -168,6 +170,10 @@ const EmptyState = () => (
   </TableRow>
 );
 
+/* ================= CONSTANTS ================= */
+
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
+
 /* ================= MAIN PAGE ================= */
 
 export default function ApproveLeaveRequest() {
@@ -175,6 +181,7 @@ export default function ApproveLeaveRequest() {
   const [filterType, setFilterType] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("PENDING");
   const [data, setData] = useState<LeaveRequest[]>([]);
+  const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(
     null,
@@ -183,9 +190,13 @@ export default function ApproveLeaveRequest() {
   /* ================= LOAD TEAM LEAVES ================= */
 
   useEffect(() => {
+    setIsLoading(true);
+    // Fetch a large enough batch (e.g. 1000) to support client-side filtering and pagination for now.
     leaveService
-      .getTeamLeaves()
-      .then((page) => setData(page.content.map(mapDto)))
+      .getTeamLeaves({ page: 0, size: 1000 })
+      .then((res) => {
+        setData(res.content.map(mapDto));
+      })
       .catch(() => toast.error(SYSTEM_MESSAGES.MGMT_ADJ.MSG_FETCH_ERROR))
       .finally(() => setIsLoading(false));
   }, []);
@@ -203,6 +214,20 @@ export default function ApproveLeaveRequest() {
           : r.status === statusFilter;
     return matchSearch && matchType && matchStatus;
   });
+
+  // Calculate pagination based on filtered results
+  const totalElementsFiltered = filtered.length;
+  const totalPagesFiltered = Math.ceil(totalElementsFiltered / PAGE_SIZE);
+  const paginatedData = filtered.slice(
+    page * PAGE_SIZE,
+    (page + 1) * PAGE_SIZE,
+  );
+
+  /* ================= RESET PAGE ON FILTER ================= */
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, filterType, statusFilter]);
 
   const clearAllFilters = () => {
     setSearch("");
@@ -435,10 +460,10 @@ export default function ApproveLeaveRequest() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : filtered.length === 0 ? (
+                ) : paginatedData.length === 0 ? (
                   <EmptyState />
                 ) : (
-                  filtered.map((row) => (
+                  paginatedData.map((row) => (
                     <TableRow
                       key={row.id}
                       className="hover:bg-muted/30 cursor-pointer"
@@ -492,9 +517,58 @@ export default function ApproveLeaveRequest() {
               </TableBody>
             </Table>
 
-            <div className="px-5 py-3 border-t bg-muted/20 text-xs text-muted-foreground">
-              {SYSTEM_MESSAGES.APPROVE.DISPLAY_PREFIX} {filtered.length}{" "}
-              {SYSTEM_MESSAGES.APPROVE.DISPLAY_UNIT}
+            <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">
+              <p className="text-sm text-muted-foreground">
+                {SYSTEM_MESSAGES.APPROVE.DISPLAY_PREFIX}{" "}
+                <span className="font-medium text-foreground">
+                  {totalElementsFiltered === 0 ? 0 : page * PAGE_SIZE + 1}
+                  {" – "}
+                  {Math.min((page + 1) * PAGE_SIZE, totalElementsFiltered)}
+                </span>{" "}
+                {SYSTEM_MESSAGES.MEMBER_LIST.PAGINATION_IN}{" "}
+                <span className="font-medium text-foreground">
+                  {totalElementsFiltered}
+                </span>{" "}
+                {SYSTEM_MESSAGES.APPROVE.DISPLAY_UNIT}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                {Array.from({ length: totalPagesFiltered }, (_, i) => (
+                  <Button
+                    key={i}
+                    size="icon"
+                    variant={i === page ? "default" : "ghost"}
+                    className={cn(
+                      "w-8 h-8",
+                      i === page
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        : "hover:bg-slate-100",
+                    )}
+                    onClick={() => setPage(i)}
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={page >= totalPagesFiltered - 1}
+                  onClick={() =>
+                    setPage((p) => Math.min(totalPagesFiltered - 1, p + 1))
+                  }
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </main>

@@ -41,12 +41,17 @@ import {
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 const StatusBadge = ({ status }: { status: string }) => {
   const label = ASSET_STATUS_LABELS[status as AssetStatus] ?? status;
-  const cls = ASSET_STATUS_COLORS[status as AssetStatus] ?? "bg-slate-100 text-slate-600";
-  return <Badge className={`${cls} hover:${cls} text-xs font-semibold`}>{label}</Badge>;
+  const cls =
+    ASSET_STATUS_COLORS[status as AssetStatus] ?? "bg-slate-100 text-slate-600";
+  return (
+    <Badge className={`${cls} hover:${cls} text-xs font-semibold`}>
+      {label}
+    </Badge>
+  );
 };
 
 export default function AssetGroupManagement() {
@@ -65,24 +70,32 @@ export default function AssetGroupManagement() {
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => { setPage(0); }, [statusFilter, searchDebounced]);
+  useEffect(() => {
+    setPage(0);
+  }, [statusFilter, searchDebounced]);
 
   const fetchAssets = useCallback(async () => {
     setLoading(true);
     try {
       const res = await assetService.listAssets({
-        page, size: PAGE_SIZE,
+        page,
+        size: PAGE_SIZE,
         status: statusFilter || undefined,
         keyword: searchDebounced || undefined,
       });
       setAssets(res.content);
       setTotal(res.totalElements);
       setTotalPages(res.totalPages);
-    } catch { toast.error(SYSTEM_MESSAGES.ASSET_GROUP.FETCH_ERROR); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error(SYSTEM_MESSAGES.ASSET_GROUP.FETCH_ERROR);
+    } finally {
+      setLoading(false);
+    }
   }, [page, statusFilter, searchDebounced]);
 
-  useEffect(() => { fetchAssets(); }, [fetchAssets]);
+  useEffect(() => {
+    fetchAssets();
+  }, [fetchAssets]);
 
   return (
     <SidebarProvider>
@@ -95,7 +108,9 @@ export default function AssetGroupManagement() {
           {/* HEADER */}
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="page-heading">{SYSTEM_MESSAGES.ASSET_GROUP.TITLE}</h1>
+              <h1 className="page-heading">
+                {SYSTEM_MESSAGES.ASSET_GROUP.TITLE}
+              </h1>
               <p className="text-muted-foreground mt-1">
                 {SYSTEM_MESSAGES.ASSET_GROUP.TITLE_DESC}
               </p>
@@ -110,10 +125,17 @@ export default function AssetGroupManagement() {
           <div className="flex gap-3 items-center flex-wrap">
             <div className="relative w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder={SYSTEM_MESSAGES.ASSET.SEARCH_PLACEHOLDER} value={search}
-                onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+              <Input
+                placeholder={SYSTEM_MESSAGES.ASSET.SEARCH_PLACEHOLDER}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
               {search && (
-                <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                >
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               )}
@@ -123,16 +145,25 @@ export default function AssetGroupManagement() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <SlidersHorizontal className="w-4 h-4" />
-                  {statusFilter ? ASSET_STATUS_LABELS[statusFilter] : SYSTEM_MESSAGES.ASSET_GROUP.FILTER_STATUS_ALL}
+                  {statusFilter
+                    ? ASSET_STATUS_LABELS[statusFilter]
+                    : SYSTEM_MESSAGES.ASSET_GROUP.FILTER_STATUS_ALL}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setStatusFilter("")}>{SYSTEM_MESSAGES.ASSET_GROUP.FILTER_ALL}</DropdownMenuItem>
-                {(Object.keys(ASSET_STATUS_LABELS) as AssetStatus[]).map(s => (
-                  <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)}>
-                    {ASSET_STATUS_LABELS[s]}
-                  </DropdownMenuItem>
-                ))}
+                <DropdownMenuItem onClick={() => setStatusFilter("")}>
+                  {SYSTEM_MESSAGES.ASSET_GROUP.FILTER_ALL}
+                </DropdownMenuItem>
+                {(Object.keys(ASSET_STATUS_LABELS) as AssetStatus[]).map(
+                  (s) => (
+                    <DropdownMenuItem
+                      key={s}
+                      onClick={() => setStatusFilter(s)}
+                    >
+                      {ASSET_STATUS_LABELS[s]}
+                    </DropdownMenuItem>
+                  ),
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -145,7 +176,9 @@ export default function AssetGroupManagement() {
                   <TableHead>{SYSTEM_MESSAGES.ASSET.TABLE_ID}</TableHead>
                   <TableHead>{SYSTEM_MESSAGES.ASSET.TABLE_NAME}</TableHead>
                   <TableHead>{SYSTEM_MESSAGES.ASSET.TABLE_TYPE}</TableHead>
-                  <TableHead>{SYSTEM_MESSAGES.ASSET_GROUP.TABLE_ASSIGNED_TO}</TableHead>
+                  <TableHead>
+                    {SYSTEM_MESSAGES.ASSET_GROUP.TABLE_ASSIGNED_TO}
+                  </TableHead>
                   <TableHead>{SYSTEM_MESSAGES.ASSET.TABLE_STATUS}</TableHead>
                   <TableHead />
                 </TableRow>
@@ -154,36 +187,57 @@ export default function AssetGroupManagement() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /> {SYSTEM_MESSAGES.LOADING}
+                    <TableCell
+                      colSpan={6}
+                      className="h-40 text-center text-muted-foreground"
+                    >
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />{" "}
+                      {SYSTEM_MESSAGES.LOADING}
                     </TableCell>
                   </TableRow>
                 ) : assets.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={6}
+                      className="h-40 text-center text-muted-foreground"
+                    >
                       {SYSTEM_MESSAGES.ADJUSTMENT.EMPTY_FILTER_TITLE}
                     </TableCell>
                   </TableRow>
                 ) : (
                   assets.map((asset) => (
                     <TableRow key={asset.id} className="hover:bg-muted/30">
-                      <TableCell className="font-mono text-muted-foreground">{asset.id}</TableCell>
+                      <TableCell className="font-mono text-muted-foreground">
+                        {asset.id}
+                      </TableCell>
                       <TableCell>
                         <div className="font-semibold">{asset.name}</div>
-                        {asset.desc && <div className="text-xs text-muted-foreground">{asset.desc}</div>}
+                        {asset.desc && (
+                          <div className="text-xs text-muted-foreground">
+                            {asset.desc}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>{asset.type ?? "—"}</TableCell>
                       <TableCell>
                         {asset.user ? (
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarFallback>{asset.user.charAt(0)}</AvatarFallback>
+                              <AvatarFallback>
+                                {asset.user.charAt(0)}
+                              </AvatarFallback>
                             </Avatar>
                             {asset.user}
                           </div>
-                        ) : <span className="text-muted-foreground">{SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}</span>}
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                          </span>
+                        )}
                       </TableCell>
-                      <TableCell><StatusBadge status={asset.status} /></TableCell>
+                      <TableCell>
+                        <StatusBadge status={asset.status} />
+                      </TableCell>
                       <TableCell align="right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -192,7 +246,9 @@ export default function AssetGroupManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem disabled>{SYSTEM_MESSAGES.MGMT_ADJ.BTN_DETAIL}</DropdownMenuItem>
+                            <DropdownMenuItem disabled>
+                              {SYSTEM_MESSAGES.MGMT_ADJ.BTN_DETAIL}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -202,22 +258,38 @@ export default function AssetGroupManagement() {
               </TableBody>
             </Table>
 
-            {/* Pagination */}
             <div className="flex items-center justify-between px-5 py-3 border-t bg-muted/20">
               <p className="text-xs text-muted-foreground">
-                {total === 0 ? SYSTEM_MESSAGES.NO_DATA : `${total} ${SYSTEM_MESSAGES.ASSET_GROUP.STATS_UNIT}`}
+                {total === 0
+                  ? SYSTEM_MESSAGES.NO_DATA
+                  : `${total} ${SYSTEM_MESSAGES.ASSET_GROUP.STATS_UNIT}`}
               </p>
               {totalPages > 1 && (
                 <div className="flex items-center gap-2">
-                  <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
-                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    className="w-7 h-7"
+                  >
                     <ChevronLeft size={14} />
-                  </button>
-                  <span className="text-xs text-muted-foreground">{SYSTEM_MESSAGES.ASSET_GROUP.PAGE_PREFIX}{page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH} {totalPages}</span>
-                  <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}
-                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40">
+                  </Button>
+                  <span className="text-xs text-muted-foreground font-medium px-1">
+                    {SYSTEM_MESSAGES.ASSET_GROUP.PAGE_PREFIX}
+                    {page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH} {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={page >= totalPages - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
+                    className="w-7 h-7"
+                  >
                     <ChevronRight size={14} />
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>

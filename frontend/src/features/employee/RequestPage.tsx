@@ -86,7 +86,7 @@ import {
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 function extractApiErrorMessage(error: unknown, fallback: string): string {
   const apiError = error as {
@@ -233,6 +233,7 @@ export default function RequestPage() {
   // Leave state
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [leaveLoading, setLeaveLoading] = useState(true);
+  const [leavePage, setLeavePage] = useState(0);
   const [employeeId, setEmployeeId] = useState<number | null>(null);
   const [leaveSearch, setLeaveSearch] = useState("");
   const [leaveStatus, setLeaveStatus] = useState<LeaveStatus | "ALL">("ALL");
@@ -244,8 +245,6 @@ export default function RequestPage() {
   const [adjRequests, setAdjRequests] = useState<AdjustmentRequest[]>([]);
   const [adjLoading, setAdjLoading] = useState(true);
   const [adjPage, setAdjPage] = useState(0);
-  const [adjTotalPages, setAdjTotalPages] = useState(0);
-  const [adjTotalElements, setAdjTotalElements] = useState(0);
   const [adjSearch, setAdjSearch] = useState("");
   const [adjStatus, setAdjStatus] = useState<AdjustmentStatus | "ALL">("ALL");
   const [adjType, setAdjType] = useState<AdjustmentType | "ALL">("ALL");
@@ -257,13 +256,13 @@ export default function RequestPage() {
   const fetchLeaves = useCallback(async () => {
     setLeaveLoading(true);
     try {
-      const [leavePage, profile] = await Promise.all([
-        leaveService.getMyLeaves(),
+      const [leaveRes, profile] = await Promise.all([
+        leaveService.getMyLeaves({ page: 0, size: 1000 }),
         employeeService.getMyProfile(),
       ]);
       setEmployeeId(profile.id);
       setLeaveRequests(
-        leavePage.content.map((dto) => ({
+        leaveRes.content.map((dto) => ({
           id: String(dto.id),
           dateCreated: new Date(dto.createdAt),
           startDate: new Date(dto.startDate + "T00:00:00"),
@@ -285,18 +284,16 @@ export default function RequestPage() {
     setAdjLoading(true);
     try {
       const res = await attendanceService.getMyAdjustments({
-        page: adjPage,
-        size: PAGE_SIZE,
+        page: 0,
+        size: 1000,
       });
       setAdjRequests(res.content.map(mapAdjustmentToFrontend));
-      setAdjTotalElements(res.totalElements);
-      setAdjTotalPages(res.totalPages);
     } catch {
       toast.error(SYSTEM_MESSAGES.ADJUSTMENT.MSG_FETCH_ERROR);
     } finally {
       setAdjLoading(false);
     }
-  }, [adjPage]);
+  }, []);
 
   const [searchParams] = useSearchParams();
 
@@ -328,15 +325,51 @@ export default function RequestPage() {
       (leaveType === "ALL" || r.type === leaveType) &&
       (q === "" ||
         r.id.toLowerCase().includes(q) ||
-        LEAVE_TYPE_CONFIG[r.type].label.toLowerCase().includes(q) ||
+        r.reason.toLowerCase().includes(q) ||
+        LEAVE_TYPE_CONFIG[r.type].label.toLowerCase().includes(q))
+    );
+  });
+
+  const leaveTotalElementsFiltered = filteredLeaves.length;
+  const leaveTotalPagesFiltered = Math.ceil(
+    leaveTotalElementsFiltered / PAGE_SIZE,
+  );
+  const paginatedLeaves = filteredLeaves.slice(
+    leavePage * PAGE_SIZE,
+    (leavePage + 1) * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setLeavePage(0);
+  }, [leaveSearch, leaveStatus, leaveType]);
+
+  const filteredAdj = adjRequests.filter((r) => {
+    const q = adjSearch.toLowerCase();
+    return (
+      (adjStatus === "ALL" || r.status === adjStatus) &&
+      (adjType === "ALL" || r.type === adjType) &&
+      (q === "" ||
+        r.id.toLowerCase().includes(q) ||
+        ADJUSTMENT_TYPE_CONFIG[r.type].label.toLowerCase().includes(q) ||
         r.reason.toLowerCase().includes(q))
     );
   });
 
+  const adjTotalElementsFiltered = filteredAdj.length;
+  const adjTotalPagesFiltered = Math.ceil(adjTotalElementsFiltered / PAGE_SIZE);
+  const paginatedAdj = filteredAdj.slice(
+    adjPage * PAGE_SIZE,
+    (adjPage + 1) * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setAdjPage(0);
+  }, [adjSearch, adjStatus, adjType]);
+
   const leaveHasFilter =
-    leaveStatus !== "ALL" || leaveType !== "ALL" || leaveSearch !== "";
+    leaveSearch !== "" || leaveStatus !== "ALL" || leaveType !== "ALL";
   const adjHasFilter =
-    adjStatus !== "ALL" || adjType !== "ALL" || adjSearch !== "";
+    adjSearch !== "" || adjStatus !== "ALL" || adjType !== "ALL";
 
   const handleCreateLeave = async (data: LeaveFormValues) => {
     if (employeeId === null) {
@@ -602,18 +635,19 @@ export default function RequestPage() {
                             colSpan={6}
                             className="h-[400px] text-center"
                           >
-                            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              <span className="text-sm">
+                            <div className="flex flex-col items-center justify-center gap-3">
+                              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                              <span className="text-sm text-muted-foreground font-medium">
                                 {SYSTEM_MESSAGES.LOADING}
                               </span>
                             </div>
                           </TableCell>
                         </TableRow>
-                      ) : filteredLeaves.length === 0 ? (
+                      ) : leaveRequests.length === 0 ||
+                        (leaveHasFilter && paginatedLeaves.length === 0) ? (
                         <EmptyState hasFilter={leaveHasFilter} />
                       ) : (
-                        filteredLeaves.map((req) => (
+                        paginatedLeaves.map((req) => (
                           <TableRow
                             key={req.id}
                             className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
@@ -689,13 +723,13 @@ export default function RequestPage() {
                   </Table>
                 </div>
 
-                {filteredLeaves.length > 0 && (
-                  <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+                <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex flex-col gap-1">
                     <span>
                       {SYSTEM_MESSAGES.LEAVE.SUMMARY_SHOW}{" "}
-                      {filteredLeaves.length}{" "}
+                      {paginatedLeaves.length}{" "}
                       {SYSTEM_MESSAGES.LEAVE.SUMMARY_DIVIDER}{" "}
-                      {leaveRequests.length}{" "}
+                      {leaveTotalElementsFiltered}{" "}
                       {SYSTEM_MESSAGES.LEAVE.SUMMARY_UNIT}
                     </span>
                     <div className="flex gap-4">
@@ -707,7 +741,7 @@ export default function RequestPage() {
                           "RETURNED",
                         ] as LeaveStatus[]
                       ).map((s) => {
-                        const count = leaveRequests.filter(
+                        const count = filteredLeaves.filter(
                           (r) => r.status === s,
                         ).length;
                         return count > 0 ? (
@@ -721,7 +755,37 @@ export default function RequestPage() {
                       })}
                     </div>
                   </div>
-                )}
+
+                  {leaveTotalPagesFiltered > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-7 w-7"
+                        disabled={leavePage === 0}
+                        onClick={() => setLeavePage((p) => Math.max(0, p - 1))}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm font-medium px-2">
+                        {leavePage + 1} / {leaveTotalPagesFiltered}
+                      </span>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-7 w-7"
+                        disabled={leavePage >= leaveTotalPagesFiltered - 1}
+                        onClick={() =>
+                          setLeavePage((p) =>
+                            Math.min(leaveTotalPagesFiltered - 1, p + 1),
+                          )
+                        }
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <CreateLeaveModal
@@ -926,96 +990,79 @@ export default function RequestPage() {
                             <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                           </TableCell>
                         </TableRow>
-                      ) : adjRequests.length === 0 ? (
+                      ) : paginatedAdj.length === 0 ? (
                         <EmptyState hasFilter={adjHasFilter} />
                       ) : (
-                        adjRequests
-                          .filter((r) => {
-                            const q = adjSearch.toLowerCase();
-                            return (
-                              (adjStatus === "ALL" || r.status === adjStatus) &&
-                              (adjType === "ALL" || r.type === adjType) &&
-                              (q === "" ||
-                                r.id.toLowerCase().includes(q) ||
-                                ADJUSTMENT_TYPE_CONFIG[r.type].label
-                                  .toLowerCase()
-                                  .includes(q) ||
-                                r.reason.toLowerCase().includes(q))
-                            );
-                          })
-                          .map((req) => (
-                            <TableRow
-                              key={req.id}
-                              className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
-                              onClick={() => setAdjDetail(req)}
+                        paginatedAdj.map((req) => (
+                          <TableRow
+                            key={req.id}
+                            className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
+                            onClick={() => setAdjDetail(req)}
+                          >
+                            <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
+                              {req.id}
+                            </TableCell>
+                            <TableCell className="px-6 py-4 font-medium text-foreground">
+                              {format(req.dateCreated, ADJ_DATE_FORMAT)}
+                            </TableCell>
+                            <TableCell className="px-6 py-4">
+                              <AdjustmentTypeBadge type={req.type} />
+                            </TableCell>
+                            <TableCell className="px-6 py-4">
+                              <AdjustmentStatusBadge status={req.status} />
+                            </TableCell>
+                            <TableCell className="px-6 py-4 text-sm text-muted-foreground">
+                              {req.reason}
+                            </TableCell>
+                            <TableCell
+                              className="py-4 text-right"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
-                                {req.id}
-                              </TableCell>
-                              <TableCell className="px-6 py-4 font-medium text-foreground">
-                                {format(req.dateCreated, ADJ_DATE_FORMAT)}
-                              </TableCell>
-                              <TableCell className="px-6 py-4">
-                                <AdjustmentTypeBadge type={req.type} />
-                              </TableCell>
-                              <TableCell className="px-6 py-4">
-                                <AdjustmentStatusBadge status={req.status} />
-                              </TableCell>
-                              <TableCell className="px-6 py-4 text-sm text-muted-foreground">
-                                {req.reason}
-                              </TableCell>
-                              <TableCell
-                                className="py-4 text-right"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                      <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="end"
-                                    className="w-44"
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                                   >
-                                    <DropdownMenuItem
-                                      className="cursor-pointer text-sm"
-                                      onClick={() => setAdjDetail(req)}
-                                    >
-                                      {SYSTEM_MESSAGES.ADJUSTMENT.BTN_DETAIL}
-                                    </DropdownMenuItem>
-                                    {req.status === "RETURNED" && (
-                                      <>
-                                        <DropdownMenuItem
-                                          className="cursor-pointer text-sm"
-                                          onClick={() => setAdjEdit(req)}
-                                        >
-                                          {
-                                            SYSTEM_MESSAGES.ADJUSTMENT
-                                              .BTN_EDIT_RESEND
-                                          }
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem
-                                          className="cursor-pointer text-sm text-primary font-medium"
-                                          onClick={() => setAdjEdit(req)}
-                                        >
-                                          {
-                                            SYSTEM_MESSAGES.ADJUSTMENT
-                                              .BTN_RESEND
-                                          }
-                                        </DropdownMenuItem>
-                                      </>
-                                    )}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
-                          ))
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-44"
+                                >
+                                  <DropdownMenuItem
+                                    className="cursor-pointer text-sm"
+                                    onClick={() => setAdjDetail(req)}
+                                  >
+                                    {SYSTEM_MESSAGES.ADJUSTMENT.BTN_DETAIL}
+                                  </DropdownMenuItem>
+                                  {req.status === "RETURNED" && (
+                                    <>
+                                      <DropdownMenuItem
+                                        className="cursor-pointer text-sm"
+                                        onClick={() => setAdjEdit(req)}
+                                      >
+                                        {
+                                          SYSTEM_MESSAGES.ADJUSTMENT
+                                            .BTN_EDIT_RESEND
+                                        }
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        className="cursor-pointer text-sm text-primary font-medium"
+                                        onClick={() => setAdjEdit(req)}
+                                      >
+                                        {SYSTEM_MESSAGES.ADJUSTMENT.BTN_RESEND}
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
                       )}
                     </TableBody>
                   </Table>
@@ -1024,30 +1071,35 @@ export default function RequestPage() {
                 <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
                   <span>
                     {SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_TOTAL}{" "}
-                    {adjTotalElements} {SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_UNIT}
+                    {adjTotalElementsFiltered}{" "}
+                    {SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_UNIT}
                   </span>
-                  {adjTotalPages > 1 && (
+                  {adjTotalPagesFiltered > 1 && (
                     <div className="flex items-center gap-2">
                       <Button
                         size="icon"
                         variant="outline"
                         className="h-7 w-7"
                         disabled={adjPage === 0}
-                        onClick={() => setAdjPage((p) => p - 1)}
+                        onClick={() => setAdjPage((p) => Math.max(0, p - 1))}
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </Button>
                       <span>
                         {adjPage + 1}
                         {SYSTEM_MESSAGES.SYMBOLS.SLASH}
-                        {adjTotalPages}
+                        {adjTotalPagesFiltered}
                       </span>
                       <Button
                         size="icon"
                         variant="outline"
                         className="h-7 w-7"
-                        disabled={adjPage >= adjTotalPages - 1}
-                        onClick={() => setAdjPage((p) => p + 1)}
+                        disabled={adjPage >= adjTotalPagesFiltered - 1}
+                        onClick={() =>
+                          setAdjPage((p) =>
+                            Math.min(adjTotalPagesFiltered - 1, p + 1),
+                          )
+                        }
                       >
                         <ChevronRight className="w-4 h-4" />
                       </Button>

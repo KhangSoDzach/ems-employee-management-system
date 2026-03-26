@@ -835,6 +835,7 @@ export const SYSTEM_MESSAGES = {
 
     LABEL_FEEDBACK_NOTE: "Ghi chú phản hồi",
     PLACEHOLDER_FEEDBACK: "Nhập phản hồi hoặc lý do xử lý cho nhân viên...",
+    UNIT_REPORT: "báo cáo",
   },
 
   // Asset Incident Management
@@ -910,6 +911,7 @@ export const SYSTEM_MESSAGES = {
     MAX_FILE_SIZE_ERROR: "File quá lớn. Vui lòng chọn file dưới 5MB.",
     UNIT_MB: "MB",
     LABEL_ASSET_TAG: "Asset Tag",
+    LABEL_REPORT_COUNT: "Tổng số báo cáo: ",
   },
 
   // Asset Request (Employee & Admin)
@@ -965,6 +967,7 @@ export const SYSTEM_MESSAGES = {
     EMPTY_DESC: "Bạn chưa gửi yêu cầu cấp phát tài sản nào.",
     EMPTY_ADMIN_DESC: "Không có yêu cầu cấp phát tài sản nào chờ xử lý.",
     MSG_FETCH_ERROR: "Không thể tải danh sách yêu cầu.",
+    UNIT_REQUEST: "yêu cầu",
   },
 
   // Review Adjustment Sheet
@@ -1101,6 +1104,7 @@ export const SYSTEM_MESSAGES = {
     METHOD_CAMERA_GPS: "Camera+GPS",
     METHOD_MANUAL: "Thủ công",
     CURRENCY_VND: " VNĐ",
+    DEFAULT_PAGE_SIZE: 5,
   },
 
   // KPI/OKR Management

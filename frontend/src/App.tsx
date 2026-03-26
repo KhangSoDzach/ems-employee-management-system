@@ -6,6 +6,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/sonner";
 import { COMMON_TEXT } from "./constants/ui-texts";
 import { AUTH_ROLES } from "./constants/auth";
+import SalaryHistoryPage from "./features/employee/SalaryHistoryPage";
 
 const LoginPage = lazy(() =>
   import("@/features/auth/LoginPage").then((module) => ({
@@ -173,6 +174,7 @@ function App() {
                 <Route path="/attendance" element={<AttendanceHistoryPage />} />
                 <Route path="/adjustment-requests" element={<RequestPage />} />
                 <Route path="/request" element={<RequestPage />} />
+                <Route path="/salary-history" element={<SalaryHistoryPage />} />
               </Route>
 
               {/* Manager + HR */}
