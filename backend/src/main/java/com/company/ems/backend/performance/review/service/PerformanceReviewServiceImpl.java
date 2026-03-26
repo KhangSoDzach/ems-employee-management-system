@@ -70,18 +70,16 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
         String reviewerDisplayName = reviewer.getFullName();
 
         Long cycleManagerId;
+        ReviewType resolvedReviewType;
         if (isManagerReviewingDirectReport(reviewer, reviewee)) {
-            if (req.getReviewType() != ReviewType.MANAGER) {
-                throw new AppException(ErrorCode.ACCESS_DENIED,
-                        "Manager chỉ được gửi đánh giá loại MANAGER cho nhân viên trực tiếp");
-            }
             cycleManagerId = reviewerId;
+            resolvedReviewType = ReviewType.MANAGER;
         } else if (isEmployeePeerReview(reviewer, reviewee)) {
-            if (req.getReviewType() != ReviewType.PEER) {
-                throw new AppException(ErrorCode.ACCESS_DENIED,
-                        "Nhân viên chỉ được gửi đánh giá ngang hàng loại PEER");
-            }
             cycleManagerId = reviewer.getReportingManager().getId();
+            resolvedReviewType = ReviewType.PEER;
+        } else if (isSubordinateReviewingManager(reviewer, reviewee)) {
+            cycleManagerId = reviewee.getId();
+            resolvedReviewType = ReviewType.UPWARD;
         } else {
             throw new AppException(ErrorCode.ACCESS_DENIED,
                     "Bạn không có quyền đánh giá nhân sự này");
@@ -111,7 +109,7 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
                 .revieweeId(req.getRevieweeId())
                 .reviewerUsername(reviewerDisplayName)
                 .revieweeUsername(reviewee.getFullName())
-                .reviewType(req.getReviewType())
+                .reviewType(resolvedReviewType)
                 .reviewPeriod(req.getReviewPeriod())
                 .expertiseScore(scores.getExpertise())
                 .communicationScore(scores.getCommunication())
@@ -267,6 +265,12 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
         Long reviewerManagerId = reviewer.getReportingManager().getId();
         Long revieweeManagerId = reviewee.getReportingManager().getId();
         return reviewerManagerId != null && reviewerManagerId.equals(revieweeManagerId);
+    }
+
+    private boolean isSubordinateReviewingManager(Employee reviewer, Employee reviewee) {
+        return reviewer.getReportingManager() != null
+                && reviewer.getReportingManager().getId() != null
+                && reviewer.getReportingManager().getId().equals(reviewee.getId());
     }
 
     private PerformanceReviewCycleDto.Response toCycleResponse(PerformanceReviewCycle cycle, int notifiedMemberCount) {

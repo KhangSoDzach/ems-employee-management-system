@@ -1,5 +1,9 @@
 package com.company.ems.backend.employee.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -7,22 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.io.IOException;
 
-import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
-import com.company.ems.backend.attendance.service.AttendanceService;
-import com.company.ems.backend.employee.mapper.EmployeeMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.util.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
+import com.company.ems.backend.attendance.service.AttendanceService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.BusinessException;
@@ -36,11 +35,12 @@ import com.company.ems.backend.employee.dto.EmployeeResponse;
 import com.company.ems.backend.employee.dto.MemberResponse;
 import com.company.ems.backend.employee.dto.OfficialContractRequest;
 import com.company.ems.backend.employee.dto.PublicEmployeeResponse;
-import com.company.ems.backend.employee.entity.EmployeeAttachment;
 import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.employee.entity.EmployeeAttachment;
 import com.company.ems.backend.employee.enums.ContractType;
 import com.company.ems.backend.employee.enums.EmployeeStatus;
 import com.company.ems.backend.employee.enums.WorkStatus;
+import com.company.ems.backend.employee.mapper.EmployeeMapper;
 import com.company.ems.backend.employee.repository.EmployeeAttachmentRepository;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.leave.enums.LeaveType;
@@ -655,7 +655,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                                                 .build();
                         }
 
-                        employees = employeeRepository.searchEmployeesByManager(
+                        employees = employeeRepository.searchEmployeesFor360ByManagerGroup(
                                         self.getReportingManager().getId(),
                                         search,
                                         null,

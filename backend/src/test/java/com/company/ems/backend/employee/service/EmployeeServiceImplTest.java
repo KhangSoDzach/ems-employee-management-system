@@ -15,10 +15,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
@@ -318,16 +318,16 @@ class EmployeeServiceImplTest {
 
         when(employeeRepository.findByUserId(3L)).thenReturn(Optional.of(self));
 
-        Page<Employee> page = new PageImpl<>(List.of(self, peer));
-        when(employeeRepository.searchEmployeesByManager(
+        Page<Employee> page = new PageImpl<>(List.of(manager, self, peer));
+        when(employeeRepository.searchEmployeesFor360ByManagerGroup(
             eq(10L), any(), eq(null), eq(null), eq(null), any(PageRequest.class))).thenReturn(page);
 
         PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response =
                 employeeService.getTeamMembers(0, 10, null);
 
         assertNotNull(response);
-        assertEquals(2, response.getContent().size());
-        assertTrue(response.getContent().stream().noneMatch(m -> "lead.one@example.com".equals(m.getEmail())));
+        assertEquals(3, response.getContent().size());
+        assertTrue(response.getContent().stream().anyMatch(m -> "lead.one@example.com".equals(m.getEmail())));
     }
 
     @Test
