@@ -71,6 +71,30 @@ export function AssetReportReviewSheet({
     return "badge-gray";
   };
 
+  const getReportStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.PENDING;
+      case "APPROVED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.APPROVED;
+      case "REJECTED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.REJECTED;
+      default:
+        return status;
+    }
+  };
+
+  const getIssueTypeLabel = (type: string) => {
+    switch (type) {
+      case "DAMAGED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.TXT_DAMAGED;
+      case "LOST":
+        return SYSTEM_MESSAGES.ASSET_REPORT.TXT_LOST;
+      default:
+        return type;
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -82,7 +106,7 @@ export function AssetReportReviewSheet({
             title={SYSTEM_MESSAGES.ASSET_REPORT.DETAIL_TITLE}
             subtitle={report.reportedAt}
             id={report.reportId}
-            statusLabel={report.statusLabel}
+            statusLabel={getReportStatusLabel(report.status)}
             statusColor={getStatusColor(report.statusColor)}
           />
         )}
@@ -115,7 +139,7 @@ export function AssetReportReviewSheet({
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                         {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_ASSET_STATUS}
                       </p>
-                      <p className="text-[11px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-lg border border-blue-100/50 dark:border-blue-800/50 uppercase tracking-tighter">
+                      <p className="text-[11px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-lg border border-blue-100/50 dark:border-blue-800/50 tracking-tighter">
                         {ASSET_STATUS_LABELS[
                           report.assetStatus as AssetStatus
                         ] || report.assetStatus}
@@ -132,7 +156,7 @@ export function AssetReportReviewSheet({
                         {report.assetCode}
                       </p>
                     </div>
-                    <div className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono font-bold text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono font-bold text-[10px] tracking-widest px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                       {report.assetTag}
                     </div>
                   </div>
@@ -157,9 +181,7 @@ export function AssetReportReviewSheet({
                             : SYSTEM_MESSAGES.ASSET_REPORT.LABEL_UPDATED_TO}
                         </p>
                         <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
-                          {report.incidentType === "DAMAGED"
-                            ? SYSTEM_MESSAGES.ASSET_REPORT.TXT_DAMAGED
-                            : SYSTEM_MESSAGES.ASSET_REPORT.TXT_LOST}
+                          {getIssueTypeLabel(report.incidentType)}
                         </p>
                       </div>
                     </div>
@@ -178,7 +200,7 @@ export function AssetReportReviewSheet({
                       {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_ISSUE_TYPE}
                     </p>
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {report.incidentTypeLabel}
+                      {getIssueTypeLabel(report.incidentType)}
                     </p>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl italic text-[13px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed border border-slate-100 dark:border-slate-800/50">

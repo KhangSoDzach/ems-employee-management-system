@@ -97,7 +97,6 @@ const profileSchema = z.object({
   endDate: z.date().optional().nullable(),
   department: z.string().min(1, FORM_VALIDATION_MESSAGES.DEPT_REQUIRED),
   jobRole: z.string().min(1, FORM_VALIDATION_MESSAGES.ROLE_REQUIRED),
-  lineManager: z.string().min(1, FORM_VALIDATION_MESSAGES.MANAGER_REQUIRED),
   workStatus: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]),
 });
 
@@ -112,7 +111,6 @@ const defaultValues: Partial<ProfileFormValues> = {
   contractType: "FULL_TIME",
   department: "",
   jobRole: "",
-  lineManager: "",
   workStatus: "ACTIVE",
 };
 
@@ -164,7 +162,6 @@ export default function ProfilePage() {
       startDate: data.hireDate ? new Date(data.hireDate) : new Date(),
       department: data.department ?? "",
       jobRole: data.position ?? "",
-      lineManager: "", // chưa có trong PublicEmployeeResponse
       workStatus: (data.status as ProfileFormValues["workStatus"]) ?? "ACTIVE",
       contractType: "FULL_TIME",
     });
@@ -308,12 +305,6 @@ export default function ProfilePage() {
                   {SYSTEM_MESSAGES.PROFILE.DEPARTMENT_PREFIX}
                   {form.watch("department")}
                 </p>
-                <div className="flex items-center justify-center md:justify-start gap-4 mt-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4" />{" "}
-                    {SYSTEM_MESSAGES.PROFILE.OFFICE_LOCATION}
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -324,19 +315,6 @@ export default function ProfilePage() {
                 </p>
                 <p className="font-bold">{form.watch("employeeCode")}</p>
               </div>
-              {effectiveRole === "employee" && (
-                <div className="flex-1 md:flex-none">
-                  <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase">
-                    {SYSTEM_MESSAGES.PROFILE.MANAGER}
-                  </p>
-                  <div className="flex items-center gap-2 justify-start md:justify-end">
-                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">
-                      {form.watch("lineManager")?.charAt(0) || "?"}
-                    </div>
-                    <p className="font-bold">{form.watch("lineManager")}</p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -737,52 +715,6 @@ export default function ProfilePage() {
                         </FormItem>
                       )}
                     />
-
-                    {effectiveRole === "employee" && (
-                      <FormField
-                        control={form.control}
-                        name="lineManager"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="form-label-bold">
-                              {SYSTEM_MESSAGES.PROFILE.MANAGER}
-                            </FormLabel>
-                            <Select
-                              disabled={!canEdit}
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger
-                                  className={cn(
-                                    "input-readonly",
-                                    canEdit && "bg-background",
-                                  )}
-                                >
-                                  <SelectValue
-                                    placeholder={
-                                      SYSTEM_MESSAGES.SELECT_PLACEHOLDER
-                                    }
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Michael Scott">
-                                  Trần Anh Tuấn
-                                </SelectItem>
-                                <SelectItem value="Dwight Schrute">
-                                  Lê Hoàng Long
-                                </SelectItem>
-                                <SelectItem value="Jim Halpert">
-                                  Nguyễn Nhật Minh
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
 
                     <FormField
                       control={form.control}

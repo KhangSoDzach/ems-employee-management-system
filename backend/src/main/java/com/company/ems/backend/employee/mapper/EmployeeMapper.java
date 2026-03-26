@@ -23,6 +23,8 @@ public interface EmployeeMapper {
     @Mapping(target = "department", source = "department.name")
     @Mapping(target = "status",     expression = "java(employee.getStatus() != null ? employee.getStatus().name() : null)")
     @Mapping(target = "employeeCode", source = "employeeCode")
+    @Mapping(target = "reportingManagerId",   source = "reportingManager.id")
+    @Mapping(target = "reportingManagerName", expression = "java(employee.getReportingManager() != null ? employee.getReportingManager().getFullName() : null)")
     PublicEmployeeResponse toPublicResponse(Employee employee);
     @Mapping(target = "positionTitle",   source = "position.title")
     @Mapping(target = "departmentName",  source = "department.name")

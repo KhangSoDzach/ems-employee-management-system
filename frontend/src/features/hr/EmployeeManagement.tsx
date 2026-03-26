@@ -25,7 +25,7 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 import EmployeeDetailModal from "./EmployeeDetailModal";
 import EmployeeFormModal from "./components/EmployeeFormModal";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 export default function EmployeeManagementPage() {
   const [employees, setEmployees] = useState<EmployeeResponse[]>([]);

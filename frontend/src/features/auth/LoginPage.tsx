@@ -151,8 +151,12 @@ export const LoginPage = () => {
       setPendingLoginData(null);
       toast.success(SYSTEM_MESSAGES.LOGIN.SUCCESS);
       navigate(getRedirectByRole(), { replace: true });
-    } catch {
-      toast.error(SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.TOAST_INVALID);
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } } };
+      toast.error(
+        apiErr.response?.data?.message ||
+          SYSTEM_MESSAGES.TWO_FACTOR_LOGIN.TOAST_INVALID,
+      );
     } finally {
       setIsVerifying2fa(false);
     }
@@ -353,15 +357,18 @@ export const LoginPage = () => {
                     onKeyDown={(e) => {
                       if (e.key === "Backspace") {
                         e.preventDefault();
-                        const newOtpArr = otpValue.split("");
+                        const newOtpArr = otpValue.padEnd(6, " ").split("");
+
                         if (otpValue[i]) {
-                          // Clear current
-                          newOtpArr[i] = "";
-                          setOtpValue(newOtpArr.join(""));
+                          // Clear current digit
+                          newOtpArr[i] = " ";
+                          const nextOtp = newOtpArr.join("").trimEnd();
+                          setOtpValue(nextOtp);
                         } else if (i > 0) {
-                          // Move back and clear previous
-                          newOtpArr[i - 1] = "";
-                          setOtpValue(newOtpArr.join(""));
+                          // Already empty, move back and clear previous
+                          newOtpArr[i - 1] = " ";
+                          const nextOtp = newOtpArr.join("").trimEnd();
+                          setOtpValue(nextOtp);
                           (
                             e.currentTarget.previousSibling as HTMLInputElement
                           )?.focus();

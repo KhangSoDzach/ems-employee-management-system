@@ -1,19 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  AlertTriangle,
   CheckCircle2,
   XCircle,
   Search,
   Calendar,
   User,
   Package,
-  FileText,
-  Loader2,
   Filter,
   Eye,
   MoreHorizontal,
   ShieldAlert,
   BadgeCheck,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  FileCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +34,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   assetService,
   AdminIncidentListItem,
@@ -57,7 +65,7 @@ export default function AssetReportManagement() {
   const [reports, setReports] = useState<AdminIncidentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
-  const [status] = useState<string>("");
+  const [status, setStatus] = useState<string>("ALL");
 
   const [selectedReport, setSelectedReport] =
     useState<IncidentReportDetail | null>(null);
@@ -98,9 +106,28 @@ export default function AssetReportManagement() {
   );
 
   useEffect(() => {
-    const controller = new AbortController();
-    fetchReports(controller.signal);
-    return () => controller.abort();
+    setPage(0);
+  }, [keyword, status, reports]);
+
+  const fetchReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await assetService.getAllReports({
+        keyword: keyword || undefined,
+        status: status === "ALL" ? undefined : status,
+        page: 0,
+        size: 1000,
+      });
+      setReports(data.content);
+    } catch {
+      toast.error(SYSTEM_MESSAGES.ASSET_REPORT.MSG_FETCH_LIST_ERROR);
+    } finally {
+      setLoading(false);
+    }
+  }, [keyword, status]);
+
+  useEffect(() => {
+    fetchReports();
   }, [fetchReports]);
 
   const handleViewDetail = async (id: number) => {
@@ -148,103 +175,139 @@ export default function AssetReportManagement() {
     }
   };
 
+  const getReportStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.PENDING;
+      case "APPROVED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.APPROVED;
+      case "REJECTED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.STATS.REJECTED;
+      default:
+        return status;
+    }
+  };
+
+  const getIssueTypeLabel = (type: string) => {
+    switch (type) {
+      case "DAMAGED":
+        return SYSTEM_MESSAGES.ASSET_REPORT.TXT_DAMAGED;
+      case "LOST":
+        return SYSTEM_MESSAGES.ASSET_REPORT.TXT_LOST;
+      default:
+        return type;
+    }
+  };
+
   return (
     <SidebarProvider>
       <AppSidebar variant="inset" role={effectiveRole} />
       <SidebarInset>
         <SiteHeader />
 
-        <main className="flex-1 space-y-8 p-4 md:p-8 pt-6 bg-[#f8fafc] min-h-screen">
+        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background">
           {/* ── Page Header ── */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">
-                <ShieldAlert className="w-3.5 h-3.5" />
-                {SYSTEM_MESSAGES.ASSET_REPORT.SUBTITLE}
-              </div>
-              <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {SYSTEM_MESSAGES.ASSET_REPORT.TITLE}
               </h1>
-              <p className="text-slate-500 font-bold text-sm">
+              <p className="text-sm text-muted-foreground mt-1">
                 {SYSTEM_MESSAGES.ASSET_REPORT.DESC}
               </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                <Input
-                  placeholder={SYSTEM_MESSAGES.ASSET_REPORT.SEARCH_PLACEHOLDER}
-                  className="pl-11 h-12 w-full md:w-80 rounded-2xl border-none shadow-sm focus:ring-blue-600/20 bg-white font-bold text-sm tracking-tight"
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                />
-              </div>
-              <Button
-                variant="outline"
-                className="h-12 w-12 rounded-2xl bg-white border-none shadow-sm hover:bg-slate-50"
-              >
-                <Filter className="w-5 h-5 text-slate-600" />
-              </Button>
             </div>
           </div>
 
           {/* ── Dashboard Stats ── */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              {
-                label: SYSTEM_MESSAGES.ASSET_REPORT.STATS.TOTAL,
-                value: reports.length,
-                icon: FileText,
-                color: "blue",
-              },
-              {
-                label: SYSTEM_MESSAGES.ASSET_REPORT.STATS.PENDING,
-                value: reports.filter((r) => r.status === "PENDING").length,
-                icon: AlertTriangle,
-                color: "amber",
-              },
-              {
-                label: SYSTEM_MESSAGES.ASSET_REPORT.STATS.APPROVED,
-                value: reports.filter((r) => r.status === "APPROVED").length,
-                icon: CheckCircle2,
-                color: "emerald",
-              },
-              {
-                label: SYSTEM_MESSAGES.ASSET_REPORT.STATS.REJECTED,
-                value: reports.filter((r) => r.status === "REJECTED").length,
-                icon: XCircle,
-                color: "rose",
-              },
-            ].map((stat, i) => (
-              <div
-                key={i}
-                className="bg-white p-6 rounded-4xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-xl hover:shadow-blue-600/5 transition-all duration-500 cursor-default"
-              >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    {stat.label}
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REPORT.STATS.TOTAL}
                   </p>
-                  <p className="text-3xl font-black text-slate-900 tracking-tighter">
-                    {stat.value}
+                  <p className="text-2xl font-bold mt-1 text-foreground">
+                    {reports.length}
                   </p>
                 </div>
-                <div
-                  className={`w-14 h-14 rounded-2xl bg-${stat.color}-50 flex items-center justify-center group-hover:scale-110 transition-transform`}
-                >
-                  <stat.icon className={`w-7 h-7 text-${stat.color}-600`} />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                  <FileCheck className="w-5 h-5" />
                 </div>
               </div>
-            ))}
+            </div>
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REPORT.STATS.PENDING}
+                  </p>
+                  <p className="text-2xl font-bold mt-1 text-yellow-600">
+                    {reports.filter((r) => r.status === "PENDING").length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100 text-yellow-600">
+                  <Clock className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REPORT.STATS.APPROVED}
+                  </p>
+                  <p className="text-2xl font-bold mt-1 text-emerald-600">
+                    {reports.filter((r) => r.status === "APPROVED").length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REPORT.STATS.REJECTED}
+                  </p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">
+                    {reports.filter((r) => r.status === "REJECTED").length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-600">
+                  <XCircle className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* ── Reports List ── */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-              <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-                {SYSTEM_MESSAGES.ASSET_REPORT.INCOMING_REPORTS}
-              </h3>
+          <div className="bg-background border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-border bg-muted/10 flex items-center justify-between gap-4">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={SYSTEM_MESSAGES.ASSET_REPORT.SEARCH_PLACEHOLDER}
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  className="pl-9 h-9 bg-white"
+                  onKeyDown={(e) => e.key === "Enter" && fetchReports()}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground hidden sm:block" />
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="w-[140px] h-9 bg-white">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả</SelectItem>
+                    <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                    <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+                    <SelectItem value="REJECTED">Từ chối</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <Table>
@@ -315,9 +378,9 @@ export default function AssetReportManagement() {
                       <TableCell className="px-8 py-6">
                         <Badge
                           variant="outline"
-                          className="border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-slate-50"
+                          className="border-slate-200 text-slate-600 font-bold text-[10px] tracking-widest px-2.5 py-0.5 rounded-full bg-slate-50"
                         >
-                          {report.issueTypeLabel}
+                          {getIssueTypeLabel(report.issueType)}
                         </Badge>
                       </TableCell>
                       <TableCell className="px-8 py-6">
@@ -329,9 +392,9 @@ export default function AssetReportManagement() {
                       <TableCell className="px-8 py-6">
                         <div className="flex justify-center">
                           <Badge
-                            className={`${report.statusColor} border-none px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.15em] shadow-sm`}
+                            className={`status-badge-pill ${report.statusColor} border-none shadow-sm normal-case`}
                           >
-                            {report.statusLabel}
+                            {getReportStatusLabel(report.status)}
                           </Badge>
                         </div>
                       </TableCell>
@@ -380,6 +443,43 @@ export default function AssetReportManagement() {
                 )}
               </TableBody>
             </Table>
+
+            {/* Pagination footer */}
+            <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground font-medium">
+              <span>
+                {reports.length > 0 ? page * PAGE_SIZE + 1 : 0}-
+                {Math.min((page + 1) * PAGE_SIZE, reports.length)}{" "}
+                {SYSTEM_MESSAGES.SYMBOLS.SLASH} {reports.length}{" "}
+                {SYSTEM_MESSAGES.ASSET_REPORT.UNIT_REPORT}
+              </span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="font-medium px-1">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7"
+                    disabled={page >= totalPages - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </SidebarInset>
