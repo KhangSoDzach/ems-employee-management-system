@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -17,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -230,6 +232,56 @@ class PerformanceReviewServiceImplTest {
         assertEquals("2026-Q1", response.getReviewPeriod());
         assertEquals(1, response.getNotifiedMemberCount());
     }
+
+        @Test
+        void saveReview_upwardFeedback_success() {
+        mockAuthentication("employee1");
+
+        Employee manager = new Employee();
+        manager.setId(7L);
+        manager.setFirstName("Lead");
+        manager.setLastName("One");
+
+        Employee reviewerEmp = new Employee();
+        reviewerEmp.setId(1L);
+        reviewerEmp.setFirstName("Emp");
+        reviewerEmp.setLastName("A");
+        reviewerEmp.setReportingManager(manager);
+
+        when(employeeRepo.findByUserUsername("employee1")).thenReturn(Optional.of(reviewerEmp));
+        when(employeeRepo.findById(7L)).thenReturn(Optional.of(manager));
+
+        PerformanceReviewCycle activeCycle = PerformanceReviewCycle.builder()
+            .managerId(7L)
+            .reviewPeriod("2026-Q1")
+            .build();
+        activeCycle.setId(200L);
+        when(cycleRepo.findActiveCycleByManagerAndPeriod(eq(7L), eq("2026-Q1"), eq(ReviewCycleStatus.OPEN), any()))
+            .thenReturn(Optional.of(activeCycle));
+
+        when(reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(1L, 7L, "2026-Q1"))
+            .thenReturn(false);
+
+        when(reviewRepo.save(any(PerformanceReview.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mapper.toResponse(any(PerformanceReview.class))).thenReturn(PerformanceReviewDto.Response.builder().build());
+
+        PerformanceReviewDto.ScoresRequest scores = new PerformanceReviewDto.ScoresRequest();
+        scores.setExpertise(85);
+        scores.setCommunication(84);
+        scores.setAttitude(83);
+
+        PerformanceReviewDto.CreateRequest req = new PerformanceReviewDto.CreateRequest();
+        req.setRevieweeId(7L);
+        req.setReviewType(ReviewType.PEER);
+        req.setReviewPeriod("2026-Q1");
+        req.setScores(scores);
+
+        service.saveReview(req);
+
+        ArgumentCaptor<PerformanceReview> savedCaptor = ArgumentCaptor.forClass(PerformanceReview.class);
+        verify(reviewRepo, times(1)).save(savedCaptor.capture());
+        assertEquals(ReviewType.UPWARD, savedCaptor.getValue().getReviewType());
+        }
 
     @Test
     void getReview_notFound_throws() {

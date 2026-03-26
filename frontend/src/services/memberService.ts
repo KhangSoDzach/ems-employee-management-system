@@ -30,7 +30,7 @@ export interface GetTeamMembersParams {
 
 // ─── Performance Review Types ─────────────────────────────────────────────────
 
-export type ReviewType = "MANAGER" | "SELF" | "PEER";
+export type ReviewType = "MANAGER" | "SELF" | "PEER" | "UPWARD";
 
 export interface ScoresRequest {
   expertise: number;
@@ -92,9 +92,10 @@ interface ApiResponse<T> {
 export const memberService = {
   /**
    * GET /api/v1/employees/team
-   * Returns the paginated list of employees under the logged-in Manager's team.
-   * Managers only see their direct reports (DataScope=TEAM).
-   * HR/Admin see all employees.
+   * Returns the paginated list of evaluable members for current user scope.
+   * Employee (SELF): same manager group (manager + peers).
+   * Manager (TEAM): direct reports.
+   * HR/Admin (ALL): all employees.
    */
   getTeamMembers: (
     params: GetTeamMembersParams = {},
