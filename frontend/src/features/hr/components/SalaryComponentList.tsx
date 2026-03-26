@@ -152,11 +152,8 @@ export function SalaryComponentList() {
       <SidebarInset>
         <SiteHeader />
         <main className="min-h-screen space-y-8 bg-background p-4 pt-6 md:p-8">
-
-          {/* ── SECTION 1: Run Payroll ─────────────────────────────────── */}
           <RunPayrollPanel />
 
-          {/* ── SECTION 2: Salary Component Config ────────────────────── */}
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -179,9 +176,7 @@ export function SalaryComponentList() {
                     <TableHead>Mã</TableHead>
                     <TableHead>Tên</TableHead>
                     <TableHead>Loại</TableHead>
-                    <TableHead>Chịu thuế</TableHead>
-                    <TableHead>Đóng BHXH</TableHead>
-                    <TableHead>Tính chất</TableHead>
+                        <TableHead>Tính chất</TableHead>
                     <TableHead>Số tiền</TableHead>
                     <TableHead>Hệ số (%)</TableHead>
                     <TableHead>Trạng thái</TableHead>
@@ -193,7 +188,7 @@ export function SalaryComponentList() {
                   {salaryComponentsQuery.isLoading ? (
                     <TableRow>
                       <TableCell
-                        colSpan={10}
+                        colSpan={8}
                         className="text-center text-sm text-muted-foreground"
                       >
                         Đang tải dữ liệu...
@@ -202,7 +197,7 @@ export function SalaryComponentList() {
                   ) : rows.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={10}
+                        colSpan={8}
                         className="text-center text-sm text-muted-foreground"
                       >
                         Chưa có thành phần lương nào.
@@ -216,9 +211,7 @@ export function SalaryComponentList() {
                         <TableCell>
                           {SALARY_COMPONENT_TYPE_LABELS[row.type] ?? row.type}
                         </TableCell>
-                        <TableCell>{row.isTaxable ? "Có" : "Không"}</TableCell>
-                        <TableCell>{row.isInsurable ? "Có" : "Không"}</TableCell>
-                        <TableCell>
+                            <TableCell>
                           {SALARY_COMPONENT_NATURE_LABELS[row.nature] ??
                             row.nature}
                         </TableCell>
