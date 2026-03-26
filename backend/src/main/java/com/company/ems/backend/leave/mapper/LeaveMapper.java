@@ -22,6 +22,7 @@ public interface LeaveMapper {
     @Mapping(target = "approvedBy",   source = "approvedBy.id")
     @Mapping(target = "approverName", expression = "java(leave.getApprovedBy() != null ? leave.getApprovedBy().getUsername() : null)")
     @Mapping(target = "duration",     source = "totalDays")
+    @Mapping(target = "requesterUserId", expression = "java(leave.getEmployee() != null && leave.getEmployee().getUser() != null ? leave.getEmployee().getUser().getId() : null)")
     LeaveResponse toResponse(Leave leave);
     @Mapping(target = "employeeId", source = "employee.id")
     @Mapping(target = "leaveType",  expression = "java(balance.getLeaveType() != null ? balance.getLeaveType().name() : null)")

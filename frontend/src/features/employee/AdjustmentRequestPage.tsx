@@ -9,6 +9,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,14 +34,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { ClipboardList } from "lucide-react";
-
-import type {
-  AdjustmentRequest,
-  AdjustmentStatus,
-  AdjustmentType,
-  AuditEntry,
-} from "./adjustment-request.constants";
 import {
   ADJUSTMENT_STATUS_CONFIG,
   ADJUSTMENT_STATUS_OPTIONS,
@@ -48,8 +41,12 @@ import {
   ADJUSTMENT_TYPE_OPTIONS,
   ALL_LABEL,
   DATE_FORMAT,
+  AdjustmentRequest,
+  AdjustmentStatus,
+  AdjustmentType,
+  AuditEntry,
+  type AdjustmentFormValues,
 } from "./adjustment-request.constants";
-import type { AdjustmentFormValues } from "./adjustment-request.constants";
 import {
   ActiveFilterBadge,
   StatusBadge,
@@ -71,9 +68,15 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 // ─── Backend ↔ UI mappers ─────────────────────────────────────────────────────
 
 function mapStatus(s: AdjustmentRequestSummary["status"]): AdjustmentStatus {
-  if (s === "APPROVED") {return "APPROVED";}
-  if (s === "REJECTED") {return "REJECTED";}
-  if (s === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
+  if (s === "APPROVED") {
+    return "APPROVED";
+  }
+  if (s === "REJECTED") {
+    return "REJECTED";
+  }
+  if (s === "RETURNED_TO_EMPLOYEE") {
+    return "RETURNED";
+  }
   return "PENDING";
 }
 
@@ -81,8 +84,12 @@ function deriveType(
   inTime: string | null,
   outTime: string | null,
 ): AdjustmentType {
-  if (inTime && outTime) {return "BOTH";}
-  if (inTime) {return "CHECK_IN";}
+  if (inTime && outTime) {
+    return "BOTH";
+  }
+  if (inTime) {
+    return "CHECK_IN";
+  }
   return "CHECK_OUT";
 }
 
@@ -105,16 +112,28 @@ function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
 }
 
 function mapHistoryAction(action: string): AuditEntry["action"] {
-  if (action === "APPROVED") {return "APPROVED";}
-  if (action === "REJECTED") {return "REJECTED";}
-  if (action === "RETURNED_TO_EMPLOYEE") {return "RETURNED";}
-  if (action === "RESUBMITTED") {return "EDITED";}
+  if (action === "APPROVED") {
+    return "APPROVED";
+  }
+  if (action === "REJECTED") {
+    return "REJECTED";
+  }
+  if (action === "RETURNED_TO_EMPLOYEE") {
+    return "RETURNED";
+  }
+  if (action === "RESUBMITTED") {
+    return "EDITED";
+  }
   return "CREATED";
 }
 
 function typeToReason(type: AdjustmentType): AdjustmentReason {
-  if (type === "CHECK_IN") {return "FORGOT_CHECKIN";}
-  if (type === "CHECK_OUT") {return "FORGOT_CHECKOUT";}
+  if (type === "CHECK_IN") {
+    return "FORGOT_CHECKIN";
+  }
+  if (type === "CHECK_OUT") {
+    return "FORGOT_CHECKOUT";
+  }
   return "OTHER";
 }
 
@@ -163,7 +182,7 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
   </TableRow>
 );
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 /* ══════════════ MAIN PAGE ══════════════ */
 export default function AdjustmentRequestPage() {
@@ -190,7 +209,9 @@ export default function AdjustmentRequestPage() {
 
   // ── Fetch details when opening sheet ───────────────────────────────────────
   useEffect(() => {
-    if (!detailRequest || detailRequest.auditTrail.length > 0) {return;}
+    if (!detailRequest || detailRequest.auditTrail.length > 0) {
+      return;
+    }
 
     const fetchDetail = async () => {
       try {
@@ -198,7 +219,9 @@ export default function AdjustmentRequestPage() {
           Number(detailRequest.id),
         );
         setDetailRequest((prev) => {
-          if (!prev || prev.id !== String(fullDetail.id)) {return prev;}
+          if (!prev || prev.id !== String(fullDetail.id)) {
+            return prev;
+          }
           return {
             ...prev,
             auditTrail: fullDetail.history.map((h) => ({
@@ -574,7 +597,9 @@ export default function AdjustmentRequestPage() {
             {/* Footer */}
             <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                {SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_TOTAL} {totalElements}{" "}
+                {totalElements > 0 ? page * PAGE_SIZE + 1 : 0}-
+                {Math.min((page + 1) * PAGE_SIZE, totalElements)}{" "}
+                {SYSTEM_MESSAGES.SYMBOLS.SLASH} {totalElements}{" "}
                 {SYSTEM_MESSAGES.ADJUSTMENT.SUMMARY_UNIT}
               </span>
               {totalPages > 1 && (
@@ -584,21 +609,21 @@ export default function AdjustmentRequestPage() {
                     variant="outline"
                     className="h-7 w-7"
                     disabled={page === 0}
-                    onClick={() => setPage((p) => p - 1)}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <span>
-                    {page + 1}
-                    {SYSTEM_MESSAGES.SYMBOLS.SLASH}
-                    {totalPages}
+                  <span className="font-medium px-1">
+                    {page + 1} / {totalPages}
                   </span>
                   <Button
                     size="icon"
                     variant="outline"
                     className="h-7 w-7"
                     disabled={page >= totalPages - 1}
-                    onClick={() => setPage((p) => p + 1)}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>

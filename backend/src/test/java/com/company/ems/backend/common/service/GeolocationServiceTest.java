@@ -1,7 +1,8 @@
 package com.company.ems.backend.common.service;
 
 import com.company.ems.backend.common.exception.BusinessException;
-import com.company.ems.backend.config.OfficeLocationProperties;
+import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.position.entity.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -203,5 +204,50 @@ class GeolocationServiceTest {
         double lon = OFFICE_LON + 0.001;
         double expected = service.calculateDistance(lat, lon, OFFICE_LAT, OFFICE_LON);
         assertThat(service.distanceToClosestOffice(lat, lon)).isCloseTo(expected, within(0.001));
+    }
+
+    // ─── employee-position mapped validation ────────────────────────────────
+
+    @Nested
+    @DisplayName("validateWithinOfficeRadiusForEmployee()")
+    class ValidateForEmployee {
+
+        @Test
+        @DisplayName("Missing position-office mapping falls back to active office validation")
+        void missingMapping_fallsBackToGlobalValidation() {
+            org.mockito.Mockito.when(officeLocationRepository.findByIsActiveTrue())
+                    .thenReturn(java.util.List.of(createOffice("Main", OFFICE_LAT, OFFICE_LON, RADIUS_M)));
+
+            Employee employee = new Employee();
+            employee.setId(1L);
+            employee.setPosition(null);
+
+            assertThatNoException().isThrownBy(
+                    () -> service.validateWithinOfficeRadiusForEmployee(employee, OFFICE_LAT, OFFICE_LON));
+        }
+
+        @Test
+        @DisplayName("Inactive mapped office falls back to active office validation")
+        void inactiveMappedOffice_fallsBackToGlobalValidation() {
+            org.mockito.Mockito.when(officeLocationRepository.findByIsActiveTrue())
+                    .thenReturn(java.util.List.of(createOffice("Main", OFFICE_LAT, OFFICE_LON, RADIUS_M)));
+
+            var inactiveOffice = createOffice("Inactive", OFFICE_LAT, OFFICE_LON, RADIUS_M);
+            inactiveOffice.setIsActive(false);
+
+            Position position = Position.builder()
+                    .code("DEV")
+                    .title("Developer")
+                    .level(1)
+                    .officeLocation(inactiveOffice)
+                    .build();
+
+            Employee employee = new Employee();
+            employee.setId(2L);
+            employee.setPosition(position);
+
+            assertThatNoException().isThrownBy(
+                    () -> service.validateWithinOfficeRadiusForEmployee(employee, OFFICE_LAT, OFFICE_LON));
+        }
     }
 }

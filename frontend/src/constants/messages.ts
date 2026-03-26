@@ -60,6 +60,8 @@ export const SYSTEM_MESSAGES = {
     MENU_ASSET_INCIDENT: "Quản lý sự cố tài sản",
     MENU_APPROVE_REPORTS: "Duyệt báo cáo sự cố",
     MENU_APPROVE_ASSET_REQUESTS: "Duyệt yêu cầu tài sản",
+    MENU_ATTENDANCE: "Lịch sử điểm danh",
+    MENU_DASHBOARD: "Tổng quan",
     MENU_ANNOUNCEMENTS: "Thông báo nội bộ",
     MENU_MANAGE_ANNOUNCEMENTS: "Tạo thông báo",
     MENU_SALARY_HISTORY: "Lịch sử lương",
@@ -74,6 +76,10 @@ export const SYSTEM_MESSAGES = {
     SHARE: "Chia sẻ",
     HRMS: "HRMS",
     VERSION_PREFIX: "v",
+    SECTION_CREATE: "Tạo đơn",
+    SECTION_APPROVE: "Duyệt đơn",
+    SECTION_PERSONAL: "Cá nhân",
+    SECTION_MANAGEMENT: "Quản lý",
   },
 
   // Profile Page
@@ -115,10 +121,16 @@ export const SYSTEM_MESSAGES = {
     BREADCRUMB: "Chấm công",
     TITLE: "Lịch sử điểm danh",
     DESC: "Xem toàn bộ lịch sử chấm công của bạn",
+    CALENDAR_TITLE: "Lịch chấm công theo tháng",
+    DETAIL_TITLE: "Chi tiết chấm công",
+    DETAIL_EMPTY: "Chọn một ngày trên lịch để xem chi tiết điểm danh",
     CARD_WORK_DAYS: "Ngày đi làm",
+    CARD_FULL_WORK_DAYS: "Số ngày đủ công",
     CARD_LATE_DAYS: "Ngày đi muộn",
+    CARD_NO_CLOCK_OUT_DAYS: "Không Clock Out",
     CARD_ABSENT_DAYS: "Ngày vắng mặt",
     CARD_TOTAL_HOURS: "Tổng giờ làm",
+    COMPARE_PREV_MONTH: "so với tháng trước",
     CARD_MONTH_LABEL: (month: string) => `Tháng ${month}`,
     TABLE_TITLE: "Chi tiết chấm công",
     FILTER_STATUS_PLACEHOLDER: "Lọc trạng thái",
@@ -265,7 +277,7 @@ export const SYSTEM_MESSAGES = {
     BTN_CREATE: "Tạo đơn mới",
     FILTER_STATUS: "Trạng thái",
     FILTER_TYPE: "Loại phép",
-    BTN_CLEAR: "Xóa lọc",
+    BTN_CLEAR: "Xóa bộ lọc",
     TABLE_ID: "Mã đơn",
     TABLE_DATE_CREATED: "Ngày tạo",
     TABLE_DATE_LEAVE: "Thời gian nghỉ",
@@ -541,6 +553,13 @@ export const SYSTEM_MESSAGES = {
     DEFAULT_NATIONALITY: "Việt Nam",
     INFO_EMP_CODE: "Mã nhân viên sẽ được hệ thống tự động tạo.",
     SYSTEM_HR: "Hệ thống Nhân sự",
+    PLACEHOLDER_SOCIAL_WARRANTY_NUMBER: "Số bảo hiểm xã hội...",
+    LABEL_SOCIAL_WARRANTY_NUMBER: "Số bảo hiểm xã hội",
+    SECTION_ATTACHMENTS: "Tài liệu đính kèm",
+    TXT_CLICK_OR_DRAG_TO_UPLOAD: "Click hoặc kéo thả file vào đây để tải lên",
+    TXT_SUPPORTED_FILE_TYPES: "Hỗ trợ PDF, DOCX, JPG, PNG (Tối đa 10MB)",
+    MSG_DELETE_DESC:
+      "Hành động này có thể bị chặn nếu nhân viên có dữ liệu ràng buộc.",
   },
 
   // Common Toast Messages
@@ -595,7 +614,6 @@ export const SYSTEM_MESSAGES = {
     DURATION_DAYS: (days: number) => `${days} ngày`,
     STATUS_APPROVED: "Đã duyệt",
     STATUS_REJECTED: "Từ chối",
-    LEAVE_LIST_TITLE: "Danh sách nghỉ phép chờ duyệt",
     LEAVE_LIST_DESC: "Xử lý các yêu cầu nghỉ phép từ nhân viên.",
     BTN_EXPORT: "Xuất báo cáo",
     SEARCH_EMP: "Tìm kiếm nhân viên...",
@@ -817,6 +835,7 @@ export const SYSTEM_MESSAGES = {
 
     LABEL_FEEDBACK_NOTE: "Ghi chú phản hồi",
     PLACEHOLDER_FEEDBACK: "Nhập phản hồi hoặc lý do xử lý cho nhân viên...",
+    UNIT_REPORT: "báo cáo",
   },
 
   // Asset Incident Management
@@ -892,6 +911,7 @@ export const SYSTEM_MESSAGES = {
     MAX_FILE_SIZE_ERROR: "File quá lớn. Vui lòng chọn file dưới 5MB.",
     UNIT_MB: "MB",
     LABEL_ASSET_TAG: "Asset Tag",
+    LABEL_REPORT_COUNT: "Tổng số báo cáo: ",
   },
 
   // Asset Request (Employee & Admin)
@@ -947,6 +967,7 @@ export const SYSTEM_MESSAGES = {
     EMPTY_DESC: "Bạn chưa gửi yêu cầu cấp phát tài sản nào.",
     EMPTY_ADMIN_DESC: "Không có yêu cầu cấp phát tài sản nào chờ xử lý.",
     MSG_FETCH_ERROR: "Không thể tải danh sách yêu cầu.",
+    UNIT_REQUEST: "yêu cầu",
   },
 
   // Review Adjustment Sheet
@@ -1083,6 +1104,7 @@ export const SYSTEM_MESSAGES = {
     METHOD_CAMERA_GPS: "Camera+GPS",
     METHOD_MANUAL: "Thủ công",
     CURRENCY_VND: " VNĐ",
+    DEFAULT_PAGE_SIZE: 5,
   },
 
   // KPI/OKR Management

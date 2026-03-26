@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -47,13 +47,25 @@ export function AssetRequestsTab() {
   const [errors, setErrors] = useState<{ assetType?: string; reason?: string }>(
     {},
   );
+  const [page, setPage] = useState(0);
+
+  const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
+  const totalPages = Math.ceil(requests.length / PAGE_SIZE);
+  const paginatedItems = requests.slice(
+    page * PAGE_SIZE,
+    (page + 1) * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setPage(0);
+  }, [requests]);
 
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await assetService.getMyAssetRequests(0, 50);
+      const res = await assetService.getMyAssetRequests(0, 1000);
       setRequests(res.content);
-    } catch (error) {
+    } catch (_error) {
       toast.error(SYSTEM_MESSAGES.ASSET_REQUEST.MSG_FETCH_ERROR);
     } finally {
       setLoading(false);
@@ -154,8 +166,8 @@ export function AssetRequestsTab() {
                   <Loader2 className="w-5 h-5 mx-auto animate-spin text-muted-foreground" />
                 </TableCell>
               </TableRow>
-            ) : requests.length > 0 ? (
-              requests.map((request) => (
+            ) : paginatedItems.length > 0 ? (
+              paginatedItems.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell className="px-5 py-3 text-sm font-medium text-foreground">
                     #{request.requestId}
@@ -190,6 +202,40 @@ export function AssetRequestsTab() {
             )}
           </TableBody>
         </Table>
+        {/* Pagination summary and controls */}
+        <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+          <span>
+            {requests.length > 0 ? page * PAGE_SIZE + 1 : 0}-
+            {Math.min((page + 1) * PAGE_SIZE, requests.length)}{" "}
+            {SYSTEM_MESSAGES.SYMBOLS.SLASH} {requests.length}{" "}
+            {SYSTEM_MESSAGES.ASSET_REQUEST.UNIT_REQUEST}
+          </span>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="font-medium px-1">
+                {page + 1} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Create Dialog */}

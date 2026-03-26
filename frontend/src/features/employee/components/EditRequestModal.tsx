@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -5,9 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  type AdjustmentFormValues, 
-  type AdjustmentRequest 
+import {
+  type AdjustmentFormValues,
+  type AdjustmentRequest,
 } from "../adjustment-request.constants";
 import { EDIT_REQUEST_TEXT as TEXT } from "@/constants/ui-texts";
 import { AdjustmentForm } from "./AdjustmentForm";
@@ -25,11 +26,26 @@ export const EditRequestModal = ({
   onClose,
   onSubmit,
 }: EditRequestModalProps) => {
-  if (!request) {return null;}
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!request) {
+    return null;
+  }
 
   const handleFormSubmit = async (data: AdjustmentFormValues) => {
-    await onSubmit(request.id, data);
-    onClose();
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await onSubmit(request.id, data);
+      onClose();
+    } catch {
+      // Error toast is handled by parent callback; keep modal open for correction.
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const defaultValues: Partial<AdjustmentFormValues> = {
@@ -53,10 +69,11 @@ export const EditRequestModal = ({
         </DialogHeader>
 
         <div className="p-8 bg-white max-h-[70vh] overflow-y-auto custom-scrollbar">
-          <AdjustmentForm 
+          <AdjustmentForm
             defaultValues={defaultValues}
             onSubmit={handleFormSubmit}
             onCancel={onClose}
+            loading={submitting}
             text={TEXT}
           />
         </div>

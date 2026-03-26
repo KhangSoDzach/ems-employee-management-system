@@ -2,11 +2,11 @@ import { useState, useMemo } from "react"
 import { Calendar, Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from "@/components/ui/table"
@@ -150,7 +150,9 @@ export default function SalaryHistoryPage() {
                 <p className="text-2xl font-bold">{isLoading ? "—" : avgNet}</p>
               </div>
               <div className="card-soft p-6">
-                <p className="text-sm text-muted-foreground mb-2">{t.STATS_NEXT_PERIOD}</p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {t.STATS_NEXT_PERIOD}
+                </p>
                 <p className="text-2xl font-bold text-primary">05/06/2024</p>
               </div>
             </div>
@@ -165,7 +167,9 @@ export default function SalaryHistoryPage() {
                     <TableHead>{t.TABLE_TOTAL_INCOME}</TableHead>
                     <TableHead>{t.TABLE_DEDUCTIONS}</TableHead>
                     <TableHead>{t.TABLE_NET_PAY}</TableHead>
-                    <TableHead className="text-right">{SYSTEM_MESSAGES.LABEL_ACTION}</TableHead>
+                    <TableHead className="text-right">
+                      {SYSTEM_MESSAGES.LABEL_ACTION}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -187,7 +191,10 @@ export default function SalaryHistoryPage() {
                     </TableRow>
                   ) : pagedData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="h-24 text-center text-muted-foreground"
+                      >
                         {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
                       </TableCell>
                     </TableRow>
@@ -203,7 +210,9 @@ export default function SalaryHistoryPage() {
                             <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center shrink-0">
                               <Calendar className="w-4 h-4 text-primary" />
                             </div>
-                            <span className="font-medium text-foreground">{row.period}</span>
+                            <span className="font-medium text-foreground">
+                              {row.period}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{row.paymentDate}</TableCell>
@@ -265,5 +274,5 @@ export default function SalaryHistoryPage() {
         onOpenChange={open => { if (!open) { setSelectedSlip(null) } }}
       />
     </SidebarProvider>
-  )
+  );
 }

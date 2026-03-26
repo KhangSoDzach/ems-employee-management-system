@@ -173,6 +173,9 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         validateNotAlreadyProcessed(request);
 
         User processor = resolveUser(principal);
+        if (request.getRequestedBy().getUser() != null && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt yêu cầu của bản thân.");
+        }
         request.setStatus(AssetRequestStatus.APPROVED);
         request.setReviewedBy(processor);
         request.setReviewedAt(LocalDateTime.now());
@@ -205,6 +208,9 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         validateNotAlreadyProcessed(request);
 
         User processor = resolveUser(principal);
+        if (request.getRequestedBy().getUser() != null && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt yêu cầu của bản thân.");
+        }
 
         request.setStatus(AssetRequestStatus.REJECTED);
         request.setReviewedBy(processor);

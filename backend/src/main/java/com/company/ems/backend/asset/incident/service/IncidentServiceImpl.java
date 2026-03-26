@@ -1,30 +1,18 @@
 package com.company.ems.backend.asset.incident.service;
 
-import com.company.ems.backend.asset.entity.Asset;
-import com.company.ems.backend.asset.enums.AssetCondition;
-import com.company.ems.backend.asset.incident.dto.IncidentDto;
-import com.company.ems.backend.asset.incident.entity.AssetIncidentReport;
-import com.company.ems.backend.asset.incident.entity.IncidentType;
-import com.company.ems.backend.asset.incident.entity.ReportStatus;
-import com.company.ems.backend.asset.incident.repository.AssetIncidentReportRepository;
-import com.company.ems.backend.asset.repository.AssetRepository;
-import com.company.ems.backend.asset.repository.AssetHistoryRepository;
-import com.company.ems.backend.asset.entity.AssetHistory;
-import com.company.ems.backend.asset.enums.AssetActionType;
-import com.company.ems.backend.auth.security.CustomUserPrincipal;
-import com.company.ems.backend.auditlog.enums.AuthActionType;
-import com.company.ems.backend.auditlog.service.AuditLogService;
-import com.company.ems.backend.common.dto.ApiResponse;
-import com.company.ems.backend.common.dto.PageResponse;
-import com.company.ems.backend.common.exception.ResourceNotFoundException;
-import com.company.ems.backend.common.message.MessageCode;
-import com.company.ems.backend.common.message.MessageService;
-import com.company.ems.backend.employee.entity.Employee;
-import com.company.ems.backend.employee.repository.EmployeeRepository;
-import com.company.ems.backend.user.entity.User;
-import com.company.ems.backend.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,18 +22,32 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.time.LocalDateTime;
-import java.util.Objects;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.UUID;
+import com.company.ems.backend.asset.entity.Asset;
+import com.company.ems.backend.asset.entity.AssetHistory;
+import com.company.ems.backend.asset.enums.AssetActionType;
+import com.company.ems.backend.asset.enums.AssetCondition;
+import com.company.ems.backend.asset.incident.dto.IncidentDto;
+import com.company.ems.backend.asset.incident.entity.AssetIncidentReport;
+import com.company.ems.backend.asset.incident.entity.IncidentType;
+import com.company.ems.backend.asset.incident.entity.ReportStatus;
+import com.company.ems.backend.asset.incident.repository.AssetIncidentReportRepository;
+import com.company.ems.backend.asset.repository.AssetHistoryRepository;
+import com.company.ems.backend.asset.repository.AssetRepository;
+import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.service.AuditLogService;
+import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.common.dto.ApiResponse;
+import com.company.ems.backend.common.dto.PageResponse;
+import com.company.ems.backend.common.exception.ResourceNotFoundException;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.employee.repository.EmployeeRepository;
+import com.company.ems.backend.user.entity.User;
+import com.company.ems.backend.user.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -203,6 +205,9 @@ public class IncidentServiceImpl implements IncidentService {
         validateNotAlreadyProcessed(report);
 
         User processor = resolveUser(principal);
+        if (report.getReportedBy().getUser() != null && report.getReportedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt báo cáo của bản thân.");
+        }
         report.setStatus(ReportStatus.APPROVED);
         report.setProcessedBy(processor);
         report.setProcessedAt(LocalDateTime.now());
@@ -262,6 +267,9 @@ public class IncidentServiceImpl implements IncidentService {
         validateNotAlreadyProcessed(report);
 
         User processor = resolveUser(principal);
+        if (report.getReportedBy().getUser() != null && report.getReportedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt báo cáo của bản thân.");
+        }
 
         report.setStatus(ReportStatus.REJECTED);
         report.setProcessedBy(processor);
@@ -310,8 +318,8 @@ public class IncidentServiceImpl implements IncidentService {
 
     private AssetCondition resolveConditionOnApprove(IncidentType type) {
         return switch (type) {
-            case DAMAGED -> AssetCondition.DAMAGED;
-            case LOST -> AssetCondition.LOST;
+            case HARDWARE_ISSUE, DAMAGED -> AssetCondition.DAMAGED;
+            case LOST_ASSET, LOST -> AssetCondition.LOST;
         };
     }
 

@@ -1,22 +1,30 @@
-import { useState, useEffect } from "react"
-import { format } from "date-fns"
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import {
-  Loader2, MoreHorizontal, Plane, Plus, Search, SlidersHorizontal, X,
-} from "lucide-react"
-import { toast } from "sonner"
+  Loader2,
+  MoreHorizontal,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Plane,
+} from "lucide-react";
+import { toast } from "sonner";
 
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -24,10 +32,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
-import type { LeaveFormValues, LeaveRequest, LeaveStatus, LeaveType } from "./leave-request.constants"
 import {
   ALL_LABEL,
   CURRENT_USER,
@@ -36,14 +43,22 @@ import {
   LEAVE_STATUS_OPTIONS,
   LEAVE_TYPE_CONFIG,
   LEAVE_TYPE_OPTIONS,
-} from "./leave-request.constants"
-import { leaveService } from "@/services/leaveService"
-import { employeeService } from "@/services/employeeService"
-import { ActiveFilterBadge, StatusBadge, TypeBadge } from "./components/LeaveBadges"
-import { LeaveDetailSheet } from "./components/LeaveDetailSheet"
-import { CreateLeaveModal } from "./components/CreateLeaveModal"
+  type LeaveFormValues,
+  type LeaveRequest,
+  type LeaveStatus,
+  type LeaveType,
+} from "./leave-request.constants";
+import { leaveService } from "@/services/leaveService";
+import { employeeService } from "@/services/employeeService";
+import {
+  ActiveFilterBadge,
+  StatusBadge,
+  TypeBadge,
+} from "./components/LeaveBadges";
+import { LeaveDetailSheet } from "./components/LeaveDetailSheet";
+import { CreateLeaveModal } from "./components/CreateLeaveModal";
 
-import { SYSTEM_MESSAGES } from "@/constants/messages"
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 /* ══════════════ EMPTY STATE ══════════════ */
 
@@ -56,39 +71,52 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
         </div>
         {hasFilter ? (
           <>
-            <p className="text-base font-medium text-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.EMPTY_FILTER_TITLE}</p>
+            <p className="text-base font-medium text-foreground mb-1">
+              {SYSTEM_MESSAGES.LEAVE.EMPTY_FILTER_TITLE}
+            </p>
             <p className="text-sm">{SYSTEM_MESSAGES.LEAVE.EMPTY_FILTER_DESC}</p>
           </>
         ) : (
           <>
-            <p className="text-base font-medium text-foreground mb-1">{SYSTEM_MESSAGES.LEAVE.EMPTY_TITLE}</p>
+            <p className="text-base font-medium text-foreground mb-1">
+              {SYSTEM_MESSAGES.LEAVE.EMPTY_TITLE}
+            </p>
             <p className="text-sm">{SYSTEM_MESSAGES.LEAVE.EMPTY_DESC}</p>
           </>
         )}
       </div>
     </TableCell>
   </TableRow>
-)
+);
 
 /* ══════════════ MAIN PAGE ══════════════ */
 
 export default function LeaveRequestPage() {
-  const [requests, setRequests] = useState<LeaveRequest[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [employeeId, setEmployeeId] = useState<number | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<LeaveStatus | "ALL">("ALL")
-  const [typeFilter, setTypeFilter] = useState<LeaveType | "ALL">("ALL")
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null)
+  const [requests, setRequests] = useState<LeaveRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [employeeId, setEmployeeId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<LeaveStatus | "ALL">("ALL");
+  const [typeFilter, setTypeFilter] = useState<LeaveType | "ALL">("ALL");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null);
+  const [page, setPage] = useState(0);
+
+  const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
   /* ── Backend status → frontend union ── */
   const mapBackendStatus = (status: string): LeaveStatus => {
-    if (status.startsWith("PENDING")) {return "PENDING"}
-    if (status === "RETURNED_TO_EMPLOYEE") {return "RETURNED"}
-    if (status === "APPROVED" || status === "REJECTED") {return status as LeaveStatus}
-    return "PENDING"
-  }
+    if (status.startsWith("PENDING")) {
+      return "PENDING";
+    }
+    if (status === "RETURNED_TO_EMPLOYEE") {
+      return "RETURNED";
+    }
+    if (status === "APPROVED" || status === "REJECTED") {
+      return status as LeaveStatus;
+    }
+    return "PENDING";
+  };
 
   /* ── Load data on mount ── */
   useEffect(() => {
@@ -97,8 +125,8 @@ export default function LeaveRequestPage() {
         const [leavePage, profile] = await Promise.all([
           leaveService.getMyLeaves(),
           employeeService.getMyProfile(),
-        ])
-        setEmployeeId(profile.id)
+        ]);
+        setEmployeeId(profile.id);
         setRequests(
           leavePage.content.map((dto) => ({
             id: String(dto.id),
@@ -109,33 +137,39 @@ export default function LeaveRequestPage() {
             status: mapBackendStatus(dto.status),
             reason: dto.reason,
             auditTrail: [],
-          }))
-        )
+          })),
+        );
       } catch {
-        toast.error(SYSTEM_MESSAGES.API_ERROR)
+        toast.error(SYSTEM_MESSAGES.API_ERROR);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    load()
-  }, [])
+    };
+    load();
+  }, []);
 
   /* ── Filtered rows ── */
   const filtered = requests.filter((r) => {
-    const q = searchQuery.toLowerCase()
+    const q = searchQuery.toLowerCase();
     return (
       (statusFilter === "ALL" || r.status === statusFilter) &&
       (typeFilter === "ALL" || r.type === typeFilter) &&
-      (
-        q === "" ||
+      (q === "" ||
         r.id.toLowerCase().includes(q) ||
         LEAVE_TYPE_CONFIG[r.type].label.toLowerCase().includes(q) ||
-        r.reason.toLowerCase().includes(q)
-      )
-    )
-  })
+        r.reason.toLowerCase().includes(q))
+    );
+  });
 
-  const hasFilter = statusFilter !== "ALL" || typeFilter !== "ALL" || searchQuery !== ""
+  const hasFilter =
+    statusFilter !== "ALL" || typeFilter !== "ALL" || searchQuery !== "";
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, statusFilter, typeFilter]);
 
   /* ── Handlers ── */
   const handleCreate = async (data: LeaveFormValues) => {
@@ -145,7 +179,7 @@ export default function LeaveRequestPage() {
       startDate: format(data.startDate, "yyyy-MM-dd"),
       endDate: format(data.endDate, "yyyy-MM-dd"),
       reason: data.reason,
-    })
+    });
     const newReq: LeaveRequest = {
       id: String(dto.id),
       dateCreated: new Date(dto.createdAt),
@@ -155,27 +189,32 @@ export default function LeaveRequestPage() {
       status: mapBackendStatus(dto.status),
       reason: dto.reason,
       auditTrail: [
-        { id: "a1", action: "CREATED", actor: CURRENT_USER.name, timestamp: new Date() },
+        {
+          id: "a1",
+          action: "CREATED",
+          actor: CURRENT_USER.name,
+          timestamp: new Date(),
+        },
       ],
-    }
-    setRequests((prev) => [newReq, ...prev])
-  }
+    };
+    setRequests((prev) => [newReq, ...prev]);
+  };
 
   const handleCancel = async (id: string) => {
     try {
-      await leaveService.cancelLeave(Number(id))
-      setRequests((prev) => prev.filter((r) => r.id !== id))
-      toast.info(SYSTEM_MESSAGES.TOAST.LEAVE_CANCELLED)
+      await leaveService.cancelLeave(Number(id));
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+      toast.info(SYSTEM_MESSAGES.TOAST.LEAVE_CANCELLED);
     } catch {
-      toast.error(SYSTEM_MESSAGES.ERROR)
+      toast.error(SYSTEM_MESSAGES.ERROR);
     }
-  }
+  };
 
   const clearAllFilters = () => {
-    setStatusFilter("ALL")
-    setTypeFilter("ALL")
-    setSearchQuery("")
-  }
+    setStatusFilter("ALL");
+    setTypeFilter("ALL");
+    setSearchQuery("");
+  };
 
   /* ── Render ── */
   return (
@@ -185,13 +224,10 @@ export default function LeaveRequestPage() {
         <SiteHeader />
 
         <main className="page-layout-wrapper">
-
           {/* ── Page Header ── */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
             <div>
-              <h1 className="page-heading">
-                {SYSTEM_MESSAGES.LEAVE.TITLE}
-              </h1>
+              <h1 className="page-heading">{SYSTEM_MESSAGES.LEAVE.TITLE}</h1>
               <p className="text-muted-foreground mt-1">
                 {SYSTEM_MESSAGES.LEAVE.DESC}
               </p>
@@ -207,7 +243,6 @@ export default function LeaveRequestPage() {
 
           {/* ── Filter Bar ── */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-6">
-
             {/* Search */}
             <div className="relative flex-1 min-w-[180px] max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -230,7 +265,11 @@ export default function LeaveRequestPage() {
             {/* Trạng thái Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap"
+                >
                   <SlidersHorizontal className="w-4 h-4" />
                   {SYSTEM_MESSAGES.LEAVE.FILTER_STATUS}
                   {statusFilter !== "ALL" && (
@@ -246,7 +285,10 @@ export default function LeaveRequestPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuItem onClick={() => setStatusFilter("ALL")} className="font-medium cursor-pointer">
+                <DropdownMenuItem
+                  onClick={() => setStatusFilter("ALL")}
+                  className="font-medium cursor-pointer"
+                >
                   {ALL_LABEL}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -254,16 +296,21 @@ export default function LeaveRequestPage() {
                   <DropdownMenuItem
                     key={value}
                     onClick={() => setStatusFilter(value)}
-                    className={cn("cursor-pointer", statusFilter === value && "bg-muted font-medium")}
+                    className={cn(
+                      "cursor-pointer",
+                      statusFilter === value && "bg-muted font-medium",
+                    )}
                   >
                     <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "w-2 h-2 rounded-full inline-block shrink-0",
-                        value === "PENDING" && "bg-amber-500",
-                        value === "APPROVED" && "bg-emerald-500",
-                        value === "REJECTED" && "bg-rose-500",
-                        value === "RETURNED" && "bg-orange-500",
-                      )} />
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full inline-block shrink-0",
+                          value === "PENDING" && "bg-amber-500",
+                          value === "APPROVED" && "bg-emerald-500",
+                          value === "REJECTED" && "bg-rose-500",
+                          value === "RETURNED" && "bg-orange-500",
+                        )}
+                      />
                       {config.label}
                     </div>
                   </DropdownMenuItem>
@@ -274,7 +321,11 @@ export default function LeaveRequestPage() {
             {/* Loại phép Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap"
+                >
                   <SlidersHorizontal className="w-4 h-4" />
                   {SYSTEM_MESSAGES.LEAVE.FILTER_TYPE}
                   {typeFilter !== "ALL" && (
@@ -290,7 +341,10 @@ export default function LeaveRequestPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuItem onClick={() => setTypeFilter("ALL")} className="font-medium cursor-pointer">
+                <DropdownMenuItem
+                  onClick={() => setTypeFilter("ALL")}
+                  className="font-medium cursor-pointer"
+                >
                   {ALL_LABEL}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -298,16 +352,21 @@ export default function LeaveRequestPage() {
                   <DropdownMenuItem
                     key={value}
                     onClick={() => setTypeFilter(value)}
-                    className={cn("cursor-pointer", typeFilter === value && "bg-muted font-medium")}
+                    className={cn(
+                      "cursor-pointer",
+                      typeFilter === value && "bg-muted font-medium",
+                    )}
                   >
                     <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "w-2 h-2 rounded-full inline-block",
-                        value === "annual" && "bg-indigo-500",
-                        value === "sick" && "bg-rose-500",
-                        value === "unpaid" && "bg-slate-500",
-                        value === "personal" && "bg-violet-500",
-                      )} />
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full inline-block",
+                          value === "annual" && "bg-indigo-500",
+                          value === "sick" && "bg-rose-500",
+                          value === "unpaid" && "bg-slate-500",
+                          value === "personal" && "bg-violet-500",
+                        )}
+                      />
                       {config.label}
                     </div>
                   </DropdownMenuItem>
@@ -334,11 +393,21 @@ export default function LeaveRequestPage() {
               <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_ID}</TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_DATE_CREATED}</TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_DATE_LEAVE}</TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_TYPE}</TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">{SYSTEM_MESSAGES.LEAVE.TABLE_STATUS}</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_ID}
+                    </TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_DATE_CREATED}
+                    </TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_DATE_LEAVE}
+                    </TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_TYPE}
+                    </TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_STATUS}
+                    </TableHead>
                     <TableHead className="py-4 w-10" />
                   </TableRow>
                 </TableHeader>
@@ -348,103 +417,159 @@ export default function LeaveRequestPage() {
                       <TableCell colSpan={6} className="h-[400px] text-center">
                         <div className="flex items-center justify-center gap-2 text-muted-foreground">
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          <span className="text-sm">{SYSTEM_MESSAGES.LOADING}</span>
+                          <span className="text-sm">
+                            {SYSTEM_MESSAGES.LOADING}
+                          </span>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : filtered.length === 0 ? (
+                  ) : paginated.length === 0 ? (
                     <EmptyState hasFilter={hasFilter} />
-                  ) : filtered.map((req) => (
-                    <TableRow
-                      key={req.id}
-                      className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
-                      onClick={() => setDetailRequest(req)}
-                    >
-                      <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
-                        {req.id}
-                      </TableCell>
-                      <TableCell className="px-6 py-4 font-medium text-foreground">
-                        {format(req.dateCreated, DATE_FORMAT)}
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <span className="font-medium text-foreground">
-                          {format(req.startDate, DATE_FORMAT)}
-                          {req.startDate.getTime() !== req.endDate.getTime()
-                            && ` – ${format(req.endDate, DATE_FORMAT)}`}
-                        </span>
-                        <span className="text-muted-foreground text-xs block mt-0.5">
-                          {Math.ceil((req.endDate.getTime() - req.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1} {SYSTEM_MESSAGES.LEAVE.DAYS}
-                        </span>
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <TypeBadge type={req.type} />
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <StatusBadge status={req.status} />
-                      </TableCell>
-                      <TableCell className="py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem
-                              className="cursor-pointer text-sm"
-                              onClick={() => setDetailRequest(req)}
-                            >
-                              {SYSTEM_MESSAGES.LEAVE.BTN_DETAIL}
-                            </DropdownMenuItem>
-                            {req.status === "RETURNED" && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer text-sm text-primary font-medium">
-                                  {SYSTEM_MESSAGES.LEAVE.BTN_RESEND}
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {req.status === "PENDING" && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="cursor-pointer text-sm text-destructive focus:text-destructive"
-                                  onClick={() => handleCancel(req.id)}
-                                >
-                                  {SYSTEM_MESSAGES.LEAVE.BTN_CANCEL}
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  ) : (
+                    paginated.map((req) => (
+                      <TableRow
+                        key={req.id}
+                        className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
+                        onClick={() => setDetailRequest(req)}
+                      >
+                        <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
+                          {req.id}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 font-medium text-foreground">
+                          {format(req.dateCreated, DATE_FORMAT)}
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <span className="font-medium text-foreground">
+                            {format(req.startDate, DATE_FORMAT)}
+                            {req.startDate.getTime() !==
+                              req.endDate.getTime() &&
+                              ` – ${format(req.endDate, DATE_FORMAT)}`}
+                          </span>
+                          <span className="text-muted-foreground text-xs block mt-0.5">
+                            {Math.ceil(
+                              (req.endDate.getTime() -
+                                req.startDate.getTime()) /
+                                (1000 * 60 * 60 * 24),
+                            ) + 1}{" "}
+                            {SYSTEM_MESSAGES.LEAVE.DAYS}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <TypeBadge type={req.type} />
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <StatusBadge status={req.status} />
+                        </TableCell>
+                        <TableCell
+                          className="py-4 text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem
+                                className="cursor-pointer text-sm"
+                                onClick={() => setDetailRequest(req)}
+                              >
+                                {SYSTEM_MESSAGES.LEAVE.BTN_DETAIL}
+                              </DropdownMenuItem>
+                              {req.status === "RETURNED" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="cursor-pointer text-sm text-primary font-medium">
+                                    {SYSTEM_MESSAGES.LEAVE.BTN_RESEND}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {req.status === "PENDING" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="cursor-pointer text-sm text-destructive focus:text-destructive"
+                                    onClick={() => handleCancel(req.id)}
+                                  >
+                                    {SYSTEM_MESSAGES.LEAVE.BTN_CANCEL}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
 
             {/* Summary footer */}
-            {filtered.length > 0 && (
-              <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-                <span>{SYSTEM_MESSAGES.LEAVE.SUMMARY_SHOW} {filtered.length} {SYSTEM_MESSAGES.LEAVE.SUMMARY_DIVIDER} {requests.length} {SYSTEM_MESSAGES.LEAVE.SUMMARY_UNIT}</span>
+            <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex flex-col gap-1">
+                <span>
+                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_SHOW}{" "}
+                  {filtered.length > 0 ? page * PAGE_SIZE + 1 : 0}-
+                  {Math.min((page + 1) * PAGE_SIZE, filtered.length)}{" "}
+                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_DIVIDER} {filtered.length}{" "}
+                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_UNIT}
+                </span>
                 <div className="flex gap-4">
-                  {(["PENDING", "APPROVED", "REJECTED", "RETURNED"] as LeaveStatus[]).map((s) => {
-                    const count = requests.filter((r) => r.status === s).length
+                  {(
+                    [
+                      "PENDING",
+                      "APPROVED",
+                      "REJECTED",
+                      "RETURNED",
+                    ] as LeaveStatus[]
+                  ).map((s) => {
+                    const count = requests.filter((r) => r.status === s).length;
                     return count > 0 ? (
                       <span key={s}>
-                        <span className="font-semibold text-foreground">{count}</span>{" "}
+                        <span className="font-semibold text-foreground">
+                          {count}
+                        </span>{" "}
                         {LEAVE_STATUS_CONFIG[s].label}
                       </span>
-                    ) : null
+                    ) : null;
                   })}
                 </div>
               </div>
-            )}
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="font-medium px-2">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page >= totalPages - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </SidebarInset>
@@ -463,5 +588,5 @@ export default function LeaveRequestPage() {
         onClose={() => setDetailRequest(null)}
       />
     </SidebarProvider>
-  )
+  );
 }

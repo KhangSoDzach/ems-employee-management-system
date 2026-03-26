@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { AlertTriangle, CheckCircle2, XCircle, Search, Calendar, User, Package, FileText, Loader2, Filter, Eye, MoreHorizontal, ShieldAlert, BadgeCheck } from "lucide-react"
 import { toast } from "sonner"
 
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     Dialog,
     DialogContent,
@@ -41,12 +41,12 @@ import { SYSTEM_MESSAGES } from "@/constants/messages"
 import { useEffectiveRole } from "@/hooks/useEffectiveRole"
 
 export default function AssetReportManagement() {
-    const effectiveRole = useEffectiveRole()
+  const effectiveRole = useEffectiveRole();
 
-    const [reports, setReports] = useState<AdminIncidentListItem[]>([])
-    const [loading, setLoading] = useState(true)
-    const [keyword, setKeyword] = useState("")
-    const [status] = useState<string>("")
+  const [reports, setReports] = useState<AdminIncidentListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [keyword, setKeyword] = useState("");
+  const [status] = useState<string>("");
 
     const [selectedReport, setSelectedReport] = useState<IncidentReportDetail | null>(null)
     const [detailOpen, setDetailOpen] = useState(false)
@@ -93,6 +93,11 @@ export default function AssetReportManagement() {
             toast.error(SYSTEM_MESSAGES.ASSET_REPORT.MSG_FETCH_DETAIL_ERROR)
         }
     }
+  }, [keyword, status]);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
     const handleProcess = async (type: 'APPROVE' | 'REJECT') => {
         if (!selectedReport) return
@@ -123,12 +128,36 @@ export default function AssetReportManagement() {
             processingRef.current = false
         }
     }
+  };
 
-    return (
-        <SidebarProvider>
-            <AppSidebar role={effectiveRole} variant="inset" />
-            <SidebarInset>
-                <SiteHeader />
+  const handleProcess = async (
+    id: number,
+    note: string,
+    type: "APPROVE" | "REJECT",
+  ) => {
+    try {
+      if (type === "APPROVE") {
+        await assetService.approveReport(id, note);
+        toast.success(SYSTEM_MESSAGES.ASSET_REPORT.MSG_APPROVE_SUCCESS, {
+          description: SYSTEM_MESSAGES.ASSET_REPORT.MSG_APPROVE_DESC,
+          icon: <BadgeCheck className="w-5 h-5 text-emerald-500" />,
+        });
+      } else {
+        await assetService.rejectReport(id, note);
+        toast.success(SYSTEM_MESSAGES.ASSET_REPORT.MSG_REJECT_SUCCESS);
+      }
+      setDetailOpen(false);
+      fetchReports();
+    } catch (error) {
+      toast.error(SYSTEM_MESSAGES.ASSET_REPORT.MSG_PROCESS_ERROR, {
+        description:
+          // @ts-expect-error - axios-style error property access on unknown error type
+          error.response?.data?.message ||
+          SYSTEM_MESSAGES.ASSET_REPORT.MSG_TRY_AGAIN,
+      });
+      throw error;
+    }
+  };
 
                 <main className="flex-1 space-y-8 p-4 md:p-8 pt-6 bg-[#f8fafc] min-h-screen">
 
@@ -187,6 +216,18 @@ export default function AssetReportManagement() {
                                 {SYSTEM_MESSAGES.ASSET_REPORT.INCOMING_REPORTS}
                             </h3>
                         </div>
+                        <p className="text-slate-900 font-black uppercase tracking-widest text-[11px]">
+                          {SYSTEM_MESSAGES.ASSET_REPORT.EMPTY_TITLE}
+                        </p>
+                        <p className="text-slate-400 font-bold text-xs max-w-xs">
+                          {SYSTEM_MESSAGES.ASSET_REPORT.EMPTY_DESC}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
 
                         <Table>
                             <TableHeader>

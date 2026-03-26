@@ -116,7 +116,7 @@ public class EmployeeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_DELETE)
-    @Operation(summary = "Delete employee", description = "Permanently deletes an employee record")
+    @Operation(summary = "Delete employee", description = "Soft-deletes an employee: marks isDeleted=true, sets status to TERMINATED. The record is preserved for audit/history purposes but excluded from all list queries.")
     public ResponseEntity<ApiResponse<Void>> deleteEmployee(@PathVariable Long id) {
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_DELETED), null));

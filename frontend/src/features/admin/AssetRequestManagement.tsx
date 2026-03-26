@@ -7,6 +7,8 @@ import {
   Search,
   XCircle,
   FileCheck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -46,9 +48,11 @@ import {
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AssetRequestManagement() {
   const effectiveRole = useEffectiveRole();
+  const { user } = useAuth();
 
   const [requests, setRequests] = useState<AssetRequestAdminItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +60,9 @@ export function AssetRequestManagement() {
   // Filters
   const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const size = 10;
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
   // Stats
   const [stats, setStats] = useState({
@@ -80,8 +86,8 @@ export function AssetRequestManagement() {
       const response = await assetService.getAllAssetRequests({
         keyword,
         status: statusFilter !== "ALL" ? statusFilter : undefined,
-        page: 0,
-        size,
+        page,
+        size: PAGE_SIZE,
       });
       setRequests(response.content);
 
@@ -104,12 +110,17 @@ export function AssetRequestManagement() {
         rejected:
           statusFilter === "REJECTED" ? response.totalElements : rejected,
       });
-    } catch (error) {
+      setTotalPages(response.totalPages);
+    } catch (_error) {
       toast.error(SYSTEM_MESSAGES.ASSET_REQUEST.MSG_FETCH_ERROR);
     } finally {
       setLoading(false);
     }
-  }, [keyword, statusFilter, size]);
+  }, [keyword, statusFilter, page, PAGE_SIZE]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [keyword, statusFilter]);
 
   useEffect(() => {
     fetchRequests();
@@ -122,7 +133,7 @@ export function AssetRequestManagement() {
     try {
       const detail = await assetService.getAssetRequestDetailAdmin(id);
       setSelectedRequest(detail);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Không thể tải chi tiết yêu cầu.");
       setIsSheetOpen(false);
     } finally {
@@ -343,7 +354,42 @@ export function AssetRequestManagement() {
                 </TableBody>
               </Table>
             </div>
-            {/* Pagination placeholder if needed */}
+            {/* Pagination */}
+            <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {stats.total > 0 ? page * PAGE_SIZE + 1 : 0}-
+                {Math.min((page + 1) * PAGE_SIZE, stats.total)}{" "}
+                {SYSTEM_MESSAGES.SYMBOLS.SLASH} {stats.total}{" "}
+                {SYSTEM_MESSAGES.ASSET_REQUEST.UNIT_REQUEST}
+              </span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="font-medium px-1">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                    disabled={page >= totalPages - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </SidebarInset>
@@ -415,37 +461,45 @@ export function AssetRequestManagement() {
               </div>
 
               {selectedRequest.status === "PENDING" ? (
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <h4 className="text-sm font-semibold">
-                    {SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_REVIEW_NOTE}
-                  </h4>
-                  <Textarea
-                    placeholder="Ghi chú thêm hoặc lý do từ chối..."
-                    value={processNote}
-                    onChange={(e) => setProcessNote(e.target.value)}
-                    className="resize-none h-24"
-                  />
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                      onClick={() => handleProcess("REJECT")}
-                      disabled={processing}
-                    >
-                      {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_REJECT}
-                    </Button>
-                    <Button
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => handleProcess("APPROVE")}
-                      disabled={processing}
-                    >
-                      {processing && (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      )}
-                      {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_APPROVE}
-                    </Button>
+                user?.id === selectedRequest.requesterUserId ? (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="bg-amber-50 text-amber-600 border border-amber-200 p-3 rounded-md text-sm text-center">
+                      Bạn không thể tự duyệt yêu cầu cấp phát của bản thân.
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2 pt-4 border-t border-border">
+                    <h4 className="text-sm font-semibold">
+                      {SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_REVIEW_NOTE}
+                    </h4>
+                    <Textarea
+                      placeholder="Ghi chú thêm hoặc lý do từ chối..."
+                      value={processNote}
+                      onChange={(e) => setProcessNote(e.target.value)}
+                      className="resize-none h-24"
+                    />
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => handleProcess("REJECT")}
+                        disabled={processing}
+                      >
+                        {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_REJECT}
+                      </Button>
+                      <Button
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleProcess("APPROVE")}
+                        disabled={processing}
+                      >
+                        {processing && (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        )}
+                        {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_APPROVE}
+                      </Button>
+                    </div>
+                  </div>
+                )
               ) : (
                 <div className="space-y-4 pt-4 border-t border-border">
                   <h4 className="text-sm font-semibold bg-muted/40 p-2 rounded-t-lg border border-b-0 border-border">

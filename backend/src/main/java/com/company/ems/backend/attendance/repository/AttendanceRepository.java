@@ -137,4 +137,14 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
      */
     @Query("SELECT a FROM Attendance a WHERE a.employee.id = :employeeId AND a.date = CURRENT_DATE")
     Optional<Attendance> findTodayAttendanceByEmployeeId(@Param("employeeId") Long employeeId);
+
+    List<Attendance> findByEmployeeIdAndDateBetweenOrderByDateAsc(
+            Long employeeId,
+            LocalDate startDate,
+            LocalDate endDate);
+
+    long countByEmployeeIdAndDateBetweenAndCheckOutTimeIsNull(
+            Long employeeId,
+            LocalDate startDate,
+            LocalDate endDate);
 }

@@ -25,11 +25,8 @@ public class GeolocationService {
 
     /** Mean Earth radius in metres (IUGG recommended value). */
     private static final double EARTH_RADIUS_METRES = 6_371_000.0;
-        private static final double LOCATION_EPSILON_METRES = 0.1;
-        private static final String ERROR_POSITION_LOCATION_NOT_CONFIGURED = "POSITION_LOCATION_NOT_CONFIGURED";
-        private static final String ERROR_LOCATION_OUT_OF_RANGE = "LOCATION_OUT_OF_RANGE";
-        private static final String MESSAGE_POSITION_LOCATION_NOT_CONFIGURED =
-            "Vị trí công việc chưa được gán khu vực check-in. Vui lòng liên hệ admin cấu hình.";
+    private static final double LOCATION_EPSILON_METRES = 0.1;
+    private static final String ERROR_LOCATION_OUT_OF_RANGE = "LOCATION_OUT_OF_RANGE";
 
     private final com.company.ems.backend.attendance.repository.OfficeLocationRepository officeLocationRepository;
 
@@ -78,8 +75,7 @@ public class GeolocationService {
             double distance = calculateDistance(latitude, longitude, location.getLatitude(), location.getLongitude());
             
             // Allow a small tolerance (in metres) to avoid false positives
-            double epsilon = 0.1; 
-            if (distance - location.getRadiusMeters() <= epsilon) {
+            if (distance - location.getRadiusMeters() <= LOCATION_EPSILON_METRES) {
                 log.debug("Geolocation check PASSED: user=({}, {}), office='{}'=({}, {}), distance={}m, allowed={}m",
                         latitude, longitude, location.getName(), location.getLatitude(), location.getLongitude(),
                         String.format("%.2f", distance), location.getRadiusMeters());
@@ -106,12 +102,18 @@ public class GeolocationService {
     public void validateWithinOfficeRadiusForEmployee(Employee employee, double latitude, double longitude) {
         Position position = employee.getPosition();
         if (position == null || position.getOfficeLocation() == null) {
-            throw new BusinessException(ERROR_POSITION_LOCATION_NOT_CONFIGURED, MESSAGE_POSITION_LOCATION_NOT_CONFIGURED);
+            log.warn("Employee [{}] has no position/location mapping. Falling back to active office validation.",
+                    employee.getId());
+            validateWithinOfficeRadius(latitude, longitude);
+            return;
         }
 
         var location = position.getOfficeLocation();
         if (!Boolean.TRUE.equals(location.getIsActive())) {
-            throw new BusinessException(ERROR_POSITION_LOCATION_NOT_CONFIGURED, MESSAGE_POSITION_LOCATION_NOT_CONFIGURED);
+            log.warn("Position [{}] has inactive office mapping. Falling back to active office validation.",
+                    position.getId());
+            validateWithinOfficeRadius(latitude, longitude);
+            return;
         }
 
         double distance = calculateDistance(latitude, longitude, location.getLatitude(), location.getLongitude());

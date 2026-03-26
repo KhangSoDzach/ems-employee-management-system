@@ -9,12 +9,16 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
@@ -324,5 +328,163 @@ class EmployeeServiceImplTest {
         assertEquals(12, response.getAnnualLeaveBalance());
         assertEquals(5, response.getSickLeaveBalance());
         assertEquals(97.5, response.getAttendancePercentage());
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Feature 3: Soft Delete
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("deleteEmployee — soft delete")
+    class SoftDeleteTests {
+
+        @Test
+        @DisplayName("Admin xóa mềm: employee bị đánh dấu isDeleted=true và status=TERMINATED")
+        void deleteEmployee_SoftDelete_SetsIsDeletedAndTerminated() {
+            // Given
+            when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
+            when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+            ArgumentCaptor<Employee> captor = ArgumentCaptor.forClass(Employee.class);
+            when(employeeRepository.save(captor.capture())).thenReturn(employee);
+
+            // When
+            employeeService.deleteEmployee(1L);
+
+            // Then — phải save (không phải delete)
+            verify(employeeRepository, never()).delete(any(Employee.class));
+            verify(employeeRepository, times(1)).save(any(Employee.class));
+
+            Employee saved = captor.getValue();
+            assertTrue(saved.getIsDeleted(), "isDeleted phải là true sau khi xóa mềm");
+            assertEquals(EmployeeStatus.TERMINATED, saved.getStatus(),
+                    "status phải là TERMINATED sau khi xóa mềm");
+            assertNotNull(saved.getTerminationDate(), "terminationDate phải được gán");
+            assertNotNull(saved.getDeletedAt(), "deletedAt phải được gán");
+            assertEquals("admin", saved.getDeletedBy(), "deletedBy phải là username của người thực hiện");
+        }
+
+        @Test
+        @DisplayName("Non-admin (TEAM scope) không được xóa nhân viên")
+        void deleteEmployee_ForbiddenForNonAdmin() {
+            // Given — manager chỉ có TEAM scope
+            when(dataScopeService.getCurrentPrincipal()).thenReturn(managerPrincipal);
+
+            // When / Then
+            assertThrows(com.company.ems.backend.common.exception.ForbiddenException.class,
+                    () -> employeeService.deleteEmployee(1L));
+
+            // Không được tìm kiếm hay lưu gì
+            verify(employeeRepository, never()).findById(any());
+            verify(employeeRepository, never()).save(any());
+            verify(employeeRepository, never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("Xóa mềm nhân viên không tồn tại → ResourceNotFoundException")
+        void deleteEmployee_NotFound() {
+            when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
+            when(employeeRepository.findById(999L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                    () -> employeeService.deleteEmployee(999L));
+
+            verify(employeeRepository, never()).save(any());
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Feature 1 & 2: avatarUrl và socialSecurityNumber (BHXH) được lưu vào DB
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("createEmployee — lưu avatarUrl và BHXH vào DB")
+    class PersistFieldsTests {
+
+        @Test
+        @DisplayName("avatarUrl được lưu vào Employee entity khi tạo mới")
+        void createEmployee_AvatarUrl_IsPersisted() {
+            EmployeeRequest request = new EmployeeRequest();
+            request.setFirstName("Nguyen");
+            request.setLastName("Van A");
+            request.setEmail("a@company.com");
+            request.setDepartmentId(1L);
+            request.setPositionId(1L);
+            request.setAvatarUrl("https://cdn.example.com/avatar.jpg");
+
+            when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+            when(positionRepository.findById(1L)).thenReturn(Optional.of(position));
+
+            ArgumentCaptor<Employee> captor = ArgumentCaptor.forClass(Employee.class);
+            when(employeeRepository.save(captor.capture())).thenAnswer(inv -> {
+                Employee e = inv.getArgument(0);
+                e.setId(10L);
+                return e;
+            });
+
+            employeeService.createEmployee(request);
+
+            Employee saved = captor.getValue();
+            assertEquals("https://cdn.example.com/avatar.jpg", saved.getAvatarUrl(),
+                    "avatarUrl phải được lưu đúng vào entity");
+        }
+
+        @Test
+        @DisplayName("socialSecurityNumber (BHXH) được lưu vào Employee entity khi tạo mới")
+        void createEmployee_SocialSecurityNumber_IsPersisted() {
+            EmployeeRequest request = new EmployeeRequest();
+            request.setFirstName("Tran");
+            request.setLastName("Thi B");
+            request.setEmail("b@company.com");
+            request.setDepartmentId(1L);
+            request.setPositionId(1L);
+            request.setSocialSecurityNumber("01234567890");
+
+            when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+            when(positionRepository.findById(1L)).thenReturn(Optional.of(position));
+
+            ArgumentCaptor<Employee> captor = ArgumentCaptor.forClass(Employee.class);
+            when(employeeRepository.save(captor.capture())).thenAnswer(inv -> {
+                Employee e = inv.getArgument(0);
+                e.setId(11L);
+                return e;
+            });
+
+            employeeService.createEmployee(request);
+
+            Employee saved = captor.getValue();
+            assertEquals("01234567890", saved.getSocialSecurityNumber(),
+                    "socialSecurityNumber (BHXH) phải được lưu đúng vào entity");
+        }
+
+        @Test
+        @DisplayName("socialSecurityNumber (BHXH) được cập nhật vào Employee entity khi update")
+        void updateEmployee_SocialSecurityNumber_IsPersisted() {
+            when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
+            doNothing().when(dataScopeService).assertCanAccessEmployee(adminPrincipal, 1L);
+            when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+            when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+            when(positionRepository.findById(1L)).thenReturn(Optional.of(position));
+
+            EmployeeRequest request = new EmployeeRequest();
+            request.setFirstName("John");
+            request.setLastName("Doe");
+            request.setEmail("john.doe@example.com");
+            request.setDepartmentId(1L);
+            request.setPositionId(1L);
+            request.setSocialSecurityNumber("99988877766");
+            request.setAvatarUrl("https://cdn.example.com/new-avatar.jpg");
+
+            ArgumentCaptor<Employee> captor = ArgumentCaptor.forClass(Employee.class);
+            when(employeeRepository.save(captor.capture())).thenReturn(employee);
+
+            employeeService.updateEmployee(1L, request);
+
+            Employee saved = captor.getValue();
+            assertEquals("99988877766", saved.getSocialSecurityNumber(),
+                    "BHXH phải được cập nhật đúng");
+            assertEquals("https://cdn.example.com/new-avatar.jpg", saved.getAvatarUrl(),
+                    "avatarUrl phải được cập nhật đúng");
+        }
     }
 }
