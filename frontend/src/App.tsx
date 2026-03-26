@@ -45,11 +45,9 @@ const KpiOkrManagement = lazy(
 );
 const MemberList = lazy(() => import("./features/manager/MemberList"));
 const PayrollManagement = lazy(() => import("@/features/hr/PayrollManagement"));
+const HrPayrollPeriodPage = lazy(() => import("@/features/hr/HrPayrollPeriodPage"));
 const AssetReportManagement = lazy(
   () => import("./features/admin/AssetReportManagement"),
-);
-const AssetRequestManagement = lazy(
-  () => import("./features/admin/AssetRequestManagement"),
 );
 const AssetGroupManagement = lazy(
   () => import("./features/manager/AssetGroupManagement"),
@@ -64,7 +62,6 @@ const AnnouncementsPage = lazy(
 const AnnouncementManagementPage = lazy(
   () => import("./features/hr/AnnouncementManagementPage"),
 );
-const AuditLogsPage = lazy(() => import("./features/admin/AuditLogsPage"));
 
 function RouteFallback() {
   return (
