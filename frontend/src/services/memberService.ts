@@ -65,6 +65,20 @@ export interface PerformanceReviewResponse {
   updatedAt: string | null;
 }
 
+export interface PerformanceReviewCycleResponse {
+  id: number;
+  managerId: number;
+  reviewPeriod: string;
+  startAt: string;
+  endAt: string;
+  status: "OPEN" | "CLOSED";
+  notifiedMemberCount: number;
+}
+
+export interface OpenReviewCycleRequest {
+  reviewPeriod: string;
+}
+
 // ─── Internal wrapper ─────────────────────────────────────────────────────────
 
 interface ApiResponse<T> {
@@ -116,5 +130,22 @@ export const memberService = {
         "/performance/reviews",
         payload,
       ) as Promise<ApiResponse<PerformanceReviewResponse>>
+    ).then((res) => res.data),
+
+  openReviewCycle: (
+    payload: OpenReviewCycleRequest,
+  ): Promise<PerformanceReviewCycleResponse> =>
+    (
+      api.post<unknown, ApiResponse<PerformanceReviewCycleResponse>>(
+        "/performance/reviews/cycles/open",
+        payload,
+      ) as Promise<ApiResponse<PerformanceReviewCycleResponse>>
+    ).then((res) => res.data),
+
+  getActiveReviewCycle: (): Promise<PerformanceReviewCycleResponse | null> =>
+    (
+      api.get<unknown, ApiResponse<PerformanceReviewCycleResponse | null>>(
+        "/performance/reviews/cycles/active",
+      ) as Promise<ApiResponse<PerformanceReviewCycleResponse | null>>
     ).then((res) => res.data),
 };

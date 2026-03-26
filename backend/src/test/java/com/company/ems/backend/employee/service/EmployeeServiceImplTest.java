@@ -293,6 +293,64 @@ class EmployeeServiceImplTest {
     }
 
     @Test
+    void getTeamMembers_SelfScope_WithManager_ShouldReturnSameManagerGroup() {
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(employeePrincipal);
+
+        Employee manager = new Employee();
+        manager.setId(10L);
+        manager.setFirstName("Lead");
+        manager.setLastName("One");
+        manager.setEmail("lead.one@example.com");
+
+        Employee self = new Employee();
+        self.setId(3L);
+        self.setFirstName("Emp");
+        self.setLastName("Self");
+        self.setEmail("emp.self@example.com");
+        self.setReportingManager(manager);
+
+        Employee peer = new Employee();
+        peer.setId(4L);
+        peer.setFirstName("Emp");
+        peer.setLastName("Peer");
+        peer.setEmail("emp.peer@example.com");
+        peer.setReportingManager(manager);
+
+        when(employeeRepository.findByUserId(3L)).thenReturn(Optional.of(self));
+
+        Page<Employee> page = new PageImpl<>(List.of(self, peer));
+        when(employeeRepository.searchEmployeesByManager(
+            eq(10L), any(), eq(null), eq(null), eq(null), any(PageRequest.class))).thenReturn(page);
+
+        PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response =
+                employeeService.getTeamMembers(0, 10, null);
+
+        assertNotNull(response);
+        assertEquals(2, response.getContent().size());
+        assertTrue(response.getContent().stream().noneMatch(m -> "lead.one@example.com".equals(m.getEmail())));
+    }
+
+    @Test
+    void getTeamMembers_SelfScope_NoManager_ShouldReturnSelfOnly() {
+        when(dataScopeService.getCurrentPrincipal()).thenReturn(employeePrincipal);
+
+        Employee self = new Employee();
+        self.setId(3L);
+        self.setFirstName("Emp");
+        self.setLastName("Solo");
+        self.setEmail("emp.solo@example.com");
+        self.setReportingManager(null);
+
+        when(employeeRepository.findByUserId(3L)).thenReturn(Optional.of(self));
+
+        PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response =
+                employeeService.getTeamMembers(0, 10, null);
+
+        assertNotNull(response);
+        assertEquals(1, response.getContent().size());
+    }
+
+    @Test
     void updateEmployee_Success() {
         when(dataScopeService.getCurrentPrincipal()).thenReturn(adminPrincipal);
         doNothing().when(dataScopeService).assertCanAccessEmployee(adminPrincipal, 1L);

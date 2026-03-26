@@ -76,11 +76,11 @@ public class EmployeeController {
     }
 
     @GetMapping("/team")
-    @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "Get team members",
-        description = "Returns a paginated, searchable list of employees under the current Manager's team. " +
-                      "Managers see only their direct reports (DataScope=TEAM); HR/Admin see all employees. " +
+        description = "Returns a paginated, searchable list of team members for the current user. " +
+                      "Employees (SELF) see members in the same manager group; Managers see direct reports; HR/Admin see all employees. " +
                       "Response is a slim projection — no sensitive fields (salary, bank, tax)."
     )
     public ResponseEntity<ApiResponse<PageResponse<MemberResponse>>> getTeamMembers(

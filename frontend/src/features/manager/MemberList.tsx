@@ -23,6 +23,13 @@ import {
   type Member,
 } from "./components/MemberEvaluationSheet";
 import { useTeamMembers } from "./hooks/useTeamMembers";
+import {
+  useActiveReviewCycle,
+  useOpenReviewCycle,
+  useSaveReview,
+} from "./hooks/usePerformanceReview";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 // Role badge colour is a UI concern only — derive it from position title
 function roleColor(positionTitle: string | null): string {
@@ -62,6 +69,7 @@ const PAGE_SIZE = 10;
 export default function MemberList() {
   const t = SYSTEM_MESSAGES.MEMBER_LIST;
   const effectiveRole = useEffectiveRole();
+  const { user } = useAuth();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [sheetMode, setSheetMode] = useState<"view" | "edit">("view");
   const [search, setSearch] = useState<string>("");
@@ -77,12 +85,12 @@ export default function MemberList() {
     clearTimeout(
       (
         window as Window &
-        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+          typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
       )._searchTimer,
     );
     (
       window as Window &
-      typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
+        typeof globalThis & { _searchTimer?: ReturnType<typeof setTimeout> }
     )._searchTimer = setTimeout(() => {
       setDebouncedSearch(value);
     }, 400);
@@ -96,21 +104,45 @@ export default function MemberList() {
 
   const totalPages = data?.totalPages ?? 1;
   const totalElements = data?.totalElements ?? 0;
+  const activeCycleQuery = useActiveReviewCycle();
+  const openCycleMutation = useOpenReviewCycle();
+  const saveReviewMutation = useSaveReview();
 
   // Map API MemberResponse → the Member type consumed by MemberEvaluationSheet
   const members: Member[] = useMemo(
     () =>
-      (data?.content ?? []).map((m) => ({
-        id: m.id,
-        name: m.fullName,
-        email: m.email,
-        role: m.positionTitle ?? "—",
-        roleColor: roleColor(m.positionTitle),
-        skills: [] as string[], // UI shows position/department; skills are not in the slim DTO
-        avatar: m.avatarUrl ?? "",
-      })),
-    [data],
+      (data?.content ?? [])
+        .filter((m) => m.id !== user?.id)
+        .map((m) => ({
+          id: m.id,
+          name: m.fullName,
+          email: m.email,
+          role: m.positionTitle ?? "—",
+          roleColor: roleColor(m.positionTitle),
+          skills: [] as string[], // UI shows position/department; skills are not in the slim DTO
+          avatar: m.avatarUrl ?? "",
+        })),
+    [data, user?.id],
   );
+
+  const handleOpenCycle = async () => {
+    const periodInput = globalThis.prompt(
+      "Nhập kỳ đánh giá (ví dụ: 2026-Q1, 2026-H1, 2026-ANNUAL)",
+    );
+    if (!periodInput) {
+      return;
+    }
+
+    const normalized = periodInput.trim().toUpperCase();
+    const periodRegex = /^\d{4}-(Q[1-4]|H[12]|ANNUAL)$/;
+    if (!periodRegex.test(normalized)) {
+      toast.error("Kỳ đánh giá không đúng định dạng");
+      return;
+    }
+
+    await openCycleMutation.mutateAsync({ reviewPeriod: normalized });
+    await activeCycleQuery.refetch();
+  };
 
   return (
     <SidebarProvider>
@@ -124,15 +156,38 @@ export default function MemberList() {
               <div>
                 <h1 className="page-heading">{t.TITLE}</h1>
                 <p className="text-muted-foreground mt-1">{t.DESC}</p>
+                {activeCycleQuery.data && (
+                  <p className="text-xs text-emerald-600 mt-1 font-medium">
+                    Đợt đánh giá {activeCycleQuery.data.reviewPeriod} đang mở
+                    đến{" "}
+                    {new Date(activeCycleQuery.data.endAt).toLocaleString(
+                      "vi-VN",
+                    )}
+                  </p>
+                )}
               </div>
-              <div className="relative w-96">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder={t.SEARCH_PLACEHOLDER}
-                  value={search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                />
+              <div className="flex items-center gap-3">
+                {effectiveRole !== "employee" && (
+                  <Button
+                    type="button"
+                    onClick={handleOpenCycle}
+                    disabled={openCycleMutation.isPending}
+                  >
+                    {openCycleMutation.isPending
+                      ? "Đang mở đợt..."
+                      : "Mở đợt đánh giá (3 ngày)"}
+                  </Button>
+                )}
+
+                <div className="relative w-96">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    placeholder={t.SEARCH_PLACEHOLDER}
+                    value={search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
 
@@ -233,21 +288,19 @@ export default function MemberList() {
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              {effectiveRole !== "employee" && (
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="text-primary hover:bg-primary/10"
-                                  title={t.BTN_EVALUATE}
-                                  aria-label={t.BTN_EVALUATE}
-                                  onClick={() => {
-                                    setSelectedMember(member);
-                                    setSheetMode("edit");
-                                  }}
-                                >
-                                  <Star className="w-4 h-4" />
-                                </Button>
-                              )}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-primary hover:bg-primary/10"
+                                title={t.BTN_EVALUATE}
+                                aria-label={t.BTN_EVALUATE}
+                                onClick={() => {
+                                  setSelectedMember(member);
+                                  setSheetMode("edit");
+                                }}
+                              >
+                                <Star className="w-4 h-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -317,7 +370,27 @@ export default function MemberList() {
               setSheetMode("view");
             }
           }}
-          onSubmit={() => {
+          onSubmit={async ({ scores, comment }) => {
+            if (!selectedMember) {
+              return;
+            }
+            if (!activeCycleQuery.data?.reviewPeriod) {
+              toast.error("Hiện chưa có đợt đánh giá đang mở");
+              return;
+            }
+
+            await saveReviewMutation.mutateAsync({
+              revieweeId: selectedMember.id,
+              reviewType: effectiveRole === "employee" ? "PEER" : "MANAGER",
+              reviewPeriod: activeCycleQuery.data.reviewPeriod,
+              scores: {
+                expertise: Number(scores["expertise"] ?? 0),
+                communication: Number(scores["communication"] ?? 0),
+                attitude: Number(scores["attitude"] ?? 0),
+              },
+              comment,
+            });
+
             setSelectedMember(null);
           }}
         />
