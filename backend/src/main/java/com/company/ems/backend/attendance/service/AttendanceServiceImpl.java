@@ -16,6 +16,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.company.ems.backend.auditlog.enums.AuditAction;
+import com.company.ems.backend.auditlog.enums.ResourceType;
+
 import com.company.ems.backend.attendance.dto.AttendanceCalendarResponse;
 import com.company.ems.backend.attendance.dto.AttendanceResponse;
 import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
@@ -56,6 +59,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         private final GeolocationService geolocationService;
         private final PhotoStorageService photoStorageService;
         private final OfficeLocationProperties officeProps;
+        private final com.company.ems.backend.auditlog.service.AuditLogService auditLogService;
 
         // ─── Check-in ─────────────────────────────────────────────────────────────
 
@@ -120,6 +124,16 @@ public class AttendanceServiceImpl implements AttendanceService {
                 log.info("Employee [{}] checked in at {} (lat={}, lon={})",
                                 employee.getEmployeeCode(), checkInTime,
                                 request.getLatitude(), request.getLongitude());
+
+                auditLogService.logEvent(
+                                ResourceType.ATTENDANCE,
+                                AuditAction.CHECK_IN,
+                                principal.getUsername(),
+                                String.valueOf(saved.getId()),
+                                employee.getFullName(),
+                                null,
+                                null);
+
                 return attendanceMapper.toResponse(saved);
         }
 
@@ -174,6 +188,16 @@ public class AttendanceServiceImpl implements AttendanceService {
                 Attendance saved = attendanceRepository.save(attendance);
                 log.info("Employee [{}] checked out at {} (workHours={}min)",
                                 employee.getEmployeeCode(), checkOutTime, saved.getWorkHours());
+
+                auditLogService.logEvent(
+                                ResourceType.ATTENDANCE,
+                                AuditAction.CHECK_OUT,
+                                principal.getUsername(),
+                                String.valueOf(saved.getId()),
+                                employee.getFullName(),
+                                null,
+                                null);
+
                 return attendanceMapper.toResponse(saved);
         }
 
