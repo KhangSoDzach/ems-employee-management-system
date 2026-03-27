@@ -1,8 +1,66 @@
-ALTER TABLE employees
-    ADD COLUMN IF NOT EXISTS work_status VARCHAR(20) NOT NULL DEFAULT 'PROBATION',
-    ADD COLUMN IF NOT EXISTS contract_start_date DATE NULL,
-    ADD COLUMN IF NOT EXISTS probation_salary DECIMAL(15, 2) NULL,
-    ADD COLUMN IF NOT EXISTS official_salary DECIMAL(15, 2) NULL;
+SET @col_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'employees'
+      AND column_name = 'work_status'
+);
+SET @sql := IF(
+    @col_exists = 0,
+    "ALTER TABLE employees ADD COLUMN work_status VARCHAR(20) NOT NULL DEFAULT 'PROBATION'",
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'employees'
+      AND column_name = 'contract_start_date'
+);
+SET @sql := IF(
+    @col_exists = 0,
+    "ALTER TABLE employees ADD COLUMN contract_start_date DATE NULL",
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'employees'
+      AND column_name = 'probation_salary'
+);
+SET @sql := IF(
+    @col_exists = 0,
+    "ALTER TABLE employees ADD COLUMN probation_salary DECIMAL(15, 2) NULL",
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'employees'
+      AND column_name = 'official_salary'
+);
+SET @sql := IF(
+    @col_exists = 0,
+    "ALTER TABLE employees ADD COLUMN official_salary DECIMAL(15, 2) NULL",
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 UPDATE employees
 SET work_status = CASE
@@ -19,4 +77,18 @@ UPDATE employees
 SET official_salary = COALESCE(official_salary, salary)
 WHERE work_status = 'ACTIVE' AND official_salary IS NULL;
 
-CREATE INDEX idx_employee_work_status ON employees (work_status);
+SET @idx_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'employees'
+      AND index_name = 'idx_employee_work_status'
+);
+SET @sql := IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_employee_work_status ON employees (work_status)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

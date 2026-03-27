@@ -347,6 +347,7 @@ export default function ApproveLeaveRequest() {
                         ]?.filterClass || ""
                       }
                       onClear={() => setStatusFilter("ALL")}
+                      showClearButton={false}
                     />
                   )}
                 </Button>
@@ -409,6 +410,7 @@ export default function ApproveLeaveRequest() {
                         LEAVE_TYPE_FILTER_CONFIG[filterType]?.filterClass || ""
                       }
                       onClear={() => setFilterType("ALL")}
+                      showClearButton={false}
                     />
                   )}
                 </Button>
