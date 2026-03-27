@@ -370,6 +370,7 @@ export default function AdjustmentRequestPage() {
                         ].filterClass
                       }
                       onClear={() => setStatusFilter("ALL")}
+                      showClearButton={false}
                     />
                   )}
                 </Button>
@@ -430,6 +431,7 @@ export default function AdjustmentRequestPage() {
                           .filterClass
                       }
                       onClear={() => setTypeFilter("ALL")}
+                      showClearButton={false}
                     />
                   )}
                 </Button>

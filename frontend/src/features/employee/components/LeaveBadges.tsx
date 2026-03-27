@@ -68,37 +68,52 @@ export const ActiveFilterBadge = ({
   onClear,
   isActive,
   onClick,
+  showClearButton = true,
 }: {
   value: string;
   colorClass: string;
   onClear: () => void;
   isActive?: boolean;
   onClick?: () => void;
-}) => (
-  <span
-    onClick={onClick}
-    className={cn(
-      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all cursor-pointer select-none",
-      isActive === false
-        ? "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-        : cn(colorClass, "border-current shadow-sm"),
-      isActive && "scale-105",
-    )}
-  >
-    {value}
-    {(isActive === undefined || isActive) && (
+  showClearButton?: boolean;
+}) => {
+  const className = cn(
+    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all select-none",
+    isActive === false
+      ? "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+      : cn(colorClass, "border-current shadow-sm"),
+    isActive && "scale-105",
+  );
+
+  if (onClick) {
+    return (
       <button
         type="button"
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onClear();
-        }}
-        className="opacity-60 hover:opacity-100 transition-opacity rounded-full ml-0.5"
-        aria-label={`Xóa bộ lọc "${value}"`}
+        onClick={onClick}
+        className={cn(className, "cursor-pointer")}
       >
-        <X className="w-3 h-3" />
+        {value}
       </button>
-    )}
-  </span>
-);
+    );
+  }
+
+  return (
+    <span className={className}>
+      {value}
+      {showClearButton && (isActive === undefined || isActive) && (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClear();
+          }}
+          className="opacity-60 hover:opacity-100 transition-opacity rounded-full ml-0.5"
+          aria-label={`Xóa bộ lọc "${value}"`}
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
+    </span>
+  );
+};

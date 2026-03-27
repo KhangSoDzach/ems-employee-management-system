@@ -70,7 +70,7 @@ public class LeaveServiceImpl implements LeaveService {
 
         Leave leave = Leave.builder()
                 .employee(employee)
-                .leaveType(LeaveType.valueOf(request.getLeaveType()))
+                .leaveType(LeaveType.fromRequest(request.getLeaveType()))
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .reason(request.getReason())
@@ -119,9 +119,6 @@ public class LeaveServiceImpl implements LeaveService {
         if (principal.hasDataScope(DataScope.ALL)) {
             leaves = leaveRepository.findAll(pageable);
         } else if (principal.hasDataScope(DataScope.TEAM)) {
-                        employeeRepository.findByUserId(principal.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
             leaves = leaveRepository.findByReportingManagerUserId(principal.getUserId(), pageable);
         } else {
             // SELF

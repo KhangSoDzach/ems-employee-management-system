@@ -288,6 +288,7 @@ export default function LeaveRequestPage() {
                         value={LEAVE_STATUS_CONFIG[statusFilter].label}
                         colorClass="text-foreground bg-muted border-none"
                         onClear={() => setStatusFilter("ALL")}
+                        showClearButton={false}
                       />
                     </>
                   )}
@@ -344,6 +345,7 @@ export default function LeaveRequestPage() {
                         value={LEAVE_TYPE_CONFIG[typeFilter].label}
                         colorClass={LEAVE_TYPE_CONFIG[typeFilter].badgeClass}
                         onClear={() => setTypeFilter("ALL")}
+                        showClearButton={false}
                       />
                     </>
                   )}
