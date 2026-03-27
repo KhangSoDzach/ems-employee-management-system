@@ -516,6 +516,7 @@ export default function RequestPage() {
                             LEAVE_STATUS_CONFIG[leaveStatus].filterClass
                           }
                           onClear={() => setLeaveStatus("ALL")}
+                          showClearButton={false}
                         />
                       )}
                     </Button>
@@ -571,6 +572,7 @@ export default function RequestPage() {
                           value={LEAVE_TYPE_CONFIG[leaveType].label}
                           colorClass={LEAVE_TYPE_CONFIG[leaveType].filterClass}
                           onClear={() => setLeaveType("ALL")}
+                          showClearButton={false}
                         />
                       )}
                     </Button>
@@ -857,6 +859,7 @@ export default function RequestPage() {
                             ].filterClass
                           }
                           onClear={() => setAdjStatus("ALL")}
+                          showClearButton={false}
                         />
                       )}
                     </Button>
@@ -917,6 +920,7 @@ export default function RequestPage() {
                               .filterClass
                           }
                           onClear={() => setAdjType("ALL")}
+                          showClearButton={false}
                         />
                       )}
                     </Button>
