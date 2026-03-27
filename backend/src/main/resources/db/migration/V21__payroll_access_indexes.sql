@@ -5,19 +5,58 @@
 -- ── Covering index for HR period view ─────────────────────────
 -- Enables index-only scan when listing payrolls by period.
 -- Avoids full table scan on large payrolls table.
-CREATE INDEX IF NOT EXISTS idx_payroll_period_status
-    ON payrolls (payroll_year, payroll_month, status);
+SET @idx_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND index_name = 'idx_payroll_period_status'
+);
+SET @sql := IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_payroll_period_status ON payrolls (payroll_year, payroll_month, status)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ── Partial covering index for streaming CSV export ───────────
 -- Includes net_pay + basic_salary to reduce heap fetches.
 -- The JOIN FETCH to employees still uses the employee FK index.
-CREATE INDEX IF NOT EXISTS idx_payroll_period_net
-    ON payrolls (payroll_year, payroll_month, employee_id, net_pay, basic_salary);
+SET @idx_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND index_name = 'idx_payroll_period_net'
+);
+SET @sql := IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_payroll_period_net ON payrolls (payroll_year, payroll_month, employee_id, net_pay, basic_salary)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ── Composite index for employee own history ──────────────────
 -- (employee_id, year DESC, month DESC) matches ORDER BY in repository
-CREATE INDEX IF NOT EXISTS idx_payroll_emp_year_month
-    ON payrolls (employee_id, payroll_year DESC, payroll_month DESC, is_deleted);
+SET @idx_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND index_name = 'idx_payroll_emp_year_month'
+);
+SET @sql := IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_payroll_emp_year_month ON payrolls (employee_id, payroll_year DESC, payroll_month DESC, is_deleted)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ── PayrollItem lookup index ──────────────────────────────────
 -- Used in GetMyPayrollHistoryUseCase when loading items per payroll.

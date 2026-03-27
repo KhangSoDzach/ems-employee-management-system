@@ -1,5 +1,18 @@
-ALTER TABLE employees
-    ADD COLUMN IF NOT EXISTS contract_duration_months INT NULL;
+SET @col_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'employees'
+      AND column_name = 'contract_duration_months'
+);
+SET @sql := IF(
+    @col_exists = 0,
+    'ALTER TABLE employees ADD COLUMN contract_duration_months INT NULL',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 UPDATE employees
 SET contract_duration_months = CASE
