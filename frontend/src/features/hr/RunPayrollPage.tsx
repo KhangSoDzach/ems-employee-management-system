@@ -3,9 +3,7 @@
 // Chứa thao tác Chạy tính lương / Tính lại lương.
 
 import { ShieldAlert } from "lucide-react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+
 import { RunPayrollPanel } from "@/features/hr/components/RunPayrollPanel";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { PAYROLL_HR_CONSTANTS as C } from "@/features/hr/run-payroll.constants";
@@ -33,32 +31,23 @@ export default function RunPayrollPage() {
   const isAllowed = effectiveRole === "hr" || effectiveRole === "admin";
 
   return (
-    <SidebarProvider>
-      <AppSidebar role={effectiveRole} variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
+    <main className="payroll-page-main">
+      {!isAllowed ? (
+        <AccessDenied />
+      ) : (
+        <>
+          {/* ── Page Header ── */}
+          <div className="payroll-page-header">
+            <div>
+              <h1 className="page-heading">{C.PAGE_TITLE}</h1>
+              <p className="text-sm text-muted-foreground">{C.PAGE_SUBTITLE}</p>
+            </div>
+          </div>
 
-        <main className="payroll-page-main">
-          {!isAllowed ? (
-            <AccessDenied />
-          ) : (
-            <>
-              {/* ── Page Header ── */}
-              <div className="payroll-page-header">
-                <div>
-                  <h1 className="page-heading">{C.PAGE_TITLE}</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {C.PAGE_SUBTITLE}
-                  </p>
-                </div>
-              </div>
-
-              {/* ── Run Payroll Panel ── */}
-              <RunPayrollPanel />
-            </>
-          )}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+          {/* ── Run Payroll Panel ── */}
+          <RunPayrollPanel />
+        </>
+      )}
+    </main>
   );
 }

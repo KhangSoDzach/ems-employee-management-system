@@ -21,10 +21,6 @@ import {
 } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -136,7 +132,6 @@ function MetricCard({
 const WEEKDAY_LABELS = ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"];
 
 export default function AttendanceHistoryPage() {
-  const effectiveRole = useEffectiveRole();
   const [viewMonth, setViewMonth] = useState<Date>(startOfMonth(new Date()));
   const [selectedDateOverride, setSelectedDateOverride] = useState<
     string | null
@@ -203,253 +198,242 @@ export default function AttendanceHistoryPage() {
   const selectedDay = selectedDate ? dayMap.get(selectedDate) : null;
 
   return (
-    <SidebarProvider>
-      <AppSidebar role={effectiveRole} variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
+    <main className="page-layout-wrapper">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="page-heading">
+            {SYSTEM_MESSAGES.ATTENDANCE_HIST.TITLE}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {SYSTEM_MESSAGES.ATTENDANCE_HIST.DESC}
+          </p>
+        </div>
+      </div>
 
-        <main className="page-layout-wrapper">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="page-heading">
-                {SYSTEM_MESSAGES.ATTENDANCE_HIST.TITLE}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {SYSTEM_MESSAGES.ATTENDANCE_HIST.DESC}
-              </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <MetricCard
+          title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_FULL_WORK_DAYS}
+          value={calendarQuery.data?.fullWorkDays.current ?? 0}
+          trend={calendarQuery.data?.fullWorkDays.changePercent ?? 0}
+          color="text-emerald-600"
+          loading={calendarQuery.isLoading}
+        />
+        <MetricCard
+          title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_LATE_DAYS}
+          value={calendarQuery.data?.lateDays.current ?? 0}
+          trend={calendarQuery.data?.lateDays.changePercent ?? 0}
+          color="text-amber-600"
+          loading={calendarQuery.isLoading}
+        />
+        <MetricCard
+          title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_NO_CLOCK_OUT_DAYS}
+          value={calendarQuery.data?.noClockOutDays.current ?? 0}
+          trend={calendarQuery.data?.noClockOutDays.changePercent ?? 0}
+          color="text-violet-600"
+          loading={calendarQuery.isLoading}
+        />
+        <MetricCard
+          title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_ABSENT_DAYS}
+          value={calendarQuery.data?.absentDays.current ?? 0}
+          trend={calendarQuery.data?.absentDays.changePercent ?? 0}
+          color="text-rose-600"
+          loading={calendarQuery.isLoading}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <Card className="card-border xl:col-span-3">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                {SYSTEM_MESSAGES.ATTENDANCE_HIST.CALENDAR_TITLE}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setSelectedDateOverride(null);
+                    setViewMonth((prev) => addMonths(prev, -1));
+                  }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <div className="min-w-[130px] text-center font-semibold text-base">
+                  {`Tháng ${format(viewMonth, "M, yyyy")}`}
+                </div>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setSelectedDateOverride(null);
+                    setViewMonth((prev) => addMonths(prev, 1));
+                  }}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+          </CardHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            <MetricCard
-              title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_FULL_WORK_DAYS}
-              value={calendarQuery.data?.fullWorkDays.current ?? 0}
-              trend={calendarQuery.data?.fullWorkDays.changePercent ?? 0}
-              color="text-emerald-600"
-              loading={calendarQuery.isLoading}
-            />
-            <MetricCard
-              title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_LATE_DAYS}
-              value={calendarQuery.data?.lateDays.current ?? 0}
-              trend={calendarQuery.data?.lateDays.changePercent ?? 0}
-              color="text-amber-600"
-              loading={calendarQuery.isLoading}
-            />
-            <MetricCard
-              title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_NO_CLOCK_OUT_DAYS}
-              value={calendarQuery.data?.noClockOutDays.current ?? 0}
-              trend={calendarQuery.data?.noClockOutDays.changePercent ?? 0}
-              color="text-violet-600"
-              loading={calendarQuery.isLoading}
-            />
-            <MetricCard
-              title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_ABSENT_DAYS}
-              value={calendarQuery.data?.absentDays.current ?? 0}
-              trend={calendarQuery.data?.absentDays.changePercent ?? 0}
-              color="text-rose-600"
-              loading={calendarQuery.isLoading}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            <Card className="card-border xl:col-span-3">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.CALENDAR_TITLE}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setSelectedDateOverride(null);
-                        setViewMonth((prev) => addMonths(prev, -1));
-                      }}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <div className="min-w-[130px] text-center font-semibold text-base">
-                      {`Tháng ${format(viewMonth, "M, yyyy")}`}
+          <CardContent>
+            {calendarQuery.isLoading ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="w-7 h-7 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="grid grid-cols-7 text-sm text-muted-foreground font-medium">
+                  {WEEKDAY_LABELS.map((label) => (
+                    <div key={label} className="px-2 py-2 text-center">
+                      {label}
                     </div>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setSelectedDateOverride(null);
-                        setViewMonth((prev) => addMonths(prev, 1));
-                      }}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden border border-border bg-border">
+                  {calendarCells.map((date) => {
+                    const dateKey = format(date, "yyyy-MM-dd");
+                    const dayData = dayMap.get(dateKey);
+                    const inCurrentMonth = isSameMonth(date, viewMonth);
+                    const active = selectedDate === dateKey;
+                    let dayNumberClass = "text-muted-foreground/60";
+                    if (inCurrentMonth) {
+                      dayNumberClass = isToday(date)
+                        ? "text-primary"
+                        : "text-foreground";
+                    }
+
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        onClick={() =>
+                          inCurrentMonth && setSelectedDateOverride(dateKey)
+                        }
+                        className={`h-[112px] bg-background p-2 text-left transition-colors ${
+                          inCurrentMonth ? "hover:bg-muted/30" : "bg-muted/20"
+                        } ${active ? "ring-2 ring-primary" : ""}`}
+                        disabled={!inCurrentMonth}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-sm font-semibold ${dayNumberClass}`}
+                          >
+                            {format(date, "d")}
+                          </span>
+                          {dayData?.hasRecord && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          )}
+                        </div>
+
+                        {inCurrentMonth && dayData?.hasRecord && (
+                          <div className="mt-2 space-y-1">
+                            <Badge
+                              variant="outline"
+                              className={`status-badge px-2 py-0 ${statusInfo(dayData.status).cls}`}
+                            >
+                              {statusInfo(dayData.status).label}
+                            </Badge>
+                            <p className="text-[11px] text-muted-foreground leading-tight">
+                              {fmtTime(dayData.checkInTime)} -{" "}
+                              {fmtTime(dayData.checkOutTime)}
+                            </p>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="card-border">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">
+              {SYSTEM_MESSAGES.ATTENDANCE_HIST.DETAIL_TITLE}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {selectedDay?.hasRecord ? (
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Ngày</p>
+                  <p className="font-semibold">
+                    {format(parseISO(selectedDay.date), "dd/MM/yyyy")}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Trạng thái</p>
+                  <Badge
+                    variant="outline"
+                    className={`status-badge px-2.5 py-0.5 ${statusInfo(selectedDay.status).cls}`}
+                  >
+                    {statusInfo(selectedDay.status).label}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <LogIn className="w-3.5 h-3.5" />
+                      Check-in
+                    </div>
+                    <div className="font-medium">
+                      {fmtTime(selectedDay.checkInTime)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <LogOut className="w-3.5 h-3.5" />
+                      Check-out
+                    </div>
+                    <div className="font-medium">
+                      {fmtTime(selectedDay.checkOutTime)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      Tổng giờ làm
+                    </div>
+                    <div className="font-medium">
+                      {formatWorkHours(selectedDay.workHours)}
+                    </div>
                   </div>
                 </div>
-              </CardHeader>
 
-              <CardContent>
-                {calendarQuery.isLoading ? (
-                  <div className="flex justify-center py-16">
-                    <Loader2 className="w-7 h-7 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="grid grid-cols-7 text-sm text-muted-foreground font-medium">
-                      {WEEKDAY_LABELS.map((label) => (
-                        <div key={label} className="px-2 py-2 text-center">
-                          {label}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden border border-border bg-border">
-                      {calendarCells.map((date) => {
-                        const dateKey = format(date, "yyyy-MM-dd");
-                        const dayData = dayMap.get(dateKey);
-                        const inCurrentMonth = isSameMonth(date, viewMonth);
-                        const active = selectedDate === dateKey;
-                        let dayNumberClass = "text-muted-foreground/60";
-                        if (inCurrentMonth) {
-                          dayNumberClass = isToday(date)
-                            ? "text-primary"
-                            : "text-foreground";
-                        }
-
-                        return (
-                          <button
-                            key={dateKey}
-                            type="button"
-                            onClick={() =>
-                              inCurrentMonth && setSelectedDateOverride(dateKey)
-                            }
-                            className={`h-[112px] bg-background p-2 text-left transition-colors ${
-                              inCurrentMonth
-                                ? "hover:bg-muted/30"
-                                : "bg-muted/20"
-                            } ${active ? "ring-2 ring-primary" : ""}`}
-                            disabled={!inCurrentMonth}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={`text-sm font-semibold ${dayNumberClass}`}
-                              >
-                                {format(date, "d")}
-                              </span>
-                              {dayData?.hasRecord && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                              )}
-                            </div>
-
-                            {inCurrentMonth && dayData?.hasRecord && (
-                              <div className="mt-2 space-y-1">
-                                <Badge
-                                  variant="outline"
-                                  className={`status-badge px-2 py-0 ${statusInfo(dayData.status).cls}`}
-                                >
-                                  {statusInfo(dayData.status).label}
-                                </Badge>
-                                <p className="text-[11px] text-muted-foreground leading-tight">
-                                  {fmtTime(dayData.checkInTime)} -{" "}
-                                  {fmtTime(dayData.checkOutTime)}
-                                </p>
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="card-border">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold">
-                  {SYSTEM_MESSAGES.ATTENDANCE_HIST.DETAIL_TITLE}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {selectedDay?.hasRecord ? (
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Ngày</p>
-                      <p className="font-semibold">
-                        {format(parseISO(selectedDay.date), "dd/MM/yyyy")}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">
-                        Trạng thái
-                      </p>
-                      <Badge
-                        variant="outline"
-                        className={`status-badge px-2.5 py-0.5 ${statusInfo(selectedDay.status).cls}`}
-                      >
-                        {statusInfo(selectedDay.status).label}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3">
-                      <div className="rounded-lg border border-border p-3">
-                        <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                          <LogIn className="w-3.5 h-3.5" />
-                          Check-in
-                        </div>
-                        <div className="font-medium">
-                          {fmtTime(selectedDay.checkInTime)}
-                        </div>
-                      </div>
-
-                      <div className="rounded-lg border border-border p-3">
-                        <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                          <LogOut className="w-3.5 h-3.5" />
-                          Check-out
-                        </div>
-                        <div className="font-medium">
-                          {fmtTime(selectedDay.checkOutTime)}
-                        </div>
-                      </div>
-
-                      <div className="rounded-lg border border-border p-3">
-                        <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          Tổng giờ làm
-                        </div>
-                        <div className="font-medium">
-                          {formatWorkHours(selectedDay.workHours)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {selectedDay.missingClockOut && (
-                      <p className="text-xs text-violet-600">
-                        Bản ghi này chưa có Clock Out.
-                      </p>
-                    )}
-
-                    {selectedDay.notes && (
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Ghi chú</p>
-                        <p className="text-sm whitespace-pre-wrap">
-                          {selectedDay.notes}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.DETAIL_EMPTY}
+                {selectedDay.missingClockOut && (
+                  <p className="text-xs text-violet-600">
+                    Bản ghi này chưa có Clock Out.
                   </p>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+
+                {selectedDay.notes && (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Ghi chú</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {selectedDay.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {SYSTEM_MESSAGES.ATTENDANCE_HIST.DETAIL_EMPTY}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   );
 }
