@@ -35,13 +35,83 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { cn } from "@/lib/utils";
 import { useSidebarBadgeCounts } from "@/hooks/useSidebarBadgeCounts";
+
+// For subitems that don't have an explicit icon, we use a fallback based on the URL
+const getFallbackItemIcon = (url: string) => {
+  if (url.includes("leave")) {
+    return Calendar;
+  }
+  if (url.includes("adjustment") || url.includes("attendance")) {
+    return Clock;
+  }
+  return CheckCircle2;
+};
+
+const SidebarItem = ({
+  item,
+  isActive,
+  renderBadge,
+  isSubItem = false,
+}: {
+  item: any;
+  isActive: boolean;
+  renderBadge: (url: string) => React.ReactNode;
+  isSubItem?: boolean;
+}) => {
+  const itemRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (isActive && itemRef.current) {
+      // Small delay to ensure any parent opening animations have finished or started
+      const timer = setTimeout(() => {
+        itemRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isActive]);
+
+  const MenuButton = isSubItem ? SidebarMenuSubButton : SidebarMenuButton;
+  const Icon = item.icon ?? (isSubItem ? getFallbackItemIcon(item.url) : null);
+
+  return (
+    <div ref={itemRef} className="w-full">
+      <MenuButton
+        asChild
+        isActive={isActive}
+        className={cn("w-full", isSubItem && "translate-x-0")}
+      >
+        <Link
+          to={item.url}
+          className="flex items-center justify-between gap-2 w-full"
+          title={item.title}
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            {Icon &&
+              React.createElement(Icon, {
+                className: cn(
+                  "w-4 h-4",
+                  isSubItem ? "w-3.5 h-3.5" : "opacity-70",
+                ),
+              })}
+            <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+              {item.title}
+            </span>
+          </span>
+          {renderBadge(item.url)}
+        </Link>
+      </MenuButton>
+    </div>
+  );
+};
 
 export function AppSidebar({
   role: propRole,
@@ -55,15 +125,15 @@ export function AppSidebar({
   const location = useLocation();
   const [openCreate, setOpenCreate] = React.useState(() => {
     const saved = localStorage.getItem("sidebar_open_create");
-    return saved !== null ? saved === "true" : true;
+    return saved !== null ? saved === "true" : false;
   });
   const [openApprove, setOpenApprove] = React.useState(() => {
     const saved = localStorage.getItem("sidebar_open_approve");
-    return saved !== null ? saved === "true" : true;
+    return saved !== null ? saved === "true" : false;
   });
   const [openManage, setOpenManage] = React.useState(() => {
     const saved = localStorage.getItem("sidebar_open_manage");
-    return saved !== null ? saved === "true" : true;
+    return saved !== null ? saved === "true" : false;
   });
 
   React.useEffect(() => {
@@ -107,15 +177,7 @@ export function AppSidebar({
     );
   };
 
-  const getFallbackItemIcon = (url: string) => {
-    if (url.includes("leave")) {
-      return Calendar;
-    }
-    if (url.includes("adjustment") || url.includes("attendance")) {
-      return Clock;
-    }
-    return CheckCircle2;
-  };
+  // SidebarItem handles the fallback logic now
 
   // We define groups based on roles, keeping it similar to the old structure
   const navMain: any[] = React.useMemo(() => {
@@ -128,6 +190,21 @@ export function AppSidebar({
           url: "/profile",
           icon: User,
         },
+        // Attendance items moved here for non-admin roles
+        ...(role !== "admin"
+          ? [
+              {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
+                url: "/checkin",
+                icon: Play,
+              },
+              {
+                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE,
+                url: "/attendance",
+                icon: Clock,
+              },
+            ]
+          : []),
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
           url: "/announcements",
@@ -153,8 +230,6 @@ export function AppSidebar({
           title: SYSTEM_MESSAGES.REQUEST.CREATE_ADJUSTMENT,
           url: "/request?tab=adjustment",
         },
-        { title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN, url: "/checkin" },
-        { title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE, url: "/attendance" },
       ],
     };
 
@@ -364,29 +439,16 @@ export function AppSidebar({
           // Simple flat menu for "Cá nhân"
           if (!group.id) {
             return (
-              <SidebarGroup key={group.title}>
+              <SidebarGroup key={group.title} className="p-0">
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {group.items.map((item: any) => (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          asChild
+                        <SidebarItem
+                          item={item}
                           isActive={isActive(item.url)}
-                        >
-                          <Link
-                            to={item.url}
-                            className="flex items-center justify-between gap-2 w-full"
-                            title={item.title}
-                          >
-                            <span className="flex items-center gap-2 min-w-0">
-                              <item.icon className="w-4 h-4 opacity-70" />
-                              <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                                {item.title}
-                              </span>
-                            </span>
-                            {renderBadge(item.url)}
-                          </Link>
-                        </SidebarMenuButton>
+                          renderBadge={renderBadge}
+                        />
                       </SidebarMenuItem>
                     ))}
                   </SidebarMenu>
@@ -402,7 +464,7 @@ export function AppSidebar({
           );
 
           return (
-            <SidebarGroup key={group.id}>
+            <SidebarGroup key={group.id} className="p-0">
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -425,34 +487,17 @@ export function AppSidebar({
                     </div>
                   </SidebarMenuButton>
                   {group.isOpen && (
-                    <SidebarMenuSub>
-                      {group.items.map((item: any) => {
-                        const ItemIcon =
-                          item.icon ?? getFallbackItemIcon(item.url);
-
-                        return (
-                          <SidebarMenuSubItem key={item.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={isActive(item.url)}
-                            >
-                              <Link
-                                to={item.url}
-                                className="flex items-center justify-between gap-2 w-full"
-                                title={item.title}
-                              >
-                                <span className="flex items-center gap-2 min-w-0">
-                                  <ItemIcon className="w-3.5 h-3.5" />
-                                  <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                                    {item.title}
-                                  </span>
-                                </span>
-                                {renderBadge(item.url)}
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
+                    <SidebarMenuSub className="mx-0 border-l-0 px-0">
+                      {group.items.map((item: any) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarItem
+                            item={item}
+                            isActive={isActive(item.url)}
+                            renderBadge={renderBadge}
+                            isSubItem
+                          />
+                        </SidebarMenuItem>
+                      ))}
                     </SidebarMenuSub>
                   )}
                 </SidebarMenuItem>
