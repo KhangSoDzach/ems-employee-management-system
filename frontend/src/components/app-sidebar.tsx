@@ -19,6 +19,7 @@ import {
   FileQuestion,
   Clock,
   LayoutDashboard,
+  Play,
   PlusCircle,
   CheckCircle2,
 } from "lucide-react";
@@ -313,6 +314,11 @@ export function AppSidebar({
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_HR_PAYROLL_PERIOD,
           url: "/hr-payroll-period",
           icon: CreditCard,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_RUN_PAYROLL,
+          url: "/run-payroll",
+          icon: Play,
         },
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,

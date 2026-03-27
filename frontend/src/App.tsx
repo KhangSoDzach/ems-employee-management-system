@@ -48,6 +48,7 @@ const PayrollManagement = lazy(() => import("@/features/hr/PayrollManagement"));
 const HrPayrollPeriodPage = lazy(
   () => import("@/features/hr/HrPayrollPeriodPage"),
 );
+const RunPayrollPage = lazy(() => import("@/features/hr/RunPayrollPage"));
 const AssetReportManagement = lazy(
   () => import("./features/admin/AssetReportManagement"),
 );
@@ -152,6 +153,7 @@ function App() {
                   path="/hr-payroll-period"
                   element={<HrPayrollPeriodPage />}
                 />
+                <Route path="/run-payroll" element={<RunPayrollPage />} />
               </Route>
 
               {/* Admin only */}
