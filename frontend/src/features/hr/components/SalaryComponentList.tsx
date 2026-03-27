@@ -9,11 +9,8 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import {
   Table,
@@ -172,38 +169,35 @@ export function SalaryComponentList() {
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <SidebarProvider>
-      <AppSidebar role="admin" variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-
-        <main className="payroll-page-main">
-          {/* ── RBAC guard ── */}
-          {effectiveRole !== "admin" ? (
-            <AccessDenied />
-          ) : (
-            <>
-              {/* ── Page Header ── */}
-              <div className="payroll-page-header">
-                <div>
-                  <h1 className="page-heading">{C.PAGE_TITLE}</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {C.PAGE_SUBTITLE}
-                  </p>
-                </div>
-                <div className="payroll-header-actions">
-                  <Button
-                    onClick={openCreate}
-                    className="gap-2 shadow-sm font-medium"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {C.BTN_CREATE}
-                  </Button>
-                </div>
+    <>
+      <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+        {/* ── RBAC guard ── */}
+        {effectiveRole !== "admin" ? (
+          <AccessDenied />
+        ) : (
+          <>
+            {/* ── Page Header ── */}
+            <div className="payroll-page-header">
+              <div>
+                <h1 className="page-heading">{C.PAGE_TITLE}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {C.PAGE_SUBTITLE}
+                </p>
               </div>
+              <div className="payroll-header-actions">
+                <Button
+                  onClick={openCreate}
+                  className="gap-2 shadow-sm font-medium"
+                >
+                  <Plus className="h-4 w-4" />
+                  {C.BTN_CREATE}
+                </Button>
+              </div>
+            </div>
 
-              {/* ── Search ── */}
-              <div className="payroll-search-wrapper">
+            {/* ── Search ── */}
+            <div className="payroll-search-wrapper">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder={C.SEARCH_PLACEHOLDER}
@@ -226,9 +220,11 @@ export function SalaryComponentList() {
                   </button>
                 )}
               </div>
+            </div>
 
-              {/* ── Data Table ── */}
-              <section className="payroll-table-section">
+            {/* ── Data Table ── */}
+            <section className="payroll-table-section">
+              <div className="card-soft overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -312,51 +308,51 @@ export function SalaryComponentList() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
 
-                {/* ── Pagination ── */}
-                <div className="flex items-center justify-between px-4 py-4 border-t bg-slate-50/50 dark:bg-transparent">
-                  <div className="text-sm text-muted-foreground">
-                    {C.PAGINATION_TOTAL(totalElements)}{" "}
-                    {totalPages === 0 ? 0 : page + 1}/{totalPages}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page === 0}
-                      onClick={() => setPage((p) => p - 1)}
-                      className="gap-1 h-9"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      {C.PAGINATION_PREV}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page >= totalPages - 1 || totalPages === 0}
-                      onClick={() => setPage((p) => p + 1)}
-                      className="gap-1 h-9"
-                    >
-                      {C.PAGINATION_NEXT}
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
+              {/* ── Pagination ── */}
+              <div className="flex items-center justify-between px-4 py-4 border-t bg-slate-50/50 dark:bg-transparent">
+                <div className="text-sm text-muted-foreground">
+                  {C.PAGINATION_TOTAL(totalElements)}{" "}
+                  {totalPages === 0 ? 0 : page + 1}/{totalPages}
                 </div>
-              </section>
-            </>
-          )}
-        </main>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => p - 1)}
+                    className="gap-1 h-9"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    {C.PAGINATION_PREV}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages - 1 || totalPages === 0}
+                    onClick={() => setPage((p) => p + 1)}
+                    className="gap-1 h-9"
+                  >
+                    {C.PAGINATION_NEXT}
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+      </main>
 
-        <SalaryComponentForm
-          open={modal.open}
-          mode={modal.mode}
-          initialValue={modal.selected}
-          submitting={isSubmitting}
-          serverError={serverError}
-          onClose={closeModal}
-          onSubmit={handleSubmit}
-        />
-      </SidebarInset>
-    </SidebarProvider>
+      <SalaryComponentForm
+        open={modal.open}
+        mode={modal.mode}
+        initialValue={modal.selected}
+        submitting={isSubmitting}
+        serverError={serverError}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
+      />
+    </>
   );
 }
