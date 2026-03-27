@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/sidebar";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { cn } from "@/lib/utils";
+import { useSidebarBadgeCounts } from "@/hooks/useSidebarBadgeCounts";
 
 export function AppSidebar({
   role: propRole,
@@ -47,8 +48,9 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar> & {
   role?: "admin" | "employee" | "manager" | "hr";
 }) {
-  useAuth();
+  const { user } = useAuth();
   const role = useEffectiveRole(propRole);
+  const badgeCounts = useSidebarBadgeCounts(role, user?.id ?? null);
   const location = useLocation();
   const [openCreate, setOpenCreate] = React.useState(() => {
     const saved = localStorage.getItem("sidebar_open_create");
@@ -78,6 +80,41 @@ export function AppSidebar({
   // Helper to determine if a route is active
   const isActive = (url: string) =>
     location.pathname + location.search === url || location.pathname === url;
+
+  const renderBadge = (url: string) => {
+    const count = badgeCounts[url] ?? 0;
+    if (count <= 0) {
+      return null;
+    }
+
+    return (
+      <span className="ml-auto inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-[10px] font-semibold text-white">
+        {count > 99 ? "99+" : count}
+      </span>
+    );
+  };
+
+  const renderCountBadge = (count: number) => {
+    if (count <= 0) {
+      return null;
+    }
+
+    return (
+      <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-[10px] font-semibold text-white">
+        {count > 99 ? "99+" : count}
+      </span>
+    );
+  };
+
+  const getFallbackItemIcon = (url: string) => {
+    if (url.includes("leave")) {
+      return Calendar;
+    }
+    if (url.includes("adjustment") || url.includes("attendance")) {
+      return Clock;
+    }
+    return CheckCircle2;
+  };
 
   // We define groups based on roles, keeping it similar to the old structure
   const navMain: any[] = React.useMemo(() => {
@@ -332,10 +369,16 @@ export function AppSidebar({
                         >
                           <Link
                             to={item.url}
-                            className="flex items-center gap-2"
+                            className="flex items-center justify-between gap-2 w-full"
+                            title={item.title}
                           >
-                            <item.icon className="w-4 h-4 opacity-70" />
-                            <span>{item.title}</span>
+                            <span className="flex items-center gap-2 min-w-0">
+                              <item.icon className="w-4 h-4 opacity-70" />
+                              <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                                {item.title}
+                              </span>
+                            </span>
+                            {renderBadge(item.url)}
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -347,6 +390,11 @@ export function AppSidebar({
           }
 
           // Collapsible menu for other sections
+          const groupBadgeTotal = (group.items as any[]).reduce(
+            (sum, item) => sum + (badgeCounts[item.url] ?? 0),
+            0,
+          );
+
           return (
             <SidebarGroup key={group.id}>
               <SidebarMenu>
@@ -361,41 +409,44 @@ export function AppSidebar({
                         {group.title}
                       </span>
                     </div>
-                    {group.isOpen ? (
-                      <ChevronDown className="w-3 h-3 text-muted-foreground/50" />
-                    ) : (
-                      <ChevronRight className="w-3 h-3 text-muted-foreground/50" />
-                    )}
+                    <div className="flex items-center gap-2">
+                      {renderCountBadge(groupBadgeTotal)}
+                      {group.isOpen ? (
+                        <ChevronDown className="w-3 h-3 text-muted-foreground/50" />
+                      ) : (
+                        <ChevronRight className="w-3 h-3 text-muted-foreground/50" />
+                      )}
+                    </div>
                   </SidebarMenuButton>
                   {group.isOpen && (
                     <SidebarMenuSub>
-                      {group.items.map((item: any) => (
-                        <SidebarMenuSubItem key={item.title}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={isActive(item.url)}
-                          >
-                            <Link
-                              to={item.url}
-                              className="flex items-center gap-2"
+                      {group.items.map((item: any) => {
+                        const ItemIcon =
+                          item.icon ?? getFallbackItemIcon(item.url);
+
+                        return (
+                          <SidebarMenuSubItem key={item.title}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={isActive(item.url)}
                             >
-                              {item.icon ? (
-                                <item.icon className="w-3.5 h-3.5" />
-                              ) : // Default icons for items without specific icons (like in Create section)
-                              item.url.includes("leave") ? (
-                                <Calendar className="w-3.5 h-3.5" />
-                              ) : item.url.includes("adjustment") ? (
-                                <Clock className="w-3.5 h-3.5" />
-                              ) : item.url.includes("attendance") ? (
-                                <Clock className="w-3.5 h-3.5" />
-                              ) : (
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                              )}
-                              <span>{item.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
+                              <Link
+                                to={item.url}
+                                className="flex items-center justify-between gap-2 w-full"
+                                title={item.title}
+                              >
+                                <span className="flex items-center gap-2 min-w-0">
+                                  <ItemIcon className="w-3.5 h-3.5" />
+                                  <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                                    {item.title}
+                                  </span>
+                                </span>
+                                {renderBadge(item.url)}
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
                     </SidebarMenuSub>
                   )}
                 </SidebarMenuItem>
