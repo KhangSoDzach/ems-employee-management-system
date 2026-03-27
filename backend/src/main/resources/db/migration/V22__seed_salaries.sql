@@ -1,3 +1,14 @@
+-- ============================================================
+-- V4: Seed bắt buộc — salaries + permissions cho HR/MANAGER
+-- Flyway chạy tự động khi backend khởi động.
+-- INSERT IGNORE / NOT EXISTS = idempotent, chạy nhiều lần an toàn.
+-- ============================================================
+
+-- ─────────────────────────────────────────────────────────────
+-- PART 1: Seed bảng salaries
+-- ─────────────────────────────────────────────────────────────
+
+-- Phương án 1: lấy basic_salary từ payroll gần nhất
 INSERT INTO salaries (
     employee_id, basic_salary, allowances, deductions, net_salary,
     effective_from, effective_to, currency, change_reason,
