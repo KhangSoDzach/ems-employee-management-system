@@ -19,13 +19,6 @@ function getRedirectByRole(roles: string[]): string {
   return "/employee";
 }
 
-/**
- * Wraps protected routes.
- * - While session is being rehydrated (isLoading): show spinner
- * - If not authenticated: redirect to /login
- * - If role-based access is required: check if user has the role
- * - Otherwise: render child routes via <Outlet />
- */
 export function ProtectedRoute({
   allowedRoles,
 }: Readonly<ProtectedRouteProps>) {
@@ -46,7 +39,6 @@ export function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  // Role-based check
   if (allowedRoles && user) {
     const hasRole = allowedRoles.some(
       (role) =>
@@ -54,7 +46,6 @@ export function ProtectedRoute({
     );
 
     if (!hasRole) {
-      // Redirect về trang home phù hợp với role của user
       return <Navigate to={getRedirectByRole(user.roles)} replace />;
     }
   }

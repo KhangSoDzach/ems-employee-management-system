@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { MoreVertical, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
@@ -136,187 +134,183 @@ export default function AssetIncidentManagementPage() {
   };
 
   return (
-    <SidebarProvider>
-      <AppSidebar variant="inset" role={effectiveRole} />
+    <>
+      <SiteHeader />
 
-      <SidebarInset>
-        <SiteHeader />
+      <main className="page-layout-main">
+        {/* HEADER */}
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">
+              {SYSTEM_MESSAGES.ASSET_INCIDENT.TITLE}
+            </h1>
+            <p className="page-subtitle text-sm mt-1">
+              {SYSTEM_MESSAGES.ASSET_INCIDENT.SUBTITLE}
+            </p>
+          </div>
+        </div>
 
-        <main className="page-layout-main">
-          {/* HEADER */}
-          <div className="page-header">
-            <div>
-              <h1 className="page-title">
-                {SYSTEM_MESSAGES.ASSET_INCIDENT.TITLE}
-              </h1>
-              <p className="page-subtitle text-sm mt-1">
-                {SYSTEM_MESSAGES.ASSET_INCIDENT.SUBTITLE}
-              </p>
+        {/* TABLE */}
+        <div className="data-table-container mt-4">
+          <div className="flex items-center justify-between p-4 border-b">
+            <input
+              placeholder={SYSTEM_MESSAGES.ASSET_INCIDENT.SEARCH_PLACEHOLDER}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input w-80"
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">
+                {SYSTEM_MESSAGES.ASSET_INCIDENT.LABEL_STATUS}
+              </span>
+              <select
+                className="form-select w-36 py-1.5"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                {INCIDENT_STATUS_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* TABLE */}
-          <div className="data-table-container mt-4">
-            <div className="flex items-center justify-between p-4 border-b">
-              <input
-                placeholder={SYSTEM_MESSAGES.ASSET_INCIDENT.SEARCH_PLACEHOLDER}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="search-input w-80"
-              />
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">
-                  {SYSTEM_MESSAGES.ASSET_INCIDENT.LABEL_STATUS}
-                </span>
-                <select
-                  className="form-select w-36 py-1.5"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  {INCIDENT_STATUS_OPTIONS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <table className="data-table">
-              <thead className="data-table-header">
+          <table className="data-table">
+            <thead className="data-table-header">
+              <tr>
+                <th className="data-table-header-cell">
+                  {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_EMPLOYEE}
+                </th>
+                <th className="data-table-header-cell">
+                  {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_ASSET}
+                </th>
+                <th className="data-table-header-cell">
+                  {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_INCIDENT}
+                </th>
+                <th className="data-table-header-cell">
+                  {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_DATE}
+                </th>
+                <th className="data-table-header-cell">
+                  {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_STATUS}
+                </th>
+                {canProcess && (
+                  <th className="data-table-header-cell text-right">
+                    {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_ACTION}
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
                 <tr>
-                  <th className="data-table-header-cell">
-                    {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_EMPLOYEE}
-                  </th>
-                  <th className="data-table-header-cell">
-                    {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_ASSET}
-                  </th>
-                  <th className="data-table-header-cell">
-                    {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_INCIDENT}
-                  </th>
-                  <th className="data-table-header-cell">
-                    {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_DATE}
-                  </th>
-                  <th className="data-table-header-cell">
-                    {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_STATUS}
-                  </th>
-                  {canProcess && (
-                    <th className="data-table-header-cell text-right">
-                      {SYSTEM_MESSAGES.ASSET_INCIDENT.TABLE_ACTION}
-                    </th>
-                  )}
+                  <td
+                    colSpan={canProcess ? 6 : 5}
+                    className="py-16 text-center text-gray-400"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm">
+                        {SYSTEM_MESSAGES.ASSET_INCIDENT.LOADING_DATA}
+                      </span>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan={canProcess ? 6 : 5}
-                      className="py-16 text-center text-gray-400"
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span className="text-sm">
-                          {SYSTEM_MESSAGES.ASSET_INCIDENT.LOADING_DATA}
-                        </span>
+              ) : filteredIncidents.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={canProcess ? 6 : 5}
+                    className="py-16 text-center text-gray-400 text-sm"
+                  >
+                    {SYSTEM_MESSAGES.ASSET_INCIDENT.NO_DATA}
+                  </td>
+                </tr>
+              ) : (
+                filteredIncidents.map((incident) => (
+                  <tr key={incident.id} className="data-table-row">
+                    <td className="data-table-cell">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                          {incident.employeeAvatar}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900">
+                            {incident.employeeName}
+                          </div>
+                          {incident.employeeDept && (
+                            <div className="text-xs text-gray-500">
+                              {incident.employeeDept}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
-                  </tr>
-                ) : filteredIncidents.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={canProcess ? 6 : 5}
-                      className="py-16 text-center text-gray-400 text-sm"
-                    >
-                      {SYSTEM_MESSAGES.ASSET_INCIDENT.NO_DATA}
+                    <td className="data-table-cell">
+                      <div className="font-medium text-gray-900">
+                        {incident.assetName}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {SYSTEM_MESSAGES.ASSET_INCIDENT.LABEL_ID}{" "}
+                        {incident.assetId}
+                      </div>
                     </td>
-                  </tr>
-                ) : (
-                  filteredIncidents.map((incident) => (
-                    <tr key={incident.id} className="data-table-row">
-                      <td className="data-table-cell">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
-                            {incident.employeeAvatar}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-gray-900">
-                              {incident.employeeName}
-                            </div>
-                            {incident.employeeDept && (
-                              <div className="text-xs text-gray-500">
-                                {incident.employeeDept}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="data-table-cell">
-                        <div className="font-medium text-gray-900">
-                          {incident.assetName}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {SYSTEM_MESSAGES.ASSET_INCIDENT.LABEL_ID}{" "}
-                          {incident.assetId}
-                        </div>
-                      </td>
-                      <td className="data-table-cell">
-                        {/* FIX: bỏ incidentIcon (là JSX mock), chỉ hiện text */}
-                        <span className="text-sm font-medium text-gray-700">
-                          {incident.incidentType}
-                        </span>
-                      </td>
-                      <td className="data-table-cell text-gray-600">
-                        {incident.dateReported}
-                      </td>
-                      <td className="data-table-cell">
-                        <span
-                          className={`status-badge-base ${incident.statusClass} rounded-full px-3 py-1 font-medium text-xs`}
+                    <td className="data-table-cell">
+                      {/* FIX: bỏ incidentIcon (là JSX mock), chỉ hiện text */}
+                      <span className="text-sm font-medium text-gray-700">
+                        {incident.incidentType}
+                      </span>
+                    </td>
+                    <td className="data-table-cell text-gray-600">
+                      {incident.dateReported}
+                    </td>
+                    <td className="data-table-cell">
+                      <span
+                        className={`status-badge-base ${incident.statusClass} rounded-full px-3 py-1 font-medium text-xs`}
+                      >
+                        {incident.status === "PENDING"
+                          ? "Pending"
+                          : incident.status === "APPROVED"
+                            ? "Approved"
+                            : incident.status === "REJECTED"
+                              ? "Rejected"
+                              : incident.status}
+                      </span>
+                    </td>
+                    {canProcess && (
+                      <td className="data-table-cell text-right">
+                        <button
+                          className="p-1 hover:bg-slate-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
+                          onClick={() => setSelectedIncident(incident)}
                         >
-                          {incident.status === "PENDING"
-                            ? "Pending"
-                            : incident.status === "APPROVED"
-                              ? "Approved"
-                              : incident.status === "REJECTED"
-                                ? "Rejected"
-                                : incident.status}
-                        </span>
+                          <MoreVertical size={16} />
+                        </button>
                       </td>
-                      {canProcess && (
-                        <td className="data-table-cell text-right">
-                          <button
-                            className="p-1 hover:bg-slate-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
-                            onClick={() => setSelectedIncident(incident)}
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                    )}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
 
-            {/* PAGINATION */}
-            <div className="pagination-container">
-              <div className="pagination-info">
-                {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_SHOW}{" "}
-                {filteredIncidents.length}{" "}
-                {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_RESULTS}
-              </div>
+          {/* PAGINATION */}
+          <div className="pagination-container">
+            <div className="pagination-info">
+              {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_SHOW}{" "}
+              {filteredIncidents.length}{" "}
+              {SYSTEM_MESSAGES.ASSET_INCIDENT.PAGINATION_RESULTS}
             </div>
           </div>
-        </main>
+        </div>
+      </main>
 
-        {/* FIX 4: onUpdate giờ là handleUpdate — gọi API thật */}
-        <AssetIncidentReviewModal
-          open={!!selectedIncident}
-          onClose={() => setSelectedIncident(null)}
-          incident={selectedIncident}
-          onUpdate={handleUpdate}
-        />
-      </SidebarInset>
-    </SidebarProvider>
+      {/* FIX 4: onUpdate giờ là handleUpdate — gọi API thật */}
+      <AssetIncidentReviewModal
+        open={!!selectedIncident}
+        onClose={() => setSelectedIncident(null)}
+        incident={selectedIncident}
+        onUpdate={handleUpdate}
+      />
+    </>
   );
 }

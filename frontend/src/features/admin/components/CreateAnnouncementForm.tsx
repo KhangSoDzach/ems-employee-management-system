@@ -4,11 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -29,7 +29,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
 import { useCreateAnnouncement } from "@/features/announcement/hooks/useAnnouncements";
 import type { TargetAudience } from "@/features/announcement/announcement.types";
 import {
@@ -96,6 +95,7 @@ export function CreateAnnouncementForm() {
     name: "targetAudience",
     defaultValue: "ALL_COMPANY",
   });
+
   const requiresIds = useMemo(
     () =>
       selectedAudience === "BY_DEPARTMENT" || selectedAudience === "BY_ROLE",
@@ -211,7 +211,7 @@ export function CreateAnnouncementForm() {
   });
 
   return (
-    <div className="space-y-4 rounded-xl border bg-card p-5">
+    <div className="space-y-4">
       <h2 className="text-lg font-semibold">Tạo thông báo nội bộ</h2>
 
       <Form {...form}>
@@ -238,8 +238,8 @@ export function CreateAnnouncementForm() {
                 <FormLabel>Nội dung</FormLabel>
                 <FormControl>
                   <Textarea
-                    rows={6}
                     placeholder="Nhập nội dung thông báo"
+                    rows={5}
                     {...field}
                   />
                 </FormControl>
@@ -327,7 +327,7 @@ export function CreateAnnouncementForm() {
                       <Button
                         variant="outline"
                         role="combobox"
-                        className="w-full justify-between font-normal"
+                        className="w-full justify-between"
                       >
                         <span className="truncate text-left">
                           {selectedTargetLabels}
@@ -362,14 +362,19 @@ export function CreateAnnouncementForm() {
                                 checked && "bg-muted",
                               )}
                             >
-                              <Checkbox
-                                checked={checked}
-                                className="pointer-events-none"
-                              />
+                              <div
+                                className={cn(
+                                  "flex h-4 w-4 items-center justify-center rounded border",
+                                  checked
+                                    ? "border-primary bg-primary text-white"
+                                    : "border-muted-foreground",
+                                )}
+                              >
+                                {checked && <Check className="h-3 w-3" />}
+                              </div>
                               <span className="flex-1 truncate">
                                 {target.label}
                               </span>
-                              {checked && <Check className="h-4 w-4" />}
                             </button>
                           );
                         })}
@@ -382,11 +387,9 @@ export function CreateAnnouncementForm() {
             />
           )}
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 pt-2">
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending
-                ? "Đang tạo..."
-                : "Tạo thông báo nội bộ"}
+              {createMutation.isPending ? "Đang tạo..." : "Tạo thông báo"}
             </Button>
             <Button
               type="button"

@@ -8,6 +8,7 @@ export interface CreateAnnouncementRequest {
   targetAudience: TargetAudience;
   targetIds: number[];
   sendEmail?: boolean;
+  expiresAt?: string | null;
 }
 
 export interface CreateAnnouncementResponse {
@@ -27,4 +28,5 @@ export interface AnnouncementResponse {
   isRead: boolean;
   readAt: string | null;
   publishedAt: string;
+  expiresAt?: string | null;
 }

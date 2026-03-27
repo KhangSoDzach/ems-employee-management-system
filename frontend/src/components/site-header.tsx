@@ -122,6 +122,9 @@ export function SiteHeader() {
                   >
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <p className="line-clamp-1 text-sm font-medium">
+                        <span className="text-primary font-semibold">
+                          Thông báo:
+                        </span>{" "}
                         {announcement.title}
                       </p>
                       {!announcement.isRead && (
