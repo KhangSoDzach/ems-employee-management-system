@@ -1,5 +1,5 @@
-import { DollarSign, Gift, Percent, FileText, Plus, X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { DollarSign, Gift, Percent, FileText, Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
   Sheet,
@@ -7,47 +7,52 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-import { useAuth } from "@/contexts/AuthContext"
-import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { AUTH_ROLES } from "@/constants/auth"
+import { useAuth } from "@/contexts/AuthContext";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { AUTH_ROLES } from "@/constants/auth";
 
 export type SalarySlip = {
-  id: number
-  period: string
-  paymentDate: string
-  baseSalary: string
-  bonus: Array<{ label: string; amount: string }>
-  allowances: Array<{ label: string; amount: string }>
-  deductions: Array<{ label: string; amount: string }>
-  totalIncome: string
-  totalDeductions: string
-  netPay: string
-  status: "paid" | "pending"
+  id: number;
+  period: string;
+  paymentDate: string;
+  baseSalary: string;
+  bonus: Array<{ label: string; amount: string }>;
+  allowances: Array<{ label: string; amount: string }>;
+  deductions: Array<{ label: string; amount: string }>;
+  totalIncome: string;
+  totalDeductions: string;
+  netPay: string;
+  status: "paid" | "pending";
 
   // Employee + payment metadata (optional)
-  employeeName?: string
-  employeeId?: string
-  department?: string
-  role?: string
-  paymentMethod?: string
-  paymentReference?: string
-}
+  employeeName?: string;
+  employeeId?: string;
+  department?: string;
+  role?: string;
+  paymentMethod?: string;
+  paymentReference?: string;
+};
 
 interface SalarySlipSheetProps {
-  slip: SalarySlip | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSave?: (slip: SalarySlip) => void
+  slip: SalarySlip | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave?: (slip: SalarySlip) => void;
 }
 
-export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlipSheetProps) => {
-  const { user } = useAuth()
-  const isHr = user?.roles?.includes(AUTH_ROLES.HR)
+export const SalarySlipSheet = ({
+  slip,
+  open,
+  onOpenChange,
+  onSave,
+}: SalarySlipSheetProps) => {
+  const { user } = useAuth();
+  const isHr = user?.roles?.includes(AUTH_ROLES.HR);
 
   const normalizeSlip = (s: SalarySlip | null): SalarySlip | null =>
     s
@@ -57,10 +62,10 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
           allowances: s.allowances ?? [],
           deductions: s.deductions ?? [],
         }
-      : null
+      : null;
 
-  const [isEditing, setIsEditing] = useState(false)
-  const [form, setForm] = useState<SalarySlip | null>(normalizeSlip(slip))
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState<SalarySlip | null>(normalizeSlip(slip));
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -71,7 +76,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
   }, [slip])
 
   if (!form) {
-    return null
+    return null;
   }
 
   const totalAllowances = form.allowances.reduce((acc, cur) => {
@@ -87,7 +92,14 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
     }, 0)
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) {onOpenChange(false)} }}>
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          onOpenChange(false);
+        }
+      }}
+    >
       <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl">
         {/* Header */}
         <div className="px-6 py-5 border-b bg-muted/10 relative overflow-hidden">
@@ -111,7 +123,7 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                         variant="secondary"
                         size="sm"
                         onClick={() => {
-                          setForm(slip);
+                          setForm(normalizeSlip(slip));
                           setIsEditing(false);
                         }}
                       >
@@ -131,7 +143,11 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                       </Button>
                     </>
                   ) : (
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                    >
                       {"Chỉnh sửa"}
                     </Button>
                   )}
@@ -142,7 +158,9 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                 {isHr ? (
                   <div className="space-y-1">
                     {form.employeeName ? (
-                      <p className="text-sm font-semibold">{form.employeeName}</p>
+                      <p className="text-sm font-semibold">
+                        {form.employeeName}
+                      </p>
                     ) : null}
                     <p className="text-xs text-muted-foreground">
                       {form.employeeId ?? ""}
@@ -158,46 +176,61 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                       variant={form.status === "paid" ? "secondary" : "outline"}
                       className="text-[11px] px-2 py-1"
                     >
-                      {form.status === "paid" ? "Đã thanh toán" : "Chờ thanh toán"}
+                      {form.status === "paid"
+                        ? "Đã thanh toán"
+                        : "Chờ thanh toán"}
                     </Badge>
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PERIOD}{": "}{form.period}
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PERIOD}
+                    {": "}
+                    {form.period}
                   </p>
 
                   <p className="text-xs text-muted-foreground">
-                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PAYMENT_DATE}{": "}{form.paymentDate}
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PAYMENT_DATE}
+                    {": "}
+                    {form.paymentDate}
                   </p>
 
                   {isHr ? (
-                    <>
-                      {isEditing ? (
-                        <div className="space-y-1">
-                          <Input
-                            value={form.paymentMethod ?? ""}
-                            placeholder="Phương thức"
-                            onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
-                            className="text-xs"
-                          />
-                          <Input
-                            value={form.paymentReference ?? ""}
-                            placeholder="Mã tham chiếu"
-                            onChange={(e) => setForm({ ...form, paymentReference: e.target.value })}
-                            className="text-xs"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          {form.paymentMethod ? (
-                            <p className="text-xs text-muted-foreground">Phương thức: {form.paymentMethod}</p>
-                          ) : null}
-                          {form.paymentReference ? (
-                            <p className="text-xs text-muted-foreground">Ref: {form.paymentReference}</p>
-                          ) : null}
-                        </>
-                      )}
-                    </>
+                    isEditing ? (
+                      <div className="space-y-1">
+                        <Input
+                          value={form.paymentMethod ?? ""}
+                          placeholder="Phương thức"
+                          onChange={(e) =>
+                            setForm({ ...form, paymentMethod: e.target.value })
+                          }
+                          className="text-xs"
+                        />
+                        <Input
+                          value={form.paymentReference ?? ""}
+                          placeholder="Mã tham chiếu"
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              paymentReference: e.target.value,
+                            })
+                          }
+                          className="text-xs"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {form.paymentMethod ? (
+                          <p className="text-xs text-muted-foreground">
+                            Phương thức: {form.paymentMethod}
+                          </p>
+                        ) : null}
+                        {form.paymentReference ? (
+                          <p className="text-xs text-muted-foreground">
+                            Ref: {form.paymentReference}
+                          </p>
+                        ) : null}
+                      </div>
+                    )
                   ) : null}
                 </div>
               </div>
@@ -211,19 +244,27 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_BASE_SALARY}</h3>
+                <h3 className="font-semibold text-lg">
+                  {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_BASE_SALARY}
+                </h3>
               </div>
               <div className="bg-muted/20 rounded-xl p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_BASE_SALARY}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_BASE_SALARY}
+                  </span>
                   {isEditing ? (
                     <Input
                       value={form.baseSalary}
-                      onChange={(e) => setForm({ ...form, baseSalary: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, baseSalary: e.target.value })
+                      }
                       className="w-32"
                     />
                   ) : (
-                    <span className="font-semibold text-foreground">{form.baseSalary}</span>
+                    <span className="font-semibold text-foreground">
+                      {form.baseSalary}
+                    </span>
                   )}
                 </div>
               </div>
@@ -234,21 +275,28 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <Gift className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_ALLOWANCES}</h3>
+                <h3 className="font-semibold text-lg">
+                  {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_ALLOWANCES}
+                </h3>
               </div>
               <div className="bg-muted/20 rounded-xl p-4 space-y-3">
                 {form.allowances.map((a, idx) => (
-                  <div key={a.label} className="flex justify-between items-center">
+                  <div
+                    key={a.label}
+                    className="flex justify-between items-center"
+                  >
                     {isEditing ? (
                       <div className="flex items-center gap-2 flex-1">
                         <Input
                           value={a.label}
                           onChange={(e) => {
-                            const next = [...form.allowances]
-                            const current = next[idx]
-                            if (!current) {return}
-                            next[idx] = { ...current, label: e.target.value }
-                            setForm({ ...form, allowances: next })
+                            const next = [...form.allowances];
+                            const current = next[idx];
+                            if (!current) {
+                              return;
+                            }
+                            next[idx] = { ...current, label: e.target.value };
+                            setForm({ ...form, allowances: next });
                           }}
                           className="flex-1 text-sm"
                           placeholder="Loại phụ cấp"
@@ -256,11 +304,13 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                         <Input
                           value={a.amount}
                           onChange={(e) => {
-                            const next = [...form.allowances]
-                            const current = next[idx]
-                            if (!current) {return}
-                            next[idx] = { ...current, amount: e.target.value }
-                            setForm({ ...form, allowances: next })
+                            const next = [...form.allowances];
+                            const current = next[idx];
+                            if (!current) {
+                              return;
+                            }
+                            next[idx] = { ...current, amount: e.target.value };
+                            setForm({ ...form, allowances: next });
                           }}
                           className="w-28 text-right"
                         />
@@ -269,8 +319,10 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                           size="icon"
                           className="h-8 w-8 text-red-500"
                           onClick={() => {
-                            const next = form.allowances.filter((_, i) => i !== idx)
-                            setForm({ ...form, allowances: next })
+                            const next = form.allowances.filter(
+                              (_, i) => i !== idx,
+                            );
+                            setForm({ ...form, allowances: next });
                           }}
                         >
                           <X className="w-4 h-4" />
@@ -290,7 +342,13 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                     size="sm"
                     className="w-full"
                     onClick={() => {
-                      setForm({ ...form, allowances: [...form.allowances, { label: "", amount: "" }] })
+                      setForm({
+                        ...form,
+                        allowances: [
+                          ...form.allowances,
+                          { label: "", amount: "" },
+                        ],
+                      });
                     }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -298,8 +356,13 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                   </Button>
                 )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
-                  <span>{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_ALLOWANCES}</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">{"+"}{" "}{totalAllowances.toLocaleString("vi-VN")}{" đ"}</span>
+                  <span>
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_ALLOWANCES}
+                  </span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {"+"} {totalAllowances.toLocaleString("vi-VN")}
+                    {" đ"}
+                  </span>
                 </div>
               </div>
             </section>
@@ -308,7 +371,9 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <Percent className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_DEDUCTIONS}</h3>
+                <h3 className="font-semibold text-lg">
+                  {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_DEDUCTIONS}
+                </h3>
               </div>
               <div className="bg-muted/20 rounded-xl p-4 space-y-3">
                 {form.deductions.filter(d => !d.label.toLowerCase().includes('thuế') && !d.label.toLowerCase().includes('tncn')).map((d, idx) => (
@@ -318,11 +383,13 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                         <Input
                           value={d.label}
                           onChange={(e) => {
-                            const next = [...form.deductions]
-                            const current = next[idx]
-                            if (!current) {return}
-                            next[idx] = { ...current, label: e.target.value }
-                            setForm({ ...form, deductions: next })
+                            const next = [...form.deductions];
+                            const current = next[idx];
+                            if (!current) {
+                              return;
+                            }
+                            next[idx] = { ...current, label: e.target.value };
+                            setForm({ ...form, deductions: next });
                           }}
                           className="flex-1 text-sm"
                           placeholder="Loại khấu trừ"
@@ -330,11 +397,13 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                         <Input
                           value={d.amount}
                           onChange={(e) => {
-                            const next = [...form.deductions]
-                            const current = next[idx]
-                            if (!current) {return}
-                            next[idx] = { ...current, amount: e.target.value }
-                            setForm({ ...form, deductions: next })
+                            const next = [...form.deductions];
+                            const current = next[idx];
+                            if (!current) {
+                              return;
+                            }
+                            next[idx] = { ...current, amount: e.target.value };
+                            setForm({ ...form, deductions: next });
                           }}
                           className="w-28 text-right"
                         />
@@ -343,8 +412,10 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                           size="icon"
                           className="h-8 w-8 text-red-500"
                           onClick={() => {
-                            const next = form.deductions.filter((_, i) => i !== idx)
-                            setForm({ ...form, deductions: next })
+                            const next = form.deductions.filter(
+                              (_, i) => i !== idx,
+                            );
+                            setForm({ ...form, deductions: next });
                           }}
                         >
                           <X className="w-4 h-4" />
@@ -352,8 +423,12 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                       </div>
                     ) : (
                       <>
-                        <span className="text-sm text-muted-foreground">{d.label}</span>
-                        <span className="font-medium text-primary">{"-"}{" "}{d.amount}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {d.label}
+                        </span>
+                        <span className="font-medium text-primary">
+                          {"-"} {d.amount}
+                        </span>
                       </>
                     )}
                   </div>
@@ -364,7 +439,13 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                     size="sm"
                     className="w-full"
                     onClick={() => {
-                      setForm({ ...form, deductions: [...form.deductions, { label: "", amount: "" }] })
+                      setForm({
+                        ...form,
+                        deductions: [
+                          ...form.deductions,
+                          { label: "", amount: "" },
+                        ],
+                      });
                     }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -372,8 +453,13 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                   </Button>
                 )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
-                  <span>{SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_DEDUCTIONS}</span>
-                  <span className="text-primary">{"-"}{" "}{totalDeductions.toLocaleString("vi-VN")}{" đ"}</span>
+                  <span>
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_DEDUCTIONS}
+                  </span>
+                  <span className="text-primary">
+                    {"-"} {totalDeductions.toLocaleString("vi-VN")}
+                    {" đ"}
+                  </span>
                 </div>
               </div>
             </section>
@@ -383,7 +469,9 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
               <span className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
                 {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_NET_PAY}
               </span>
-              <span className="text-4xl font-bold text-primary">{form.netPay}</span>
+              <span className="text-4xl font-bold text-primary">
+                {form.netPay}
+              </span>
             </div>
           </div>
         </div>
@@ -431,28 +519,12 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
                 <div class="net-box"><div class="net-label">TONG THUC LINH</div>
                   <div class="net-amount">${form.netPay}</div></div>
               </div></body></html>`
-              // Mở cửa sổ in → user chọn "Save as PDF" trong print dialog
-              const printWin = window.open("", "_blank", "width=700,height=900")
-              if (!printWin) {
-                // Fallback nếu popup bị block: download HTML file
-                const blob = new Blob([html], { type: "text/html;charset=utf-8" })
-                const url  = URL.createObjectURL(blob)
-                const a    = document.createElement("a")
-                a.href = url
-                a.download = `phieu-luong-${form.period ?? "export"}.html`
-                document.body.appendChild(a); a.click(); document.body.removeChild(a)
-                setTimeout(() => URL.revokeObjectURL(url), 10000)
-                return
-              }
-              printWin.document.write(html)
-              printWin.document.close()
-              // Đợi load xong rồi mới in
-              printWin.onload = () => {
-                printWin.focus()
-                printWin.print()
-                // Đóng cửa sổ sau khi print dialog đóng
-                printWin.onafterprint = () => printWin.close()
-              }
+              const blob = new Blob([html], { type: "text/html;charset=utf-8" })
+              const url  = URL.createObjectURL(blob)
+              const a    = document.createElement("a")
+              a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"
+              document.body.appendChild(a); a.click(); document.body.removeChild(a)
+              setTimeout(() => URL.revokeObjectURL(url), 15000)
             }}
           >
             <FileText className="w-4 h-4" />
@@ -468,5 +540,5 @@ export const SalarySlipSheet = ({ slip, open, onOpenChange, onSave }: SalarySlip
         </div>
       </SheetContent>
     </Sheet>
-  )
-}
+  );
+};

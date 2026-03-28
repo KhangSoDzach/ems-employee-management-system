@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.company.ems.backend.attendance.entity.AttendanceAdjustmentRequest;
-import com.company.ems.backend.attendance.enums.AdjustmentAction;
 import com.company.ems.backend.attendance.enums.AdjustmentRequestStatus;
 
 /**
@@ -59,44 +58,6 @@ public interface AttendanceAdjustmentRequestRepository
             @Param("roleName")           String roleName,
             @Param("excludeEmployeeId")  Long excludeEmployeeId,
             Pageable pageable);
-
-    /**
-     * Returns approver inbox items plus requests already processed by this approver.
-     *
-     * <p>Use-case: manager/HR screens need both current pending items and history
-     * (approved/rejected/returned), so items do not disappear after processing.
-     */
-    @Query("""
-                SELECT r FROM AttendanceAdjustmentRequest r
-                WHERE r.employee.id <> :excludeEmployeeId
-                  AND (
-                          EXISTS (
-                                SELECT wl.id FROM WorkflowLevel wl
-                                WHERE wl.template.id  = r.workflowTemplateId
-                                  AND wl.levelNumber  = r.currentApprovalLevel
-                                  AND wl.isDeleted    = false
-                                  AND r.status IN :pendingStatuses
-                                  AND (
-                                          (wl.assigneeType = 'ROLE' AND wl.assigneeRole = :roleName)
-                                     OR (wl.assigneeType = 'USER' AND wl.assigneeUser.id = :approverUserId)
-                                  )
-                          )
-                          OR EXISTS (
-                                SELECT h.id FROM AttendanceAdjustmentHistory h
-                                WHERE h.adjustmentRequest.id = r.id
-                                  AND h.actionBy.id          = :approverUserId
-                                  AND h.action IN :historyActions
-                          )
-                  )
-                ORDER BY r.createdAt DESC
-                """)
-    Page<AttendanceAdjustmentRequest> findApproverInboxAndHistory(
-                @Param("pendingStatuses")   List<AdjustmentRequestStatus> pendingStatuses,
-                @Param("historyActions")    List<AdjustmentAction> historyActions,
-                @Param("roleName")          String roleName,
-                @Param("excludeEmployeeId") Long excludeEmployeeId,
-                @Param("approverUserId")    Long approverUserId,
-                Pageable pageable);
 
     /**
      * Returns all pending requests where a specific user is assigned as an approver

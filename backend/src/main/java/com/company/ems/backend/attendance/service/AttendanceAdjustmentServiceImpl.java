@@ -344,23 +344,9 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                 // Determine primary role for ROLE-based lookup
                 String approverRole = isManager ? "ROLE_MANAGER" : (isHr ? "ROLE_HR" : "ROLE_ADMIN");
 
-                Long approverUserId = principal.getUserId();
-                if (approverUserId == null) {
-                        throw new ForbiddenException();
-                }
-
-                List<AdjustmentAction> historyActions = List.of(
-                                AdjustmentAction.APPROVED,
-                                AdjustmentAction.REJECTED,
-                                AdjustmentAction.RETURNED_TO_EMPLOYEE);
-
-                Page<AttendanceAdjustmentRequest> pageResult = requestRepository.findApproverInboxAndHistory(
-                                pendingStatuses,
-                                historyActions,
-                                approverRole,
-                                myEmployeeId,
-                                approverUserId,
-                                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+                Page<AttendanceAdjustmentRequest> pageResult = requestRepository.findPendingByRoleApprover(
+                                pendingStatuses, approverRole, myEmployeeId,
+                                PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt")));
 
                 return PageResponse.of(pageResult.map(attendanceMapper::toSummaryResponse));
         }
