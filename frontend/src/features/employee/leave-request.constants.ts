@@ -31,10 +31,6 @@ export interface LeaveRequest {
   status: LeaveStatus;
   reason: string;
   auditTrail: AuditEntry[];
-  // Real employee info
-  employeeName?: string;
-  employeeCode?: string;
-  department?: string;
 }
 
 /* ══════════════ DATE FORMATS ══════════════ */
@@ -45,12 +41,11 @@ export const DATETIME_LOG_FORMAT = "HH:mm · dd/MM/yyyy";
 
 /* ══════════════ USER INFO ══════════════ */
 
-/** Replace with real auth context once backend is integrated */
-// export const CURRENT_USER = {
-//   name: "Nguyễn Văn A",
-//   id: "EMP-001",
-//   department: "Phòng Kỹ thuật",
-// };
+export const CURRENT_USER = {
+  name: "Nguyễn Văn A",
+  id: "EMP-001",
+  department: "Phòng Kỹ thuật",
+};
 
 export const FORM_DEFAULTS = {};
 

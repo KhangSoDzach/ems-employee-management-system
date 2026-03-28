@@ -61,7 +61,6 @@ export const SYSTEM_MESSAGES = {
     MENU_APPROVE_REPORTS: "Duyệt báo cáo sự cố",
     MENU_APPROVE_ASSET_REQUESTS: "Duyệt yêu cầu tài sản",
     MENU_HR_PAYROLL_PERIOD: "Bảng lương theo kì",
-    MENU_RUN_PAYROLL: "Chạy tính lương",
     MENU_ATTENDANCE: "Lịch sử điểm danh",
     MENU_DASHBOARD: "Tổng quan",
     MENU_ANNOUNCEMENTS: "Thông báo nội bộ",
@@ -169,7 +168,6 @@ export const SYSTEM_MESSAGES = {
     SHEET_NET_PAY: "Tổng thực lĩnh",
     SHEET_DOWNLOAD: "Tải phiếu lương (PDF)",
     SHEET_CLOSE: "Đóng",
-    BTN_VIEW_SLIP: "Xem chi tiết",
   },
 
   // Check-in Page

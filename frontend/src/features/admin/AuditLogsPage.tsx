@@ -2,6 +2,9 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -113,6 +116,7 @@ function actionLabel(action: AuditActionType): string {
 }
 
 export default function AuditLogsPage() {
+  const effectiveRole = useEffectiveRole();
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -385,7 +389,6 @@ export default function AuditLogsPage() {
             </Button>
             <Button onClick={applyFilters}>Lọc</Button>
           </div>
-        </div>
 
         <div className="card-soft">
           <div className="px-4 md:px-6 py-4 border-b text-sm text-muted-foreground">
@@ -430,8 +433,8 @@ export default function AuditLogsPage() {
               </Button>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </SidebarInset>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="sm:max-w-2xl">
@@ -442,7 +445,7 @@ export default function AuditLogsPage() {
           {detailContent}
         </DialogContent>
       </Dialog>
-    </>
+    </SidebarProvider>
   );
 }
 

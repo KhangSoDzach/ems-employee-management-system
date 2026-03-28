@@ -17,7 +17,7 @@ public interface LeaveMapper {
             expression = "java(leave.getEmployee() != null "
                     + "? leave.getEmployee().getFirstName() + \" \" + leave.getEmployee().getLastName() "
                     + ": null)")
-    @Mapping(target = "leaveType",    expression = "java(leave.getLeaveType() != null ? leave.getLeaveType().toApiValue() : null)")
+    @Mapping(target = "leaveType",    expression = "java(leave.getLeaveType() != null ? leave.getLeaveType().name() : null)")
     @Mapping(target = "status",       expression = "java(leave.getStatus() != null ? leave.getStatus().name() : null)")
     @Mapping(target = "approvedBy",   source = "approvedBy.id")
     @Mapping(target = "approverName", expression = "java(leave.getApprovedBy() != null ? leave.getApprovedBy().getUsername() : null)")

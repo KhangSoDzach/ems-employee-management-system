@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +37,7 @@ import { cn } from "@/lib/utils";
 
 import {
   ALL_LABEL,
+  CURRENT_USER,
   DATE_FORMAT,
   LEAVE_STATUS_CONFIG,
   LEAVE_STATUS_OPTIONS,
@@ -96,7 +100,6 @@ export default function LeaveRequestPage() {
   const [typeFilter, setTypeFilter] = useState<LeaveType | "ALL">("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null);
-  const [profile, setProfile] = useState<any>(null);
   const [page, setPage] = useState(0);
 
   const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
@@ -124,7 +127,6 @@ export default function LeaveRequestPage() {
           employeeService.getMyProfile(),
         ]);
         setEmployeeId(profile.id);
-        setProfile(profile);
         setRequests(
           leavePage.content.map((dto) => ({
             id: String(dto.id),
@@ -135,11 +137,6 @@ export default function LeaveRequestPage() {
             status: mapBackendStatus(dto.status),
             reason: dto.reason,
             auditTrail: [],
-
-            // From profile profile
-            employeeName: `${profile.firstName} ${profile.lastName}`,
-            employeeCode: profile.employeeCode ?? "N/A",
-            department: profile.department ?? "N/A",
           })),
         );
       } catch {
@@ -195,13 +192,10 @@ export default function LeaveRequestPage() {
         {
           id: "a1",
           action: "CREATED",
-          actor: profile ? `${profile.firstName} ${profile.lastName}` : "Me",
+          actor: CURRENT_USER.name,
           timestamp: new Date(),
         },
       ],
-      employeeName: profile ? `${profile.firstName} ${profile.lastName}` : "-",
-      employeeCode: profile?.employeeCode ?? "N/A",
-      department: profile?.department ?? "N/A",
     };
     setRequests((prev) => [newReq, ...prev]);
   };
@@ -224,356 +218,361 @@ export default function LeaveRequestPage() {
 
   /* ── Render ── */
   return (
-    <>
-      <main className="page-layout-wrapper">
-        {/* ── Page Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-          <div>
-            <h1 className="page-heading">{SYSTEM_MESSAGES.LEAVE.TITLE}</h1>
-            <p className="text-muted-foreground mt-1">
-              {SYSTEM_MESSAGES.LEAVE.DESC}
-            </p>
-          </div>
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="shrink-0 h-10 px-5 font-semibold gap-1.5 shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            {SYSTEM_MESSAGES.LEAVE.BTN_CREATE}
-          </Button>
-        </div>
+    <SidebarProvider>
+      <AppSidebar role="employee" variant="inset" />
+      <SidebarInset>
+        <SiteHeader />
 
-        {/* ── Filter Bar ── */}
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-6">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[180px] max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder={SYSTEM_MESSAGES.SEARCH_PLACEHOLDER}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 w-full text-sm"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Trạng thái Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                {SYSTEM_MESSAGES.LEAVE.FILTER_STATUS}
-                {statusFilter !== "ALL" && (
-                  <>
-                    <div className="w-px h-4 bg-border mx-1" />
-                    <ActiveFilterBadge
-                      value={LEAVE_STATUS_CONFIG[statusFilter].label}
-                      colorClass="text-foreground bg-muted border-none"
-                      onClear={() => setStatusFilter("ALL")}
-                      showClearButton={false}
-                    />
-                  </>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[200px]">
-              <DropdownMenuItem
-                onClick={() => setStatusFilter("ALL")}
-                className="font-medium cursor-pointer"
-              >
-                {ALL_LABEL}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {LEAVE_STATUS_OPTIONS.map(([value, config]) => (
-                <DropdownMenuItem
-                  key={value}
-                  onClick={() => setStatusFilter(value)}
-                  className={cn(
-                    "cursor-pointer",
-                    statusFilter === value && "bg-muted font-medium",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "w-2 h-2 rounded-full inline-block shrink-0",
-                        value === "PENDING" && "bg-amber-500",
-                        value === "APPROVED" && "bg-emerald-500",
-                        value === "REJECTED" && "bg-rose-500",
-                        value === "RETURNED" && "bg-orange-500",
-                      )}
-                    />
-                    {config.label}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Loại phép Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                {SYSTEM_MESSAGES.LEAVE.FILTER_TYPE}
-                {typeFilter !== "ALL" && (
-                  <>
-                    <div className="w-px h-4 bg-border mx-1" />
-                    <ActiveFilterBadge
-                      value={LEAVE_TYPE_CONFIG[typeFilter].label}
-                      colorClass={LEAVE_TYPE_CONFIG[typeFilter].badgeClass}
-                      onClear={() => setTypeFilter("ALL")}
-                      showClearButton={false}
-                    />
-                  </>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[200px]">
-              <DropdownMenuItem
-                onClick={() => setTypeFilter("ALL")}
-                className="font-medium cursor-pointer"
-              >
-                {ALL_LABEL}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {LEAVE_TYPE_OPTIONS.map(([value, config]) => (
-                <DropdownMenuItem
-                  key={value}
-                  onClick={() => setTypeFilter(value)}
-                  className={cn(
-                    "cursor-pointer",
-                    typeFilter === value && "bg-muted font-medium",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "w-2 h-2 rounded-full inline-block",
-                        value === "annual" && "bg-indigo-500",
-                        value === "sick" && "bg-rose-500",
-                        value === "unpaid" && "bg-slate-500",
-                        value === "personal" && "bg-violet-500",
-                      )}
-                    />
-                    {config.label}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Clear all */}
-          {hasFilter && (
+        <main className="page-layout-wrapper">
+          {/* ── Page Header ── */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+            <div>
+              <h1 className="page-heading">{SYSTEM_MESSAGES.LEAVE.TITLE}</h1>
+              <p className="text-muted-foreground mt-1">
+                {SYSTEM_MESSAGES.LEAVE.DESC}
+              </p>
+            </div>
             <Button
-              variant="ghost"
-              onClick={clearAllFilters}
-              className="h-9 px-3 text-muted-foreground hover:text-foreground gap-1.5"
+              onClick={() => setIsModalOpen(true)}
+              className="shrink-0 h-10 px-5 font-semibold gap-1.5 shadow-sm"
             >
-              <X className="w-4 h-4" />
-              {SYSTEM_MESSAGES.LEAVE.BTN_CLEAR}
+              <Plus className="w-4 h-4" />
+              {SYSTEM_MESSAGES.LEAVE.BTN_CREATE}
             </Button>
-          )}
-        </div>
-
-        {/* ── Table Area ── */}
-        <div className="border rounded-2xl bg-card shadow-sm overflow-hidden flex flex-col">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-muted/40">
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="py-4 font-semibold text-foreground px-6">
-                    {SYSTEM_MESSAGES.LEAVE.TABLE_ID}
-                  </TableHead>
-                  <TableHead className="py-4 font-semibold text-foreground px-6">
-                    {SYSTEM_MESSAGES.LEAVE.TABLE_DATE_CREATED}
-                  </TableHead>
-                  <TableHead className="py-4 font-semibold text-foreground px-6">
-                    {SYSTEM_MESSAGES.LEAVE.TABLE_DATE_LEAVE}
-                  </TableHead>
-                  <TableHead className="py-4 font-semibold text-foreground px-6">
-                    {SYSTEM_MESSAGES.LEAVE.TABLE_TYPE}
-                  </TableHead>
-                  <TableHead className="py-4 font-semibold text-foreground px-6">
-                    {SYSTEM_MESSAGES.LEAVE.TABLE_STATUS}
-                  </TableHead>
-                  <TableHead className="py-4 w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-[400px] text-center">
-                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span className="text-sm">
-                          {SYSTEM_MESSAGES.LOADING}
-                        </span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : paginated.length === 0 ? (
-                  <EmptyState hasFilter={hasFilter} />
-                ) : (
-                  paginated.map((req) => (
-                    <TableRow
-                      key={req.id}
-                      className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
-                      onClick={() => setDetailRequest(req)}
-                    >
-                      <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
-                        {req.id}
-                      </TableCell>
-                      <TableCell className="px-6 py-4 font-medium text-foreground">
-                        {format(req.dateCreated, DATE_FORMAT)}
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <span className="font-medium text-foreground">
-                          {format(req.startDate, DATE_FORMAT)}
-                          {req.startDate.getTime() !== req.endDate.getTime() &&
-                            ` – ${format(req.endDate, DATE_FORMAT)}`}
-                        </span>
-                        <span className="text-muted-foreground text-xs block mt-0.5">
-                          {Math.ceil(
-                            (req.endDate.getTime() - req.startDate.getTime()) /
-                              (1000 * 60 * 60 * 24),
-                          ) + 1}{" "}
-                          {SYSTEM_MESSAGES.LEAVE.DAYS}
-                        </span>
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <TypeBadge type={req.type} />
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
-                        <StatusBadge status={req.status} />
-                      </TableCell>
-                      <TableCell
-                        className="py-4 text-right"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem
-                              className="cursor-pointer text-sm"
-                              onClick={() => setDetailRequest(req)}
-                            >
-                              {SYSTEM_MESSAGES.LEAVE.BTN_DETAIL}
-                            </DropdownMenuItem>
-                            {req.status === "RETURNED" && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer text-sm text-primary font-medium">
-                                  {SYSTEM_MESSAGES.LEAVE.BTN_RESEND}
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {req.status === "PENDING" && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="cursor-pointer text-sm text-destructive focus:text-destructive"
-                                  onClick={() => handleCancel(req.id)}
-                                >
-                                  {SYSTEM_MESSAGES.LEAVE.BTN_CANCEL}
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
           </div>
 
-          {/* Summary footer */}
-          <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex flex-col gap-1">
-              <span>
-                {SYSTEM_MESSAGES.LEAVE.SUMMARY_SHOW}{" "}
-                {filtered.length > 0 ? page * PAGE_SIZE + 1 : 0}-
-                {Math.min((page + 1) * PAGE_SIZE, filtered.length)}{" "}
-                {SYSTEM_MESSAGES.LEAVE.SUMMARY_DIVIDER} {filtered.length}{" "}
-                {SYSTEM_MESSAGES.LEAVE.SUMMARY_UNIT}
-              </span>
-              <div className="flex gap-4">
-                {(
-                  [
-                    "PENDING",
-                    "APPROVED",
-                    "REJECTED",
-                    "RETURNED",
-                  ] as LeaveStatus[]
-                ).map((s) => {
-                  const count = requests.filter((r) => r.status === s).length;
-                  return count > 0 ? (
-                    <span key={s}>
-                      <span className="font-semibold text-foreground">
-                        {count}
-                      </span>{" "}
-                      {LEAVE_STATUS_CONFIG[s].label}
-                    </span>
-                  ) : null;
-                })}
-              </div>
+          {/* ── Filter Bar ── */}
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-6">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[180px] max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder={SYSTEM_MESSAGES.SEARCH_PLACEHOLDER}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 w-full text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {totalPages > 1 && (
-              <div className="flex items-center gap-2">
+            {/* Trạng thái Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  size="sm"
+                  className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <SlidersHorizontal className="w-4 h-4" />
+                  {SYSTEM_MESSAGES.LEAVE.FILTER_STATUS}
+                  {statusFilter !== "ALL" && (
+                    <>
+                      <div className="w-px h-4 bg-border mx-1" />
+                      <ActiveFilterBadge
+                        value={LEAVE_STATUS_CONFIG[statusFilter].label}
+                        colorClass="text-foreground bg-muted border-none"
+                        onClear={() => setStatusFilter("ALL")}
+                      />
+                    </>
+                  )}
                 </Button>
-                <span className="font-medium px-2">
-                  {page + 1} / {totalPages}
-                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuItem
+                  onClick={() => setStatusFilter("ALL")}
+                  className="font-medium cursor-pointer"
+                >
+                  {ALL_LABEL}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {LEAVE_STATUS_OPTIONS.map(([value, config]) => (
+                  <DropdownMenuItem
+                    key={value}
+                    onClick={() => setStatusFilter(value)}
+                    className={cn(
+                      "cursor-pointer",
+                      statusFilter === value && "bg-muted font-medium",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full inline-block shrink-0",
+                          value === "PENDING" && "bg-amber-500",
+                          value === "APPROVED" && "bg-emerald-500",
+                          value === "REJECTED" && "bg-rose-500",
+                          value === "RETURNED" && "bg-orange-500",
+                        )}
+                      />
+                      {config.label}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Loại phép Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={page >= totalPages - 1}
-                  onClick={() =>
-                    setPage((p) => Math.min(totalPages - 1, p + 1))
-                  }
+                  size="sm"
+                  className="h-9 gap-2 text-sm shadow-sm whitespace-nowrap"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <SlidersHorizontal className="w-4 h-4" />
+                  {SYSTEM_MESSAGES.LEAVE.FILTER_TYPE}
+                  {typeFilter !== "ALL" && (
+                    <>
+                      <div className="w-px h-4 bg-border mx-1" />
+                      <ActiveFilterBadge
+                        value={LEAVE_TYPE_CONFIG[typeFilter].label}
+                        colorClass={LEAVE_TYPE_CONFIG[typeFilter].badgeClass}
+                        onClear={() => setTypeFilter("ALL")}
+                      />
+                    </>
+                  )}
                 </Button>
-              </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuItem
+                  onClick={() => setTypeFilter("ALL")}
+                  className="font-medium cursor-pointer"
+                >
+                  {ALL_LABEL}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {LEAVE_TYPE_OPTIONS.map(([value, config]) => (
+                  <DropdownMenuItem
+                    key={value}
+                    onClick={() => setTypeFilter(value)}
+                    className={cn(
+                      "cursor-pointer",
+                      typeFilter === value && "bg-muted font-medium",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full inline-block",
+                          value === "annual" && "bg-indigo-500",
+                          value === "sick" && "bg-rose-500",
+                          value === "unpaid" && "bg-slate-500",
+                          value === "personal" && "bg-violet-500",
+                        )}
+                      />
+                      {config.label}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Clear all */}
+            {hasFilter && (
+              <Button
+                variant="ghost"
+                onClick={clearAllFilters}
+                className="h-9 px-3 text-muted-foreground hover:text-foreground gap-1.5"
+              >
+                <X className="w-4 h-4" />
+                {SYSTEM_MESSAGES.LEAVE.BTN_CLEAR}
+              </Button>
             )}
           </div>
-        </div>
-      </main>
+
+          {/* ── Table Area ── */}
+          <div className="border rounded-2xl bg-card shadow-sm overflow-hidden flex flex-col">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/40">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_ID}
+                    </TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_DATE_CREATED}
+                    </TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_DATE_LEAVE}
+                    </TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_TYPE}
+                    </TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground px-6">
+                      {SYSTEM_MESSAGES.LEAVE.TABLE_STATUS}
+                    </TableHead>
+                    <TableHead className="py-4 w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-[400px] text-center">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span className="text-sm">
+                            {SYSTEM_MESSAGES.LOADING}
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : paginated.length === 0 ? (
+                    <EmptyState hasFilter={hasFilter} />
+                  ) : (
+                    paginated.map((req) => (
+                      <TableRow
+                        key={req.id}
+                        className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
+                        onClick={() => setDetailRequest(req)}
+                      >
+                        <TableCell className="px-6 py-4 font-mono text-xs font-semibold text-primary/80">
+                          {req.id}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 font-medium text-foreground">
+                          {format(req.dateCreated, DATE_FORMAT)}
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <span className="font-medium text-foreground">
+                            {format(req.startDate, DATE_FORMAT)}
+                            {req.startDate.getTime() !==
+                              req.endDate.getTime() &&
+                              ` – ${format(req.endDate, DATE_FORMAT)}`}
+                          </span>
+                          <span className="text-muted-foreground text-xs block mt-0.5">
+                            {Math.ceil(
+                              (req.endDate.getTime() -
+                                req.startDate.getTime()) /
+                                (1000 * 60 * 60 * 24),
+                            ) + 1}{" "}
+                            {SYSTEM_MESSAGES.LEAVE.DAYS}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <TypeBadge type={req.type} />
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <StatusBadge status={req.status} />
+                        </TableCell>
+                        <TableCell
+                          className="py-4 text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem
+                                className="cursor-pointer text-sm"
+                                onClick={() => setDetailRequest(req)}
+                              >
+                                {SYSTEM_MESSAGES.LEAVE.BTN_DETAIL}
+                              </DropdownMenuItem>
+                              {req.status === "RETURNED" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="cursor-pointer text-sm text-primary font-medium">
+                                    {SYSTEM_MESSAGES.LEAVE.BTN_RESEND}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {req.status === "PENDING" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="cursor-pointer text-sm text-destructive focus:text-destructive"
+                                    onClick={() => handleCancel(req.id)}
+                                  >
+                                    {SYSTEM_MESSAGES.LEAVE.BTN_CANCEL}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Summary footer */}
+            <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex flex-col gap-1">
+                <span>
+                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_SHOW}{" "}
+                  {filtered.length > 0 ? page * PAGE_SIZE + 1 : 0}-
+                  {Math.min((page + 1) * PAGE_SIZE, filtered.length)}{" "}
+                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_DIVIDER} {filtered.length}{" "}
+                  {SYSTEM_MESSAGES.LEAVE.SUMMARY_UNIT}
+                </span>
+                <div className="flex gap-4">
+                  {(
+                    [
+                      "PENDING",
+                      "APPROVED",
+                      "REJECTED",
+                      "RETURNED",
+                    ] as LeaveStatus[]
+                  ).map((s) => {
+                    const count = requests.filter((r) => r.status === s).length;
+                    return count > 0 ? (
+                      <span key={s}>
+                        <span className="font-semibold text-foreground">
+                          {count}
+                        </span>{" "}
+                        {LEAVE_STATUS_CONFIG[s].label}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="font-medium px-2">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page >= totalPages - 1}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages - 1, p + 1))
+                    }
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      </SidebarInset>
 
       {/* Create Modal */}
       <CreateLeaveModal
@@ -588,6 +587,6 @@ export default function LeaveRequestPage() {
         open={!!detailRequest}
         onClose={() => setDetailRequest(null)}
       />
-    </>
+    </SidebarProvider>
   );
 }
