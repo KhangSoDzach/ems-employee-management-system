@@ -41,58 +41,58 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
         List<Employee> findAllActive();
 
         @Query("SELECT e FROM Employee e WHERE " +
-                "(e.isDeleted IS NULL OR e.isDeleted = false) AND " +
-                "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-                "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-                "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-                "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
-                "AND (:positionId IS NULL OR e.position.id = :positionId) " +
-                "AND (:status IS NULL OR e.workStatus = :status)")
+                        "(e.isDeleted IS NULL OR e.isDeleted = false) AND " +
+                        "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                        "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
+                        "AND (:positionId IS NULL OR e.position.id = :positionId) " +
+                        "AND (:status IS NULL OR e.workStatus = :status)")
         Page<Employee> searchEmployees(
-                @Param("search") String search,
-                @Param("departmentId") Long departmentId,
-                @Param("positionId") Long positionId,
-                @Param("status") WorkStatus status,
-                Pageable pageable);
+                        @Param("search") String search,
+                        @Param("departmentId") Long departmentId,
+                        @Param("positionId") Long positionId,
+                        @Param("status") WorkStatus status,
+                        Pageable pageable);
 
         @Query("SELECT e FROM Employee e WHERE " +
-                "(e.isDeleted IS NULL OR e.isDeleted = false) AND " +
-                "e.reportingManager.id = :managerId AND " +
-                "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-                "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-                "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-                "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
-                "AND (:positionId IS NULL OR e.position.id = :positionId) " +
-                "AND (:status IS NULL OR e.workStatus = :status)")
+                        "(e.isDeleted IS NULL OR e.isDeleted = false) AND " +
+                        "e.reportingManager.id = :managerId AND " +
+                        "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                        "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
+                        "AND (:positionId IS NULL OR e.position.id = :positionId) " +
+                        "AND (:status IS NULL OR e.workStatus = :status)")
         Page<Employee> searchEmployeesByManager(
-                @Param("managerId") Long managerId,
-                @Param("search") String search,
-                @Param("departmentId") Long departmentId,
-                @Param("positionId") Long positionId,
-                @Param("status") WorkStatus status,
-                Pageable pageable);
+                        @Param("managerId") Long managerId,
+                        @Param("search") String search,
+                        @Param("departmentId") Long departmentId,
+                        @Param("positionId") Long positionId,
+                        @Param("status") WorkStatus status,
+                        Pageable pageable);
 
         @Query("SELECT e FROM Employee e WHERE " +
-                "(e.isDeleted IS NULL OR e.isDeleted = false) AND " +
-                "(e.reportingManager.id = :managerId OR e.id = :managerId) AND " +
-                "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-                "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-                "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-                "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
-                "AND (:positionId IS NULL OR e.position.id = :positionId) " +
-                "AND (:status IS NULL OR e.workStatus = :status)")
+                        "(e.isDeleted IS NULL OR e.isDeleted = false) AND " +
+                        "(e.reportingManager.id = :managerId OR e.id = :managerId) AND " +
+                        "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                        "AND (:departmentId IS NULL OR e.department.id = :departmentId) " +
+                        "AND (:positionId IS NULL OR e.position.id = :positionId) " +
+                        "AND (:status IS NULL OR e.workStatus = :status)")
         Page<Employee> searchEmployeesFor360ByManagerGroup(
-                @Param("managerId") Long managerId,
-                @Param("search") String search,
-                @Param("departmentId") Long departmentId,
-                @Param("positionId") Long positionId,
-                @Param("status") WorkStatus status,
-                Pageable pageable);
+                        @Param("managerId") Long managerId,
+                        @Param("search") String search,
+                        @Param("departmentId") Long departmentId,
+                        @Param("positionId") Long positionId,
+                        @Param("status") WorkStatus status,
+                        Pageable pageable);
 
         @Query("SELECT e FROM Employee e WHERE e.hireDate BETWEEN :startDate AND :endDate")
         List<Employee> findEmployeesHiredBetween(
-                @Param("startDate") LocalDate startDate,
-                @Param("endDate") LocalDate endDate);
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate);
 
         @Query("SELECT COUNT(e) FROM Employee e WHERE e.department.id = :departmentId AND e.status = 'ACTIVE'")
         long countByDepartment(@Param("departmentId") Long departmentId);
@@ -129,12 +129,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
         @Query("SELECT e FROM Employee e WHERE e.user.username = :username")
         Optional<Employee> findByUserUsername(@Param("username") String username);
 
-                                @Query("""
-                                                                                                SELECT DISTINCT e.user.id
-                                                                                                FROM Employee e
-                                                                                                WHERE e.user IS NOT NULL
-                                                                                                        AND e.user.enabled = true
-                                                                                                        AND e.department.id IN :departmentIds
-                                                                                                """)
-                                List<Long> findDistinctUserIdsByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
+        @Query("""
+                        SELECT DISTINCT e.user.id
+                        FROM Employee e
+                        WHERE e.user IS NOT NULL
+                            AND e.user.enabled = true
+                            AND e.department.id IN :departmentIds
+                        """)
+        List<Long> findDistinctUserIdsByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
+
+        @Query("SELECT e FROM Employee e WHERE e.user.username IN :usernames")
+        List<Employee> findAllByUserUsernameIn(@Param("usernames") java.util.Collection<String> usernames);
 }

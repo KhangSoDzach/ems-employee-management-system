@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.company.ems.backend.auditlog.dto.AuditLogFilterRequest;
 import com.company.ems.backend.auditlog.dto.AuditLogResponse;
-import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.enums.AuditAction;
+import com.company.ems.backend.auditlog.enums.ResourceType;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.auditlog.service.AuditLogService;
@@ -26,10 +27,14 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Audit Log controller for administrative oversight.
+ * Uses standardized ResourceType and AuditAction enums.
+ */
 @RestController
 @RequestMapping("/api/v1/audit-logs")
 @RequiredArgsConstructor
-@Tag(name = "Audit Log", description = "Authentication audit log endpoints – Admin only")
+@Tag(name = "Audit Log", description = "System-wide audit log endpoints – Admin only")
 @SecurityRequirement(name = "bearerAuth")
 public class AuditLogController {
 
@@ -38,24 +43,26 @@ public class AuditLogController {
 
     @GetMapping
     @PreAuthorize(RoleAuthorization.HAS_PERM_AUDIT_LOG_VIEW)
-    @Operation(summary = "List audit logs", description = "Returns paginated audit logs. Requires AUDIT_LOG_VIEW permission.")
+    @Operation(summary = "List audit logs", description = "Returns standardized paginated audit logs. Requires AUDIT_LOG_VIEW permission.")
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getAuditLogs(
-            @RequestParam(required = false) String entityType,
-            @RequestParam(required = false) AuthActionType actionType,
+            @RequestParam(required = false) ResourceType resource,
+            @RequestParam(required = false) AuditAction action,
             @RequestParam(required = false) String actor,
-            @RequestParam(required = false) String identifierAttempted,
+            @RequestParam(required = false) String identifier,
             @RequestParam(required = false) String ipAddress,
+            @RequestParam(defaultValue = "false") boolean showAnonymous,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         AuditLogFilterRequest filter = AuditLogFilterRequest.builder()
-                .entityType(entityType)
-                .actionType(actionType)
+                .resource(resource)
+                .action(action)
                 .actor(actor)
-                .identifierAttempted(identifierAttempted)
+                .identifier(identifier)
                 .ipAddress(ipAddress)
+                .showAnonymous(showAnonymous)
                 .from(from)
                 .to(to)
                 .page(page)
