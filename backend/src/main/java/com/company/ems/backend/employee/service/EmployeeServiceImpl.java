@@ -14,9 +14,6 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-
-import com.company.ems.backend.auditlog.enums.AuditAction;
-import com.company.ems.backend.auditlog.enums.ResourceType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,10 +62,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class EmployeeServiceImpl implements EmployeeService {
 
-        /**
-         * Date format for default password derivation: ddMMyy (e.g. 110299 for
-         * 11/02/1999).
-         */
+        /** Date format for default password derivation: ddMMyy (e.g. 110299 for 11/02/1999). */
         private static final DateTimeFormatter DOB_PASSWORD_FORMATTER = DateTimeFormatter.ofPattern("ddMMyy");
         private static final List<Integer> ALLOWED_FIXED_TERM_MONTHS = List.of(12, 24, 36);
         private static final long MAX_EMPLOYEE_FILE_SIZE_BYTES = 10L * 1024 * 1024;
@@ -93,12 +87,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         private final LeaveBalanceService leaveBalanceService;
         private final AttendanceService attendanceService;
         private final EmployeeAttachmentRepository employeeAttachmentRepository;
-        private final com.company.ems.backend.auditlog.service.AuditLogService auditLogService;
 
         @Override
         public EmployeeResponse createEmployee(EmployeeRequest request) {
                 log.info("Creating employee: {} {}", request.getFirstName(), request.getLastName());
-                CustomUserPrincipal creator = dataScopeService.getCurrentPrincipal();
 
                 if (employeeRepository.existsByEmail(request.getEmail())) {
                         throw new BusinessException("DUPLICATE_EMAIL", "Email đã tồn tại trong hệ thống");
@@ -144,8 +136,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 if (request.getDateOfBirth() != null) {
                         rawPassword = buildDefaultPassword(employeeCode, request.getDateOfBirth());
                         Role employeeRole = roleRepository.findByName("ROLE_EMPLOYEE")
-                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name",
-                                                        "ROLE_EMPLOYEE"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_EMPLOYEE"));
                         linkedUser = User.builder()
                                         .username(employeeCode)
                                         .email(request.getEmail())
@@ -202,15 +193,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 request.getContractDurationMonths(), request.getContractEndDate());
 
                 Employee saved = employeeRepository.save(employee);
-
-                auditLogService.logEvent(
-                                ResourceType.EMPLOYEE,
-                                AuditAction.CREATE,
-                                creator.getUsername(),
-                                saved.getEmployeeCode(),
-                                saved.getFullName(),
-                                null,
-                                null);
 
                 int currentYear = LocalDate.now().getYear();
                 leaveBalanceService.initializeDefaultBalancesForEmployee(saved.getId(), currentYear);
@@ -405,15 +387,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 Employee updated = employeeRepository.save(employee);
                 log.info("User [{}] updated employee [{}]", principal.getUsername(), id);
 
-                auditLogService.logEvent(
-                                ResourceType.EMPLOYEE,
-                                AuditAction.UPDATE_EMPLOYEE,
-                                principal.getUsername(),
-                                updated.getEmployeeCode(),
-                                updated.getFullName(),
-                                null, // For simplicity not logging all field diffs here
-                                null);
-
                 return employeeMapper.toResponse(updated);
         }
 
@@ -507,8 +480,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                         throw new BusinessException("INVALID_AVATAR_TYPE", "Ảnh đại diện chỉ chấp nhận JPG hoặc PNG");
                 }
                 if (!isAvatar && !ALLOWED_DOCUMENT_TYPES.contains(contentType)) {
-                        throw new BusinessException("INVALID_DOCUMENT_TYPE",
-                                        "Tài liệu chỉ chấp nhận PDF, DOC, DOCX, JPG, PNG");
+                        throw new BusinessException("INVALID_DOCUMENT_TYPE", "Tài liệu chỉ chấp nhận PDF, DOC, DOCX, JPG, PNG");
                 }
 
                 String relativePath = storeEmployeeFile(file, employee, isAvatar ? "avatars" : "documents");
@@ -522,8 +494,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                 EmployeeAttachment attachment = EmployeeAttachment.builder()
                                 .employee(employee)
-                                .originalFileName(file.getOriginalFilename() != null ? file.getOriginalFilename()
-                                                : "unknown")
+                                .originalFileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown")
                                 .storedFileName(Paths.get(relativePath).getFileName().toString())
                                 .fileUrl(fileUrl)
                                 .fileType(contentType)
@@ -567,8 +538,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                 EmployeeAttachment attachment = employeeAttachmentRepository
                                 .findByIdAndEmployeeIdAndIsDeletedFalse(attachmentId, id)
-                                .orElseThrow(() -> new ResourceNotFoundException("EmployeeAttachment", "id",
-                                                attachmentId));
+                                .orElseThrow(() -> new ResourceNotFoundException("EmployeeAttachment", "id", attachmentId));
 
                 deleteStoredEmployeeFile(attachment.getFileUrl());
                 attachment.softDelete(principal.getUsername());
@@ -596,15 +566,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 }
                 employeeRepository.save(employee);
                 log.info("User [{}] soft-deleted employee [{}]", principal.getUsername(), id);
-
-                auditLogService.logEvent(
-                                ResourceType.EMPLOYEE,
-                                AuditAction.DELETE,
-                                principal.getUsername(),
-                                employee.getEmployeeCode(),
-                                employee.getFullName(),
-                                null,
-                                null);
         }
 
         @Override
@@ -727,18 +688,15 @@ public class EmployeeServiceImpl implements EmployeeService {
          * Maps an Employee to a slim MemberResponse (no sensitive fields).
          */
         private MemberResponse mapToMemberResponse(Employee employee) {
-                if (employee == null)
-                        return null;
+                if (employee == null) return null;
                 return MemberResponse.builder()
                                 .id(employee.getId())
                                 .employeeCode(employee.getEmployeeCode())
                                 .fullName(employee.getFullName())
                                 .email(employee.getEmail())
                                 .avatarUrl(employee.getAvatarUrl())
-                                .positionTitle(employee.getPosition() != null ? employee.getPosition().getTitle()
-                                                : null)
-                                .departmentName(employee.getDepartment() != null ? employee.getDepartment().getName()
-                                                : null)
+                                .positionTitle(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
+                                .departmentName(employee.getDepartment() != null ? employee.getDepartment().getName() : null)
                                 .status(employee.getStatus() != null ? employee.getStatus().name() : null)
                                 .build();
         }
@@ -756,9 +714,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         /**
          * Derives the default login password: {@code employeeCode + DOB(ddMMyy)}.
-         * <p>
-         * Example: code {@code IT202600001} + DOB {@code 1999-02-11} =>
-         * {@code IT202600001110299}.
+         * <p>Example: code {@code IT202600001} + DOB {@code 1999-02-11} => {@code IT202600001110299}.
          */
         private String buildDefaultPassword(String employeeCode, LocalDate dateOfBirth) {
                 return employeeCode + dateOfBirth.format(DOB_PASSWORD_FORMATTER);
@@ -806,8 +762,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 throw new BusinessException("MISSING_CONTRACT_START_DATE",
                                                 "Hợp đồng có thời hạn bắt buộc phải có ngày bắt đầu");
                         }
-                        if (contractDurationMonths == null
-                                        || !ALLOWED_FIXED_TERM_MONTHS.contains(contractDurationMonths)) {
+                        if (contractDurationMonths == null || !ALLOWED_FIXED_TERM_MONTHS.contains(contractDurationMonths)) {
                                 throw new BusinessException("INVALID_CONTRACT_DURATION",
                                                 "Hợp đồng có thời hạn chỉ được phép 12, 24 hoặc 36 tháng");
                         }

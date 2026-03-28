@@ -11,7 +11,6 @@ export const SYSTEM_MESSAGES = {
   SELECT_PLACEHOLDER: "Chọn giá trị",
   SUCCESS_UPDATE: "Cập nhật thành công!",
   ERROR: "Có lỗi xảy ra",
-  FILTER: "Lọc",
 
   // Actions
   BTN_CANCEL: "Hủy bỏ",

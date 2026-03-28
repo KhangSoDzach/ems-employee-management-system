@@ -2,9 +2,7 @@ package com.company.ems.backend.auditlog.entity;
 
 import java.time.LocalDateTime;
 
-import com.company.ems.backend.auditlog.enums.AuditAction;
-import com.company.ems.backend.auditlog.enums.EventType;
-import com.company.ems.backend.auditlog.enums.ResourceType;
+import com.company.ems.backend.auditlog.enums.AuthActionType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,15 +21,22 @@ import lombok.NoArgsConstructor;
 
 /**
  * Append-only Audit Log record.
- * Standardized for professional classification (Resource, EventType, Action).
+ * <p>
+ * Design constraints (US-05 AC-05):
+ * <ul>
+ *   <li>No UPDATE path – entity has only getters (no setters outside of builder).</li>
+ *   <li>No soft-delete fields – records are truly immutable once written.</li>
+ *   <li>No @Version – optimistic locking not needed for append-only data.</li>
+ * </ul>
+ * SECURITY: passwords and raw tokens MUST NEVER be stored here.
  */
 @Entity
 @Table(name = "audit_log", indexes = {
-        @Index(name = "idx_audit_log_resource", columnList = "resource"),
-        @Index(name = "idx_audit_log_action", columnList = "action"),
-        @Index(name = "idx_audit_log_category", columnList = "category"),
-        @Index(name = "idx_audit_log_actor", columnList = "actor"),
-        @Index(name = "idx_audit_log_created_at", columnList = "created_at")
+        @Index(name = "idx_audit_log_entity_type", columnList = "entity_type"),
+        @Index(name = "idx_audit_log_action_type", columnList = "action_type"),
+        @Index(name = "idx_audit_log_actor",       columnList = "actor"),
+        @Index(name = "idx_audit_log_identifier",  columnList = "identifier_attempted"),
+        @Index(name = "idx_audit_log_created_at",  columnList = "created_at")
 })
 @Getter
 @Builder
@@ -43,51 +48,59 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Domain resource impacted (AUTH, EMPLOYEE, etc.) */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "resource", nullable = false, length = 50, updatable = false)
-    private ResourceType resource;
+    /** Domain category of the audited operation (e.g. AUTHENTICATION). */
+    @Column(name = "entity_type", nullable = false, length = 100, updatable = false)
+    private String entityType;
 
-    /** High-level classification (AUTHENTICATION, AUTHORIZATION, etc.) */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "category", nullable = false, length = 50, updatable = false)
-    private EventType eventType;
+    /** Resolved user ID (UUID string) or SSO subject. Null when user is unknown. */
+    @Column(name = "entity_id", length = 255, updatable = false)
+    private String entityId;
 
     /** Specific action performed. */
     @Enumerated(EnumType.STRING)
-    @Column(name = "action", nullable = false, length = 50, updatable = false)
-    private AuditAction action;
+    @Column(name = "action_type", nullable = false, length = 50, updatable = false)
+    private AuthActionType actionType;
 
-    /** Identity of the targeted resource (e.g. user_id string). */
-    @Column(name = "target_id", length = 255, updatable = false)
-    private String targetId;
-
-    /** Human-readable identifier of the target (e.g. Full Name). */
-    @Column(name = "identifier", length = 255, updatable = false)
-    private String identifier;
-
-    /** Identity of the actor (username). */
-    @Column(name = "actor", nullable = false, length = 255, updatable = false)
+    /** Resolved actor: user_id string or "ANONYMOUS". */
+    @Column(name = "actor", length = 255, updatable = false)
     private String actor;
 
-    @Column(name = "ip_address", length = 50, updatable = false)
-    private String ipAddress;
+    /**
+     * Credential identifier that was attempted (username / email).
+     * Logged even on failure, but NEVER the password itself.
+     */
+    @Column(name = "identifier_attempted", length = 255, updatable = false)
+    private String identifierAttempted;
 
-    @Column(name = "client_type", length = 20, updatable = false)
-    private String clientType;
-
+    /** Previous state (null for most auth events). */
     @Column(name = "old_value", columnDefinition = "TEXT", updatable = false)
     private String oldValue;
 
+    /**
+     * JSON payload with contextual data, e.g.:
+     * {"login_method":"JWT","result":"SUCCESS"}
+     * NEVER include passwords or tokens.
+     */
     @Column(name = "new_value", columnDefinition = "TEXT", updatable = false)
     private String newValue;
 
+    /** Client IP address. */
+    @Column(name = "ip_address", length = 50, updatable = false)
+    private String ipAddress;
+
+    /** HTTP User-Agent header value. */
     @Column(name = "user_agent", length = 1000, updatable = false)
     private String userAgent;
 
+    /** Client type: WEB | MOBILE | API */
+    @Column(name = "client_type", length = 20, updatable = false)
+    private String clientType;
+
+    /** Correlation / request ID for distributed tracing. */
     @Column(name = "correlation_id", length = 100, updatable = false)
     private String correlationId;
 
+    /** Immutable creation timestamp – set automatically on persist. */
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

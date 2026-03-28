@@ -33,8 +33,7 @@ import com.company.ems.backend.asset.incident.entity.ReportStatus;
 import com.company.ems.backend.asset.incident.repository.AssetIncidentReportRepository;
 import com.company.ems.backend.asset.repository.AssetHistoryRepository;
 import com.company.ems.backend.asset.repository.AssetRepository;
-import com.company.ems.backend.auditlog.enums.AuditAction;
-import com.company.ems.backend.auditlog.enums.ResourceType;
+import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.ApiResponse;
@@ -55,6 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class IncidentServiceImpl implements IncidentService {
 
+    private static final String ENTITY_TYPE_ASSET_INCIDENT = "ASSET_INCIDENT";
     private final AssetIncidentReportRepository incidentRepo;
     private final AssetRepository assetRepo;
     private final AssetHistoryRepository historyRepo;
@@ -124,15 +124,14 @@ public class IncidentServiceImpl implements IncidentService {
         AssetIncidentReport savedReport = incidentRepo.save(report);
 
         auditLogService.logEvent(
-                ResourceType.ASSET,
-                AuditAction.CREATE,
+                ENTITY_TYPE_ASSET_INCIDENT,
+                AuthActionType.ASSET_REPORT_SUBMITTED,
                 emp.getUser().getUsername(),
                 savedReport.getReportCode(),
-                emp.getFullName(),
+                null,
                 new AuditLogService.AuditValues(
                         null,
-                        "{\"asset\":\"" + asset.getAssetCode() + "\", \"type\":\"" + savedReport.getIncidentType()
-                                + "\"}"),
+                        "{\"asset\":\"" + asset.getAssetCode() + "\", \"type\":\"" + savedReport.getIncidentType() + "\"}"),
                 null);
 
         log.info("Incident report created: {} by employee: {}", savedReport.getReportCode(), emp.getId());
@@ -198,8 +197,7 @@ public class IncidentServiceImpl implements IncidentService {
             CustomUserPrincipal principal) {
 
         AssetIncidentReport report = findReportById(id);
-        // FIX: Idempotent — concurrent/double request (React StrictMode) returns
-        // current state
+        // FIX: Idempotent — concurrent/double request (React StrictMode) returns current state
         if (report.getStatus() == ReportStatus.APPROVED) {
             log.info("approveReport: report [{}] already APPROVED — idempotent return", id);
             return ApiResponse.success(messages.get(MessageCode.INCIDENT_APPROVED), mapper.toDetail(report));
@@ -207,10 +205,8 @@ public class IncidentServiceImpl implements IncidentService {
         validateNotAlreadyProcessed(report);
 
         User processor = resolveUser(principal);
-        if (report.getReportedBy().getUser() != null
-                && report.getReportedBy().getUser().getId().equals(processor.getId())) {
-            throw new org.springframework.security.access.AccessDeniedException(
-                    "Bạn không thể tự duyệt báo cáo của bản thân.");
+        if (report.getReportedBy().getUser() != null && report.getReportedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt báo cáo của bản thân.");
         }
         report.setStatus(ReportStatus.APPROVED);
         report.setProcessedBy(processor);
@@ -235,11 +231,11 @@ public class IncidentServiceImpl implements IncidentService {
         incidentRepo.save(report);
 
         auditLogService.logEvent(
-                ResourceType.ASSET,
-                AuditAction.UPDATE,
+                ENTITY_TYPE_ASSET_INCIDENT,
+                AuthActionType.ASSET_REPORT_APPROVED,
                 processor.getUsername(),
                 report.getReportCode(),
-                report.getReportedBy().getFullName(),
+                null,
                 new AuditLogService.AuditValues(oldCondition.name(), newCondition.name()),
                 null);
 
@@ -271,10 +267,8 @@ public class IncidentServiceImpl implements IncidentService {
         validateNotAlreadyProcessed(report);
 
         User processor = resolveUser(principal);
-        if (report.getReportedBy().getUser() != null
-                && report.getReportedBy().getUser().getId().equals(processor.getId())) {
-            throw new org.springframework.security.access.AccessDeniedException(
-                    "Bạn không thể tự duyệt báo cáo của bản thân.");
+        if (report.getReportedBy().getUser() != null && report.getReportedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt báo cáo của bản thân.");
         }
 
         report.setStatus(ReportStatus.REJECTED);
@@ -285,11 +279,11 @@ public class IncidentServiceImpl implements IncidentService {
         incidentRepo.save(report);
 
         auditLogService.logEvent(
-                ResourceType.ASSET,
-                AuditAction.UPDATE,
+                ENTITY_TYPE_ASSET_INCIDENT,
+                AuthActionType.ASSET_REPORT_REJECTED,
                 processor.getUsername(),
                 report.getReportCode(),
-                report.getReportedBy().getFullName(),
+                null,
                 new AuditLogService.AuditValues(null, "REJECTED: " + report.getProcessNote()),
                 null);
 
