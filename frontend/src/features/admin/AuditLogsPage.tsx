@@ -116,7 +116,6 @@ function actionLabel(action: AuditActionType): string {
 }
 
 export default function AuditLogsPage() {
-  const effectiveRole = useEffectiveRole();
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -320,117 +319,122 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <>
-      <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
-        <div className="space-y-1">
-          <h1 className="page-heading">Nhật ký kiểm toán</h1>
-          <p className="text-sm text-muted-foreground">
-            Theo dõi ai đã thao tác gì, vào thời điểm nào và từ đâu.
-          </p>
-        </div>
-
-        <div className="card-soft p-4 md:p-5 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            <Input
-              placeholder="Actor"
-              value={filters.actor}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, actor: e.target.value }))
-              }
-            />
-
-            <Select
-              value={filters.actionType}
-              onValueChange={(value) =>
-                setFilters((prev) => ({ ...prev, actionType: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Loại hành động" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả hành động</SelectItem>
-                {ACTION_OPTIONS.map((action) => (
-                  <SelectItem key={action.value} value={action.value}>
-                    {action.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              placeholder="IP Address"
-              value={filters.ipAddress}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, ipAddress: e.target.value }))
-              }
-            />
-
-            <Input
-              type="datetime-local"
-              value={filters.from}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, from: e.target.value }))
-              }
-            />
-
-            <Input
-              type="datetime-local"
-              value={filters.to}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, to: e.target.value }))
-              }
-            />
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <SiteHeader />
+        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+          <div className="space-y-1">
+            <h1 className="page-heading">Nhật ký kiểm toán</h1>
+            <p className="text-sm text-muted-foreground">
+              Theo dõi ai đã thao tác gì, vào thời điểm nào và từ đâu.
+            </p>
           </div>
 
-          <div className="flex items-center gap-2 justify-end">
-            <Button variant="outline" onClick={resetFilters}>
-              {SYSTEM_MESSAGES.BTN_CANCEL}
-            </Button>
-            <Button onClick={applyFilters}>Lọc</Button>
-          </div>
+          <div className="card-soft p-4 md:p-5 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+              <Input
+                placeholder="Actor"
+                value={filters.actor}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, actor: e.target.value }))
+                }
+              />
 
-        <div className="card-soft">
-          <div className="px-4 md:px-6 py-4 border-b text-sm text-muted-foreground">
-            Tổng {totalElements} bản ghi
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Thời gian</TableHead>
-                <TableHead>Actor</TableHead>
-                <TableHead>Hành động</TableHead>
-                <TableHead>IP</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Identifier</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>{listContent}</TableBody>
-          </Table>
-
-          <div className="flex items-center justify-between px-4 md:px-6 py-4 border-t">
-            <span className="text-sm text-muted-foreground">
-              Trang {totalPages === 0 ? 0 : page + 1}/{totalPages}
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 0}
-                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+              <Select
+                value={filters.actionType}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, actionType: value }))
+                }
               >
-                Trước
+                <SelectTrigger>
+                  <SelectValue placeholder="Loại hành động" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả hành động</SelectItem>
+                  {ACTION_OPTIONS.map((action) => (
+                    <SelectItem key={action.value} value={action.value}>
+                      {action.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                placeholder="IP Address"
+                value={filters.ipAddress}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, ipAddress: e.target.value }))
+                }
+              />
+
+              <Input
+                type="datetime-local"
+                value={filters.from}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, from: e.target.value }))
+                }
+              />
+
+              <Input
+                type="datetime-local"
+                value={filters.to}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, to: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="flex items-center gap-2 justify-end">
+              <Button variant="outline" onClick={resetFilters}>
+                {SYSTEM_MESSAGES.BTN_CANCEL}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={totalPages === 0 || page >= totalPages - 1}
-                onClick={() => setPage((prev) => prev + 1)}
-              >
-                Sau
-              </Button>
+              <Button onClick={applyFilters}>Lọc</Button>
+            </div>
+          </div>
+
+          <div className="card-soft">
+            <div className="px-4 md:px-6 py-4 border-b text-sm text-muted-foreground">
+              Tổng {totalElements} bản ghi
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Thời gian</TableHead>
+                  <TableHead>Actor</TableHead>
+                  <TableHead>Hành động</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Identifier</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>{listContent}</TableBody>
+            </Table>
+
+            <div className="flex items-center justify-between px-4 md:px-6 py-4 border-t">
+              <span className="text-sm text-muted-foreground">
+                Trang {totalPages === 0 ? 0 : page + 1}/{totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 0}
+                  onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+                >
+                  Trước
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={totalPages === 0 || page >= totalPages - 1}
+                  onClick={() => setPage((prev) => prev + 1)}
+                >
+                  Sau
+                </Button>
+              </div>
             </div>
           </div>
         </main>
