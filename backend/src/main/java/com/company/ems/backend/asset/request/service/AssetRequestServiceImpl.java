@@ -4,8 +4,7 @@ import com.company.ems.backend.asset.request.dto.AssetRequestDto;
 import com.company.ems.backend.asset.request.entity.AssetRequest;
 import com.company.ems.backend.asset.request.enums.AssetRequestStatus;
 import com.company.ems.backend.asset.request.repository.AssetRequestRepository;
-import com.company.ems.backend.auditlog.enums.AuditAction;
-import com.company.ems.backend.auditlog.enums.ResourceType;
+import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.ApiResponse;
@@ -37,6 +36,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AssetRequestServiceImpl implements AssetRequestService {
 
+    private static final String ENTITY_TYPE_ASSET_REQUEST = "ASSET_REQUEST";
     private final AssetRequestRepository requestRepo;
     private final EmployeeRepository employeeRepo;
     private final UserRepository userRepo;
@@ -64,11 +64,11 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         AssetRequest savedRequest = requestRepo.save(request);
 
         auditLogService.logEvent(
-                ResourceType.ASSET,
-                AuditAction.CREATE,
+                ENTITY_TYPE_ASSET_REQUEST,
+                AuthActionType.ASSET_REQUEST_SUBMITTED,
                 emp.getUser().getUsername(),
                 savedRequest.getRequestCode(),
-                emp.getFullName(),
+                null,
                 new AuditLogService.AuditValues(
                         null,
                         "{\"assetType\":\"" + savedRequest.getAssetType() + "\"}"),
@@ -124,11 +124,11 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         AssetRequest savedRequest = requestRepo.save(request);
 
         auditLogService.logEvent(
-                ResourceType.ASSET,
-                AuditAction.UPDATE,
+                ENTITY_TYPE_ASSET_REQUEST,
+                AuthActionType.ASSET_REQUEST_CANCELLED,
                 emp.getUser().getUsername(),
                 savedRequest.getRequestCode(),
-                emp.getFullName(),
+                null,
                 new AuditLogService.AuditValues(STATUS_PENDING, "CANCELLED"),
                 null);
 
@@ -173,10 +173,8 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         validateNotAlreadyProcessed(request);
 
         User processor = resolveUser(principal);
-        if (request.getRequestedBy().getUser() != null
-                && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
-            throw new org.springframework.security.access.AccessDeniedException(
-                    "Bạn không thể tự duyệt yêu cầu của bản thân.");
+        if (request.getRequestedBy().getUser() != null && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt yêu cầu của bản thân.");
         }
         request.setStatus(AssetRequestStatus.APPROVED);
         request.setReviewedBy(processor);
@@ -186,11 +184,11 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         AssetRequest savedRequest = requestRepo.save(request);
 
         auditLogService.logEvent(
-                ResourceType.ASSET,
-                AuditAction.UPDATE,
+                ENTITY_TYPE_ASSET_REQUEST,
+                AuthActionType.ASSET_REQUEST_APPROVED,
                 processor.getUsername(),
                 request.getRequestCode(),
-                request.getRequestedBy().getFullName(),
+                null,
                 new AuditLogService.AuditValues(STATUS_PENDING, "APPROVED"),
                 null);
 
@@ -210,10 +208,8 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         validateNotAlreadyProcessed(request);
 
         User processor = resolveUser(principal);
-        if (request.getRequestedBy().getUser() != null
-                && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
-            throw new org.springframework.security.access.AccessDeniedException(
-                    "Bạn không thể tự duyệt yêu cầu của bản thân.");
+        if (request.getRequestedBy().getUser() != null && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt yêu cầu của bản thân.");
         }
 
         request.setStatus(AssetRequestStatus.REJECTED);
@@ -224,13 +220,12 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         AssetRequest savedRequest = requestRepo.save(request);
 
         auditLogService.logEvent(
-                ResourceType.ASSET,
-                AuditAction.UPDATE,
+                ENTITY_TYPE_ASSET_REQUEST,
+                AuthActionType.ASSET_REQUEST_REJECTED,
                 processor.getUsername(),
                 request.getRequestCode(),
-                request.getRequestedBy().getFullName(),
-                new AuditLogService.AuditValues(STATUS_PENDING,
-                        "REJECTED" + (request.getReviewNote() != null ? ": " + request.getReviewNote() : "")),
+                null,
+                new AuditLogService.AuditValues(STATUS_PENDING, "REJECTED" + (request.getReviewNote() != null ? ": " + request.getReviewNote() : "")),
                 null);
 
         log.info("Asset request {} rejected by {}", request.getRequestCode(), processor.getUsername());

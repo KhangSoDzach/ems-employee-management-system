@@ -27,9 +27,7 @@ public class CustomUserPrincipal implements UserDetails {
 
     private final Set<DataScope> dataScopes;
 
-    private final String fullName;
-
-    public static CustomUserPrincipal of(User user, String fullName) {
+    public static CustomUserPrincipal of(User user) {
         // Tạo authorities = ROLE_{name} + all permission names từ tất cả roles
         Set<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> {
@@ -54,7 +52,6 @@ public class CustomUserPrincipal implements UserDetails {
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
-                fullName != null ? fullName : user.getUsername(),
                 user.getEnabled(),
                 user.getAccountNonExpired(),
                 !user.isAccountLocked(),
@@ -67,7 +64,6 @@ public class CustomUserPrincipal implements UserDetails {
             Long userId,
             String username,
             String password,
-            String fullName,
             boolean enabled,
             boolean accountNonExpired,
             boolean accountNonLocked,
@@ -77,7 +73,6 @@ public class CustomUserPrincipal implements UserDetails {
         this.userId = userId;
         this.username = username;
         this.password = password;
-        this.fullName = fullName;
         this.enabled = enabled;
         this.accountNonExpired = accountNonExpired;
         this.accountNonLocked = accountNonLocked;

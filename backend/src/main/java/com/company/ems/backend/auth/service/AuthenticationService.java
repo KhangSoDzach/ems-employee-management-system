@@ -22,7 +22,6 @@ import com.company.ems.backend.auth.dto.AuthResponse;
 import com.company.ems.backend.auth.dto.ChangePasswordRequest;
 import com.company.ems.backend.auth.dto.LoginRequest;
 import com.company.ems.backend.auth.entity.RefreshToken;
-import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.auth.security.JwtTokenUtil;
 import com.company.ems.backend.common.message.MessageCode;
 import com.company.ems.backend.common.message.MessageService;
@@ -48,7 +47,6 @@ public class AuthenticationService {
     private final AuditLogService auditLogService;
     private final PasswordEncoder passwordEncoder;
     private final TwoFactorAuthService twoFactorAuthService;
-    private final com.company.ems.backend.employee.repository.EmployeeRepository employeeRepository;
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCK_DURATION_MINUTES = 15;
@@ -69,7 +67,7 @@ public class AuthenticationService {
             log.warn("Login attempt for locked account: {}", request.getUsername());
             auditLogService.logAuthEvent(
                     AuthActionType.LOGIN_FAILED,
-                    user.getUsername(),
+                user.getUsername(),
                     String.valueOf(user.getId()),
                     request.getUsername(), "JWT", "FAILED", ctx);
             throw new LockedException(
@@ -105,8 +103,8 @@ public class AuthenticationService {
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
 
-            CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
-            String accessToken = jwtTokenUtil.generateAccessToken(principal);
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String accessToken = jwtTokenUtil.generateAccessToken(userDetails);
             String deviceInfo = buildDeviceInfo(ctx);
             String refreshToken = refreshTokenService.createRefreshToken(user, deviceInfo);
 
@@ -114,7 +112,7 @@ public class AuthenticationService {
                     AuthActionType.LOGIN_SUCCESS,
                     user.getUsername(),
                     String.valueOf(user.getId()),
-                    principal.getFullName(), "JWT", "SUCCESS", ctx);
+                    request.getUsername(), "JWT", "SUCCESS", ctx);
 
             log.info("Login successful for user: {}", request.getUsername());
 
@@ -155,15 +153,15 @@ public class AuthenticationService {
 
         refreshTokenService.revokeRefreshToken(refreshTokenString);
         log.info("Old refresh token revoked for rotation: {}", user.getUsername());
-        CustomUserPrincipal principal = (CustomUserPrincipal) userDetailsService.loadUserByUsername(user.getUsername());
-        String newAccessToken = jwtTokenUtil.generateAccessToken(principal);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String newAccessToken = jwtTokenUtil.generateAccessToken(userDetails);
         String deviceInfo = buildDeviceInfo(ctx);
         String newRefreshToken = refreshTokenService.createRefreshToken(user, deviceInfo);
         auditLogService.logAuthEvent(
                 AuthActionType.TOKEN_REFRESH_SUCCESS,
-                user.getUsername(),
+            user.getUsername(),
                 String.valueOf(user.getId()),
-                principal.getFullName(), "JWT", "SUCCESS", ctx);
+                user.getUsername(), "JWT", "SUCCESS", ctx);
 
         log.info("Access token refreshed and rotated for user: {}", user.getUsername());
 
@@ -175,14 +173,9 @@ public class AuthenticationService {
         log.debug("Logout request");
         boolean revoked = refreshTokenService.revokeRefreshToken(refreshToken);
         if (revoked) {
-            String fullName = employeeRepository
-                    .findByUserId(userRepository.findByUsername(actor).map(User::getId).orElse(null))
-                    .map(com.company.ems.backend.employee.entity.Employee::getFullName)
-                    .orElse(actor);
-
             auditLogService.logAuthEvent(
-                    AuthActionType.LOGOUT, actor, null,
-                    fullName, "JWT", "SUCCESS", ctx);
+                    AuthActionType.LOGOUT, actor, actor,
+                    actor, "JWT", "SUCCESS", ctx);
             log.info("User logged out successfully");
         } else {
             log.warn("Logout failed: token not found");
@@ -193,14 +186,9 @@ public class AuthenticationService {
     public void logoutAllDevices(Long userId, String actor, RequestContext ctx) {
         log.debug("Logout all devices for user ID: {}", userId);
         refreshTokenService.revokeAllUserTokens(userId);
-
-        String fullName = employeeRepository.findByUserId(userId)
-                .map(com.company.ems.backend.employee.entity.Employee::getFullName)
-                .orElse(actor);
-
         auditLogService.logAuthEvent(
                 AuthActionType.TOKEN_REVOKED, actor, String.valueOf(userId),
-                fullName, "JWT", "SUCCESS", ctx);
+                actor, "JWT", "SUCCESS", ctx);
         log.info("User logged out from all devices: {}", userId);
     }
 
@@ -211,15 +199,11 @@ public class AuthenticationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadCredentialsException("User not found: ID " + userId));
 
-        String fullName = employeeRepository.findByUserId(userId)
-                .map(com.company.ems.backend.employee.entity.Employee::getFullName)
-                .orElse(user.getUsername());
-
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             log.warn("Change password failed: invalid current password for user: {}", user.getUsername());
             auditLogService.logAuthEvent(
                     AuthActionType.LOGIN_FAILED, user.getUsername(), String.valueOf(user.getId()),
-                    fullName, "JWT", "FAILED", ctx);
+                    user.getUsername(), "JWT", "FAILED", ctx);
             throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
         }
 
@@ -237,7 +221,7 @@ public class AuthenticationService {
 
         auditLogService.logAuthEvent(
                 AuthActionType.PASSWORD_CHANGED, user.getUsername(), String.valueOf(user.getId()),
-                fullName, "JWT", "SUCCESS", ctx);
+                user.getUsername(), "JWT", "SUCCESS", ctx);
         log.info("Password changed successfully for user: {}", user.getUsername());
     }
 

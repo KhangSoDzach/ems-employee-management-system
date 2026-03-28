@@ -9,8 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.company.ems.backend.auditlog.enums.AuditAction;
-import com.company.ems.backend.auditlog.enums.ResourceType;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.BusinessException;
@@ -45,159 +43,140 @@ public class LeaveServiceImpl implements LeaveService {
         private static final String ENTITY_USER = "User";
         private static final String ERROR_LEAVE_ID_NULL = "leave id must not be null";
 
-        private final LeaveRepository leaveRepository;
-        private final LeaveMapper leaveMapper;
-        private final EmployeeRepository employeeRepository;
-        private final UserRepository userRepository;
-        private final DataScopeService dataScopeService;
-        private final MessageService messages;
-        private final com.company.ems.backend.auditlog.service.AuditLogService auditLogService;
+    private final LeaveRepository leaveRepository;
+    private final LeaveMapper leaveMapper;
+    private final EmployeeRepository employeeRepository;
+    private final UserRepository userRepository;
+    private final DataScopeService dataScopeService;
+    private final MessageService messages;
 
-        @Override
-        public LeaveResponse createLeaveRequest(LeaveRequest request) {
-                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+    @Override
+    public LeaveResponse createLeaveRequest(LeaveRequest request) {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
 
-                Employee employee = employeeRepository.findByUserId(principal.getUserId())
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER,
-                                                                principal.getUserId())));
+        Employee employee = employeeRepository.findByUserId(principal.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
 
-                // Validate dates
-                if (request.getEndDate().isBefore(request.getStartDate())) {
-                        throw new BusinessException("INVALID_DATE_RANGE",
-                                        messages.get(MessageCode.LEAVE_INVALID_DATE_RANGE));
-                }
-                if (request.getStartDate().isBefore(LocalDate.now())) {
-                        throw new BusinessException("INVALID_START_DATE",
-                                        messages.get(MessageCode.LEAVE_INVALID_START_DATE));
-                }
-
-                Leave leave = Leave.builder()
-                                .employee(employee)
-                                .leaveType(LeaveType.valueOf(request.getLeaveType()))
-                                .startDate(request.getStartDate())
-                                .endDate(request.getEndDate())
-                                .reason(request.getReason())
-                                .status(LeaveStatus.PENDING_LEVEL_1)
-                                .build();
-                leave.calculateTotalDays();
-
-                Leave saved = leaveRepository.save(leave);
-                log.info("User [{}] created leave request [{}]", principal.getUsername(), saved.getId());
-
-                auditLogService.logEvent(
-                                ResourceType.LEAVE,
-                                AuditAction.CREATE,
-                                principal.getUsername(),
-                                String.valueOf(saved.getId()),
-                                employee.getFullName(),
-                                null,
-                                null);
-
-                return leaveMapper.toResponse(saved);
+        // Validate dates
+        if (request.getEndDate().isBefore(request.getStartDate())) {
+            throw new BusinessException("INVALID_DATE_RANGE",
+                    messages.get(MessageCode.LEAVE_INVALID_DATE_RANGE ));
+        }
+        if (request.getStartDate().isBefore(LocalDate.now())) {
+            throw new BusinessException("INVALID_START_DATE",
+                    messages.get(MessageCode.LEAVE_INVALID_START_DATE ));
         }
 
-        @Override
-        @Transactional(readOnly = true)
-        public PageResponse<LeaveResponse> getMyLeaves(int page, int size) {
-                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-                PageRequest pageable = PageRequest.of(page, size);
+        Leave leave = Leave.builder()
+                .employee(employee)
+                .leaveType(LeaveType.fromRequest(request.getLeaveType()))
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .reason(request.getReason())
+                .status(LeaveStatus.PENDING_LEVEL_1)
+                .build();
+        leave.calculateTotalDays();
 
-                Employee self = employeeRepository.findByUserId(principal.getUserId())
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER,
-                                                                principal.getUserId())));
+        Leave saved = leaveRepository.save(leave);
+        log.info("User [{}] created leave request [{}]", principal.getUsername(), saved.getId());
+        return leaveMapper.toResponse(saved);
+    }
 
-                Page<Leave> leaves = leaveRepository.findByEmployeeId(self.getId(), pageable);
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<LeaveResponse> getMyLeaves(int page, int size) {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+        PageRequest pageable = PageRequest.of(page, size);
 
-                List<LeaveResponse> content = leaves.getContent().stream()
-                                .map(leaveMapper::toResponse)
-                                .toList();
+        Employee self = employeeRepository.findByUserId(principal.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
 
-                return PageResponse.<LeaveResponse>builder()
-                                .content(content)
-                                .page(page).size(size)
-                                .totalElements(leaves.getTotalElements())
-                                .totalPages(leaves.getTotalPages())
-                                .build();
+        Page<Leave> leaves = leaveRepository.findByEmployeeId(self.getId(), pageable);
+
+        List<LeaveResponse> content = leaves.getContent().stream()
+                .map(leaveMapper::toResponse)
+                .toList();
+
+        return PageResponse.<LeaveResponse>builder()
+                .content(content)
+                .page(page).size(size)
+                .totalElements(leaves.getTotalElements())
+                .totalPages(leaves.getTotalPages())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<LeaveResponse> getAllLeaves(int page, int size, Long employeeId,
+                                                    String status, String leaveType,
+                                                    LocalDate startDate, LocalDate endDate) {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<Leave> leaves;
+
+        if (principal.hasDataScope(DataScope.ALL)) {
+            leaves = leaveRepository.findAll(pageable);
+        } else if (principal.hasDataScope(DataScope.TEAM)) {
+            leaves = leaveRepository.findByReportingManagerUserId(principal.getUserId(), pageable);
+        } else {
+            // SELF
+            Employee self = employeeRepository.findByUserId(principal.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER, principal.getUserId())));
+            leaves = leaveRepository.findByEmployeeId(self.getId(), pageable);
         }
 
-        @Override
-        @Transactional(readOnly = true)
-        public PageResponse<LeaveResponse> getAllLeaves(int page, int size, Long employeeId,
-                        String status, String leaveType,
-                        LocalDate startDate, LocalDate endDate) {
-                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-                PageRequest pageable = PageRequest.of(page, size);
-                Page<Leave> leaves;
+        List<LeaveResponse> content = leaves.getContent().stream()
+                .map(leaveMapper::toResponse)
+                .toList();
 
-                if (principal.hasDataScope(DataScope.ALL)) {
-                        leaves = leaveRepository.findAll(pageable);
-                } else if (principal.hasDataScope(DataScope.TEAM)) {
-                        employeeRepository.findByUserId(principal.getUserId())
-                                        .orElseThrow(() -> new ResourceNotFoundException(
-                                                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER,
-                                                                        principal.getUserId())));
-                        leaves = leaveRepository.findByReportingManagerUserId(principal.getUserId(), pageable);
-                } else {
-                        // SELF
-                        Employee self = employeeRepository.findByUserId(principal.getUserId())
-                                        .orElseThrow(() -> new ResourceNotFoundException(
-                                                        messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER,
-                                                                        principal.getUserId())));
-                        leaves = leaveRepository.findByEmployeeId(self.getId(), pageable);
-                }
+        return PageResponse.<LeaveResponse>builder()
+                .content(content)
+                .page(page).size(size)
+                .totalElements(leaves.getTotalElements())
+                .totalPages(leaves.getTotalPages())
+                .build();
+    }
 
-                List<LeaveResponse> content = leaves.getContent().stream()
-                                .map(leaveMapper::toResponse)
-                                .toList();
-
-                return PageResponse.<LeaveResponse>builder()
-                                .content(content)
-                                .page(page).size(size)
-                                .totalElements(leaves.getTotalElements())
-                                .totalPages(leaves.getTotalPages())
-                                .build();
-        }
-
-        @Override
-        @Transactional(readOnly = true)
-        public LeaveResponse getLeaveById(Long id) {
-                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-                dataScopeService.assertCanAccessLeave(principal, id);
+    @Override
+    @Transactional(readOnly = true)
+    public LeaveResponse getLeaveById(Long id) {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+        dataScopeService.assertCanAccessLeave(principal, id);
                 Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
                 Leave leave = leaveRepository.findById(leaveId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
-                return leaveMapper.toResponse(leave);
+        return leaveMapper.toResponse(leave);
+    }
+
+    @Override
+    public LeaveResponse approveLeave(Long id, ApproveLeaveRequest request) {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+
+        // DataScope check: chỉ TEAM hoặc ALL scope
+        dataScopeService.assertCanApproveLeave(principal, id);
+
+        Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
+        Leave leave = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
+
+        if (!leave.isPending()) {
+            throw new BusinessException(
+                    messages.get(MessageCode.LEAVE_NOT_PENDING, leave.getStatus()));
         }
 
-        @Override
-        public LeaveResponse approveLeave(Long id, ApproveLeaveRequest request) {
-                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+        if (leave.getEmployee().getUser() != null
+                && leave.getEmployee().getUser().getId().equals(principal.getUserId())) {
+            throw new ForbiddenException();
+        }
 
-                // DataScope check: chỉ TEAM hoặc ALL scope
-                dataScopeService.assertCanApproveLeave(principal, id);
-
-                Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
-                Leave leave = leaveRepository.findById(leaveId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
-
-                if (!leave.isPending()) {
-                        throw new BusinessException(
-                                        messages.get(MessageCode.LEAVE_NOT_PENDING, leave.getStatus()));
-                }
-
-                if (leave.getEmployee().getUser() != null
-                                && leave.getEmployee().getUser().getId().equals(principal.getUserId())) {
-                        throw new ForbiddenException();
-                }
-
-                Long approverUserId = Objects.requireNonNull(principal.getUserId(),
-                                "principal userId must not be null");
+                Long approverUserId = Objects.requireNonNull(principal.getUserId(), "principal userId must not be null");
                 var approver = userRepository.findById(approverUserId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ENTITY_USER, "id", approverUserId));
 
-                String statusStr = request.getStatus().toUpperCase().trim();
+        String statusStr = request.getStatus().toUpperCase().trim();
                 switch (statusStr) {
                         case "APPROVED" -> {
                                 leave.approve(approver, request.getNotes());
@@ -211,54 +190,31 @@ public class LeaveServiceImpl implements LeaveService {
                                         messages.get(MessageCode.INVALID_STATUS, leave.getStatus()));
                 }
 
-                Leave updated = leaveRepository.save(leave);
+        Leave updated = leaveRepository.save(leave);
+        return leaveMapper.toResponse(updated);
+    }
 
-                AuditAction action = statusStr.equals("APPROVED")
-                                ? AuditAction.APPROVE
-                                : AuditAction.REJECT;
+    @Override
+    public void cancelLeave(Long id) {
+        CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
 
-                auditLogService.logEvent(
-                                ResourceType.LEAVE,
-                                action,
-                                principal.getUsername(),
-                                String.valueOf(updated.getId()),
-                                updated.getEmployee().getFullName(),
-                                null,
-                                null);
-
-                return leaveMapper.toResponse(updated);
+        Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
+        Leave leave = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
+        if (leave.getEmployee().getUser() == null
+                || !leave.getEmployee().getUser().getId().equals(principal.getUserId())) {
+            log.warn("User [{}] attempted to cancel leave [{}] belonging to another employee",
+                    principal.getUsername(), id);
+            throw new ForbiddenException();
         }
 
-        @Override
-        public void cancelLeave(Long id) {
-                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
-
-                Long leaveId = Objects.requireNonNull(id, ERROR_LEAVE_ID_NULL);
-                Leave leave = leaveRepository.findById(leaveId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_LEAVE, "id", id));
-                if (leave.getEmployee().getUser() == null
-                                || !leave.getEmployee().getUser().getId().equals(principal.getUserId())) {
-                        log.warn("User [{}] attempted to cancel leave [{}] belonging to another employee",
-                                        principal.getUsername(), id);
-                        throw new ForbiddenException();
-                }
-
-                if (!leave.isPending()) {
-                        throw new BusinessException(
-                                        messages.get(MessageCode.LEAVE_CANNOT_CANCEL, leave.getStatus()));
-                }
-
-                leave.cancel();
-                Leave canceled = leaveRepository.save(leave);
-                log.info("User [{}] cancelled leave [{}]", principal.getUsername(), id);
-
-                auditLogService.logEvent(
-                                ResourceType.LEAVE,
-                                AuditAction.CANCEL,
-                                principal.getUsername(),
-                                String.valueOf(canceled.getId()),
-                                canceled.getEmployee().getFullName(),
-                                null,
-                                null);
+        if (!leave.isPending()) {
+            throw new BusinessException(
+                    messages.get(MessageCode.LEAVE_CANNOT_CANCEL, leave.getStatus()));
         }
+
+        leave.cancel();
+        leaveRepository.save(leave);
+        log.info("User [{}] cancelled leave [{}]", principal.getUsername(), id);
+    }
 }

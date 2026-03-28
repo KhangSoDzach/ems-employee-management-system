@@ -16,8 +16,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.company.ems.backend.auditlog.entity.AuditLog;
-import com.company.ems.backend.auditlog.enums.AuditAction;
-import com.company.ems.backend.auditlog.enums.AuditResource;
+import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.repository.AuditLogRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,11 +42,11 @@ class AuditLogServiceTest {
             RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
             auditLogService.logEvent(
-                    AuditResource.ASSET,
-                    AuditAction.CREATE,
+                    "ASSET_INCIDENT",
+                    AuthActionType.ASSET_REPORT_SUBMITTED,
                     "john.doe",
                     "INC-001",
-                    "John Doe",
+                    null,
                     new AuditLogService.AuditValues(null, "{\"result\":\"SUCCESS\"}"),
                     null);
 
@@ -59,7 +58,6 @@ class AuditLogServiceTest {
             assertEquals("Mozilla/5.0 (Windows NT 10.0; Win64; x64)", saved.getUserAgent());
             assertEquals("corr-123", saved.getCorrelationId());
             assertEquals("WEB", saved.getClientType());
-            assertEquals("John Doe", saved.getIdentifier());
         } finally {
             RequestContextHolder.resetRequestAttributes();
         }
@@ -73,11 +71,11 @@ class AuditLogServiceTest {
             RequestContextHolder.resetRequestAttributes();
 
             auditLogService.logEvent(
-                    AuditResource.ASSET,
-                    AuditAction.UPDATE,
+                    "ASSET_INCIDENT",
+                    AuthActionType.ASSET_REPORT_REJECTED,
                     "jane.doe",
                     "INC-002",
-                    "Jane Doe",
+                    null,
                     new AuditLogService.AuditValues(null, "REJECTED"),
                     null);
 
@@ -89,7 +87,6 @@ class AuditLogServiceTest {
             assertNull(saved.getUserAgent());
             assertNull(saved.getCorrelationId());
             assertEquals("WEB", saved.getClientType());
-            assertEquals("Jane Doe", saved.getIdentifier());
         } finally {
             RequestContextHolder.resetRequestAttributes();
         }
