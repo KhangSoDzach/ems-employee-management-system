@@ -9,7 +9,7 @@ ALTER TABLE payrolls
 
 -- Populate period for existing rows (best-effort backfill)
 UPDATE payrolls
-SET period = CONCAT(payrollYear, '-', LPAD(payrollMonth, 2, '0'))
+SET period = CONCAT(payroll_year, '-', LPAD(payroll_month, 2, '0'))
 WHERE period IS NULL;
 
 CREATE TABLE IF NOT EXISTS payroll_items (
@@ -37,6 +37,6 @@ CREATE TABLE IF NOT EXISTS payroll_items (
   COLLATE=utf8mb4_unicode_ci
   COMMENT='Immutable snapshot of salary line items per payroll record';
 
--- Verify the index exists on audit_logs for fast lookup by period
-CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type_created
-    ON audit_logs (entity_type, created_at);
+-- Verify the index exists on audit_log for fast lookup by period
+CREATE INDEX IF NOT EXISTS idx_audit_log_entity_type_created
+    ON audit_log (entity_type, created_at);
