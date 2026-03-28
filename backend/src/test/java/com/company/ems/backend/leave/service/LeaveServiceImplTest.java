@@ -60,7 +60,7 @@ class LeaveServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        managerPrincipal = new CustomUserPrincipal(2L, "manager", "pwd", "Manager User", true, true, true, true,
+        managerPrincipal = new CustomUserPrincipal(2L, "manager", "pwd", true, true, true, true,
                 java.util.Collections.emptyList(), java.util.Set.of(com.company.ems.backend.user.enums.DataScope.TEAM));
 
         lenient().when(leaveMapper.toResponse(any(Leave.class))).thenAnswer(inv -> {

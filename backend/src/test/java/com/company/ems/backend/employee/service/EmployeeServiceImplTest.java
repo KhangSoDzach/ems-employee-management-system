@@ -121,11 +121,11 @@ class EmployeeServiceImplTest {
         employee.setWorkStatus(WorkStatus.PROBATION);
         employee.setSalary(10000000.0);
 
-        adminPrincipal = new CustomUserPrincipal(1L, "admin", "password", "Admin User", true, true, true, true,
+        adminPrincipal = new CustomUserPrincipal(1L, "admin", "password", true, true, true, true,
                 Collections.emptyList(), Set.of(DataScope.ALL));
-        managerPrincipal = new CustomUserPrincipal(2L, "manager", "password", "Manager User", true, true, true, true,
+        managerPrincipal = new CustomUserPrincipal(2L, "manager", "password", true, true, true, true,
                 Collections.emptyList(), Set.of(DataScope.TEAM));
-        employeePrincipal = new CustomUserPrincipal(3L, "emp", "password", "Employee User", true, true, true, true,
+        employeePrincipal = new CustomUserPrincipal(3L, "emp", "password", true, true, true, true,
                 Collections.emptyList(), Set.of(DataScope.SELF));
 
         lenient().when(employeeMapper.toResponse(any(Employee.class))).thenAnswer(inv -> {
@@ -151,7 +151,7 @@ class EmployeeServiceImplTest {
         });
 
         lenient().when(attendanceService.getSummary(any(), any(), any(), any()))
-                .thenReturn(AttendanceSummaryResponse.builder().attendancePercentage(95.0).build());
+            .thenReturn(AttendanceSummaryResponse.builder().attendancePercentage(95.0).build());
         lenient().when(leaveBalanceService.getRemainingDays(any(), eq(LeaveType.ANNUAL))).thenReturn(12);
     }
 
@@ -320,10 +320,10 @@ class EmployeeServiceImplTest {
 
         Page<Employee> page = new PageImpl<>(List.of(manager, self, peer));
         when(employeeRepository.searchEmployeesFor360ByManagerGroup(
-                eq(10L), any(), eq(null), eq(null), eq(null), any(PageRequest.class))).thenReturn(page);
+            eq(10L), any(), eq(null), eq(null), eq(null), any(PageRequest.class))).thenReturn(page);
 
-        PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response = employeeService.getTeamMembers(0,
-                10, null);
+        PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response =
+                employeeService.getTeamMembers(0, 10, null);
 
         assertNotNull(response);
         assertEquals(3, response.getContent().size());
@@ -343,8 +343,8 @@ class EmployeeServiceImplTest {
 
         when(employeeRepository.findByUserId(3L)).thenReturn(Optional.of(self));
 
-        PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response = employeeService.getTeamMembers(0,
-                10, null);
+        PageResponse<com.company.ems.backend.employee.dto.MemberResponse> response =
+                employeeService.getTeamMembers(0, 10, null);
 
         assertNotNull(response);
         assertEquals(1, response.getContent().size());

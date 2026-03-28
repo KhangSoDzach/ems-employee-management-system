@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 public class CustomUserDetailsService implements UserDetailsService {
 
         private final UserRepository userRepository;
-        private final com.company.ems.backend.employee.repository.EmployeeRepository employeeRepository;
 
         @Override
         @Transactional(readOnly = true)
@@ -39,12 +38,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                         throw new UsernameNotFoundException("Account is locked: " + username);
                 }
 
-                String fullName = employeeRepository.findByUserId(user.getId())
-                                .map(com.company.ems.backend.employee.entity.Employee::getFullName)
-                                .orElse(user.getUsername());
-
                 // Convert User entity to Spring Security UserDetails
-                return CustomUserPrincipal.of(user, fullName);
+                //
+                return CustomUserPrincipal.of(user);
         }
 
         /**
@@ -58,10 +54,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
 
-                String fullName = employeeRepository.findByUserId(user.getId())
-                                .map(com.company.ems.backend.employee.entity.Employee::getFullName)
-                                .orElse(user.getUsername());
-
-                return CustomUserPrincipal.of(user, fullName);
+                return CustomUserPrincipal.of(user);
         }
 }
