@@ -17,8 +17,10 @@
   },
   "scripts": {
     "dev": "concurrently -k -n backend,frontend \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && mvn spring-boot:run",
+    "dev:db": "docker compose up mysql -d --wait",
+    "dev:backend": "backend\\mvnw.cmd -f backend/pom.xml spring-boot:run -DskipTests -Dspring-boot.run.profiles=dev",
     "dev:frontend": "npm --prefix frontend run dev",
+    "dev:all": "docker compose up",
     "prepare": "husky",
     "check:conflicts": "git diff --cached --check"
   },
