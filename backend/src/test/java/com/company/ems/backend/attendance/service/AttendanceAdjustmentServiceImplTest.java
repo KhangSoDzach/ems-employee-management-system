@@ -1,53 +1,18 @@
 package com.company.ems.backend.attendance.service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.springframework.data.domain.PageImpl;
-
 import com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestCreateDto;
 import com.company.ems.backend.attendance.dto.adjustment.ApprovalActionDto;
 import com.company.ems.backend.attendance.entity.AttendanceAdjustmentHistory;
 import com.company.ems.backend.attendance.entity.AttendanceAdjustmentRequest;
 import com.company.ems.backend.attendance.enums.AdjustmentReason;
 import com.company.ems.backend.attendance.enums.AdjustmentRequestStatus;
-import com.company.ems.backend.attendance.mapper.AttendanceMapper;
 import com.company.ems.backend.attendance.repository.AttendanceAdjustmentHistoryRepository;
 import com.company.ems.backend.attendance.repository.AttendanceAdjustmentRequestRepository;
 import com.company.ems.backend.attendance.repository.AttendanceRepository;
+import com.company.ems.backend.attendance.mapper.AttendanceMapper;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.exception.BusinessException;
-import com.company.ems.backend.common.message.MessageCode;
-import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.common.service.NotificationService;
-import com.company.ems.backend.config.OfficeLocationProperties;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.user.entity.User;
@@ -57,6 +22,41 @@ import com.company.ems.backend.workflow.entity.WorkflowTemplate;
 import com.company.ems.backend.workflow.enums.AssigneeType;
 import com.company.ems.backend.workflow.enums.WorkflowType;
 import com.company.ems.backend.workflow.service.WorkflowEngineService;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.config.OfficeLocationProperties;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+/**
+ * Unit tests for {@link AttendanceAdjustmentServiceImpl}.
+ *
+ * <p>Covers:
+ * <ul>
+ *   <li>submitRequest — happy path and validation failure
+ *   <li>approve — single-level flow ending in APPROVED
+ *   <li>reject — state transition + validation
+ * </ul>
+ */
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -299,43 +299,6 @@ class AttendanceAdjustmentServiceImplTest {
 
                         assertThat(request.getStatus()).isEqualTo(AdjustmentRequestStatus.REJECTED);
                         verify(historyRepository).save(any(AttendanceAdjustmentHistory.class));
-                }
-        }
-
-        /* ── approver list ────────────────────────────────────────────────────── */
-        @Nested
-        @DisplayName("getPendingForApprover()")
-        class ApproverList {
-
-                @Test
-                @DisplayName("Uses inbox+history query so processed requests remain visible")
-                void usesInboxAndHistoryQuery() {
-                        when(principal.getAuthorities()).thenAnswer(inv -> List
-                                        .of(
-                                                        new org.springframework.security.core.authority.SimpleGrantedAuthority(
-                                                                        "ROLE_MANAGER"),
-                                                        new org.springframework.security.core.authority.SimpleGrantedAuthority(
-                                                                        "ATTENDANCE_ADJUSTMENT_APPROVE")));
-
-                        AttendanceAdjustmentRequest request = AttendanceAdjustmentRequest.builder()
-                                        .employee(employee)
-                                        .requestDate(LocalDate.now().minusDays(1))
-                                        .reasonType(AdjustmentReason.DEVICE_ERROR)
-                                        .reasonText("Reason text with enough characters.")
-                                        .status(AdjustmentRequestStatus.APPROVED)
-                                        .currentApprovalLevel(1)
-                                        .maxApprovalLevel(1)
-                                        .workflowTemplateId(1L)
-                                        .build();
-                        request.setId(100L);
-
-                        when(requestRepository.findApproverInboxAndHistory(anyList(), anyList(), anyString(), anyLong(), anyLong(), any()))
-                                        .thenReturn(new PageImpl<>(List.of(request)));
-
-                        service.getPendingForApprover(0, 20, principal);
-
-                        verify(requestRepository).findApproverInboxAndHistory(anyList(), anyList(), eq("ROLE_MANAGER"), eq(10L), eq(1L), any());
-                        verify(requestRepository, never()).findPendingByRoleApprover(anyList(), anyString(), anyLong(), any());
                 }
         }
 }

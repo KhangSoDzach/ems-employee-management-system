@@ -40,27 +40,9 @@ export function AnnouncementList({
   const [selectedAnnouncement, setSelectedAnnouncement] =
     useState<AnnouncementResponse | null>(null);
 
-  const sortedAnnouncements = useMemo(() => {
-    if (!data) {
-      return [];
-    }
-    return [...data].sort((a, b) => {
-      // Prioritize unread
-      if (a.isRead !== b.isRead) {
-        return a.isRead ? 1 : -1;
-      }
-      // Then newest first
-      return (
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-      );
-    });
-  }, [data]);
-
   const focusedAnnouncement = useMemo(
-    () =>
-      sortedAnnouncements.find((item) => item.id === focusedAnnouncementId) ??
-      null,
-    [sortedAnnouncements, focusedAnnouncementId],
+    () => data?.find((item) => item.id === focusedAnnouncementId) ?? null,
+    [data, focusedAnnouncementId],
   );
 
   useEffect(() => {
@@ -78,9 +60,7 @@ export function AnnouncementList({
   }, [focusedAnnouncement, isLoading]);
 
   const handleMarkRead = async (announcementId: number, isRead: boolean) => {
-    if (isRead || userId === null) {
-      return;
-    }
+    if (isRead || userId === null) {return;}
     try {
       await markReadMutation.mutateAsync(announcementId);
     } catch (error) {
@@ -103,7 +83,7 @@ export function AnnouncementList({
     );
   }
 
-  if (sortedAnnouncements.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <Card>
         <CardContent className="py-10 text-center text-muted-foreground">
@@ -115,7 +95,7 @@ export function AnnouncementList({
 
   return (
     <div className="space-y-3">
-      {sortedAnnouncements.map((announcement) => (
+      {data.map((announcement) => (
         <Card
           key={announcement.id}
           id={`announcement-${announcement.id}`}
@@ -130,7 +110,7 @@ export function AnnouncementList({
           }}
           className={cn(
             "cursor-pointer transition-colors",
-            !announcement.isRead && "border-primary/50 bg-primary/5 shadow-sm",
+            !announcement.isRead && "border-primary/50 bg-primary/5",
             focusedAnnouncementId === announcement.id &&
               "ring-2 ring-primary/40",
           )}
@@ -138,10 +118,7 @@ export function AnnouncementList({
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between gap-3">
               <CardTitle
-                className={cn(
-                  "line-clamp-1 break-all text-base",
-                  !announcement.isRead && "font-bold",
-                )}
+                className={cn("text-base", !announcement.isRead && "font-bold")}
               >
                 {announcement.title}
               </CardTitle>
@@ -163,7 +140,7 @@ export function AnnouncementList({
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="line-clamp-2 break-all whitespace-pre-wrap text-sm text-foreground/90">
+            <p className="whitespace-pre-wrap text-sm text-foreground/90">
               {announcement.content}
             </p>
             <div>
@@ -190,25 +167,19 @@ export function AnnouncementList({
           }
         }}
       >
-        <DialogContent className="max-w-lg p-6">
+        <DialogContent className="max-w-md p-4">
           {selectedAnnouncement && (
-            <div className="space-y-4">
+            <>
               <DialogHeader>
-                <DialogTitle className="leading-tight">
-                  <span className="text-2xl font-extrabold text-primary block mb-1">
-                    Thông báo:
-                  </span>
-                  <span className="text-lg font-bold text-foreground/90">
-                    {selectedAnnouncement.title}
-                  </span>
+                <DialogTitle className="text-base">
+                  {selectedAnnouncement.title}
                 </DialogTitle>
-                <DialogDescription className="flex items-center gap-3 pt-1">
-                  <Badge variant="secondary" className="font-medium text-xs">
+                <DialogDescription>
+                  <span className="mr-2 inline-flex">
                     {TYPE_LABEL[selectedAnnouncement.announcementType] ??
                       selectedAnnouncement.announcementType}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground flex items-center font-normal">
-                    <Bell className="mr-1.5 h-3.5 w-3.5" />
+                  </span>
+                  <span>
                     {format(
                       new Date(selectedAnnouncement.publishedAt),
                       "dd/MM/yyyy HH:mm",
@@ -216,20 +187,10 @@ export function AnnouncementList({
                   </span>
                 </DialogDescription>
               </DialogHeader>
-              <div className="rounded-xl border bg-slate-50/50 p-4 dark:bg-slate-900/20">
-                <div className="max-h-[450px] overflow-y-auto break-all whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90 pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                  {selectedAnnouncement.content}
-                </div>
+              <div className="max-h-[260px] overflow-auto whitespace-pre-wrap text-sm text-foreground/90">
+                {selectedAnnouncement.content}
               </div>
-              <div className="flex justify-end pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedAnnouncement(null)}
-                >
-                  Đóng
-                </Button>
-              </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

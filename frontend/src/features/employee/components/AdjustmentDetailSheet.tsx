@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   ADJUSTMENT_TYPE_CONFIG,
   AUDIT_ACTION_CONFIG,
+  CURRENT_USER,
   DATE_FORMAT,
   DATETIME_FORMAT,
   DATETIME_LOG_FORMAT,
@@ -98,18 +99,6 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
   const hasIn = request.type === "CHECK_IN" || request.type === "BOTH";
   const hasOut = request.type === "CHECK_OUT" || request.type === "BOTH";
 
-  const getInitials = (name?: string) => {
-    if (!name) {
-      return "??";
-    }
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   return (
     <Sheet
       open={open}
@@ -124,13 +113,11 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
         <SheetHeader className="px-6 py-5 border-b">
           <div className="flex items-center gap-3">
             <Avatar className="w-10 h-10">
-              <AvatarFallback>
-                {getInitials(request.employeeName)}
-              </AvatarFallback>
+              <AvatarFallback>{CURRENT_USER.initials}</AvatarFallback>
             </Avatar>
             <div>
               <SheetTitle className="text-base font-bold leading-tight">
-                {request.employeeName || "N/A"}
+                {CURRENT_USER.name}
               </SheetTitle>
               <SheetDescription className="text-xs mt-0">
                 {ADJUSTMENT_TYPE_CONFIG[request.type].label}

@@ -1,9 +1,9 @@
 package com.company.ems.backend.attendance.service;
 
+import com.company.ems.backend.attendance.dto.adjustment.ApprovalActionDto;
 import com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestCreateDto;
 import com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestResponse;
 import com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestSummaryResponse;
-import com.company.ems.backend.attendance.dto.adjustment.ApprovalActionDto;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
 import com.company.ems.backend.common.dto.PageResponse;
 
@@ -91,8 +91,7 @@ public interface AttendanceAdjustmentService {
             int page, int size, CustomUserPrincipal principal);
 
     /**
-     * Returns the approver inbox with both currently pending requests and
-     * requests this approver has already processed (approval history view).
+     * Returns requests currently pending the authenticated approver's action.
      */
     PageResponse<AdjustmentRequestSummaryResponse> getPendingForApprover(
             int page, int size, CustomUserPrincipal principal);

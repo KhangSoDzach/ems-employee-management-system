@@ -17,7 +17,11 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+
 import {
   Card,
   CardContent,
@@ -35,7 +39,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -76,7 +80,7 @@ const TimeField: React.FC<TimeFieldProps> = ({
       <FormItem>
         <FormLabel className="font-medium text-foreground">{label}</FormLabel>
         <FormControl>
-          <Input type="time" {...field} />
+          <Input type="time" {...field}  />
         </FormControl>
         <FormDescription className="text-sm text-muted-foreground">
           {description}
@@ -126,13 +130,12 @@ const NumberField: React.FC<NumberFieldProps> = ({
                 const val = Number(e.target.value);
                 field.onChange(Number.isNaN(val) ? 0 : val);
               }}
+              
               placeholder={placeholder}
               min={min}
               disabled={disabled}
             />
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {suffix}
-            </span>
+            <span className="text-sm text-muted-foreground whitespace-nowrap">{suffix}</span>
           </div>
         </FormControl>
         <FormDescription className="text-sm text-muted-foreground">
@@ -275,6 +278,7 @@ type BranchLocationDraft = {
 };
 
 export default function AttendanceSettings() {
+  const effectiveRole = useEffectiveRole();
   const queryClient = useQueryClient();
   const [mapSearchKeyword, setMapSearchKeyword] = React.useState("");
   const [mapSearchQuery, setMapSearchQuery] = React.useState("");
@@ -718,775 +722,799 @@ export default function AttendanceSettings() {
   };
 
   return (
-    <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <h1 className="page-heading">
-            {ATTENDANCE_SETTINGS_CONSTANTS.PAGE.TITLE}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {ATTENDANCE_SETTINGS_CONSTANTS.PAGE.DESCRIPTION}
-          </p>
-        </div>
-        <div className="flex items-center gap-2"></div>
-      </div>
+    <SidebarProvider>
+      <AppSidebar variant="inset" role={effectiveRole} />
 
-      <Tabs defaultValue="time" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-          <TabsTrigger value="time" className="gap-2">
-            <Clock className="h-4 w-4" />
-            {ATTENDANCE_SETTINGS_CONSTANTS.TABS.TIME_RULES}
-          </TabsTrigger>
-          <TabsTrigger value="location" className="gap-2">
-            <MapPin className="h-4 w-4" />
-            {ATTENDANCE_SETTINGS_CONSTANTS.TABS.LOCATION_RULES}
-          </TabsTrigger>
-        </TabsList>
+      <SidebarInset>
+        <SiteHeader />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <TabsContent value="time" className="mt-6">
-              <Card className="shadow-sm">
-                <CardHeader className="pb-4 border-b mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="icon-box-sm bg-primary/10">
-                      <Clock className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-semibold leading-none tracking-tight">
-                        {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SECTION_TITLE}
-                      </CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SECTION_DESC}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6 pt-0">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {/* Ca 1 */}
-                    <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                          1
-                        </span>
-                        <span className="font-medium text-foreground">
-                          {
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
-                              .LABEL
-                          }
-                        </span>
+        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <h1 className="page-heading">
+                {ATTENDANCE_SETTINGS_CONSTANTS.PAGE.TITLE}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {ATTENDANCE_SETTINGS_CONSTANTS.PAGE.DESCRIPTION}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+            </div>
+          </div>
+
+          <Tabs defaultValue="time" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+              <TabsTrigger value="time" className="gap-2">
+                <Clock className="h-4 w-4" />
+                {ATTENDANCE_SETTINGS_CONSTANTS.TABS.TIME_RULES}
+              </TabsTrigger>
+              <TabsTrigger value="location" className="gap-2">
+                <MapPin className="h-4 w-4" />
+                {ATTENDANCE_SETTINGS_CONSTANTS.TABS.LOCATION_RULES}
+              </TabsTrigger>
+            </TabsList>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <TabsContent value="time" className="mt-6">
+                  <Card className="shadow-sm">
+                    <CardHeader className="pb-4 border-b mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="icon-box-sm bg-primary/10">
+                          <Clock className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg font-semibold leading-none tracking-tight">
+                            {
+                              ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                                .SECTION_TITLE
+                            }
+                          </CardTitle>
+                          <CardDescription className="text-sm text-muted-foreground">
+                            {
+                              ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                                .SECTION_DESC
+                            }
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <TimeField
+                    </CardHeader>
+                    <CardContent className="space-y-6 pt-0">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        {/* Ca 1 */}
+                        <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold">
+                              1
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .LABEL
+                              }
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <TimeField
+                              control={form.control}
+                              name="shift1CheckIn"
+                              label={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .CHECK_IN.LABEL
+                              }
+                              description={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .CHECK_IN.DESCRIPTION
+                              }
+                            />
+                            <TimeField
+                              control={form.control}
+                              name="shift1CheckOut"
+                              label={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .CHECK_OUT.LABEL
+                              }
+                              description={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
+                                  .CHECK_OUT.DESCRIPTION
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        {/* Ca 2 */}
+                        <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold">
+                              2
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .LABEL
+                              }
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <TimeField
+                              control={form.control}
+                              name="shift2CheckIn"
+                              label={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .CHECK_IN.LABEL
+                              }
+                              description={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .CHECK_IN.DESCRIPTION
+                              }
+                            />
+                            <TimeField
+                              control={form.control}
+                              name="shift2CheckOut"
+                              label={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .CHECK_OUT.LABEL
+                              }
+                              description={
+                                ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
+                                  .CHECK_OUT.DESCRIPTION
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <NumberField
                           control={form.control}
-                          name="shift1CheckIn"
+                          name="gracePeriod"
                           label={
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
-                              .CHECK_IN.LABEL
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .GRACE_PERIOD.LABEL
                           }
                           description={
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
-                              .CHECK_IN.DESCRIPTION
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .GRACE_PERIOD.DESCRIPTION
+                          }
+                          placeholder={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .GRACE_PERIOD.PLACEHOLDER
+                          }
+                          suffix={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .GRACE_PERIOD.SUFFIX
                           }
                         />
-                        <TimeField
+
+                        <NumberField
                           control={form.control}
-                          name="shift1CheckOut"
+                          name="earlyLeaveThreshold"
                           label={
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
-                              .CHECK_OUT.LABEL
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .EARLY_LEAVE_THRESHOLD.LABEL
                           }
                           description={
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1
-                              .CHECK_OUT.DESCRIPTION
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .EARLY_LEAVE_THRESHOLD.DESCRIPTION
+                          }
+                          placeholder={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .EARLY_LEAVE_THRESHOLD.PLACEHOLDER
+                          }
+                          suffix={
+                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
+                              .EARLY_LEAVE_THRESHOLD.SUFFIX
                           }
                         />
                       </div>
-                    </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                    {/* Ca 2 */}
-                    <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                          2
-                        </span>
-                        <span className="font-medium text-foreground">
-                          {
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
-                              .LABEL
-                          }
-                        </span>
+                <TabsContent value="location" className="mt-6">
+                  <Card className="shadow-sm">
+                    <CardHeader className="pb-4 border-b mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="icon-box-sm bg-primary/10">
+                          <MapPin className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg font-semibold leading-none tracking-tight">
+                            {
+                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                .SECTION_TITLE
+                            }
+                          </CardTitle>
+                          <CardDescription className="text-sm text-muted-foreground">
+                            {
+                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                .SECTION_DESC
+                            }
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <TimeField
+                    </CardHeader>
+                    <CardContent className="space-y-6 pt-0">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <FormField
                           control={form.control}
-                          name="shift2CheckIn"
-                          label={
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
-                              .CHECK_IN.LABEL
-                          }
-                          description={
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
-                              .CHECK_IN.DESCRIPTION
-                          }
-                        />
-                        <TimeField
-                          control={form.control}
-                          name="shift2CheckOut"
-                          label={
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
-                              .CHECK_OUT.LABEL
-                          }
-                          description={
-                            ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2
-                              .CHECK_OUT.DESCRIPTION
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <NumberField
-                      control={form.control}
-                      name="gracePeriod"
-                      label={
-                        ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.GRACE_PERIOD
-                          .LABEL
-                      }
-                      description={
-                        ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.GRACE_PERIOD
-                          .DESCRIPTION
-                      }
-                      placeholder={
-                        ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.GRACE_PERIOD
-                          .PLACEHOLDER
-                      }
-                      suffix={
-                        ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.GRACE_PERIOD
-                          .SUFFIX
-                      }
-                    />
-
-                    <NumberField
-                      control={form.control}
-                      name="earlyLeaveThreshold"
-                      label={
-                        ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                          .EARLY_LEAVE_THRESHOLD.LABEL
-                      }
-                      description={
-                        ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                          .EARLY_LEAVE_THRESHOLD.DESCRIPTION
-                      }
-                      placeholder={
-                        ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                          .EARLY_LEAVE_THRESHOLD.PLACEHOLDER
-                      }
-                      suffix={
-                        ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES
-                          .EARLY_LEAVE_THRESHOLD.SUFFIX
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="location" className="mt-6">
-              <Card className="shadow-sm">
-                <CardHeader className="pb-4 border-b mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="icon-box-sm bg-primary/10">
-                      <MapPin className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-semibold leading-none tracking-tight">
-                        {
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .SECTION_TITLE
-                        }
-                      </CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        {
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .SECTION_DESC
-                        }
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6 pt-0">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="gpsEnabled"
-                      render={({ field }) => (
-                        <FormItem className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
-                          <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base font-medium text-foreground">
+                          name="gpsEnabled"
+                          render={({ field }) => (
+                            <FormItem className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
+                              <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                  <FormLabel className="text-base font-medium text-foreground">
+                                    {
+                                      ATTENDANCE_SETTINGS_CONSTANTS
+                                        .LOCATION_RULES.GPS_ENABLED.LABEL
+                                    }
+                                  </FormLabel>
+                                  <FormDescription className="text-sm text-muted-foreground">
+                                    {field.value
+                                      ? ATTENDANCE_SETTINGS_CONSTANTS
+                                          .LOCATION_RULES.GPS_ENABLED.ENABLED
+                                      : ATTENDANCE_SETTINGS_CONSTANTS
+                                          .LOCATION_RULES.GPS_ENABLED.DISABLED}
+                                  </FormDescription>
+                                </div>
+                                <FormControl>
+                                  <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                              </div>
+                              <FormDescription className="setting-description mt-2">
                                 {
                                   ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                    .GPS_ENABLED.LABEL
+                                    .GPS_ENABLED.DESCRIPTION
+                                }
+                              </FormDescription>
+                              <FormMessage className="text-xs font-medium" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
+                          <FormField
+                            control={form.control}
+                            name="latitude"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="font-medium text-foreground">
+                                  {
+                                    ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                      .COORDINATES.LATITUDE.LABEL
+                                  }
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    className="font-mono"
+                                    placeholder={
+                                      ATTENDANCE_SETTINGS_CONSTANTS
+                                        .LOCATION_RULES.COORDINATES.LATITUDE
+                                        .PLACEHOLDER
+                                    }
+                                    disabled={!form.watch("gpsEnabled")}
+                                  />
+                                </FormControl>
+                                <FormDescription className="text-sm text-muted-foreground">
+                                  {
+                                    ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                      .COORDINATES.LATITUDE.DESCRIPTION
+                                  }
+                                </FormDescription>
+                                <FormMessage className="text-xs font-medium" />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="longitude"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="font-medium text-foreground">
+                                  {
+                                    ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                      .COORDINATES.LONGITUDE.LABEL
+                                  }
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    className="font-mono"
+                                    placeholder={
+                                      ATTENDANCE_SETTINGS_CONSTANTS
+                                        .LOCATION_RULES.COORDINATES.LONGITUDE
+                                        .PLACEHOLDER
+                                    }
+                                    disabled={!form.watch("gpsEnabled")}
+                                  />
+                                </FormControl>
+                                <FormDescription className="text-sm text-muted-foreground">
+                                  {
+                                    ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                      .COORDINATES.LONGITUDE.DESCRIPTION
+                                  }
+                                </FormDescription>
+                                <FormMessage className="text-xs font-medium" />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="radius"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-medium text-foreground">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                    .RADIUS.LABEL
                                 }
                               </FormLabel>
+                              <FormControl>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    name={field.name}
+                                    ref={field.ref}
+                                    onBlur={field.onBlur}
+                                    value={
+                                      typeof field.value === "number"
+                                        ? field.value
+                                        : 0
+                                    }
+                                    onChange={(event) => {
+                                      const value = Number(event.target.value);
+                                      field.onChange(
+                                        Number.isNaN(value)
+                                          ? 0
+                                          : (value as any),
+                                      );
+                                    }}
+                                    
+                                    placeholder={
+                                      ATTENDANCE_SETTINGS_CONSTANTS
+                                        .LOCATION_RULES.RADIUS.PLACEHOLDER
+                                    }
+                                    min={1}
+                                    disabled={!form.watch("gpsEnabled")}
+                                  />
+                                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                    {
+                                      ATTENDANCE_SETTINGS_CONSTANTS
+                                        .LOCATION_RULES.RADIUS.SUFFIX
+                                    }
+                                  </span>
+                                </div>
+                              </FormControl>
                               <FormDescription className="text-sm text-muted-foreground">
-                                {field.value
-                                  ? ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                      .GPS_ENABLED.ENABLED
-                                  : ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                      .GPS_ENABLED.DISABLED}
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </div>
-                          <FormDescription className="setting-description mt-2">
-                            {
-                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                .GPS_ENABLED.DESCRIPTION
-                            }
-                          </FormDescription>
-                          <FormMessage className="text-xs font-medium" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
-                      <FormField
-                        control={form.control}
-                        name="latitude"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-medium text-foreground">
-                              {
-                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                  .COORDINATES.LATITUDE.LABEL
-                              }
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                className="font-mono"
-                                placeholder={
-                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                    .COORDINATES.LATITUDE.PLACEHOLDER
-                                }
-                                disabled={!form.watch("gpsEnabled")}
-                              />
-                            </FormControl>
-                            <FormDescription className="text-sm text-muted-foreground">
-                              {
-                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                  .COORDINATES.LATITUDE.DESCRIPTION
-                              }
-                            </FormDescription>
-                            <FormMessage className="text-xs font-medium" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="longitude"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-medium text-foreground">
-                              {
-                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                  .COORDINATES.LONGITUDE.LABEL
-                              }
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                className="font-mono"
-                                placeholder={
-                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                    .COORDINATES.LONGITUDE.PLACEHOLDER
-                                }
-                                disabled={!form.watch("gpsEnabled")}
-                              />
-                            </FormControl>
-                            <FormDescription className="text-sm text-muted-foreground">
-                              {
-                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                  .COORDINATES.LONGITUDE.DESCRIPTION
-                              }
-                            </FormDescription>
-                            <FormMessage className="text-xs font-medium" />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="radius"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium text-foreground">
-                            {
-                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                .RADIUS.LABEL
-                            }
-                          </FormLabel>
-                          <FormControl>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                name={field.name}
-                                ref={field.ref}
-                                onBlur={field.onBlur}
-                                value={
-                                  typeof field.value === "number"
-                                    ? field.value
-                                    : 0
-                                }
-                                onChange={(event) => {
-                                  const value = Number(event.target.value);
-                                  field.onChange(
-                                    Number.isNaN(value) ? 0 : (value as any),
-                                  );
-                                }}
-                                placeholder={
-                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                    .RADIUS.PLACEHOLDER
-                                }
-                                min={1}
-                                disabled={!form.watch("gpsEnabled")}
-                              />
-                              <span className="text-sm text-muted-foreground whitespace-nowrap">
                                 {
                                   ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                    .RADIUS.SUFFIX
+                                    .RADIUS.DESCRIPTION
                                 }
-                              </span>
-                            </div>
-                          </FormControl>
-                          <FormDescription className="text-sm text-muted-foreground">
-                            {
-                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                .RADIUS.DESCRIPTION
-                            }
-                          </FormDescription>
-                          <FormMessage className="text-xs font-medium" />
-                        </FormItem>
-                      )}
-                    />
+                              </FormDescription>
+                              <FormMessage className="text-xs font-medium" />
+                            </FormItem>
+                          )}
+                        />
 
-                    <FormField
-                      control={form.control}
-                      name="locationAction"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium text-foreground">
-                            {
-                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                .ACTION_ON_MISMATCH.LABEL
-                            }
-                          </FormLabel>
-                          <FormControl>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
+                        <FormField
+                          control={form.control}
+                          name="locationAction"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-medium text-foreground">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                    .ACTION_ON_MISMATCH.LABEL
+                                }
+                              </FormLabel>
+                              <FormControl>
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                  disabled={!form.watch("gpsEnabled")}
+                                >
+                                  <SelectTrigger className="form-select">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {LOCATION_ACTION_OPTIONS.map((option) => (
+                                      <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                      >
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormDescription className="text-sm text-muted-foreground">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                    .ACTION_ON_MISMATCH.DESCRIPTION
+                                }
+                              </FormDescription>
+                              <FormMessage className="text-xs font-medium" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-3">
+                            <Input
+                              value={mapSearchKeyword}
+                              onChange={(event) =>
+                                setMapSearchKeyword(event.target.value)
+                              }
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  event.preventDefault();
+                                  onSearchMapLocation();
+                                }
+                              }}
+                              placeholder={
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .MAP_SEARCH.SEARCH_PLACEHOLDER
+                              }
+                              
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={onSearchMapLocation}
+                              disabled={isSearchingLocation}
+                            >
+                              {isSearchingLocation ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Search className="mr-2 h-4 w-4" />
+                              )}
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .MAP_SEARCH.SEARCH_BTN
+                              }
+                            </Button>
+                          </div>
+
+                          {locationSuggestions.length > 0 && (
+                            <div className="mb-3 space-y-2 rounded-lg border p-2">
+                              {locationSuggestions.map((suggestion) => (
+                                <button
+                                  key={`${suggestion.displayName}-${suggestion.latitude}-${suggestion.longitude}`}
+                                  type="button"
+                                  className="w-full rounded-md border bg-background px-3 py-2 text-left text-sm hover:bg-accent"
+                                  onClick={() =>
+                                    onSelectLocationSuggestion(suggestion)
+                                  }
+                                >
+                                  <span className="block font-medium">
+                                    {suggestion.displayName}
+                                  </span>
+                                  <span className="block text-xs text-muted-foreground">
+                                    {suggestion.latitude.toFixed(6)},{" "}
+                                    {suggestion.longitude.toFixed(6)}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-3 mb-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={onUseCurrentLocation}
                               disabled={!form.watch("gpsEnabled")}
                             >
-                              <SelectTrigger className="form-select">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {LOCATION_ACTION_OPTIONS.map((option) => (
-                                  <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormDescription className="text-sm text-muted-foreground">
+                              <Navigation className="mr-2 h-4 w-4" />
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .MAP_SEARCH.USE_CURRENT_LOCATION
+                              }
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                if (!hasValidCoordinates && !mapSearchQuery) {
+                                  toast.error(
+                                    ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION
+                                      .INVALID_COORDINATE,
+                                  );
+                                  return;
+                                }
+                                const mapsQuery =
+                                  mapSearchQuery || `${latitude},${longitude}`;
+                                window.open(
+                                  `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}`,
+                                  "_blank",
+                                );
+                              }}
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .MAP_SEARCH.OPEN_GOOGLE_MAPS
+                              }
+                            </Button>
+                          </div>
+
+                          <div className="overflow-hidden rounded-xl border bg-white">
+                            <iframe
+                              title="Google Maps Preview"
+                              src={googleMapsEmbedUrl}
+                              className="w-full h-72"
+                              loading="lazy"
+                              referrerPolicy="no-referrer-when-downgrade"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="settings-card mt-6">
+                    <CardHeader className="pb-4 border-b mb-6">
+                      <CardTitle className="text-lg font-semibold leading-none tracking-tight">
+                        {
+                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                            .BRANCH_LOCATIONS.SECTION_TITLE
+                        }
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        {
+                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                            .BRANCH_LOCATIONS.SECTION_DESC
+                        }
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="settings-card-content space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="font-medium text-foreground">
                             {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                .ACTION_ON_MISMATCH.DESCRIPTION
+                                .BRANCH_LOCATIONS.BRANCH_NAME_LABEL
                             }
-                          </FormDescription>
-                          <FormMessage className="text-xs font-medium" />
-                        </FormItem>
-                      )}
-                    />
+                          </label>
+                          <Input
+                            value={branchLocationDraft.name}
+                            onChange={(event) =>
+                              setBranchLocationDraft((prev) => ({
+                                ...prev,
+                                name: event.target.value,
+                              }))
+                            }
+                            placeholder={
+                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                .BRANCH_LOCATIONS.BRANCH_NAME_PLACEHOLDER
+                            }
+                            
+                          />
+                        </div>
 
-                    <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
-                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-3">
-                        <Input
-                          value={mapSearchKeyword}
-                          onChange={(event) =>
-                            setMapSearchKeyword(event.target.value)
-                          }
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
-                              onSearchMapLocation();
+                        <div className="space-y-2">
+                          <label className="font-medium text-foreground">
+                            {
+                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                .BRANCH_LOCATIONS.BRANCH_ADDRESS_LABEL
                             }
-                          }}
-                          placeholder={
-                            ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                              .MAP_SEARCH.SEARCH_PLACEHOLDER
-                          }
-                        />
+                          </label>
+                          <Input
+                            value={branchLocationDraft.address}
+                            onChange={(event) =>
+                              setBranchLocationDraft((prev) => ({
+                                ...prev,
+                                address: event.target.value,
+                              }))
+                            }
+                            placeholder={
+                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                .BRANCH_LOCATIONS.BRANCH_ADDRESS_PLACEHOLDER
+                            }
+                            
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="font-medium text-foreground">
+                            {
+                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                .BRANCH_LOCATIONS.LATITUDE_LABEL
+                            }
+                          </label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={branchLocationDraft.latitude}
+                            onChange={(event) =>
+                              setBranchLocationDraft((prev) => ({
+                                ...prev,
+                                latitude: event.target.value,
+                              }))
+                            }
+                            className="font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="font-medium text-foreground">
+                            {
+                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                .BRANCH_LOCATIONS.LONGITUDE_LABEL
+                            }
+                          </label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={branchLocationDraft.longitude}
+                            onChange={(event) =>
+                              setBranchLocationDraft((prev) => ({
+                                ...prev,
+                                longitude: event.target.value,
+                              }))
+                            }
+                            className="font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="font-medium text-foreground">
+                            {
+                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                .BRANCH_LOCATIONS.RADIUS_LABEL
+                            }
+                          </label>
+                          <Input
+                            type="number"
+                            min={ATTENDANCE_SETTINGS_SCHEMA.radius.min}
+                            max={ATTENDANCE_SETTINGS_SCHEMA.radius.max}
+                            value={branchLocationDraft.radiusMeters}
+                            onChange={(event) =>
+                              setBranchLocationDraft((prev) => ({
+                                ...prev,
+                                radiusMeters: event.target.value,
+                              }))
+                            }
+                            
+                          />
+                        </div>
+
+                        <div className="flex items-end justify-between rounded-lg border px-4 py-3">
+                          <div>
+                            <p className="font-medium">
+                              {
+                                ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                  .BRANCH_LOCATIONS.ACTIVE_LABEL
+                              }
+                            </p>
+                          </div>
+                          <Switch
+                            checked={branchLocationDraft.isActive}
+                            onCheckedChange={(checked) =>
+                              setBranchLocationDraft((prev) => ({
+                                ...prev,
+                                isActive: checked,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end">
                         <Button
                           type="button"
-                          variant="outline"
-                          onClick={onSearchMapLocation}
-                          disabled={isSearchingLocation}
+                          onClick={onCreateBranchLocation}
+                          disabled={createOfficeLocationMutation.isPending}
                         >
-                          {isSearchingLocation ? (
+                          {createOfficeLocationMutation.isPending && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Search className="mr-2 h-4 w-4" />
                           )}
                           {
                             ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                              .MAP_SEARCH.SEARCH_BTN
+                              .BRANCH_LOCATIONS.ADD_BUTTON
                           }
                         </Button>
                       </div>
 
-                      {locationSuggestions.length > 0 && (
-                        <div className="mb-3 space-y-2 rounded-lg border p-2">
-                          {locationSuggestions.map((suggestion) => (
-                            <button
-                              key={`${suggestion.displayName}-${suggestion.latitude}-${suggestion.longitude}`}
-                              type="button"
-                              className="w-full rounded-md border bg-background px-3 py-2 text-left text-sm hover:bg-accent"
-                              onClick={() =>
-                                onSelectLocationSuggestion(suggestion)
-                              }
+                      {officeLocations.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          {
+                            ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                              .BRANCH_LOCATIONS.EMPTY_MESSAGE
+                          }
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {officeLocations.map((office) => (
+                            <div
+                              key={office.id}
+                              className="rounded-lg border p-3 space-y-1"
                             >
-                              <span className="block font-medium">
-                                {suggestion.displayName}
-                              </span>
-                              <span className="block text-xs text-muted-foreground">
-                                {suggestion.latitude.toFixed(6)},{" "}
-                                {suggestion.longitude.toFixed(6)}
-                              </span>
-                            </button>
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="font-medium">{office.name}</p>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">
+                                    {office.isActive
+                                      ? ATTENDANCE_SETTINGS_CONSTANTS
+                                          .LOCATION_RULES.BRANCH_LOCATIONS
+                                          .ACTIVE_STATUS
+                                      : ATTENDANCE_SETTINGS_CONSTANTS
+                                          .LOCATION_RULES.BRANCH_LOCATIONS
+                                          .INACTIVE_STATUS}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-2 text-red-600 hover:text-red-700"
+                                    onClick={() =>
+                                      onDeleteOfficeLocation(office.id)
+                                    }
+                                    disabled={
+                                      deleteOfficeLocationMutation.isPending
+                                    }
+                                  >
+                                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                                    {
+                                      ATTENDANCE_SETTINGS_CONSTANTS
+                                        .LOCATION_RULES.BRANCH_LOCATIONS
+                                        .DELETE_BUTTON
+                                    }
+                                  </Button>
+                                </div>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {office.address ||
+                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                    .BRANCH_LOCATIONS.ADDRESS_FALLBACK}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                    .BRANCH_LOCATIONS.COORDINATE_PREFIX
+                                }
+                                : {office.latitude.toFixed(6)},{" "}
+                                {office.longitude.toFixed(6)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {
+                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
+                                    .BRANCH_LOCATIONS.RADIUS_PREFIX
+                                }
+                                : {office.radiusMeters}m
+                              </p>
+                            </div>
                           ))}
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                      <div className="flex flex-wrap items-center gap-3 mb-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={onUseCurrentLocation}
-                          disabled={!form.watch("gpsEnabled")}
-                        >
-                          <Navigation className="mr-2 h-4 w-4" />
-                          {
-                            ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                              .MAP_SEARCH.USE_CURRENT_LOCATION
-                          }
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            if (!hasValidCoordinates && !mapSearchQuery) {
-                              toast.error(
-                                ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION
-                                  .INVALID_COORDINATE,
-                              );
-                              return;
-                            }
-                            const mapsQuery =
-                              mapSearchQuery || `${latitude},${longitude}`;
-                            window.open(
-                              `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}`,
-                              "_blank",
-                            );
-                          }}
-                        >
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          {
-                            ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                              .MAP_SEARCH.OPEN_GOOGLE_MAPS
-                          }
-                        </Button>
-                      </div>
-
-                      <div className="overflow-hidden rounded-xl border bg-white">
-                        <iframe
-                          title="Google Maps Preview"
-                          src={googleMapsEmbedUrl}
-                          className="w-full h-72"
-                          loading="lazy"
-                          referrerPolicy="no-referrer-when-downgrade"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="settings-card mt-6">
-                <CardHeader className="pb-4 border-b mb-6">
-                  <CardTitle className="text-lg font-semibold leading-none tracking-tight">
-                    {
-                      ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                        .BRANCH_LOCATIONS.SECTION_TITLE
-                    }
-                  </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground">
-                    {
-                      ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                        .BRANCH_LOCATIONS.SECTION_DESC
-                    }
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="settings-card-content space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="font-medium text-foreground">
-                        {
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .BRANCH_LOCATIONS.BRANCH_NAME_LABEL
-                        }
-                      </label>
-                      <Input
-                        value={branchLocationDraft.name}
-                        onChange={(event) =>
-                          setBranchLocationDraft((prev) => ({
-                            ...prev,
-                            name: event.target.value,
-                          }))
-                        }
-                        placeholder={
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .BRANCH_LOCATIONS.BRANCH_NAME_PLACEHOLDER
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="font-medium text-foreground">
-                        {
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .BRANCH_LOCATIONS.BRANCH_ADDRESS_LABEL
-                        }
-                      </label>
-                      <Input
-                        value={branchLocationDraft.address}
-                        onChange={(event) =>
-                          setBranchLocationDraft((prev) => ({
-                            ...prev,
-                            address: event.target.value,
-                          }))
-                        }
-                        placeholder={
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .BRANCH_LOCATIONS.BRANCH_ADDRESS_PLACEHOLDER
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="font-medium text-foreground">
-                        {
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .BRANCH_LOCATIONS.LATITUDE_LABEL
-                        }
-                      </label>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={branchLocationDraft.latitude}
-                        onChange={(event) =>
-                          setBranchLocationDraft((prev) => ({
-                            ...prev,
-                            latitude: event.target.value,
-                          }))
-                        }
-                        className="font-mono"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="font-medium text-foreground">
-                        {
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .BRANCH_LOCATIONS.LONGITUDE_LABEL
-                        }
-                      </label>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={branchLocationDraft.longitude}
-                        onChange={(event) =>
-                          setBranchLocationDraft((prev) => ({
-                            ...prev,
-                            longitude: event.target.value,
-                          }))
-                        }
-                        className="font-mono"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="font-medium text-foreground">
-                        {
-                          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                            .BRANCH_LOCATIONS.RADIUS_LABEL
-                        }
-                      </label>
-                      <Input
-                        type="number"
-                        min={ATTENDANCE_SETTINGS_SCHEMA.radius.min}
-                        max={ATTENDANCE_SETTINGS_SCHEMA.radius.max}
-                        value={branchLocationDraft.radiusMeters}
-                        onChange={(event) =>
-                          setBranchLocationDraft((prev) => ({
-                            ...prev,
-                            radiusMeters: event.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-end justify-between rounded-lg border px-4 py-3">
-                      <div>
-                        <p className="font-medium">
-                          {
-                            ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                              .BRANCH_LOCATIONS.ACTIVE_LABEL
-                          }
-                        </p>
-                      </div>
-                      <Switch
-                        checked={branchLocationDraft.isActive}
-                        onCheckedChange={(checked) =>
-                          setBranchLocationDraft((prev) => ({
-                            ...prev,
-                            isActive: checked,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      onClick={onCreateBranchLocation}
-                      disabled={createOfficeLocationMutation.isPending}
-                    >
-                      {createOfficeLocationMutation.isPending && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      {
-                        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                          .BRANCH_LOCATIONS.ADD_BUTTON
-                      }
-                    </Button>
-                  </div>
-
-                  {officeLocations.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {
-                        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                          .BRANCH_LOCATIONS.EMPTY_MESSAGE
-                      }
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {officeLocations.map((office) => (
-                        <div
-                          key={office.id}
-                          className="rounded-lg border p-3 space-y-1"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="font-medium">{office.name}</p>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">
-                                {office.isActive
-                                  ? ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                      .BRANCH_LOCATIONS.ACTIVE_STATUS
-                                  : ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                      .BRANCH_LOCATIONS.INACTIVE_STATUS}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-2 text-red-600 hover:text-red-700"
-                                onClick={() =>
-                                  onDeleteOfficeLocation(office.id)
-                                }
-                                disabled={
-                                  deleteOfficeLocationMutation.isPending
-                                }
-                              >
-                                <Trash2 className="mr-1 h-3.5 w-3.5" />
-                                {
-                                  ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                    .BRANCH_LOCATIONS.DELETE_BUTTON
-                                }
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {office.address ||
-                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                .BRANCH_LOCATIONS.ADDRESS_FALLBACK}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {
-                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                .BRANCH_LOCATIONS.COORDINATE_PREFIX
-                            }
-                            : {office.latitude.toFixed(6)},{" "}
-                            {office.longitude.toFixed(6)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {
-                              ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
-                                .BRANCH_LOCATIONS.RADIUS_PREFIX
-                            }
-                            : {office.radiusMeters}m
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t">
-              <Button type="button" variant="outline" onClick={handleReset}>
-                {ATTENDANCE_SETTINGS_CONSTANTS.BUTTONS.CANCEL}
-              </Button>
-              <Button
-                type="submit"
-                disabled={updateOfficeConfigMutation.isPending}
-              >
-                {updateOfficeConfigMutation.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="mr-2 h-4 w-4" />
-                )}
-                {ATTENDANCE_SETTINGS_CONSTANTS.BUTTONS.SAVE}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </Tabs>
-    </main>
+                <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t">
+                  <Button type="button" variant="outline" onClick={handleReset}>
+                    {ATTENDANCE_SETTINGS_CONSTANTS.BUTTONS.CANCEL}
+                  </Button>
+                  <Button type="submit" disabled={updateOfficeConfigMutation.isPending}>
+                    {updateOfficeConfigMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="mr-2 h-4 w-4" />
+                    )}
+                    {ATTENDANCE_SETTINGS_CONSTANTS.BUTTONS.SAVE}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </Tabs>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -19,7 +19,6 @@ import {
   FileQuestion,
   Clock,
   LayoutDashboard,
-  Play,
   PlusCircle,
   CheckCircle2,
 } from "lucide-react";
@@ -35,83 +34,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
+  SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { cn } from "@/lib/utils";
-import { useSidebarBadgeCounts } from "@/hooks/useSidebarBadgeCounts";
-
-// For subitems that don't have an explicit icon, we use a fallback based on the URL
-const getFallbackItemIcon = (url: string) => {
-  if (url.includes("leave")) {
-    return Calendar;
-  }
-  if (url.includes("adjustment") || url.includes("attendance")) {
-    return Clock;
-  }
-  return CheckCircle2;
-};
-
-const SidebarItem = ({
-  item,
-  isActive,
-  renderBadge,
-  isSubItem = false,
-}: {
-  item: any;
-  isActive: boolean;
-  renderBadge: (url: string) => React.ReactNode;
-  isSubItem?: boolean;
-}) => {
-  const itemRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (isActive && itemRef.current) {
-      // Small delay to ensure any parent opening animations have finished or started
-      const timer = setTimeout(() => {
-        itemRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [isActive]);
-
-  const MenuButton = isSubItem ? SidebarMenuSubButton : SidebarMenuButton;
-  const Icon = item.icon ?? (isSubItem ? getFallbackItemIcon(item.url) : null);
-
-  return (
-    <div ref={itemRef} className="w-full">
-      <MenuButton
-        asChild
-        isActive={isActive}
-        className={cn("w-full", isSubItem && "translate-x-0")}
-      >
-        <Link
-          to={item.url}
-          className="flex items-center justify-between gap-2 w-full"
-          title={item.title}
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            {Icon &&
-              React.createElement(Icon, {
-                className: cn(
-                  "w-4 h-4",
-                  isSubItem ? "w-3.5 h-3.5" : "opacity-70",
-                ),
-              })}
-            <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-              {item.title}
-            </span>
-          </span>
-          {renderBadge(item.url)}
-        </Link>
-      </MenuButton>
-    </div>
-  );
-};
 
 export function AppSidebar({
   role: propRole,
@@ -119,21 +47,20 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar> & {
   role?: "admin" | "employee" | "manager" | "hr";
 }) {
-  const { user } = useAuth();
+  useAuth();
   const role = useEffectiveRole(propRole);
-  const badgeCounts = useSidebarBadgeCounts(role, user?.id ?? null);
   const location = useLocation();
   const [openCreate, setOpenCreate] = React.useState(() => {
     const saved = localStorage.getItem("sidebar_open_create");
-    return saved !== null ? saved === "true" : false;
+    return saved !== null ? saved === "true" : true;
   });
   const [openApprove, setOpenApprove] = React.useState(() => {
     const saved = localStorage.getItem("sidebar_open_approve");
-    return saved !== null ? saved === "true" : false;
+    return saved !== null ? saved === "true" : true;
   });
   const [openManage, setOpenManage] = React.useState(() => {
     const saved = localStorage.getItem("sidebar_open_manage");
-    return saved !== null ? saved === "true" : false;
+    return saved !== null ? saved === "true" : true;
   });
 
   React.useEffect(() => {
@@ -152,33 +79,6 @@ export function AppSidebar({
   const isActive = (url: string) =>
     location.pathname + location.search === url || location.pathname === url;
 
-  const renderBadge = (url: string) => {
-    const count = badgeCounts[url] ?? 0;
-    if (count <= 0) {
-      return null;
-    }
-
-    return (
-      <span className="ml-auto inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-[10px] font-semibold text-white">
-        {count > 99 ? "99+" : count}
-      </span>
-    );
-  };
-
-  const renderCountBadge = (count: number) => {
-    if (count <= 0) {
-      return null;
-    }
-
-    return (
-      <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-[10px] font-semibold text-white">
-        {count > 99 ? "99+" : count}
-      </span>
-    );
-  };
-
-  // SidebarItem handles the fallback logic now
-
   // We define groups based on roles, keeping it similar to the old structure
   const navMain: any[] = React.useMemo(() => {
     // 1. Common sections for everyone
@@ -190,21 +90,6 @@ export function AppSidebar({
           url: "/profile",
           icon: User,
         },
-        // Attendance items moved here for non-admin roles
-        ...(role !== "admin"
-          ? [
-              {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
-                url: "/checkin",
-                icon: Play,
-              },
-              {
-                title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE,
-                url: "/attendance",
-                icon: Clock,
-              },
-            ]
-          : []),
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
           url: "/announcements",
@@ -230,6 +115,8 @@ export function AppSidebar({
           title: SYSTEM_MESSAGES.REQUEST.CREATE_ADJUSTMENT,
           url: "/request?tab=adjustment",
         },
+        { title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN, url: "/checkin" },
+        { title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE, url: "/attendance" },
       ],
     };
 
@@ -261,6 +148,11 @@ export function AppSidebar({
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
           url: "/profile",
           icon: User,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
+          url: "/my-assets",
+          icon: Package,
         },
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
@@ -391,11 +283,6 @@ export function AppSidebar({
           icon: CreditCard,
         },
         {
-          title: SYSTEM_MESSAGES.SIDEBAR.MENU_RUN_PAYROLL,
-          url: "/run-payroll",
-          icon: Play,
-        },
-        {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
           url: "/audit-logs",
           icon: ShieldCheck,
@@ -439,16 +326,23 @@ export function AppSidebar({
           // Simple flat menu for "Cá nhân"
           if (!group.id) {
             return (
-              <SidebarGroup key={group.title} className="p-0">
+              <SidebarGroup key={group.title}>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {group.items.map((item: any) => (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarItem
-                          item={item}
+                        <SidebarMenuButton
+                          asChild
                           isActive={isActive(item.url)}
-                          renderBadge={renderBadge}
-                        />
+                        >
+                          <Link
+                            to={item.url}
+                            className="flex items-center gap-2"
+                          >
+                            <item.icon className="w-4 h-4 opacity-70" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}
                   </SidebarMenu>
@@ -458,13 +352,8 @@ export function AppSidebar({
           }
 
           // Collapsible menu for other sections
-          const groupBadgeTotal = (group.items as any[]).reduce(
-            (sum, item) => sum + (badgeCounts[item.url] ?? 0),
-            0,
-          );
-
           return (
-            <SidebarGroup key={group.id} className="p-0">
+            <SidebarGroup key={group.id}>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -477,26 +366,40 @@ export function AppSidebar({
                         {group.title}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {renderCountBadge(groupBadgeTotal)}
-                      {group.isOpen ? (
-                        <ChevronDown className="w-3 h-3 text-muted-foreground/50" />
-                      ) : (
-                        <ChevronRight className="w-3 h-3 text-muted-foreground/50" />
-                      )}
-                    </div>
+                    {group.isOpen ? (
+                      <ChevronDown className="w-3 h-3 text-muted-foreground/50" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3 text-muted-foreground/50" />
+                    )}
                   </SidebarMenuButton>
                   {group.isOpen && (
-                    <SidebarMenuSub className="mx-0 border-l-0 px-0">
+                    <SidebarMenuSub>
                       {group.items.map((item: any) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarItem
-                            item={item}
+                        <SidebarMenuSubItem key={item.title}>
+                          <SidebarMenuSubButton
+                            asChild
                             isActive={isActive(item.url)}
-                            renderBadge={renderBadge}
-                            isSubItem
-                          />
-                        </SidebarMenuItem>
+                          >
+                            <Link
+                              to={item.url}
+                              className="flex items-center gap-2"
+                            >
+                              {item.icon ? (
+                                <item.icon className="w-3.5 h-3.5" />
+                              ) : // Default icons for items without specific icons (like in Create section)
+                              item.url.includes("leave") ? (
+                                <Calendar className="w-3.5 h-3.5" />
+                              ) : item.url.includes("adjustment") ? (
+                                <Clock className="w-3.5 h-3.5" />
+                              ) : item.url.includes("attendance") ? (
+                                <Clock className="w-3.5 h-3.5" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              )}
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
                       ))}
                     </SidebarMenuSub>
                   )}
