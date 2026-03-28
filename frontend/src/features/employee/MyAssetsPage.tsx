@@ -12,9 +12,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,7 +45,6 @@ import {
   MyAsset,
   IncidentReportRow,
 } from "@/services/assetService";
-import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 
 /* ─────────────── CONSTANTS ─────────────── */
 
@@ -114,7 +110,6 @@ function AssetCard({
 /* ─────────────── MAIN PAGE ─────────────── */
 
 export default function MyAssetsPage() {
-  const effectiveRole = useEffectiveRole();
   const [assets, setAssets] = useState<MyAsset[]>([]);
   const [reports, setReports] = useState<IncidentReportRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -233,214 +228,207 @@ export default function MyAssetsPage() {
   };
 
   return (
-    <SidebarProvider>
-      <AppSidebar role={effectiveRole} variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
+    <>
+      <main className="flex-1 space-y-8 p-4 md:p-8 pt-6 bg-background min-h-screen">
+        {/* ── Page Header ── */}
+        <div>
+          <h1 className="page-heading">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {SYSTEM_MESSAGES.MY_ASSETS.DESCRIPTION}
+          </p>
+        </div>
 
-        <main className="flex-1 space-y-8 p-4 md:p-8 pt-6 bg-background min-h-screen">
-          {/* ── Page Header ── */}
-          <div>
-            <h1 className="page-heading">{SYSTEM_MESSAGES.MY_ASSETS.TITLE}</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {SYSTEM_MESSAGES.MY_ASSETS.DESCRIPTION}
-            </p>
-          </div>
-
-          <Tabs defaultValue="equipment" className="space-y-6">
-            <TabsList className="bg-muted/50 p-1 rounded-xl">
-              <TabsTrigger
-                value="equipment"
-                className="rounded-lg px-6 py-2 text-sm font-medium"
-              >
-                Thiết bị & Báo cáo
-              </TabsTrigger>
-              <TabsTrigger
-                value="requests"
-                className="rounded-lg px-6 py-2 text-sm font-medium"
-              >
-                Yêu cầu cấp phát
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent
+        <Tabs defaultValue="equipment" className="space-y-6">
+          <TabsList className="bg-muted/50 p-1 rounded-xl">
+            <TabsTrigger
               value="equipment"
-              className="space-y-8 animate-in fade-in-50 duration-500"
+              className="rounded-lg px-6 py-2 text-sm font-medium"
             >
-              {/* ── Assigned Equipment ── */}
-              <section>
-                <h2 className="text-base font-bold text-foreground mb-4">
-                  {SYSTEM_MESSAGES.MY_ASSETS.SECTION_EQUIPMENT}
-                </h2>
-
-                {loading ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="h-64 rounded-xl border border-border animate-pulse bg-muted/20"
-                      />
-                    ))}
-                  </div>
-                ) : assets.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {assets.map((asset) => (
-                      <AssetCard
-                        key={asset.id}
-                        asset={asset}
-                        onReportIssue={handleReportIssue}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-8 bg-muted/10 rounded-xl border border-dashed border-border text-center">
-                    <Laptop className="w-10 h-10 text-muted-foreground/30 mb-3" />
-                    <p className="text-sm font-medium text-foreground">
-                      {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
-                    </p>
-                  </div>
-                )}
-              </section>
-
-              {/* ── Recent Reports ── */}
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-bold text-foreground">
-                    {SYSTEM_MESSAGES.MY_ASSETS.SECTION_REPORTS}
-                  </h2>
-                </div>
-
-                <div className="bg-background rounded-xl border border-border shadow-sm overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/40 hover:bg-muted/40">
-                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          {SYSTEM_MESSAGES.MY_ASSETS.TABLE_ID}
-                        </TableHead>
-                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          {SYSTEM_MESSAGES.ASSET.TABLE_NAME}
-                        </TableHead>
-                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          {SYSTEM_MESSAGES.MY_ASSETS.TABLE_INCIDENT}
-                        </TableHead>
-                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          {SYSTEM_MESSAGES.MY_ASSETS.TABLE_DATE}
-                        </TableHead>
-                        <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          {SYSTEM_MESSAGES.LABEL_STATUS}
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="h-24 text-center">
-                            <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
-                          </TableCell>
-                        </TableRow>
-                      ) : paginatedReports.length > 0 ? (
-                        paginatedReports.map((report) => (
-                          <TableRow
-                            key={report.id}
-                            className="hover:bg-muted/20 transition-colors border-border"
-                          >
-                            <TableCell className="px-5 py-3 text-sm font-medium text-blue-600 cursor-pointer hover:underline">
-                              {SYSTEM_MESSAGES.SYMBOLS.HASH}
-                              {report.reportId}
-                            </TableCell>
-                            <TableCell className="px-5 py-3">
-                              <div className="flex flex-col">
-                                <span className="text-sm text-foreground font-medium">
-                                  {report.asset}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground">
-                                  {report.assetTag}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-sm text-muted-foreground">
-                              {report.issueType}
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-sm text-muted-foreground">
-                              {report.dateReported}
-                            </TableCell>
-                            <TableCell className="px-5 py-3">
-                              <Badge
-                                className={
-                                  report.statusColor
-                                    ? report.statusColor
-                                    : "bg-gray-100 text-gray-700"
-                                }
-                              >
-                                {report.statusLabel || report.status}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={5}
-                            className="h-24 text-center text-sm text-muted-foreground"
-                          >
-                            {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-
-                  {/* Pagination footer */}
-                  <div className="border-t border-border px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-muted/10">
-                    <span>
-                      {SYSTEM_MESSAGES.MY_ASSETS.LABEL_REPORT_COUNT}{" "}
-                      {reports.length}
-                    </span>
-                    {totalReportPages > 1 && (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={reportPage === 0}
-                          onClick={() =>
-                            setReportPage((p) => Math.max(0, p - 1))
-                          }
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <span className="font-medium px-1">
-                          {reportPage + 1} / {totalReportPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={reportPage >= totalReportPages - 1}
-                          onClick={() =>
-                            setReportPage((p) =>
-                              Math.min(totalReportPages - 1, p + 1),
-                            )
-                          }
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-            </TabsContent>
-
-            <TabsContent
+              Thiết bị & Báo cáo
+            </TabsTrigger>
+            <TabsTrigger
               value="requests"
-              className="animate-in fade-in-50 duration-500"
+              className="rounded-lg px-6 py-2 text-sm font-medium"
             >
-              <AssetRequestsTab />
-            </TabsContent>
-          </Tabs>
-        </main>
-      </SidebarInset>
+              Yêu cầu cấp phát
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent
+            value="equipment"
+            className="space-y-8 animate-in fade-in-50 duration-500"
+          >
+            {/* ── Assigned Equipment ── */}
+            <section>
+              <h2 className="text-base font-bold text-foreground mb-4">
+                {SYSTEM_MESSAGES.MY_ASSETS.SECTION_EQUIPMENT}
+              </h2>
+
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-64 rounded-xl border border-border animate-pulse bg-muted/20"
+                    />
+                  ))}
+                </div>
+              ) : assets.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {assets.map((asset) => (
+                    <AssetCard
+                      key={asset.id}
+                      asset={asset}
+                      onReportIssue={handleReportIssue}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 bg-muted/10 rounded-xl border border-dashed border-border text-center">
+                  <Laptop className="w-10 h-10 text-muted-foreground/30 mb-3" />
+                  <p className="text-sm font-medium text-foreground">
+                    {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
+                  </p>
+                </div>
+              )}
+            </section>
+
+            {/* ── Recent Reports ── */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold text-foreground">
+                  {SYSTEM_MESSAGES.MY_ASSETS.SECTION_REPORTS}
+                </h2>
+              </div>
+
+              <div className="bg-background rounded-xl border border-border shadow-sm overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {SYSTEM_MESSAGES.MY_ASSETS.TABLE_ID}
+                      </TableHead>
+                      <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {SYSTEM_MESSAGES.ASSET.TABLE_NAME}
+                      </TableHead>
+                      <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {SYSTEM_MESSAGES.MY_ASSETS.TABLE_INCIDENT}
+                      </TableHead>
+                      <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {SYSTEM_MESSAGES.MY_ASSETS.TABLE_DATE}
+                      </TableHead>
+                      <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {SYSTEM_MESSAGES.LABEL_STATUS}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                          <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
+                        </TableCell>
+                      </TableRow>
+                    ) : paginatedReports.length > 0 ? (
+                      paginatedReports.map((report) => (
+                        <TableRow
+                          key={report.id}
+                          className="hover:bg-muted/20 transition-colors border-border"
+                        >
+                          <TableCell className="px-5 py-3 text-sm font-medium text-blue-600 cursor-pointer hover:underline">
+                            {SYSTEM_MESSAGES.SYMBOLS.HASH}
+                            {report.reportId}
+                          </TableCell>
+                          <TableCell className="px-5 py-3">
+                            <div className="flex flex-col">
+                              <span className="text-sm text-foreground font-medium">
+                                {report.asset}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {report.assetTag}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-5 py-3 text-sm text-muted-foreground">
+                            {report.issueType}
+                          </TableCell>
+                          <TableCell className="px-5 py-3 text-sm text-muted-foreground">
+                            {report.dateReported}
+                          </TableCell>
+                          <TableCell className="px-5 py-3">
+                            <Badge
+                              className={
+                                report.statusColor
+                                  ? report.statusColor
+                                  : "bg-gray-100 text-gray-700"
+                              }
+                            >
+                              {report.statusLabel || report.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="h-24 text-center text-sm text-muted-foreground"
+                        >
+                          {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+
+                {/* Pagination footer */}
+                <div className="border-t border-border px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-muted/10">
+                  <span>
+                    {SYSTEM_MESSAGES.MY_ASSETS.LABEL_REPORT_COUNT}{" "}
+                    {reports.length}
+                  </span>
+                  {totalReportPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={reportPage === 0}
+                        onClick={() => setReportPage((p) => Math.max(0, p - 1))}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="font-medium px-1">
+                        {reportPage + 1} / {totalReportPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={reportPage >= totalReportPages - 1}
+                        onClick={() =>
+                          setReportPage((p) =>
+                            Math.min(totalReportPages - 1, p + 1),
+                          )
+                        }
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          </TabsContent>
+
+          <TabsContent
+            value="requests"
+            className="animate-in fade-in-50 duration-500"
+          >
+            <AssetRequestsTab />
+          </TabsContent>
+        </Tabs>
+      </main>
 
       {/* ── Report Asset Issue Dialog ── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -615,6 +603,6 @@ export default function MyAssetsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </SidebarProvider>
+    </>
   );
 }

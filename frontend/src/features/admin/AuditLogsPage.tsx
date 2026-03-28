@@ -14,9 +14,6 @@ import {
   History
 } from "lucide-react";
 
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { AUDIT_LOG_TEXT, COMMON_TEXT } from "@/constants/ui-texts";
 import {
@@ -100,7 +97,6 @@ type FilterState = {
 const COMMON_LOADING_TEXT = COMMON_TEXT.LOADING_DATA;
 
 export default function AuditLogsPage() {
-  const effectiveRole = useEffectiveRole();
   const [page, setPage] = useState(0);
   const [selectedItem, setSelectedItem] = useState<AuditLogItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -319,6 +315,7 @@ export default function AuditLogsPage() {
               </div>
             </div>
           </div>
+        </div>
 
           {/* Table Card */}
           <div className="card-glass border shadow-sm overflow-hidden">
@@ -421,8 +418,8 @@ export default function AuditLogsPage() {
               </div>
             </div>
           </div>
-        </main>
-      </SidebarInset>
+        </div>
+      </main>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="sm:max-w-3xl p-0 overflow-hidden border-0 shadow-2xl">
@@ -518,6 +515,6 @@ export default function AuditLogsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </SidebarProvider>
+    </>
   );
 }

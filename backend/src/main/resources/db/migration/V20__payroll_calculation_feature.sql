@@ -1,3 +1,13 @@
+-- ============================================================
+-- Migration: Payroll Calculation Feature
+-- Creates payroll_items table.
+-- Adds breakdown columns to existing payrolls table.
+-- ============================================================
+
+-- -----------------------------------------------------------
+-- 1. Add missing columns to the existing `payrolls` table
+--    (all nullable / defaulted so existing rows are unaffected)
+-- -----------------------------------------------------------
 ALTER TABLE payrolls
     ADD COLUMN IF NOT EXISTS gross_salary      DECIMAL(15, 2)  DEFAULT 0    COMMENT 'Tổng thu nhập gộp trước khấu trừ',
     ADD COLUMN IF NOT EXISTS bhxh_deduction    DECIMAL(15, 2)  DEFAULT 0    COMMENT 'Khấu trừ BHXH (8%)',
@@ -9,13 +19,16 @@ ALTER TABLE payrolls
 
 -- Populate period for existing rows (best-effort backfill)
 UPDATE payrolls
-SET period = CONCAT(payrollYear, '-', LPAD(payrollMonth, 2, '0'))
+SET period = CONCAT(payroll_year, '-', LPAD(payroll_month, 2, '0'))
 WHERE period IS NULL;
 
+-- -----------------------------------------------------------
+-- 2. Create payroll_items (snapshot of each calculation line)
+-- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS payroll_items (
-    id               BIGINT       NOT NULL AUTO_INCREMENT,
-    payroll_id       BIGINT       NOT NULL,
-    component_code   VARCHAR(50)  NOT NULL COMMENT 'Code snapshot at calculation time',
+                                             id               BIGINT       NOT NULL AUTO_INCREMENT,
+                                             payroll_id       BIGINT       NOT NULL,
+                                             component_code   VARCHAR(50)  NOT NULL COMMENT 'Code snapshot at calculation time',
     component_name   VARCHAR(255) NOT NULL COMMENT 'Name snapshot at calculation time',
     component_type   VARCHAR(30)  NOT NULL COMMENT 'SalaryComponentType enum value',
     nature           VARCHAR(20)  NOT NULL COMMENT 'INCOME or DEDUCTION',
@@ -26,17 +39,21 @@ CREATE TABLE IF NOT EXISTS payroll_items (
     PRIMARY KEY (id),
 
     CONSTRAINT fk_payroll_items_payroll
-        FOREIGN KEY (payroll_id)
-        REFERENCES payrolls(id)
-        ON DELETE CASCADE,
+    FOREIGN KEY (payroll_id)
+    REFERENCES payrolls(id)
+    ON DELETE CASCADE,
 
     INDEX idx_payroll_items_payroll_id (payroll_id),
     INDEX idx_payroll_items_type       (component_type)
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_unicode_ci
-  COMMENT='Immutable snapshot of salary line items per payroll record';
+    ) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_unicode_ci
+    COMMENT='Immutable snapshot of salary line items per payroll record';
 
+-- -----------------------------------------------------------
+-- 3. Ensure audit_logs can store PAYROLL_RUN entity_type
+--    (no schema change needed — entity_type is VARCHAR(100))
+-- -----------------------------------------------------------
 -- Verify the index exists on audit_logs for fast lookup by period
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type_created
     ON audit_logs (entity_type, created_at);

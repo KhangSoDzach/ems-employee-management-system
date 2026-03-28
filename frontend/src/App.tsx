@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ThemeProvider from "@/contexts/ThemeProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppLayout } from "@/components/AppLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { COMMON_TEXT } from "./constants/ui-texts";
 import { AUTH_ROLES } from "./constants/auth";
@@ -48,6 +49,7 @@ const PayrollManagement = lazy(() => import("@/features/hr/PayrollManagement"));
 const HrPayrollPeriodPage = lazy(
   () => import("@/features/hr/HrPayrollPeriodPage"),
 );
+const RunPayrollPage = lazy(() => import("@/features/hr/RunPayrollPage"));
 const AssetReportManagement = lazy(
   () => import("./features/admin/AssetReportManagement"),
 );
@@ -84,148 +86,169 @@ function App() {
         <BrowserRouter>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
-              {/* Public routes */}
+              {/* Public routes – no sidebar */}
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-              {/* Shared: All authenticated roles */}
-              <Route
-                element={
-                  <ProtectedRoute
-                    allowedRoles={[
-                      AUTH_ROLES.ADMIN,
-                      AUTH_ROLES.HR,
-                      AUTH_ROLES.MANAGER,
-                      AUTH_ROLES.EMPLOYEE,
-                    ]}
+              {/* All authenticated routes share the AppLayout shell */}
+              <Route element={<AppLayout />}>
+                {/* Shared: All authenticated roles */}
+                <Route
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={[
+                        AUTH_ROLES.ADMIN,
+                        AUTH_ROLES.HR,
+                        AUTH_ROLES.MANAGER,
+                        AUTH_ROLES.EMPLOYEE,
+                      ]}
+                    />
+                  }
+                >
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/my-assets" element={<MyAssetsPage />} />
+                  <Route
+                    path="/announcements"
+                    element={<AnnouncementsPage />}
                   />
-                }
-              >
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/my-assets" element={<MyAssetsPage />} />
-                <Route path="/announcements" element={<AnnouncementsPage />} />
-              </Route>
-
-              {/* Admin + HR + Manager */}
-              <Route
-                element={
-                  <ProtectedRoute
-                    allowedRoles={[
-                      AUTH_ROLES.ADMIN,
-                      AUTH_ROLES.HR,
-                      AUTH_ROLES.MANAGER,
-                    ]}
+                  <Route
+                    path="/salary-history"
+                    element={<SalaryHistoryPage />}
                   />
-                }
-              >
-                <Route
-                  path="/asset-incidents"
-                  element={<AssetIncidentManagementPage />}
-                />
-              </Route>
+                </Route>
 
-              {/* Admin + HR */}
-              <Route
-                element={
-                  <ProtectedRoute
-                    allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR]}
+                {/* Admin + HR + Manager */}
+                <Route
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={[
+                        AUTH_ROLES.ADMIN,
+                        AUTH_ROLES.HR,
+                        AUTH_ROLES.MANAGER,
+                      ]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/asset-incidents"
+                    element={<AssetIncidentManagementPage />}
                   />
-                }
-              >
-                <Route path="/assets" element={<AssetManagementPage />} />
-                <Route path="/audit-logs" element={<AuditLogsPage />} />
-                <Route
-                  path="/announcements/manage"
-                  element={<AnnouncementManagementPage />}
-                />
-                <Route
-                  path="/asset-reports"
-                  element={<AssetReportManagement />}
-                />
-                <Route
-                  path="/asset-requests"
-                  element={<AssetRequestManagement />}
-                />
-                <Route path="/hr-employees" element={<EmployeeManagement />} />
-                <Route
-                  path="/hr-payroll-period"
-                  element={<HrPayrollPeriodPage />}
-                />
-              </Route>
+                </Route>
 
-              {/* Admin only */}
-              <Route
-                element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}
-              >
-                <Route path="/payroll" element={<PayrollManagement />} />
+                {/* Admin + HR */}
                 <Route
-                  path="/attendance-settings"
-                  element={<AttendanceSettings />}
-                />
-              </Route>
-
-              {/* Employee + HR + Manager */}
-              <Route
-                element={
-                  <ProtectedRoute
-                    allowedRoles={[
-                      AUTH_ROLES.EMPLOYEE,
-                      AUTH_ROLES.HR,
-                      AUTH_ROLES.MANAGER,
-                    ]}
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR]}
+                    />
+                  }
+                >
+                  <Route path="/assets" element={<AssetManagementPage />} />
+                  <Route path="/audit-logs" element={<AuditLogsPage />} />
+                  <Route
+                    path="/announcements/manage"
+                    element={<AnnouncementManagementPage />}
                   />
-                }
-              >
-                <Route path="/checkin" element={<CheckinPage />} />
-                <Route path="/attendance" element={<AttendanceHistoryPage />} />
-                <Route path="/adjustment-requests" element={<RequestPage />} />
-                <Route path="/request" element={<RequestPage />} />
-                <Route path="/salary-history" element={<SalaryHistoryPage />} />
-              </Route>
-
-              {/* Manager + HR */}
-              <Route
-                element={
-                  <ProtectedRoute
-                    allowedRoles={[AUTH_ROLES.MANAGER, AUTH_ROLES.HR]}
+                  <Route
+                    path="/asset-reports"
+                    element={<AssetReportManagement />}
                   />
-                }
-              >
-                <Route path="/approve" element={<ApproveLeaveRequest />} />
-                <Route
-                  path="/approve-adjustments"
-                  element={<ApproveAdjustmentRequest />}
-                />
-              </Route>
-
-              {/* Manager only */}
-              <Route
-                element={<ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />}
-              >
-                <Route path="/kpi-okr" element={<KpiOkrManagement />} />
-                <Route
-                  path="/view-group-asset"
-                  element={<AssetGroupManagement />}
-                />
-              </Route>
-
-              {/* Manager + Employee */}
-              <Route
-                element={
-                  <ProtectedRoute
-                    allowedRoles={[AUTH_ROLES.MANAGER, AUTH_ROLES.EMPLOYEE]}
+                  <Route
+                    path="/asset-requests"
+                    element={<AssetRequestManagement />}
                   />
-                }
-              >
-                <Route path="/members" element={<MemberList />} />
-              </Route>
+                  <Route
+                    path="/hr-employees"
+                    element={<EmployeeManagement />}
+                  />
+                  <Route
+                    path="/hr-payroll-period"
+                    element={<HrPayrollPeriodPage />}
+                  />
+                  <Route path="/run-payroll" element={<RunPayrollPage />} />
+                </Route>
 
-              {/* HR only */}
-              <Route
-                element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}
-              >
-                <Route path="/hr/employees" element={<Dashboard />} />
+                {/* Admin only */}
+                <Route
+                  element={<ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />}
+                >
+                  <Route path="/payroll" element={<PayrollManagement />} />
+                  <Route
+                    path="/attendance-settings"
+                    element={<AttendanceSettings />}
+                  />
+                </Route>
+
+                {/* Employee + HR + Manager */}
+                <Route
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={[
+                        AUTH_ROLES.EMPLOYEE,
+                        AUTH_ROLES.HR,
+                        AUTH_ROLES.MANAGER,
+                      ]}
+                    />
+                  }
+                >
+                  <Route path="/checkin" element={<CheckinPage />} />
+                  <Route
+                    path="/attendance"
+                    element={<AttendanceHistoryPage />}
+                  />
+                  <Route
+                    path="/adjustment-requests"
+                    element={<RequestPage />}
+                  />
+                  <Route path="/request" element={<RequestPage />} />
+                </Route>
+
+                {/* Manager + HR */}
+                <Route
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={[AUTH_ROLES.MANAGER, AUTH_ROLES.HR]}
+                    />
+                  }
+                >
+                  <Route path="/approve" element={<ApproveLeaveRequest />} />
+                  <Route
+                    path="/approve-adjustments"
+                    element={<ApproveAdjustmentRequest />}
+                  />
+                </Route>
+
+                {/* Manager only */}
+                <Route
+                  element={
+                    <ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />
+                  }
+                >
+                  <Route path="/kpi-okr" element={<KpiOkrManagement />} />
+                  <Route
+                    path="/view-group-asset"
+                    element={<AssetGroupManagement />}
+                  />
+                </Route>
+
+                {/* Manager + Employee */}
+                <Route
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={[AUTH_ROLES.MANAGER, AUTH_ROLES.EMPLOYEE]}
+                    />
+                  }
+                >
+                  <Route path="/members" element={<MemberList />} />
+                </Route>
+
+                {/* HR only */}
+                <Route
+                  element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}
+                >
+                  <Route path="/hr/employees" element={<Dashboard />} />
+                </Route>
               </Route>
             </Routes>
           </Suspense>

@@ -23,6 +23,50 @@ CREATE TABLE IF NOT EXISTS asset_requests (
         FOREIGN KEY (reviewed_by)  REFERENCES users(id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_ar_requested_by ON asset_requests (requested_by);
-CREATE INDEX IF NOT EXISTS idx_ar_status        ON asset_requests (status);
-CREATE INDEX IF NOT EXISTS idx_ar_created_at    ON asset_requests (created_at);
+SET @idx_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_requests'
+      AND index_name = 'idx_ar_requested_by'
+);
+SET @sql := IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_ar_requested_by ON asset_requests (requested_by)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_requests'
+      AND index_name = 'idx_ar_status'
+);
+SET @sql := IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_ar_status ON asset_requests (status)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_requests'
+      AND index_name = 'idx_ar_created_at'
+);
+SET @sql := IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_ar_created_at ON asset_requests (created_at)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS asset_incident_reports (
     FOREIGN KEY (processed_by) REFERENCES users(id)
     );
 
-CREATE INDEX IF NOT EXISTS idx_air_asset_id    ON asset_incident_reports (asset_id);
-CREATE INDEX IF NOT EXISTS idx_air_reported_by ON asset_incident_reports (reported_by);
-CREATE INDEX IF NOT EXISTS idx_air_status      ON asset_incident_reports (status);
-CREATE INDEX IF NOT EXISTS idx_air_reported_at ON asset_incident_reports (reported_at);
+CREATE INDEX idx_air_asset_id    ON asset_incident_reports (asset_id);
+CREATE INDEX idx_air_reported_by ON asset_incident_reports (reported_by);
+CREATE INDEX idx_air_status      ON asset_incident_reports (status);
+CREATE INDEX idx_air_reported_at ON asset_incident_reports (reported_at);

@@ -5,14 +5,12 @@ import {
   Pencil,
   Plus,
   Search,
+  ShieldAlert,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import {
   Table,
@@ -32,9 +30,10 @@ import {
   useUpdateSalaryComponent,
 } from "@/features/hr/hooks/useSalaryComponents";
 import { SalaryComponentForm } from "@/features/hr/components/SalaryComponentForm";
-import { RunPayrollPanel } from "@/features/hr/components/RunPayrollPanel";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+import { PAYROLL_ADMIN_CONSTANTS as C } from "@/features/admin/salary-policy.constants";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 type ModalState = {
   open: boolean;
@@ -48,52 +47,42 @@ const INITIAL_MODAL_STATE: ModalState = {
   selected: null,
 };
 
-const SALARY_COMPONENT_TYPE_LABELS: Record<string, string> = {
-  BASE: "Lương cơ bản",
-  ALLOWANCE: "Phụ cấp",
-  COMMISSION: "Hoa hồng",
-  BONUS: "Thưởng",
-  DEDUCTION: "Khấu trừ",
-  INSURANCE: "Bảo hiểm",
-};
-
-const SALARY_COMPONENT_NATURE_LABELS: Record<string, string> = {
-  INCOME: "Thu nhập",
-  DEDUCTION: "Khấu trừ",
-};
-
-const SALARY_COMPONENT_STATUS_LABELS: Record<string, string> = {
-  ACTIVE: "Đang áp dụng",
-  INACTIVE: "Ngừng áp dụng",
-};
-
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
-function getApiErrorMessage(error: unknown): string {
-  const fallback = "Không thể xử lý yêu cầu. Vui lòng thử lại.";
-  if (!error || typeof error !== "object") {
-    return fallback;
-  }
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
-  const maybeAxiosError = error as {
-    response?: {
-      data?: {
-        message?: string;
-      };
-    };
+function getApiErrorMessage(error: unknown): string {
+  if (!error || typeof error !== "object") {
+    return C.ERROR_FALLBACK;
+  }
+  const e = error as {
+    response?: { data?: { message?: string } };
     message?: string;
   };
+  return e.response?.data?.message ?? e.message ?? C.ERROR_FALLBACK;
+}
 
+// ── 403 Guard ──────────────────────────────────────────────────────────────────
+
+function AccessDenied() {
   return (
-    maybeAxiosError.response?.data?.message ??
-    maybeAxiosError.message ??
-    fallback
+    <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+      <ShieldAlert className="h-14 w-14 text-destructive opacity-80" />
+      <h2 className="text-xl font-bold text-destructive">
+        {C.ACCESS_DENIED_TITLE}
+      </h2>
+      <p className="max-w-sm text-sm text-muted-foreground">
+        {C.ACCESS_DENIED_DESC}
+      </p>
+    </div>
   );
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export function SalaryComponentList() {
+  const effectiveRole = useEffectiveRole();
+
   const [modal, setModal] = useState<ModalState>(INITIAL_MODAL_STATE);
   const [serverError, setServerError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -145,7 +134,7 @@ export function SalaryComponentList() {
     if (modal.mode === "create") {
       createMutation.mutate(payload, {
         onSuccess: () => {
-          toast.success("Tạo thành phần lương thành công");
+          toast.success(C.TOAST_CREATE_SUCCESS);
           closeModal();
         },
         onError: (error) => {
@@ -165,7 +154,7 @@ export function SalaryComponentList() {
       { id: modal.selected.id, payload },
       {
         onSuccess: () => {
-          toast.success("Cập nhật thành phần lương thành công");
+          toast.success(C.TOAST_UPDATE_SUCCESS);
           closeModal();
         },
         onError: (error) => {
@@ -180,185 +169,190 @@ export function SalaryComponentList() {
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <SidebarProvider>
-      <AppSidebar role="admin" variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-
-        {/*
-         * ⚠️  RunPayrollPanel PHẢI nằm bên trong SidebarInset
-         *    để sidebar không đè lên nội dung.
-         *    KHÔNG đặt nó ở PayrollManagement.tsx bên ngoài component này.
-         */}
-        {/* No min-h-screen: flex column fills viewport, no page scroll */}
-        <main className="min-h-screen space-y-6 bg-background p-4 pt-6 md:p-8">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="page-heading">Cấu hình chính sách lương</h1>
-              <p className="text-sm text-muted-foreground">
-                Quản lý danh sách thành phần lương để phục vụ hệ thống tính
-                lương.
-              </p>
+    <>
+      <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+        {/* ── RBAC guard ── */}
+        {effectiveRole !== "admin" ? (
+          <AccessDenied />
+        ) : (
+          <>
+            {/* ── Page Header ── */}
+            <div className="payroll-page-header">
+              <div>
+                <h1 className="page-heading">{C.PAGE_TITLE}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {C.PAGE_SUBTITLE}
+                </p>
+              </div>
+              <div className="payroll-header-actions">
+                <Button
+                  onClick={openCreate}
+                  className="gap-2 shadow-sm font-medium"
+                >
+                  <Plus className="h-4 w-4" />
+                  {C.BTN_CREATE}
+                </Button>
+              </div>
             </div>
-            <Button
-              onClick={openCreate}
-              className="gap-2 shadow-sm font-medium"
-            >
-              <Plus className="h-4 w-4" />
-              Tạo mới
-            </Button>
-          </div>
 
-          <RunPayrollPanel />
-
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Tìm kiếm mã hoặc tên..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(0);
-              }}
-              className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
-            />
-            {search && (
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setPage(0);
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          <section className="rounded-lg border bg-white shadow-sm dark:bg-slate-900 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã</TableHead>
-                  <TableHead>Tên</TableHead>
-                  <TableHead>Loại</TableHead>
-                  <TableHead>Chịu thuế</TableHead>
-                  <TableHead>Đóng BHXH</TableHead>
-                  <TableHead>Tính chất</TableHead>
-                  <TableHead>Số tiền</TableHead>
-                  <TableHead>Hệ số (%)</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Hành động</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {salaryComponentsQuery.isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={10}
-                      className="text-center text-sm text-muted-foreground"
-                    >
-                      Đang tải dữ liệu...
-                    </TableCell>
-                  </TableRow>
-                ) : paginatedRows.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={10}
-                      className="text-center text-sm text-muted-foreground py-10"
-                    >
-                      {search
-                        ? "Không tìm thấy kết quả phù hợp."
-                        : "Chưa có thành phần lương nào."}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedRows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="font-medium">{row.code}</TableCell>
-                      <TableCell>{row.name}</TableCell>
-                      <TableCell>
-                        {SALARY_COMPONENT_TYPE_LABELS[row.type] ?? row.type}
-                      </TableCell>
-                      <TableCell>{row.isTaxable ? "Có" : "Không"}</TableCell>
-                      <TableCell>{row.isInsurable ? "Có" : "Không"}</TableCell>
-                      <TableCell>
-                        {SALARY_COMPONENT_NATURE_LABELS[row.nature] ??
-                          row.nature}
-                      </TableCell>
-                      <TableCell>
-                        {row.amount === null || row.amount === undefined
-                          ? "-"
-                          : Number(row.amount).toLocaleString("vi-VN")}
-                      </TableCell>
-                      <TableCell>
-                        {row.ratePercent === null ||
-                        row.ratePercent === undefined
-                          ? "-"
-                          : `${Number(row.ratePercent).toLocaleString("vi-VN")}%`}
-                      </TableCell>
-                      <TableCell>
-                        {SALARY_COMPONENT_STATUS_LABELS[row.status] ??
-                          row.status}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEdit(row)}
-                          className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+            {/* ── Search ── */}
+            <div className="payroll-search-wrapper">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder={C.SEARCH_PLACEHOLDER}
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(0);
+                  }}
+                  className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
+                />
+                {search && (
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setPage(0);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 )}
-              </TableBody>
-            </Table>
-
-            <div className="flex items-center justify-between px-4 py-4 border-t bg-slate-50/50 dark:bg-transparent">
-              <div className="text-sm text-muted-foreground">
-                Tổng cộng {totalElements} kết quả. Trang{" "}
-                {totalPages === 0 ? 0 : page + 1}/{totalPages}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
-                  className="gap-1 h-9"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Trước
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages - 1 || totalPages === 0}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="gap-1 h-9"
-                >
-                  Sau
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
               </div>
             </div>
-          </section>
-        </main>
 
-        <SalaryComponentForm
-          open={modal.open}
-          mode={modal.mode}
-          initialValue={modal.selected}
-          submitting={isSubmitting}
-          serverError={serverError}
-          onClose={closeModal}
-          onSubmit={handleSubmit}
-        />
-      </SidebarInset>
-    </SidebarProvider>
+            {/* ── Data Table ── */}
+            <section className="payroll-table-section">
+              <div className="card-soft overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{C.COL_CODE}</TableHead>
+                      <TableHead>{C.COL_NAME}</TableHead>
+                      <TableHead>{C.COL_TYPE}</TableHead>
+                      <TableHead>{C.COL_TAXABLE}</TableHead>
+                      <TableHead>{C.COL_INSURABLE}</TableHead>
+                      <TableHead>{C.COL_NATURE}</TableHead>
+                      <TableHead>{C.COL_AMOUNT}</TableHead>
+                      <TableHead>{C.COL_RATE}</TableHead>
+                      <TableHead>{C.COL_STATUS}</TableHead>
+                      <TableHead className="text-right">
+                        {C.COL_ACTIONS}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {salaryComponentsQuery.isLoading ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={10}
+                          className="text-center text-sm text-muted-foreground"
+                        >
+                          {C.LOADING}
+                        </TableCell>
+                      </TableRow>
+                    ) : paginatedRows.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={10}
+                          className="text-center text-sm text-muted-foreground py-10"
+                        >
+                          {search ? C.EMPTY_SEARCH : C.EMPTY_DATA}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paginatedRows.map((row) => (
+                        <TableRow key={row.id}>
+                          <TableCell className="font-medium">
+                            {row.code}
+                          </TableCell>
+                          <TableCell>{row.name}</TableCell>
+                          <TableCell>
+                            {C.TYPE_LABELS[row.type] ?? row.type}
+                          </TableCell>
+                          <TableCell>{row.isTaxable ? C.YES : C.NO}</TableCell>
+                          <TableCell>
+                            {row.isInsurable ? C.YES : C.NO}
+                          </TableCell>
+                          <TableCell>
+                            {C.NATURE_LABELS[row.nature] ?? row.nature}
+                          </TableCell>
+                          <TableCell>
+                            {row.amount === null || row.amount === undefined
+                              ? C.EMPTY_VALUE
+                              : Number(row.amount).toLocaleString("vi-VN")}
+                          </TableCell>
+                          <TableCell>
+                            {row.ratePercent === null ||
+                            row.ratePercent === undefined
+                              ? C.EMPTY_VALUE
+                              : `${Number(row.ratePercent).toLocaleString("vi-VN")}%`}
+                          </TableCell>
+                          <TableCell>
+                            {C.STATUS_LABELS[row.status] ?? row.status}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEdit(row)}
+                              className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* ── Pagination ── */}
+              <div className="flex items-center justify-between px-4 py-4 border-t bg-slate-50/50 dark:bg-transparent">
+                <div className="text-sm text-muted-foreground">
+                  {C.PAGINATION_TOTAL(totalElements)}{" "}
+                  {totalPages === 0 ? 0 : page + 1}/{totalPages}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => p - 1)}
+                    className="gap-1 h-9"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    {C.PAGINATION_PREV}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages - 1 || totalPages === 0}
+                    onClick={() => setPage((p) => p + 1)}
+                    className="gap-1 h-9"
+                  >
+                    {C.PAGINATION_NEXT}
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+      </main>
+
+      <SalaryComponentForm
+        open={modal.open}
+        mode={modal.mode}
+        initialValue={modal.selected}
+        submitting={isSubmitting}
+        serverError={serverError}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
+      />
+    </>
   );
 }

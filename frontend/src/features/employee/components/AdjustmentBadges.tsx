@@ -66,29 +66,55 @@ export const ActiveFilterBadge = ({
   value,
   colorClass,
   onClear,
+  isActive,
+  onClick,
+  showClearButton = true,
 }: {
   value: string;
   colorClass: string;
   onClear: () => void;
-}) => (
-  <span
-    className={cn(
-      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-semibold",
-      colorClass,
-    )}
-  >
-    {value}
-    <button
-      type="button"
-      onPointerDown={(e) => e.stopPropagation()} // prevents Radix DropdownMenuTrigger
-      onClick={(e) => {
-        e.stopPropagation();
-        onClear();
-      }}
-      className="opacity-60 hover:opacity-100 transition-opacity rounded-full"
-      aria-label={SYSTEM_MESSAGES.ADJUSTMENT.BTN_CLEAR + value}
-    >
-      <X className="w-2.5 h-2.5" />
-    </button>
-  </span>
-);
+  isActive?: boolean;
+  onClick?: () => void;
+  showClearButton?: boolean;
+}) => {
+  const className = cn(
+    "inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all select-none",
+    isActive === false
+      ? "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+      : cn(colorClass, "border-current shadow-sm"),
+    isActive && "scale-105",
+  );
+
+  // Clickable chips are rendered as native buttons for keyboard accessibility.
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(className, "cursor-pointer")}
+      >
+        {value}
+      </button>
+    );
+  }
+
+  return (
+    <span className={className}>
+      {value}
+      {showClearButton && (isActive === undefined || isActive) && (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()} // prevents Radix DropdownMenuTrigger
+          onClick={(e) => {
+            e.stopPropagation();
+            onClear();
+          }}
+          className="opacity-60 hover:opacity-100 transition-opacity rounded-full ml-0.5"
+          aria-label={SYSTEM_MESSAGES.ADJUSTMENT.BTN_CLEAR + value}
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
+    </span>
+  );
+};
