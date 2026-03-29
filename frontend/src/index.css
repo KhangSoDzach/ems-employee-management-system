@@ -81,7 +81,8 @@
   html,
   body,
   #root {
-    @apply h-full;
+    @apply h-full overflow-hidden;
+    overscroll-behavior: none;
   }
 
   * {
@@ -109,7 +110,7 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.141 0.005 285.823);
 
-    --primary: oklch(0.58 0.17 27);
+    --primary: oklch(0.6 0.18 190);
     --primary-foreground: oklch(0.985 0 0);
 
     --secondary: oklch(0.967 0.001 286.375);
@@ -126,17 +127,19 @@
 
     --border: oklch(0.92 0.004 286.32);
     --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.58 0.17 27);
+    --ring: oklch(0.6 0.18 190);
 
     /* Sidebar */
     --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-primary: oklch(0.58 0.17 27);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.967 0.001 286.375);
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: oklch(0.58 0.17 27);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: oklch(
+      from var(--primary) l c h / 0.08
+    ); /* Minimal tint */
+    --sidebar-accent-foreground: var(--primary);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
   }
 }
 
@@ -154,8 +157,8 @@
     --popover: oklch(0.19 0.008 264);
     --popover-foreground: oklch(0.94 0.004 264);
 
-    /* Primary — warm rose-red, soft & readable */
-    --primary: oklch(0.63 0.14 24);
+    /* Primary — Modern Teal vibrant for Dark Mode */
+    --primary: oklch(0.7 0.14 185);
     --primary-foreground: oklch(0.99 0 0);
 
     --secondary: oklch(0.25 0.008 264);
@@ -173,17 +176,19 @@
 
     --border: oklch(0.27 0.007 264);
     --input: oklch(0.23 0.007 264);
-    --ring: oklch(0.63 0.14 24);
+    --ring: oklch(0.7 0.14 185);
 
     /* Sidebar — darkest surface for visual depth */
     --sidebar: oklch(0.16 0.007 264);
-    --sidebar-foreground: oklch(0.94 0.004 264);
-    --sidebar-primary: oklch(0.63 0.14 24);
-    --sidebar-primary-foreground: oklch(0.99 0 0);
-    --sidebar-accent: oklch(0.25 0.008 264);
-    --sidebar-accent-foreground: oklch(0.94 0.004 264);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: oklch(
+      from var(--primary) l c h / 0.15
+    ); /* More visible in dark */
+    --sidebar-accent-foreground: var(--primary);
     --sidebar-border: oklch(0.22 0.006 264);
-    --sidebar-ring: oklch(0.63 0.14 24);
+    --sidebar-ring: var(--ring);
   }
 }
 
@@ -225,7 +230,7 @@
      Shared UI utilities
      ========================================= */
   .page-layout-wrapper {
-    @apply flex flex-1 flex-col p-4 md:p-8 bg-gray-50/50 dark:bg-gray-950 min-h-screen;
+    @apply flex flex-1 flex-col p-4 md:p-10 bg-gray-50/50 dark:bg-gray-950;
   }
 
   .content-card {
@@ -242,6 +247,19 @@
 
   .status-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 text-gray-600;
+  }
+
+  /* Layout specific */
+  .page-header-container {
+    @apply flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6;
+  }
+
+  .data-table-container {
+    @apply border rounded-2xl bg-card shadow-sm overflow-hidden flex flex-col;
+  }
+
+  .search-input-wrapper {
+    @apply relative flex-1 min-w-[200px] max-w-sm;
   }
 
   .form-label-bold {
@@ -998,4 +1016,20 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none !important;
+}
+
+/* Edge (legacy + Chromium) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
+/* Một số trường hợp Chrome mới */
+input[type="password"]::-webkit-password-toggle-button {
+  display: none !important;
 }

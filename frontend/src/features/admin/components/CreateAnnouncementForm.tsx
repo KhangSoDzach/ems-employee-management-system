@@ -38,6 +38,7 @@ import {
   type RoleOption,
 } from "@/services/lookupService";
 import { useQuery } from "@tanstack/react-query";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 const formSchema = z.object({
   title: z
@@ -53,9 +54,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const TYPE_OPTIONS = [
-  { value: "POLICY", label: "Chính sách" },
-  { value: "EVENT", label: "Sự kiện" },
-  { value: "OTHER", label: "Khác" },
+  { value: "POLICY", label: SYSTEM_MESSAGES.ANNOUNCEMENT.TYPE_POLICY },
+  { value: "EVENT", label: SYSTEM_MESSAGES.ANNOUNCEMENT.TYPE_EVENT },
+  { value: "OTHER", label: SYSTEM_MESSAGES.ANNOUNCEMENT.TYPE_OTHER },
 ] as const;
 
 const TARGET_OPTIONS = [
@@ -212,7 +213,9 @@ export function CreateAnnouncementForm() {
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-5">
-      <h2 className="text-lg font-semibold">Tạo thông báo nội bộ</h2>
+      <h2 className="text-lg font-semibold">
+        {SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_TITLE}
+      </h2>
 
       <Form {...form}>
         <form onSubmit={onSubmit} className="space-y-4">

@@ -1,9 +1,7 @@
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { CreateAnnouncementForm } from "@/features/admin/components/CreateAnnouncementForm";
 import { Navigate } from "react-router-dom";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 export default function AnnouncementManagementPage() {
   const role = useEffectiveRole();
@@ -13,15 +11,11 @@ export default function AnnouncementManagementPage() {
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar role={role} variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <main className="page-layout-wrapper">
-          <h1 className="page-heading mb-4">Quản lý Thông báo Nội bộ</h1>
-          <CreateAnnouncementForm />
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+    <main className="page-layout-wrapper">
+      <h1 className="page-heading mb-4">
+        {SYSTEM_MESSAGES.ANNOUNCEMENT.TITLE_MGMT}
+      </h1>
+      <CreateAnnouncementForm />
+    </main>
   );
 }
