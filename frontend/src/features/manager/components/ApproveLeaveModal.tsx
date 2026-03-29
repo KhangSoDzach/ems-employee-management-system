@@ -7,10 +7,7 @@ import { leaveService } from "@/services/leaveService";
 import type { LeaveRequest } from "../ApproveLeaveRequest";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
-import {
-  DATETIME_FORMAT,
-  DATE_FORMAT,
-} from "../../employee/adjustment-request.constants";
+import { DATETIME_FORMAT, DATE_FORMAT } from "@/constants/leave-request";
 import {
   ReviewSheetHeader,
   ReviewSheetProfile,

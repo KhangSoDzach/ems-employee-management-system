@@ -1,7 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import {
   Eye,
   Pencil,
@@ -24,7 +21,6 @@ import {
   AssetDetail,
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import {
   Dialog,
   DialogContent,
@@ -44,7 +40,6 @@ const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 export default function AssetManagementPage() {
-  const effectiveRole = useEffectiveRole();
   const [assets, setAssets] = useState<AssetSummary[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -215,348 +210,342 @@ export default function AssetManagementPage() {
   const to = Math.min((page + 1) * PAGE_SIZE, totalElements);
 
   return (
-    <SidebarProvider>
-      <AppSidebar variant="inset" role={effectiveRole} />
+    <>
+      <main className="flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950">
+        {/* ===== HEADER ===== */}
+        <div className="flex items-center justify-between">
+          <h1 className="page-heading">{SYSTEM_MESSAGES.ASSET.TITLE}</h1>
 
-      <SidebarInset>
-        <SiteHeader />
-
-        <main className="flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950">
-          {/* ===== HEADER ===== */}
-          <div className="flex items-center justify-between">
-            <h1 className="page-heading">{SYSTEM_MESSAGES.ASSET.TITLE}</h1>
-
-            <div className="flex items-center gap-4">
-              <input
-                placeholder={SYSTEM_MESSAGES.ASSET.SEARCH_PLACEHOLDER}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="px-4 py-2 w-64 rounded-full bg-gray-100 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                onClick={handleExportAssets}
-                disabled={loading}
-                className="px-5 py-2 flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition gap-2"
-                title="Tải về danh sách tài sản (CSV)"
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-              </button>
-              <button
-                onClick={() => setOpenCreate(true)}
-                className="px-5 py-2 bg-primary text-white rounded-full font-semibold hover:bg-primary/90"
-              >
-                {SYSTEM_MESSAGES.ASSET.BTN_ADD}
-              </button>
-            </div>
+          <div className="flex items-center gap-4">
+            <input
+              placeholder={SYSTEM_MESSAGES.ASSET.SEARCH_PLACEHOLDER}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-4 py-2 w-64 rounded-full bg-gray-100 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <button
+              onClick={handleExportAssets}
+              disabled={loading}
+              className="px-5 py-2 flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition gap-2"
+              title="Tải về danh sách tài sản (CSV)"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              onClick={() => setOpenCreate(true)}
+              className="px-5 py-2 bg-primary text-white rounded-full font-semibold hover:bg-primary/90"
+            >
+              {SYSTEM_MESSAGES.ASSET.BTN_ADD}
+            </button>
           </div>
+        </div>
 
-          {/* ===== FILTER TABS ===== */}
-          <div className="flex gap-3">
-            {STATUS_FILTERS.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setStatusFilter(tab.value)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                  statusFilter === tab.value
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        {/* ===== FILTER TABS ===== */}
+        <div className="flex gap-3">
+          {STATUS_FILTERS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setStatusFilter(tab.value)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                statusFilter === tab.value
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          {/* ===== TABLE ===== */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase text-xs">
+        {/* ===== TABLE ===== */}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase text-xs">
+              <tr>
+                <th className="px-6 py-4 text-left">
+                  {SYSTEM_MESSAGES.ASSET.TABLE_ID}
+                </th>
+                <th className="px-6 py-4 text-left">
+                  {SYSTEM_MESSAGES.ASSET.TABLE_NAME}
+                </th>
+                <th className="px-6 py-4 text-left">
+                  {SYSTEM_MESSAGES.ASSET.TABLE_TYPE}
+                </th>
+                <th className="px-6 py-4 text-left">
+                  {SYSTEM_MESSAGES.ASSET.TABLE_STATUS}
+                </th>
+                <th className="px-6 py-4 text-left">
+                  {SYSTEM_MESSAGES.ASSET.TABLE_USER}
+                </th>
+                <th className="px-6 py-4 text-right">
+                  {SYSTEM_MESSAGES.ASSET.TABLE_ACTIONS}
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
                 <tr>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_ID}
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_NAME}
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_TYPE}
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_STATUS}
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_USER}
-                  </th>
-                  <th className="px-6 py-4 text-right">
-                    {SYSTEM_MESSAGES.ASSET.TABLE_ACTIONS}
-                  </th>
+                  <td colSpan={6} className="py-16 text-center text-gray-400">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                    {SYSTEM_MESSAGES.LOADING}
+                  </td>
                 </tr>
-              </thead>
+              ) : assets.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center text-gray-400">
+                    {SYSTEM_MESSAGES.NO_DATA}
+                  </td>
+                </tr>
+              ) : (
+                assets.map((asset) => (
+                  <tr
+                    key={asset.id}
+                    className="border-t hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  >
+                    <td className="px-6 py-4 font-medium text-gray-700">
+                      {asset.id}
+                    </td>
 
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-gray-400">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                      {SYSTEM_MESSAGES.LOADING}
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-gray-900 dark:text-white">
+                        {asset.name}
+                      </div>
+                      {asset.desc && (
+                        <div className="text-xs text-gray-500">
+                          {asset.desc}
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {asset.type ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span
+                        className={`text-xs font-bold px-3 py-1 rounded-full ${asset.statusColor}`}
+                      >
+                        {ASSET_STATUS_LABELS[asset.status as AssetStatus] ??
+                          asset.status}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4 text-gray-600">
+                      {asset.user ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                    </td>
+
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-3 text-gray-500">
+                        <Eye
+                          size={18}
+                          className="cursor-pointer hover:text-primary"
+                          onClick={() => handleOpenDetail(asset)}
+                        />
+                        <Pencil
+                          size={18}
+                          className="cursor-pointer hover:text-primary"
+                          onClick={() => handleOpenEdit(asset)}
+                        />
+                        <Trash2
+                          size={18}
+                          className="cursor-pointer hover:text-red-500"
+                          onClick={() => {
+                            const identifier = resolveAssetIdentifier(asset);
+                            if (
+                              identifier === null ||
+                              identifier === undefined
+                            ) {
+                              toast.error(SYSTEM_MESSAGES.ERROR);
+                              return;
+                            }
+                            handleDelete(
+                              identifier,
+                              asset.name,
+                              asset.status?.toUpperCase() ?? "",
+                            );
+                          }}
+                        />
+                      </div>
                     </td>
                   </tr>
-                ) : assets.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-gray-400">
-                      {SYSTEM_MESSAGES.NO_DATA}
-                    </td>
-                  </tr>
-                ) : (
-                  assets.map((asset) => (
-                    <tr
-                      key={asset.id}
-                      className="border-t hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                    >
-                      <td className="px-6 py-4 font-medium text-gray-700">
-                        {asset.id}
-                      </td>
+                ))
+              )}
+            </tbody>
+          </table>
 
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {asset.name}
-                        </div>
-                        {asset.desc && (
-                          <div className="text-xs text-gray-500">
-                            {asset.desc}
-                          </div>
-                        )}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {asset.type ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span
-                          className={`text-xs font-bold px-3 py-1 rounded-full ${asset.statusColor}`}
-                        >
-                          {ASSET_STATUS_LABELS[asset.status as AssetStatus] ??
-                            asset.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4 text-gray-600">
-                        {asset.user ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
-                      </td>
-
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-3 text-gray-500">
-                          <Eye
-                            size={18}
-                            className="cursor-pointer hover:text-primary"
-                            onClick={() => handleOpenDetail(asset)}
-                          />
-                          <Pencil
-                            size={18}
-                            className="cursor-pointer hover:text-primary"
-                            onClick={() => handleOpenEdit(asset)}
-                          />
-                          <Trash2
-                            size={18}
-                            className="cursor-pointer hover:text-red-500"
-                            onClick={() => {
-                              const identifier = resolveAssetIdentifier(asset);
-                              if (
-                                identifier === null ||
-                                identifier === undefined
-                              ) {
-                                toast.error(SYSTEM_MESSAGES.ERROR);
-                                return;
-                              }
-                              handleDelete(
-                                identifier,
-                                asset.name,
-                                asset.status?.toUpperCase() ?? "",
-                              );
-                            }}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-
-            {/* ===== PAGINATION ===== */}
-            <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 text-sm">
-              <div className="text-gray-500">
-                {totalElements === 0
-                  ? SYSTEM_MESSAGES.NO_DATA
-                  : `${SYSTEM_MESSAGES.ASSET.PAGINATION_SHOW} ${from}–${to} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ON} ${totalElements} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ITEMS}`}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const pg = totalPages <= 5 ? i : Math.max(0, page - 2) + i;
-                  if (pg >= totalPages) {
-                    return null;
-                  }
-                  return (
-                    <button
-                      key={pg}
-                      onClick={() => setPage(pg)}
-                      className={`w-8 h-8 rounded-full font-bold ${
-                        pg === page
-                          ? "bg-primary text-white"
-                          : "hover:bg-gray-200"
-                      }`}
-                    >
-                      {pg + 1}
-                    </button>
-                  );
-                })}
-                <button
-                  disabled={page >= totalPages - 1}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+          {/* ===== PAGINATION ===== */}
+          <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 text-sm">
+            <div className="text-gray-500">
+              {totalElements === 0
+                ? SYSTEM_MESSAGES.NO_DATA
+                : `${SYSTEM_MESSAGES.ASSET.PAGINATION_SHOW} ${from}–${to} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ON} ${totalElements} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ITEMS}`}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const pg = totalPages <= 5 ? i : Math.max(0, page - 2) + i;
+                if (pg >= totalPages) {
+                  return null;
+                }
+                return (
+                  <button
+                    key={pg}
+                    onClick={() => setPage(pg)}
+                    className={`w-8 h-8 rounded-full font-bold ${
+                      pg === page
+                        ? "bg-primary text-white"
+                        : "hover:bg-gray-200"
+                    }`}
+                  >
+                    {pg + 1}
+                  </button>
+                );
+              })}
+              <button
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => p + 1)}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
-        </main>
+        </div>
+      </main>
 
-        <AssetCreateModal
-          open={openCreate}
-          onClose={() => setOpenCreate(false)}
-          onCreated={() => {
-            fetchList();
-            setOpenCreate(false);
-          }}
-        />
-        <AssetDetailModal
-          open={openDetail}
-          assetId={selectedId}
-          onClose={() => setOpenDetail(false)}
-          onChanged={fetchList}
-        />
-        <AssetEditModal
-          open={openEdit}
-          assetId={
-            selectedAsset?.id ??
-            (typeof selectedId === "number" ? selectedId : null)
+      <AssetCreateModal
+        open={openCreate}
+        onClose={() => setOpenCreate(false)}
+        onCreated={() => {
+          fetchList();
+          setOpenCreate(false);
+        }}
+      />
+      <AssetDetailModal
+        open={openDetail}
+        assetId={selectedId}
+        onClose={() => setOpenDetail(false)}
+        onChanged={fetchList}
+      />
+      <AssetEditModal
+        open={openEdit}
+        assetId={
+          selectedAsset?.id ??
+          (typeof selectedId === "number" ? selectedId : null)
+        }
+        onClose={() => setOpenEdit(false)}
+        onUpdated={() => {
+          fetchList();
+          setOpenEdit(false);
+        }}
+      />
+
+      {/* ===== DELETE CONFIRMATION DIALOG ===== */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setDeleteTarget(null);
           }
-          onClose={() => setOpenEdit(false)}
-          onUpdated={() => {
-            fetchList();
-            setOpenEdit(false);
-          }}
-        />
-
-        {/* ===== DELETE CONFIRMATION DIALOG ===== */}
-        <Dialog
-          open={!!deleteTarget}
-          onOpenChange={(open) => {
-            if (!open && !deleting) {
-              setDeleteTarget(null);
-            }
-          }}
-        >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-red-600">
-                <AlertTriangle className="w-5 h-5" />
-                {deleteTarget?.status?.toUpperCase() === "ASSIGNED"
-                  ? "Không thể xóa tài sản"
-                  : "Xác nhận xóa tài sản"}
-              </DialogTitle>
-              <DialogDescription className="pt-2" asChild>
-                <div>
-                  {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
-                    // ASSIGNED: show guidance to return first
-                    <div className="space-y-3">
-                      <p>
-                        Tài sản{" "}
-                        <span className="font-semibold text-gray-900">
-                          "{deleteTarget?.name}"
-                        </span>{" "}
-                        đang được cấp phát. Phải{" "}
-                        <span className="font-semibold text-orange-600">
-                          thu hồi trước
-                        </span>{" "}
-                        khi xóa.
-                      </p>
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
-                        <p className="font-semibold mb-1">Cách thực hiện:</p>
-                        <p>
-                          Mở chi tiết tài sản → bấm{" "}
-                          <span className="font-bold">Thu hồi</span> → quay lại
-                          và xóa.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    // AVAILABLE / RETIRED: normal confirm
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              {deleteTarget?.status?.toUpperCase() === "ASSIGNED"
+                ? "Không thể xóa tài sản"
+                : "Xác nhận xóa tài sản"}
+            </DialogTitle>
+            <DialogDescription className="pt-2" asChild>
+              <div>
+                {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
+                  // ASSIGNED: show guidance to return first
+                  <div className="space-y-3">
                     <p>
-                      Bạn có chắc muốn xóa tài sản{" "}
+                      Tài sản{" "}
                       <span className="font-semibold text-gray-900">
                         "{deleteTarget?.name}"
-                      </span>
-                      ?
-                      <br />
-                      Hành động này không thể hoàn tác.
+                      </span>{" "}
+                      đang được cấp phát. Phải{" "}
+                      <span className="font-semibold text-orange-600">
+                        thu hồi trước
+                      </span>{" "}
+                      khi xóa.
                     </p>
-                  )}
-                </div>
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 pt-2">
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
+                      <p className="font-semibold mb-1">Cách thực hiện:</p>
+                      <p>
+                        Mở chi tiết tài sản → bấm{" "}
+                        <span className="font-bold">Thu hồi</span> → quay lại và
+                        xóa.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  // AVAILABLE / RETIRED: normal confirm
+                  <p>
+                    Bạn có chắc muốn xóa tài sản{" "}
+                    <span className="font-semibold text-gray-900">
+                      "{deleteTarget?.name}"
+                    </span>
+                    ?
+                    <br />
+                    Hành động này không thể hoàn tác.
+                  </p>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 pt-2">
+            <button
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
+            >
+              Đóng
+            </button>
+            {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
+              // Guide to open detail modal for return
               <button
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleting}
-                className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
+                onClick={() => {
+                  const asset = assets.find((a) => {
+                    const id = resolveAssetIdentifier(a);
+                    return id === deleteTarget?.id;
+                  });
+                  if (asset) {
+                    setDeleteTarget(null);
+                    handleOpenDetail(asset);
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition flex items-center gap-2"
               >
-                Đóng
+                Mở chi tiết để thu hồi
               </button>
-              {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
-                // Guide to open detail modal for return
-                <button
-                  onClick={() => {
-                    const asset = assets.find((a) => {
-                      const id = resolveAssetIdentifier(a);
-                      return id === deleteTarget?.id;
-                    });
-                    if (asset) {
-                      setDeleteTarget(null);
-                      handleOpenDetail(asset);
-                    }
-                  }}
-                  className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition flex items-center gap-2"
-                >
-                  Mở chi tiết để thu hồi
-                </button>
-              ) : (
-                <button
-                  onClick={confirmDelete}
-                  disabled={deleting}
-                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition flex items-center gap-2"
-                >
-                  {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {deleting ? "Đang xóa..." : "Xóa tài sản"}
-                </button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </SidebarInset>
-    </SidebarProvider>
+            ) : (
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition flex items-center gap-2"
+              >
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {deleting ? "Đang xóa..." : "Xóa tài sản"}
+              </button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

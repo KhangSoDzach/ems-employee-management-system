@@ -39,7 +39,7 @@ import {
   PopoverTrigger,
   PopoverArrow,
 } from "@/components/ui/popover";
-import { SECURITY_CONSTANTS as TEXT } from "./security.constants";
+import { SECURITY_CONSTANTS as TEXT } from "@/constants/security";
 import { useTheme } from "@/contexts/useTheme";
 import {
   disable2FA,

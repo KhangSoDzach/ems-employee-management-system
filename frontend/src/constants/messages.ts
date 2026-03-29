@@ -1,5 +1,4 @@
 // src/constants/messages.ts
-
 export const SYSTEM_MESSAGES = {
   // API & Load States
   API_ERROR: "Không thể tải dữ liệu. Vui lòng thử lại.",
@@ -11,7 +10,6 @@ export const SYSTEM_MESSAGES = {
   SELECT_PLACEHOLDER: "Chọn giá trị",
   SUCCESS_UPDATE: "Cập nhật thành công!",
   ERROR: "Có lỗi xảy ra",
-
   // Actions
   BTN_CANCEL: "Hủy bỏ",
   BTN_UPDATE: "Cập nhật",
@@ -22,7 +20,6 @@ export const SYSTEM_MESSAGES = {
   BTN_CLOSE: "Đóng",
   BTN_CONFIRM: "Xác nhận",
   BTN_SUBMIT: "Gửi",
-
   // Common labels
   LABEL_STATUS: "Trạng thái",
   LABEL_DATE: "Ngày",
@@ -35,7 +32,6 @@ export const SYSTEM_MESSAGES = {
   LABEL_CREATED_AT: "Ngày tạo",
   LABEL_ACTION: "Thao tác",
   LABEL_ALL: "Tất cả",
-
   // Sidebar & Navigation
   SIDEBAR: {
     ADMIN_SECTION: "Quản lý hệ thống",
@@ -51,7 +47,6 @@ export const SYSTEM_MESSAGES = {
     MENU_CHECKIN: "Chấm công",
     MENU_REQUEST: "Tạo đơn nghỉ phép",
     MENU_ATTENDANCE_SETTINGS: "Cấu hình chấm công",
-
     MENU_MY_ASSETS: "Tài sản của tôi",
     MENU_MEMBERS: "Thành viên nhóm",
     MENU_KPI: "Thiết lập KPI/OKR",
@@ -82,7 +77,6 @@ export const SYSTEM_MESSAGES = {
     SECTION_PERSONAL: "Cá nhân",
     SECTION_MANAGEMENT: "Quản lý",
   },
-
   // Profile Page
   PROFILE: {
     BREADCRUMB: "Cổng thông tin > Hồ sơ của tôi",
@@ -117,7 +111,6 @@ export const SYSTEM_MESSAGES = {
     LOADING: "Đang xác thực...",
     SUCCESS: "Đăng nhập thành công!",
   },
-
   // Attendance History
   ATTENDANCE_HIST: {
     BREADCRUMB: "Chấm công",
@@ -139,7 +132,6 @@ export const SYSTEM_MESSAGES = {
     UNIT_RECORDS: "bản ghi",
     TOTAL_PREFIX: "Tổng",
   },
-
   // Salary History
   SALARY_HISTORY: {
     TITLE: "Lịch sử kỳ lương",
@@ -169,7 +161,6 @@ export const SYSTEM_MESSAGES = {
     SHEET_DOWNLOAD: "Tải phiếu lương (PDF)",
     SHEET_CLOSE: "Đóng",
   },
-
   // Check-in Page
   CHECKIN: {
     BREADCRUMB: "Cổng thông tin > Chấm công",
@@ -209,7 +200,6 @@ export const SYSTEM_MESSAGES = {
     DONE_CHECKOUT: "Đã hoàn thành Check-out",
     CHECKIN_POLICY_DETAIL: "Chi tiết chính sách chấm công",
   },
-
   // Manager - Approve Adjustments
   MGMT_ADJ: {
     BREADCRUMB_PARENT: "Phê duyệt",
@@ -238,7 +228,6 @@ export const SYSTEM_MESSAGES = {
     MSG_REJECT_SUCCESS: "Đã từ chối yêu cầu.",
     MSG_RETURN_SUCCESS: "Đã trả yêu cầu về nhân viên.",
   },
-
   // Status Labels (Generic)
   STATUS: {
     PENDING: "Chờ duyệt",
@@ -266,7 +255,6 @@ export const SYSTEM_MESSAGES = {
     NOT_CHECKED_IN: "Chưa checkin",
     UNKNOWN: "Không xác định",
   },
-
   // Leave Request
   LEAVE: {
     EMPTY_FILTER_TITLE: "Không tìm thấy kết quả",
@@ -316,7 +304,6 @@ export const SYSTEM_MESSAGES = {
     EMPTY_PENDING: "Không có yêu cầu nghỉ phép nào đang chờ duyệt.",
     MSG_SUBMIT_SUCCESS: "Đơn xin nghỉ phép đã được gửi thành công!",
   },
-
   // File Uploads
   DOCUMENTS: {
     UPLOAD_NEW: "Tải lên tài liệu mới",
@@ -331,7 +318,6 @@ export const SYSTEM_MESSAGES = {
     DOC_2_NAME: "Sơ yếu lý lịch (CV)",
     DOC_3_NAME: "Bằng cấp & Chứng chỉ",
   },
-
   // Adjustment Request
   ADJUSTMENT: {
     EMPTY_FILTER_TITLE: "Không tìm thấy kết quả phù hợp",
@@ -430,6 +416,32 @@ export const SYSTEM_MESSAGES = {
     PAGINATION_SHOW: "Hiển thị",
     PAGINATION_ON: "trên",
     PAGINATION_ITEMS: "tài sản",
+  },
+
+  // Internal Announcement Management
+  ANNOUNCEMENT: {
+    TITLE: "Thông báo nội bộ",
+    TITLE_MGMT: "Quản lý Thông báo Nội bộ",
+    DESC_MGMT: "Xem và xử lý các thông báo, sự kiện và chính sách của công ty.",
+    LIST_TITLE: "Danh sách thông báo",
+    BTN_CREATE: "Tạo thông báo mới",
+    FORM_TITLE: "Tạo thông báo nội bộ",
+    LABEL_TITLE: "Tiêu đề",
+    LABEL_CONTENT: "Nội dung",
+    LABEL_TYPE: "Phân loại",
+    LABEL_TARGET: "Đối tượng nhận",
+    LABEL_SEND_EMAIL: "Tạo & Gửi Gmail",
+    TYPE_POLICY: "Chính sách",
+    TYPE_EVENT: "Sự kiện",
+    TYPE_OTHER: "Khác",
+    EMPTY_LIST: "Không có thông báo nào.",
+    LOADING: "Đang tải thông báo...",
+    MSG_CREATE_SUCCESS: "Tạo thông báo thành công!",
+    MSG_CREATE_ERROR: "Không thể tạo thông báo",
+    MSG_FETCH_ERROR: "Không thể tải danh sách thông báo.",
+    STATUS_READ: "Đã đọc",
+    STATUS_UNREAD: "Chưa đọc",
+    MARK_READ: "Đánh dấu đã đọc",
   },
 
   // Employee Management (Admin Dashboard + HR)
