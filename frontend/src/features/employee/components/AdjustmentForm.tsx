@@ -33,7 +33,7 @@ import {
   DATE_FORMAT,
   FORM_DEFAULTS,
   type AdjustmentFormValues,
-} from "../adjustment-request.constants";
+} from "@/constants/adjustment-request";
 import { CREATE_REQUEST_TEXT } from "@/constants/ui-texts";
 
 export interface AdjustmentFormText {
@@ -58,7 +58,13 @@ interface AdjustmentFormProps {
   text?: AdjustmentFormText;
 }
 
-const RequiredLabel = ({ children, asterisk }: { children: React.ReactNode; asterisk?: string }) => (
+const RequiredLabel = ({
+  children,
+  asterisk,
+}: {
+  children: React.ReactNode;
+  asterisk?: string;
+}) => (
   <FormLabel className="flex items-center gap-1 font-semibold text-slate-700">
     {children}
     {asterisk && (
@@ -76,18 +82,18 @@ export const AdjustmentForm = ({
   loading,
   text = CREATE_REQUEST_TEXT,
 }: AdjustmentFormProps) => {
-  const { 
-    LABEL_DATE, 
-    PLACEHOLDER_DATE, 
-    LABEL_TYPE, 
-    PLACEHOLDER_TYPE, 
-    LABEL_TIME_IN, 
-    LABEL_TIME_OUT, 
-    LABEL_REASON, 
-    PLACEHOLDER_REASON, 
-    BTN_CANCEL, 
-    BTN_SUBMIT, 
-    ASTERISK 
+  const {
+    LABEL_DATE,
+    PLACEHOLDER_DATE,
+    LABEL_TYPE,
+    PLACEHOLDER_TYPE,
+    LABEL_TIME_IN,
+    LABEL_TIME_OUT,
+    LABEL_REASON,
+    PLACEHOLDER_REASON,
+    BTN_CANCEL,
+    BTN_SUBMIT,
+    ASTERISK,
   } = text;
 
   const form = useForm<AdjustmentFormValues>({
@@ -129,7 +135,7 @@ export const AdjustmentForm = ({
                         variant="outline"
                         className={cn(
                           "w-full pl-3 text-left font-normal h-11 rounded-xl border-slate-200 hover:bg-slate-50 transition-colors",
-                          !field.value && "text-muted-foreground"
+                          !field.value && "text-muted-foreground",
                         )}
                       >
                         {field.value ? (
@@ -141,7 +147,10 @@ export const AdjustmentForm = ({
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-xl shadow-xl overflow-hidden border-slate-100" align="start">
+                  <PopoverContent
+                    className="w-auto p-0 rounded-xl shadow-xl overflow-hidden border-slate-100"
+                    align="start"
+                  >
                     <Calendar
                       mode="single"
                       selected={field.value}
@@ -177,7 +186,11 @@ export const AdjustmentForm = ({
                   </FormControl>
                   <SelectContent className="rounded-xl shadow-xl border-slate-100">
                     {ADJUSTMENT_TYPE_OPTIONS.map(([value, config]) => (
-                      <SelectItem key={value} value={value} className="rounded-lg py-2.5">
+                      <SelectItem
+                        key={value}
+                        value={value}
+                        className="rounded-lg py-2.5"
+                      >
                         {config.label}
                       </SelectItem>
                     ))}
@@ -197,7 +210,9 @@ export const AdjustmentForm = ({
               name="timeIn"
               render={({ field }) => (
                 <FormItem>
-                  <RequiredLabel asterisk={ASTERISK}>{LABEL_TIME_IN}</RequiredLabel>
+                  <RequiredLabel asterisk={ASTERISK}>
+                    {LABEL_TIME_IN}
+                  </RequiredLabel>
                   <FormControl>
                     <div className="relative group">
                       <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
@@ -220,7 +235,9 @@ export const AdjustmentForm = ({
               name="timeOut"
               render={({ field }) => (
                 <FormItem>
-                  <RequiredLabel asterisk={ASTERISK}>{LABEL_TIME_OUT}</RequiredLabel>
+                  <RequiredLabel asterisk={ASTERISK}>
+                    {LABEL_TIME_OUT}
+                  </RequiredLabel>
                   <FormControl>
                     <div className="relative group">
                       <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />

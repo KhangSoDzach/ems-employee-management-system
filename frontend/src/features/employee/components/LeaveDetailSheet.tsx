@@ -11,14 +11,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import {
-  AuditEntry,
+  type AuditEntry,
   AUDIT_ACTION_CONFIG,
   CURRENT_USER,
   DATE_FORMAT,
   DATETIME_FORMAT,
   DATETIME_LOG_FORMAT,
-  LeaveRequest,
-} from "../leave-request.constants";
+  type LeaveRequest,
+} from "@/constants/leave-request";
 import { StatusBadge } from "./LeaveBadges";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 

@@ -9,7 +9,7 @@ import {
 import {
   type AdjustmentFormValues,
   type AdjustmentRequest,
-} from "../adjustment-request.constants";
+} from "@/constants/adjustment-request";
 import { EDIT_REQUEST_TEXT as TEXT } from "@/constants/ui-texts";
 import { AdjustmentForm } from "./AdjustmentForm";
 

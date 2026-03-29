@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   PlusCircle,
   CheckCircle2,
+  Play,
 } from "lucide-react";
 
 import { VersionSwitcher } from "@/components/version-switcher";
@@ -84,6 +85,7 @@ export function AppSidebar({
     // 1. Common sections for everyone
     const commonSection = {
       title: SYSTEM_MESSAGES.SIDEBAR.SECTION_PERSONAL,
+      color: "text-primary",
       items: [
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
@@ -98,22 +100,40 @@ export function AppSidebar({
       ],
     };
 
+    // 1.5 Attendance section (Chấm công)
+    const attendanceSection = {
+      title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
+      color: "text-primary",
+      items: [
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
+          url: "/checkin",
+          icon: Play,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE,
+          url: "/attendance",
+          icon: Clock,
+        },
+      ],
+    };
+
     // 2. Create Request (Tạo đơn) - visible for Employee, Manager, HR
     const createSection = {
       title: SYSTEM_MESSAGES.SIDEBAR.SECTION_CREATE,
       id: "create",
       icon: PlusCircle,
-      color: "text-red-500",
+      color: "text-primary",
       isOpen: openCreate,
       setOpen: setOpenCreate,
       items: [
         {
           title: SYSTEM_MESSAGES.REQUEST.CREATE_LEAVE,
-          url: "/request?tab=leave",
+          url: "/leave-request",
         },
         {
           title: SYSTEM_MESSAGES.REQUEST.CREATE_ADJUSTMENT,
-          url: "/request?tab=adjustment",
+          url: "/adjustment-request",
         },
         { title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN, url: "/checkin" },
         { title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE, url: "/attendance" },
@@ -125,7 +145,7 @@ export function AppSidebar({
       title: SYSTEM_MESSAGES.SIDEBAR.SECTION_APPROVE,
       id: "approve",
       icon: CheckCircle2,
-      color: "text-emerald-500",
+      color: "text-primary",
       isOpen: openApprove,
       setOpen: setOpenApprove,
       items: [] as any[],
@@ -136,7 +156,7 @@ export function AppSidebar({
       title: SYSTEM_MESSAGES.SIDEBAR.SECTION_MANAGEMENT,
       id: "manage",
       icon: LayoutDashboard,
-      color: "text-blue-500",
+      color: "text-primary",
       isOpen: openManage,
       setOpen: setOpenManage,
       items: [] as any[],
@@ -167,7 +187,12 @@ export function AppSidebar({
           icon: Settings,
         },
         {
-          title: SYSTEM_MESSAGES.SIDEBAR.MENU_PAYROLL,
+          title: "Cấu hình chính sách",
+          url: "/payroll-config",
+          icon: Settings,
+        },
+        {
+          title: "Chạy tính lương",
           url: "/payroll",
           icon: CreditCard,
         },
@@ -230,7 +255,13 @@ export function AppSidebar({
           icon: AlertCircle,
         },
       ];
-      return [commonSection, createSection, approveSection, manageSection];
+      return [
+        commonSection,
+        attendanceSection,
+        createSection,
+        approveSection,
+        manageSection,
+      ];
     }
 
     if (role === "hr") {
@@ -273,14 +304,14 @@ export function AppSidebar({
           icon: Users,
         },
         {
-          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
-          url: "/assets",
-          icon: Package,
+          title: "Chạy tính lương",
+          url: "/payroll",
+          icon: CreditCard,
         },
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_HR_PAYROLL_PERIOD,
           url: "/hr-payroll-period",
-          icon: CreditCard,
+          icon: Calendar,
         },
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
@@ -288,7 +319,13 @@ export function AppSidebar({
           icon: ShieldCheck,
         },
       ];
-      return [commonSection, createSection, approveSection, manageSection];
+      return [
+        commonSection,
+        attendanceSection,
+        createSection,
+        approveSection,
+        manageSection,
+      ];
     }
 
     // Role: Employee
@@ -309,7 +346,7 @@ export function AppSidebar({
         icon: Users,
       },
     ];
-    return [commonSection, createSection, manageSection];
+    return [commonSection, attendanceSection, createSection, manageSection];
   }, [role, openCreate, openApprove, openManage]);
 
   return (

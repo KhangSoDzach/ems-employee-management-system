@@ -33,6 +33,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.EMAIL_REQUIRED),
@@ -173,32 +174,8 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center bg-background overflow-hidden p-4">
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: "#ffffff",
-          backgroundImage: `
-        radial-gradient(
-          circle at top right,
-          rgba(249, 86, 86, 0.938),
-          transparent 70%
-        )
-      `,
-          filter: "blur(80px)",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-      <div
-        className="absolute inset-0 z-0 opacity-40 pointer-events-none"
-        style={{
-          backgroundImage: `linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)`,
-          backgroundSize: "24px 24px",
-          maskImage: `radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%)`,
-          WebkitMaskImage: `radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%)`,
-        }}
-      />
-      <Card className="w-full max-w-md relative z-10 animate-slide-in-up shadow-2xl border border-muted-foreground/30">
+    <>
+      <Card className="w-full max-w-md animate-slide-in-up">
         <CardHeader className="text-center space-y-2 pb-6">
           <div className="flex aspect-square size-16 mx-auto items-center justify-center rounded-lg bg-sidebar-primary/50 text-sidebar-primary-foreground overflow-hidden mb-2 shadow-sm border border-primary/20">
             <img
@@ -230,12 +207,16 @@ export const LoginPage = () => {
                 <Input
                   id="email"
                   placeholder={SYSTEM_MESSAGES.LOGIN.PLACEHOLDER_EMAIL}
-                  className={`pl-9 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                  className={cn(
+                    "pl-9",
+                    errors.email &&
+                      "border-destructive focus-visible:ring-destructive",
+                  )}
                   {...register("email")}
                 />
               </div>
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-destructive text-xs mt-1">
                   {errors.email.message}
                 </p>
               )}
@@ -255,7 +236,11 @@ export const LoginPage = () => {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder={SYSTEM_MESSAGES.LOGIN.PLACEHOLDER_PASSWORD}
-                  className={`pl-9 pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                  className={cn(
+                    "pl-9 pr-10",
+                    errors.password &&
+                      "border-destructive focus-visible:ring-destructive",
+                  )}
                   {...register("password")}
                 />
 
@@ -272,7 +257,7 @@ export const LoginPage = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-destructive text-xs mt-1">
                   {errors.password.message}
                 </p>
               )}
@@ -463,6 +448,6 @@ export const LoginPage = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };

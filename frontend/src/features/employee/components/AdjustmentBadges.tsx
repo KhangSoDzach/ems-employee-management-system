@@ -6,7 +6,7 @@ import {
   ADJUSTMENT_TYPE_CONFIG,
   type AdjustmentStatus,
   type AdjustmentType,
-} from "../adjustment-request.constants";
+} from "@/constants/adjustment-request";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 /* ══════════════ STATUS BADGE ══════════════ */

@@ -7,7 +7,7 @@ import {
   DATETIME_FORMAT,
   DATE_FORMAT,
   ADJUSTMENT_STATUS_CONFIG,
-} from "../../employee/adjustment-request.constants";
+} from "@/constants/adjustment-request";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { toast } from "sonner";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";

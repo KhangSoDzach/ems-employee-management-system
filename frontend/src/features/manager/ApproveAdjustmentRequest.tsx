@@ -1,7 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ReviewAdjustmentSheet } from "./components/ReviewAdjustmentSheet";
 
 import {
@@ -34,12 +31,12 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import {
   DATE_FORMAT,
-  AdjustmentRequest,
+  type AdjustmentRequest,
   type AuditEntry,
   ADJUSTMENT_STATUS_CONFIG,
   ADJUSTMENT_STATUS_OPTIONS,
   type AdjustmentType,
-} from "../employee/adjustment-request.constants";
+} from "@/constants/adjustment-request";
 import {
   StatusBadge,
   TypeBadge,
@@ -246,292 +243,284 @@ const ApproveAdjustmentRequest: React.FC = () => {
   };
 
   return (
-    <SidebarProvider>
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div>
-              <h1 className="page-heading">{SYSTEM_MESSAGES.MGMT_ADJ.TITLE}</h1>
-              <p className="text-muted-foreground mt-1">
-                {SYSTEM_MESSAGES.MGMT_ADJ.DESC}
-              </p>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1 pl-1">
-                {SYSTEM_MESSAGES.MGMT_ADJ.PENDING_STATS_LABEL}
-              </span>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-foreground">
-                  {pendingCount}
+    <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div>
+          <h1 className="page-heading">{SYSTEM_MESSAGES.MGMT_ADJ.TITLE}</h1>
+          <p className="text-muted-foreground mt-1">
+            {SYSTEM_MESSAGES.MGMT_ADJ.DESC}
+          </p>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1 pl-1">
+            {SYSTEM_MESSAGES.MGMT_ADJ.PENDING_STATS_LABEL}
+          </span>
+          <div className="flex items-baseline gap-3">
+            <span className="text-4xl font-black text-foreground">
+              {pendingCount}
+            </span>
+            {loading && (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+          <div className="relative w-full sm:w-auto sm:min-w-[320px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={SYSTEM_MESSAGES.MGMT_ADJ.SEARCH_PLACEHOLDER}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
+              >
+                <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                <span className="font-semibold text-slate-700">
+                  {SYSTEM_MESSAGES.MGMT_ADJ.FILTER_STATUS}
                 </span>
-                {loading && (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-              <div className="relative w-full sm:w-auto sm:min-w-[320px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder={SYSTEM_MESSAGES.MGMT_ADJ.SEARCH_PLACEHOLDER}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
-                  >
-                    <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-semibold text-slate-700">
-                      {SYSTEM_MESSAGES.MGMT_ADJ.FILTER_STATUS}
-                    </span>
-                    {statusFilter !== "ALL" && (
-                      <ActiveFilterBadge
-                        value={
-                          ADJUSTMENT_STATUS_CONFIG[
-                            statusFilter as keyof typeof ADJUSTMENT_STATUS_CONFIG
-                          ]?.label
-                        }
-                        colorClass={
-                          ADJUSTMENT_STATUS_CONFIG[
-                            statusFilter as keyof typeof ADJUSTMENT_STATUS_CONFIG
-                          ]?.filterClass
-                        }
-                        onClear={() => setStatusFilter("ALL")}
-                      />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 p-1">
-                  <DropdownMenuItem
-                    onClick={() => setStatusFilter("ALL")}
-                    className={cn(
-                      "cursor-pointer text-sm",
-                      statusFilter === "ALL" &&
-                        "bg-muted font-bold text-primary",
-                    )}
-                  >
-                    {SYSTEM_MESSAGES.LABEL_ALL}
-                  </DropdownMenuItem>
-                  {ADJUSTMENT_STATUS_OPTIONS.map(([value, cfg]) => (
-                    <DropdownMenuItem
-                      key={value}
-                      onClick={() => setStatusFilter(value)}
-                      className={cn(
-                        "cursor-pointer",
-                        statusFilter === value
-                          ? "bg-muted font-medium"
-                          : "hover:bg-slate-50",
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5 py-1">
-                        <span
-                          className={cn(
-                            "w-2 h-2 rounded-full inline-block shrink-0",
-                            value === "PENDING" && "bg-amber-500",
-                            value === "APPROVED" && "bg-emerald-500",
-                            value === "REJECTED" && "bg-rose-500",
-                            value === "RETURNED" && "bg-orange-500",
-                          )}
-                        />
-                        {cfg.label}
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {(statusFilter !== "ALL" || searchQuery !== "") && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-10 text-sm text-slate-500 hover:text-primary transition-colors hover:bg-transparent"
-                  onClick={clearAllFilters}
-                >
-                  {SYSTEM_MESSAGES.MGMT_ADJ.BTN_CLEAR_FILTER}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="card-soft mt-2">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40 hover:bg-muted/40">
-                    <TableHead className="py-4 font-semibold text-foreground px-6">
-                      {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_EMP}
-                    </TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">
-                      {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_ADJ_DATE}
-                    </TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">
-                      {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_TYPE}
-                    </TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6">
-                      {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_STATUS}
-                    </TableHead>
-                    <TableHead className="py-4 font-semibold text-foreground px-6 text-right">
-                      {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_ACTIONS}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-32 text-center">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
-                      </TableCell>
-                    </TableRow>
-                  ) : paginatedData.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="h-48 text-center text-muted-foreground"
-                      >
-                        {SYSTEM_MESSAGES.MGMT_ADJ.EMPTY_DATA}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    paginatedData.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
-                        onClick={() => handleRowClick(row)}
-                      >
-                        <TableCell className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9 border border-border">
-                              <AvatarImage src={undefined} />
-                              <AvatarFallback className="bg-muted text-muted-foreground font-semibold text-sm">
-                                {row.auditTrail[0]?.actor?.charAt(0) || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-sm text-foreground">
-                                {row.auditTrail[0]?.actor ||
-                                  SYSTEM_MESSAGES.STATUS.UNKNOWN}
-                              </span>
-                              <span className="text-[11px] font-medium text-muted-foreground">
-                                {SYSTEM_MESSAGES.SYMBOLS.HASH}
-                                {row.id}
-                              </span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 font-medium text-foreground">
-                          {format(row.adjustmentDate, DATE_FORMAT)}
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <TypeBadge type={row.type} />
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <StatusBadge status={row.status} />
-                        </TableCell>
-                        <TableCell className="px-6 py-4 text-right">
-                          <div
-                            className="flex items-center justify-end gap-2"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {(row.status === "PENDING" ||
-                              row.status === "RETURNED") && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  className="h-8 shadow-sm tracking-wide text-xs"
-                                  onClick={() => handleRowClick(row)}
-                                >
-                                  {SYSTEM_MESSAGES.MGMT_ADJ.BTN_APPROVE}
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 shadow-sm font-medium tracking-wide text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-                                  onClick={() => handleRowClick(row)}
-                                >
-                                  {SYSTEM_MESSAGES.MGMT_ADJ.BTN_REJECT}
-                                </Button>
-                              </>
-                            )}
-                            {row.status !== "PENDING" &&
-                              row.status !== "RETURNED" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 font-medium text-muted-foreground"
-                                  onClick={() => handleRowClick(row)}
-                                >
-                                  {SYSTEM_MESSAGES.MGMT_ADJ.BTN_DETAIL}
-                                </Button>
-                              )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Footer */}
-            <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_TOTAL} {totalElementsFiltered}{" "}
-                {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_UNIT}
-              </span>
-              {totalPagesFiltered > 1 && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-7 w-7"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <span className="text-sm font-medium">
-                    {page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH}{" "}
-                    {totalPagesFiltered}
-                  </span>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-7 w-7"
-                    disabled={page >= totalPagesFiltered - 1}
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPagesFiltered - 1, p + 1))
+                {statusFilter !== "ALL" && (
+                  <ActiveFilterBadge
+                    value={
+                      ADJUSTMENT_STATUS_CONFIG[
+                        statusFilter as keyof typeof ADJUSTMENT_STATUS_CONFIG
+                      ]?.label
                     }
+                    colorClass={
+                      ADJUSTMENT_STATUS_CONFIG[
+                        statusFilter as keyof typeof ADJUSTMENT_STATUS_CONFIG
+                      ]?.filterClass
+                    }
+                    onClear={() => setStatusFilter("ALL")}
+                  />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1">
+              <DropdownMenuItem
+                onClick={() => setStatusFilter("ALL")}
+                className={cn(
+                  "cursor-pointer text-sm",
+                  statusFilter === "ALL" && "bg-muted font-bold text-primary",
+                )}
+              >
+                {SYSTEM_MESSAGES.LABEL_ALL}
+              </DropdownMenuItem>
+              {ADJUSTMENT_STATUS_OPTIONS.map(([value, cfg]) => (
+                <DropdownMenuItem
+                  key={value}
+                  onClick={() => setStatusFilter(value)}
+                  className={cn(
+                    "cursor-pointer",
+                    statusFilter === value
+                      ? "bg-muted font-medium"
+                      : "hover:bg-slate-50",
+                  )}
+                >
+                  <div className="flex items-center gap-2.5 py-1">
+                    <span
+                      className={cn(
+                        "w-2 h-2 rounded-full inline-block shrink-0",
+                        value === "PENDING" && "bg-amber-500",
+                        value === "APPROVED" && "bg-emerald-500",
+                        value === "REJECTED" && "bg-rose-500",
+                        value === "RETURNED" && "bg-orange-500",
+                      )}
+                    />
+                    {cfg.label}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {(statusFilter !== "ALL" || searchQuery !== "") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-10 text-sm text-slate-500 hover:text-primary transition-colors hover:bg-transparent"
+              onClick={clearAllFilters}
+            >
+              {SYSTEM_MESSAGES.MGMT_ADJ.BTN_CLEAR_FILTER}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="card-soft mt-2">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableHead className="py-4 font-semibold text-foreground px-6">
+                  {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_EMP}
+                </TableHead>
+                <TableHead className="py-4 font-semibold text-foreground px-6">
+                  {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_ADJ_DATE}
+                </TableHead>
+                <TableHead className="py-4 font-semibold text-foreground px-6">
+                  {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_TYPE}
+                </TableHead>
+                <TableHead className="py-4 font-semibold text-foreground px-6">
+                  {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_STATUS}
+                </TableHead>
+                <TableHead className="py-4 font-semibold text-foreground px-6 text-right">
+                  {SYSTEM_MESSAGES.MGMT_ADJ.TABLE_ACTIONS}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-32 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                  </TableCell>
+                </TableRow>
+              ) : paginatedData.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="h-48 text-center text-muted-foreground"
                   >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
+                    {SYSTEM_MESSAGES.MGMT_ADJ.EMPTY_DATA}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedData.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className="hover:bg-muted/30 transition-colors border-border cursor-pointer group"
+                    onClick={() => handleRowClick(row)}
+                  >
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9 border border-border">
+                          <AvatarImage src={undefined} />
+                          <AvatarFallback className="bg-muted text-muted-foreground font-semibold text-sm">
+                            {row.auditTrail[0]?.actor?.charAt(0) || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-sm text-foreground">
+                            {row.auditTrail[0]?.actor ||
+                              SYSTEM_MESSAGES.STATUS.UNKNOWN}
+                          </span>
+                          <span className="text-[11px] font-medium text-muted-foreground">
+                            {SYSTEM_MESSAGES.SYMBOLS.HASH}
+                            {row.id}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 font-medium text-foreground">
+                      {format(row.adjustmentDate, DATE_FORMAT)}
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <TypeBadge type={row.type} />
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <StatusBadge status={row.status} />
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-right">
+                      <div
+                        className="flex items-center justify-end gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {(row.status === "PENDING" ||
+                          row.status === "RETURNED") && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="h-8 shadow-sm tracking-wide text-xs"
+                              onClick={() => handleRowClick(row)}
+                            >
+                              {SYSTEM_MESSAGES.MGMT_ADJ.BTN_APPROVE}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 shadow-sm font-medium tracking-wide text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                              onClick={() => handleRowClick(row)}
+                            >
+                              {SYSTEM_MESSAGES.MGMT_ADJ.BTN_REJECT}
+                            </Button>
+                          </>
+                        )}
+                        {row.status !== "PENDING" &&
+                          row.status !== "RETURNED" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 font-medium text-muted-foreground"
+                              onClick={() => handleRowClick(row)}
+                            >
+                              {SYSTEM_MESSAGES.MGMT_ADJ.BTN_DETAIL}
+                            </Button>
+                          )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+          <span>
+            {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_TOTAL} {totalElementsFiltered}{" "}
+            {SYSTEM_MESSAGES.MGMT_ADJ.SUMMARY_UNIT}
+          </span>
+          {totalPagesFiltered > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-7 w-7"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-medium">
+                {page + 1} {SYSTEM_MESSAGES.SYMBOLS.SLASH} {totalPagesFiltered}
+              </span>
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-7 w-7"
+                disabled={page >= totalPagesFiltered - 1}
+                onClick={() =>
+                  setPage((p) => Math.min(totalPagesFiltered - 1, p + 1))
+                }
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-          </div>
-        </main>
-      </SidebarInset>
+          )}
+        </div>
+      </div>
 
       <ReviewAdjustmentSheet
         open={openReview}
@@ -541,7 +530,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
         onReject={handleReject}
         onReturn={handleReturn}
       />
-    </SidebarProvider>
+    </main>
   );
 };
 

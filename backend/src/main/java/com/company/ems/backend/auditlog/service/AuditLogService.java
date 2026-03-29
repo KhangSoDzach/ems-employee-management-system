@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -18,6 +17,7 @@ import com.company.ems.backend.auditlog.entity.AuditLog;
 import com.company.ems.backend.auditlog.enums.AuthActionType;
 import com.company.ems.backend.auditlog.repository.AuditLogRepository;
 import com.company.ems.backend.common.dto.PageResponse;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +46,7 @@ public class AuditLogService {
         public record AuditValues(String oldValue, String newValue) {}
 
         private final AuditLogRepository auditLogRepository;
+        private final TransactionTemplate transactionTemplate;
 
         // ─────────────────────────────────────────────────────────────
         // Write operations
@@ -67,7 +68,6 @@ public class AuditLogService {
          * @param result              {@code "SUCCESS"} or {@code "FAILED"}
          * @param ctx                 per-request network context (ip, ua, …)
          */
-        @Transactional(propagation = Propagation.REQUIRES_NEW)
         public void logAuthEvent(
                         AuthActionType actionType,
                         String actor,
@@ -79,7 +79,7 @@ public class AuditLogService {
 
                 try {
                         String newValue = buildNewValue(loginMethod, result);
-                        writeAuditEvent(ENTITY_TYPE_AUTH, actionType, actor, entityId, identifierAttempted,
+                        logEvent(ENTITY_TYPE_AUTH, actionType, actor, entityId, identifierAttempted,
                                         new AuditValues(null, newValue), ctx);
                 } catch (Exception ex) {
                         log.warn("Failed to write audit log [action={}]: {}", actionType, ex.getMessage());
@@ -89,7 +89,6 @@ public class AuditLogService {
         /**
          * Generic audit log entry.
          */
-        @Transactional(propagation = Propagation.REQUIRES_NEW)
         public void logEvent(
                         String entityType,
                         AuthActionType actionType,
@@ -99,7 +98,15 @@ public class AuditLogService {
                         AuditValues values,
                         RequestContext ctx) {
 
-                writeAuditEvent(entityType, actionType, actor, entityId, identifierAttempted, values, ctx);
+                try {
+                        transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRES_NEW);
+                        transactionTemplate.execute(status -> {
+                                writeAuditEvent(entityType, actionType, actor, entityId, identifierAttempted, values, ctx);
+                                return null;
+                        });
+                } catch (Exception ex) {
+                        log.warn("Audit log transaction failed [type={}]: {}", entityType, ex.getMessage());
+                }
         }
 
         @SuppressWarnings("null")
@@ -112,28 +119,24 @@ public class AuditLogService {
                         AuditValues values,
                         RequestContext ctx) {
 
-                try {
-                        RequestContext effectiveCtx = resolveRequestContext(ctx);
+                RequestContext effectiveCtx = resolveRequestContext(ctx);
 
-                        AuditLog auditLog = AuditLog.builder()
-                                        .entityType(entityType)
-                                        .entityId(entityId)
-                                        .actionType(actionType)
-                                        .actor(actor != null ? actor : "ANONYMOUS")
-                                        .identifierAttempted(identifierAttempted)
-                                        .oldValue(values != null ? values.oldValue() : null)
-                                        .newValue(values != null ? values.newValue() : null)
-                                        .ipAddress(effectiveCtx.getIpAddress())
-                                        .userAgent(effectiveCtx.getUserAgent())
-                                        .clientType(effectiveCtx.getClientType())
-                                        .correlationId(effectiveCtx.getCorrelationId())
-                                        .build();
+                AuditLog auditLog = AuditLog.builder()
+                                .entityType(entityType)
+                                .entityId(entityId)
+                                .actionType(actionType)
+                                .actor(actor != null ? actor : "ANONYMOUS")
+                                .identifierAttempted(identifierAttempted)
+                                .oldValue(values != null ? values.oldValue() : null)
+                                .newValue(values != null ? values.newValue() : null)
+                                .ipAddress(effectiveCtx.getIpAddress())
+                                .userAgent(effectiveCtx.getUserAgent())
+                                .clientType(effectiveCtx.getClientType())
+                                .correlationId(effectiveCtx.getCorrelationId())
+                                .build();
 
-                        auditLogRepository.save(auditLog);
-                        log.debug("Audit record saved: type={} action={} actor={}", entityType, actionType, actor);
-                } catch (Exception ex) {
-                        log.warn("Failed to save audit record: {}", ex.getMessage());
-                }
+                auditLogRepository.save(auditLog);
+                log.debug("Audit record saved: type={} action={} actor={}", entityType, actionType, actor);
         }
 
         // ─────────────────────────────────────────────────────────────

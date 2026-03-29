@@ -18,7 +18,7 @@ import {
   DATETIME_LOG_FORMAT,
   type AdjustmentRequest,
   type AuditEntry,
-} from "../adjustment-request.constants";
+} from "@/constants/adjustment-request";
 import { StatusBadge } from "./AdjustmentBadges";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
