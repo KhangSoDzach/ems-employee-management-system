@@ -135,6 +135,8 @@ export function AppSidebar({
           title: SYSTEM_MESSAGES.REQUEST.CREATE_ADJUSTMENT,
           url: "/adjustment-request",
         },
+        { title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN, url: "/checkin" },
+        { title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE, url: "/attendance" },
       ],
     };
 
@@ -168,6 +170,11 @@ export function AppSidebar({
           icon: User,
         },
         {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
+          url: "/my-assets",
+          icon: Package,
+        },
+        {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
           url: "/announcements",
           icon: Bell,
@@ -183,6 +190,16 @@ export function AppSidebar({
           title: "Cấu hình chính sách",
           url: "/payroll-config",
           icon: Settings,
+        },
+        // {
+        //   title: "Chạy tính lương",
+        //   url: "/payroll",
+        //   icon: CreditCard,
+        // },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
+          url: "/audit-logs",
+          icon: ShieldCheck,
         },
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_MANAGE_ANNOUNCEMENTS,
@@ -231,6 +248,11 @@ export function AppSidebar({
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_GROUP_ASSET,
           url: "/view-group-asset",
           icon: Package,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_INCIDENT,
+          url: "/asset-incidents",
+          icon: AlertCircle,
         },
       ];
       return [
@@ -291,6 +313,11 @@ export function AppSidebar({
           url: "/hr-payroll-period",
           icon: Calendar,
         },
+        // {
+        //   title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
+        //   url: "/audit-logs",
+        //   icon: ShieldCheck,
+        // },
       ];
       return [
         commonSection,
