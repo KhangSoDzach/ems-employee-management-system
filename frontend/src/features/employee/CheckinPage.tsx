@@ -401,16 +401,6 @@ export default function CheckinPage() {
 
             <h1 className="text-5xl font-extrabold text-foreground">
               {currentTime}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="w-4 h-4 cursor-pointer" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p>{SYSTEM_MESSAGES.CHECKIN.CHECKIN_POLICY_DETAIL}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </h1>
 
             <p className="text-muted-foreground text-lg">
@@ -464,7 +454,7 @@ export default function CheckinPage() {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => navigate("/request?tab=leave")}
+                onClick={() => navigate("/leave-request")}
                 className="btn-cancel"
               >
                 <Plane className="w-5 h-5 text-muted-foreground" />

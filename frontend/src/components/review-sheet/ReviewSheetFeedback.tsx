@@ -23,7 +23,7 @@ export function ReviewSheetFeedback({
       </h4>
 
       <div
-        className={`bg-white rounded-xl border ${error ? "border-destructive focus-within:ring-destructive/20" : "border-slate-200 focus-within:ring-primary/20"} shadow-sm overflow-hidden transition-all`}
+        className={`bg-background rounded-xl border ${error ? "border-destructive focus-within:ring-destructive/20" : "border-border focus-within:ring-primary/20"} shadow-sm overflow-hidden transition-all`}
       >
         <Textarea
           placeholder={

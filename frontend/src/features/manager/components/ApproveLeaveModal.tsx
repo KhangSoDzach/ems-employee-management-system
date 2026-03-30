@@ -120,7 +120,7 @@ export default function ApproveLeaveDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md md:max-w-lg p-0 bg-slate-50 rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
+        className="w-full sm:max-w-md md:max-w-lg p-0 bg-background rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
       >
         <ReviewSheetHeader
           title={SYSTEM_MESSAGES.LEAVE.SHEET_TITLE}
@@ -145,13 +145,13 @@ export default function ApproveLeaveDialog({
               {SYSTEM_MESSAGES.APPROVE.SECTION_LEAVE_DETAIL}
             </h4>
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-sm">
-              <div className="grid grid-cols-2 divide-x divide-slate-100 border-b">
-                <div className="p-4 bg-muted/5">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden text-sm">
+              <div className="grid grid-cols-2 divide-x divide-border border-b">
+                <div className="p-4 bg-muted/30">
+                  <p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-tight mb-1">
                     {SYSTEM_MESSAGES.LEAVE.CREATE_DATE_START}
                   </p>
-                  <p className="font-bold text-slate-900">
+                  <p className="font-bold text-foreground">
                     {format(
                       new Date(request.startDate + "T00:00:00"),
                       DATE_FORMAT,
@@ -159,10 +159,10 @@ export default function ApproveLeaveDialog({
                   </p>
                 </div>
                 <div className="p-4">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
+                  <p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-tight mb-1">
                     {SYSTEM_MESSAGES.LEAVE.SHEET_END_DATE}
                   </p>
-                  <p className="font-bold text-slate-900">
+                  <p className="font-bold text-foreground">
                     {format(
                       new Date(request.endDate + "T00:00:00"),
                       DATE_FORMAT,
@@ -174,7 +174,7 @@ export default function ApproveLeaveDialog({
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
                   {SYSTEM_MESSAGES.LEAVE.SHEET_TOTAL_TIME}
                 </p>
-                <p className="font-bold text-red-500">
+                <p className="font-bold text-destructive">
                   {request.duration !== null
                     ? `${request.duration} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}`
                     : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
@@ -189,7 +189,7 @@ export default function ApproveLeaveDialog({
               {SYSTEM_MESSAGES.APPROVE.SECTION_REASON_DETAIL}
             </h4>
 
-            <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm italic text-slate-600 font-medium text-sm">
+            <div className="p-4 bg-card border border-border rounded-xl shadow-sm italic text-muted-foreground font-medium text-sm">
               <p className="leading-relaxed">
                 {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                 {request.reason}

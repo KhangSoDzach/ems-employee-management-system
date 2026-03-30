@@ -1,5 +1,5 @@
+import React, { useEffect, useMemo, useState } from "react";
 import { Download, MessageCircle, Star, UserCheck, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -39,6 +39,8 @@ type MemberEvaluationSheetProps = {
   open: boolean;
   mode?: "view" | "edit";
   onOpenChange: (open: boolean) => void;
+  initialScores?: Record<string, number>;
+  initialComment?: string;
   onSubmit?: (data: {
     scores: Record<string, number>;
     comment: string;
@@ -95,8 +97,8 @@ function getEvaluationForMember(
 
   const totalScore = Math.round(
     (criteria.reduce((acc, cur) => acc + cur.score, 0) /
-      (criteria.length * 100)) *
-      100,
+      (criteria.length * SYSTEM_MESSAGES.COMMON.MAX_SCORE)) *
+      SYSTEM_MESSAGES.COMMON.MAX_SCORE,
   );
   const rank =
     totalScore >= 90
@@ -114,6 +116,8 @@ export function MemberEvaluationSheet({
   member,
   open,
   mode = "view",
+  initialScores,
+  initialComment,
   onOpenChange,
   onSubmit,
 }: Readonly<MemberEvaluationSheetProps>) {
@@ -125,17 +129,34 @@ export function MemberEvaluationSheet({
     return getEvaluationForMember(member, t);
   }, [member, t]);
 
-  const [scores, setScores] = useState<Record<string, number>>(() =>
-    Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])),
-  );
-  const [comment, setComment] = useState<string>(t.SHEET_COMMENT_TEXT);
-
-  useEffect(() => {
-    setScores(
+  const [scores, setScores] = useState<Record<string, number>>(
+    () =>
+      initialScores ??
       Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])),
-    );
-    setComment(t.SHEET_COMMENT_TEXT);
-  }, [baseline.criteria, member?.id, t.SHEET_COMMENT_TEXT]);
+  );
+  const [comment, setComment] = useState<string>(
+    initialComment ?? t.SHEET_COMMENT_TEXT,
+  );
+
+  const prevMemberIdRef = React.useRef<number | null>(null);
+  useEffect(() => {
+    // Reset scores only when switching to a DIFFERENT employee, not on mode flip
+    if (member?.id !== prevMemberIdRef.current) {
+      prevMemberIdRef.current = member?.id ?? null;
+      // Use parent-stored scores if available (most recent submission), else baseline
+      setScores(
+        initialScores ??
+          Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])),
+      );
+      setComment(initialComment ?? t.SHEET_COMMENT_TEXT);
+    }
+  }, [
+    member?.id,
+    initialScores,
+    initialComment,
+    baseline.criteria,
+    t.SHEET_COMMENT_TEXT,
+  ]);
 
   const totalScore = useMemo(() => {
     const values = Object.values(scores);
@@ -211,34 +232,34 @@ export function MemberEvaluationSheet({
     const rows = baseline.criteria
       .map(
         (c) =>
-          `<div class="score-row"><span class="label">${c.label}</span><span class="score">${scores[c.key] ?? c.score}/100</span></div>`,
+          `<div class="score-row"><span class="label">${c.label}</span><span class="score">${scores[c.key] ?? c.score}${SYSTEM_MESSAGES.SYMBOLS.SLASH}${SYSTEM_MESSAGES.COMMON.MAX_SCORE}</span></div>`,
       )
       .join("");
-    const html = `<html><head><title>Danh gia - ${member.name}</title>
+    const html = `<html><head><title>${t.EXPORT_PDF_TITLE} - ${member.name}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:32px;color:#1e293b}
         h1{font-size:22px;font-weight:bold;margin-bottom:4px}
         .sub{color:#64748b;font-size:13px;margin-bottom:24px}
         .meta{background:#f8fafc;padding:16px;border-radius:8px;margin-bottom:20px}
         .meta p{margin:4px 0;font-size:14px}
-        .total{background:#fef2f2;border-left:4px solid #e41b21;padding:16px;border-radius:4px;margin-bottom:20px}
+        .total{background:oklch(from var(--primary) l c h / 0.05);border-left:4px solid var(--primary);padding:16px;border-radius:4px;margin-bottom:20px}
         .score-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e2e8f0}
         .label{font-weight:600;font-size:14px}
-        .score{font-weight:bold;color:#e41b21;font-size:16px}
+        .score{font-weight:bold;color:var(--primary);font-size:16px}
         .comment{background:#f8fafc;padding:16px;border-radius:8px;font-size:13px;line-height:1.6;margin-top:20px}
         @media print{body{padding:16px}}
       </style></head><body>
-      <h1>Phiếu đánh giá năng lực</h1>
-      <div class="sub">Ngày xuất: ${new Date().toLocaleDateString("vi-VN")}</div>
+      <h1>${t.EXPORT_PDF_TITLE}</h1>
+      <div class="sub">${t.EXPORT_PDF_DATE}: ${new Date().toLocaleDateString("vi-VN")}</div>
       <div class="meta">
-        <p><strong>Họ và tên:</strong> ${member.name}</p>
-        <p><strong>Email:</strong> ${member.email}</p>
-        <p><strong>Vị trí:</strong> ${member.role}</p>
-        <p><strong>Mã NV:</strong> ${member.id}</p>
+        <p><strong>${t.EXPORT_PDF_NAME}:</strong> ${member.name}</p>
+        <p><strong>${t.EXPORT_PDF_EMAIL}:</strong> ${member.email}</p>
+        <p><strong>${t.EXPORT_PDF_ROLE}:</strong> ${member.role}</p>
+        <p><strong>${t.EXPORT_PDF_EMP_CODE}:</strong> ${member.id}</p>
       </div>
-      <div class="total"><strong>Tổng điểm: ${totalScore}/100 — Xếp loại: ${rank}</strong></div>
+      <div class="total"><strong>${t.EXPORT_PDF_TOTAL_SCORE}: ${totalScore}${SYSTEM_MESSAGES.SYMBOLS.SLASH}${SYSTEM_MESSAGES.COMMON.MAX_SCORE} ${SYSTEM_MESSAGES.SYMBOLS.EM_DASH} ${t.EXPORT_PDF_RANK}: ${rank}</strong></div>
       ${rows}
-      <div class="comment"><strong>Nhận xét:</strong><br/>${comment}</div>
+      <div class="comment"><strong>${t.EXPORT_PDF_COMMENT}:</strong><br/>${comment}</div>
       </body></html>`;
     const win = window.open("", "_blank");
     if (!win) {
@@ -336,7 +357,8 @@ export function MemberEvaluationSheet({
                     {totalScore}
                   </span>
                   <span className="text-slate-400 text-lg font-medium">
-                    {"/100"}
+                    {SYSTEM_MESSAGES.SYMBOLS.SLASH}
+                    {SYSTEM_MESSAGES.COMMON.MAX_SCORE}
                   </span>
                 </div>
               </div>
@@ -386,10 +408,8 @@ export function MemberEvaluationSheet({
             <div className="space-y-3">
               {baseline.criteria.map((criterion) => {
                 const score = scores[criterion.key] ?? criterion.score;
-                const rating = canEdit ? getRating(score) : criterion.rating;
-                const ratingClass = canEdit
-                  ? getRatingClass(score)
-                  : criterion.ratingClass;
+                const rating = getRating(score);
+                const ratingClass = getRatingClass(score);
 
                 return (
                   <div
@@ -419,7 +439,7 @@ export function MemberEvaluationSheet({
                             value={score}
                             onChange={(e) => {
                               const next = Math.min(
-                                100,
+                                SYSTEM_MESSAGES.COMMON.MAX_SCORE,
                                 Math.max(0, Number(e.target.value)),
                               );
                               setScores((prev) => ({
@@ -431,13 +451,15 @@ export function MemberEvaluationSheet({
                             className="w-20 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-9 px-2 text-sm font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                           />
                           <span className="text-sm font-semibold text-slate-500">
-                            {"/ 100"}
+                            {SYSTEM_MESSAGES.SYMBOLS.SLASH}{" "}
+                            {SYSTEM_MESSAGES.COMMON.MAX_SCORE}
                           </span>
                         </div>
                       ) : (
                         <p className="text-slate-900 dark:text-white font-bold text-base">
-                          {criterion.score}
-                          {"/100"}
+                          {score}
+                          {SYSTEM_MESSAGES.SYMBOLS.SLASH}
+                          {SYSTEM_MESSAGES.COMMON.MAX_SCORE}
                         </p>
                       )}
                       <span
@@ -471,10 +493,10 @@ export function MemberEvaluationSheet({
             ) : (
               <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 italic relative">
                 <span className="absolute -top-3 -left-1 text-4xl text-primary/10 font-serif">
-                  {'"'}
+                  {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                 </span>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-                  {t.SHEET_COMMENT_TEXT}
+                  {comment}
                 </p>
                 <div className="mt-4 flex items-center gap-2 not-italic">
                   <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold">

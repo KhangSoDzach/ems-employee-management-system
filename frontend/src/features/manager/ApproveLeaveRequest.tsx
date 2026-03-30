@@ -278,7 +278,7 @@ export default function ApproveLeaveRequest() {
               placeholder={SYSTEM_MESSAGES.APPROVE.SEARCH_EMP}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
+              className="pl-9 h-10 w-full text-sm border-border focus:border-primary focus:ring-primary shadow-sm"
             />
             {search && (
               <button
@@ -294,7 +294,7 @@ export default function ApproveLeaveRequest() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
+                className="h-10 px-4 gap-3 text-sm border-border shadow-sm"
               >
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                 <span className="font-semibold text-slate-700">
@@ -360,7 +360,7 @@ export default function ApproveLeaveRequest() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
+                className="h-10 px-4 gap-3 text-sm border-border shadow-sm"
               >
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                 <span className="font-semibold text-slate-700">
