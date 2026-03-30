@@ -44,7 +44,7 @@ import {
   type LeaveRequest,
   type LeaveStatus,
   type LeaveType,
-} from "./leave-request.constants";
+} from "@/constants/leave-request";
 import { leaveService } from "@/services/leaveService";
 import { employeeService } from "@/services/employeeService";
 import {
@@ -65,7 +65,7 @@ import {
   type AdjustmentRequest,
   type AdjustmentStatus,
   type AdjustmentType,
-} from "./adjustment-request.constants";
+} from "@/constants/adjustment-request";
 import {
   ActiveFilterBadge as ActiveAdjustmentBadge,
   StatusBadge as AdjustmentStatusBadge,
@@ -507,29 +507,31 @@ export default function RequestPage() {
                   {SYSTEM_MESSAGES.REQUEST.FILTER_ALL_STATUS}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {LEAVE_STATUS_OPTIONS.map(([value, config]) => (
-                  <DropdownMenuItem
-                    key={value}
-                    onClick={() => setLeaveStatus(value)}
-                    className={cn(
-                      "cursor-pointer",
-                      leaveStatus === value && "bg-muted font-medium",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "w-2 h-2 rounded-full inline-block shrink-0",
-                          value === "PENDING" && "bg-amber-500",
-                          value === "APPROVED" && "bg-emerald-500",
-                          value === "REJECTED" && "bg-rose-500",
-                          value === "RETURNED" && "bg-orange-500",
-                        )}
-                      />
-                      {config.label}
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+                {(LEAVE_STATUS_OPTIONS as any[]).map(
+                  ([value, config]: [LeaveStatus, any]) => (
+                    <DropdownMenuItem
+                      key={value}
+                      onClick={() => setLeaveStatus(value)}
+                      className={cn(
+                        "cursor-pointer",
+                        leaveStatus === value && "bg-muted font-medium",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "w-2 h-2 rounded-full inline-block shrink-0",
+                            value === "PENDING" && "bg-amber-500",
+                            value === "APPROVED" && "bg-emerald-500",
+                            value === "REJECTED" && "bg-rose-500",
+                            value === "RETURNED" && "bg-orange-500",
+                          )}
+                        />
+                        {config.label}
+                      </div>
+                    </DropdownMenuItem>
+                  ),
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -562,18 +564,20 @@ export default function RequestPage() {
                   {SYSTEM_MESSAGES.REQUEST.FILTER_ALL_TYPE}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {LEAVE_TYPE_OPTIONS.map(([value, config]) => (
-                  <DropdownMenuItem
-                    key={value}
-                    onClick={() => setLeaveType(value)}
-                    className={cn(
-                      "cursor-pointer",
-                      leaveType === value && "bg-muted font-medium",
-                    )}
-                  >
-                    {config.label}
-                  </DropdownMenuItem>
-                ))}
+                {(LEAVE_TYPE_OPTIONS as any[]).map(
+                  ([value, config]: [LeaveType, any]) => (
+                    <DropdownMenuItem
+                      key={value}
+                      onClick={() => setLeaveType(value)}
+                      className={cn(
+                        "cursor-pointer",
+                        leaveType === value && "bg-muted font-medium",
+                      )}
+                    >
+                      {config.label}
+                    </DropdownMenuItem>
+                  ),
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -836,29 +840,31 @@ export default function RequestPage() {
                 >
                   {ALL_LABEL}
                 </DropdownMenuItem>
-                {ADJUSTMENT_STATUS_OPTIONS.map(([value, cfg]) => (
-                  <DropdownMenuItem
-                    key={value}
-                    onClick={() => setAdjStatus(value)}
-                    className={cn(
-                      "cursor-pointer",
-                      adjStatus === value && "bg-muted font-medium",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "w-2 h-2 rounded-full inline-block shrink-0",
-                          value === "PENDING" && "bg-amber-500",
-                          value === "APPROVED" && "bg-emerald-500",
-                          value === "REJECTED" && "bg-rose-500",
-                          value === "RETURNED" && "bg-orange-500",
-                        )}
-                      />
-                      {cfg.label}
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+                {(ADJUSTMENT_STATUS_OPTIONS as any[]).map(
+                  ([value, cfg]: [AdjustmentStatus, any]) => (
+                    <DropdownMenuItem
+                      key={value}
+                      onClick={() => setAdjStatus(value)}
+                      className={cn(
+                        "cursor-pointer",
+                        adjStatus === value && "bg-muted font-medium",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "w-2 h-2 rounded-full inline-block shrink-0",
+                            value === "PENDING" && "bg-amber-500",
+                            value === "APPROVED" && "bg-emerald-500",
+                            value === "REJECTED" && "bg-rose-500",
+                            value === "RETURNED" && "bg-orange-500",
+                          )}
+                        />
+                        {cfg.label}
+                      </div>
+                    </DropdownMenuItem>
+                  ),
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -895,28 +901,30 @@ export default function RequestPage() {
                 >
                   {ALL_LABEL}
                 </DropdownMenuItem>
-                {ADJUSTMENT_TYPE_OPTIONS.map(([value, cfg]) => (
-                  <DropdownMenuItem
-                    key={value}
-                    onClick={() => setAdjType(value)}
-                    className={cn(
-                      "cursor-pointer",
-                      adjType === value && "bg-muted font-medium",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "w-2 h-2 rounded-full inline-block shrink-0",
-                          value === "CHECK_IN" && "bg-indigo-500",
-                          value === "CHECK_OUT" && "bg-violet-500",
-                          value === "BOTH" && "bg-teal-500",
-                        )}
-                      />
-                      {cfg.label}
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+                {(ADJUSTMENT_TYPE_OPTIONS as any[]).map(
+                  ([value, cfg]: [AdjustmentType, any]) => (
+                    <DropdownMenuItem
+                      key={value}
+                      onClick={() => setAdjType(value)}
+                      className={cn(
+                        "cursor-pointer",
+                        adjType === value && "bg-muted font-medium",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "w-2 h-2 rounded-full inline-block shrink-0",
+                            value === "CHECK_IN" && "bg-indigo-500",
+                            value === "CHECK_OUT" && "bg-violet-500",
+                            value === "BOTH" && "bg-teal-500",
+                          )}
+                        />
+                        {cfg.label}
+                      </div>
+                    </DropdownMenuItem>
+                  ),
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 

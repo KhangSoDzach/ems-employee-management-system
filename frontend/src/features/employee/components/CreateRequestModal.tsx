@@ -41,17 +41,17 @@ export const CreateRequestModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] p-0 gap-0 rounded-2xl overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="p-8 bg-slate-50 border-b border-slate-100">
-          <DialogTitle className="text-2xl font-bold text-slate-900 tracking-tight">
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0 rounded-2xl overflow-hidden border border-border bg-background shadow-2xl">
+        <DialogHeader className="p-8 bg-muted/30 border-b border-border">
+          <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
             {TEXT.TITLE}
           </DialogTitle>
-          <DialogDescription className="text-slate-500 mt-2 font-medium">
+          <DialogDescription className="text-muted-foreground mt-2 font-medium">
             {TEXT.DESCRIPTION}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-8 bg-white max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <div className="p-8 bg-card max-h-[70vh] overflow-y-auto custom-scrollbar">
           <AdjustmentForm
             onSubmit={handleFormSubmit}
             onCancel={onClose}

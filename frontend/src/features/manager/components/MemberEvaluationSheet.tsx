@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react"
-import { Download, MessageCircle, Star, UserCheck, X } from "lucide-react"
-import { toast } from "sonner"
+import React, { useEffect, useMemo, useState } from "react";
+import { Download, MessageCircle, Star, UserCheck, X } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   Sheet,
@@ -8,11 +8,11 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { SYSTEM_MESSAGES } from "@/constants/messages"
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations"
+} from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 export type Member = {
   id: number;
@@ -97,8 +97,8 @@ function getEvaluationForMember(
 
   const totalScore = Math.round(
     (criteria.reduce((acc, cur) => acc + cur.score, 0) /
-      (criteria.length * 100)) *
-      100,
+      (criteria.length * SYSTEM_MESSAGES.COMMON.MAX_SCORE)) *
+      SYSTEM_MESSAGES.COMMON.MAX_SCORE,
   );
   const rank =
     totalScore >= 90
@@ -112,65 +112,104 @@ function getEvaluationForMember(
   return { criteria, totalScore, rank, radarPoints };
 }
 
-export function MemberEvaluationSheet({ member, open, mode = "view", initialScores, initialComment, onOpenChange, onSubmit }: Readonly<MemberEvaluationSheetProps>) {
-  const t = SYSTEM_MESSAGES.MEMBER_LIST
+export function MemberEvaluationSheet({
+  member,
+  open,
+  mode = "view",
+  initialScores,
+  initialComment,
+  onOpenChange,
+  onSubmit,
+}: Readonly<MemberEvaluationSheetProps>) {
+  const t = SYSTEM_MESSAGES.MEMBER_LIST;
   const baseline = useMemo(() => {
-    if (!member) { return { criteria: [], totalScore: 0, rank: "", radarPoints: "" }; }
+    if (!member) {
+      return { criteria: [], totalScore: 0, rank: "", radarPoints: "" };
+    }
     return getEvaluationForMember(member, t);
-  }, [member, t])
+  }, [member, t]);
 
-  const [scores, setScores] = useState<Record<string, number>>(() =>
-    initialScores ?? Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score]))
+  const [scores, setScores] = useState<Record<string, number>>(
+    () =>
+      initialScores ??
+      Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])),
   );
-  const [comment, setComment] = useState<string>(initialComment ?? t.SHEET_COMMENT_TEXT);
+  const [comment, setComment] = useState<string>(
+    initialComment ?? t.SHEET_COMMENT_TEXT,
+  );
 
-  const prevMemberIdRef = React.useRef<number | null>(null)
+  const prevMemberIdRef = React.useRef<number | null>(null);
   useEffect(() => {
     // Reset scores only when switching to a DIFFERENT employee, not on mode flip
     if (member?.id !== prevMemberIdRef.current) {
-      prevMemberIdRef.current = member?.id ?? null
+      prevMemberIdRef.current = member?.id ?? null;
       // Use parent-stored scores if available (most recent submission), else baseline
-      setScores(initialScores ?? Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])))
-      setComment(initialComment ?? t.SHEET_COMMENT_TEXT)
+      setScores(
+        initialScores ??
+          Object.fromEntries(baseline.criteria.map((c) => [c.key, c.score])),
+      );
+      setComment(initialComment ?? t.SHEET_COMMENT_TEXT);
     }
-  }, [member?.id, initialScores, baseline.criteria, t.SHEET_COMMENT_TEXT])
+  }, [
+    member?.id,
+    initialScores,
+    initialComment,
+    baseline.criteria,
+    t.SHEET_COMMENT_TEXT,
+  ]);
 
   const totalScore = useMemo(() => {
-    const values = Object.values(scores)
-    if (!values.length) { return 0; }
-    const sum = values.reduce((acc, cur) => acc + cur, 0)
-    return Math.round(sum / values.length)
-  }, [scores])
+    const values = Object.values(scores);
+    if (!values.length) {
+      return 0;
+    }
+    const sum = values.reduce((acc, cur) => acc + cur, 0);
+    return Math.round(sum / values.length);
+  }, [scores]);
 
   const rank = useMemo(() => {
-    if (totalScore >= 90) { return t.SHEET_RANK_A; }
-    if (totalScore >= 80) { return t.SHEET_RANK_B; }
-    return t.SHEET_RANK_C
-  }, [totalScore, t])
+    if (totalScore >= 90) {
+      return t.SHEET_RANK_A;
+    }
+    if (totalScore >= 80) {
+      return t.SHEET_RANK_B;
+    }
+    return t.SHEET_RANK_C;
+  }, [totalScore, t]);
 
   const getRating = (value: number) => {
-    if (value >= 90) { return t.SHEET_RATING_EXCELLENT; }
-    if (value >= 80) { return t.SHEET_RATING_GOOD; }
-    return t.SHEET_RATING_NEEDS_IMPROVEMENT
-  }
+    if (value >= 90) {
+      return t.SHEET_RATING_EXCELLENT;
+    }
+    if (value >= 80) {
+      return t.SHEET_RATING_GOOD;
+    }
+    return t.SHEET_RATING_NEEDS_IMPROVEMENT;
+  };
 
   const getRatingClass = (value: number) => {
-    if (value >= 90) { return "bg-emerald-100 text-emerald-700"; }
-    if (value >= 80) { return "bg-primary/10 text-primary"; }
-    return "bg-amber-100 text-amber-700"
+    if (value >= 90) {
+      return "bg-emerald-100 text-emerald-700";
+    }
+    if (value >= 80) {
+      return "bg-primary/10 text-primary";
+    }
+    return "bg-amber-100 text-amber-700";
+  };
+
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!member) {
+    return null;
   }
-
-  const [submitting, setSubmitting] = useState(false)
-
-  if (!member) { return null; }
 
   const handleSubmit = async () => {
     const hasEmpty = Object.values(scores).some(
       (s) => s === null || s === undefined || Number.isNaN(Number(s)),
     );
     if (hasEmpty) {
-      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT)
-      return
+      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+      return;
     }
     setSubmitting(true);
     try {
@@ -180,56 +219,74 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
       toast.success(t.SHEET_SUBMIT_SUCCESS);
       onOpenChange(false);
     } catch {
-      toast.error(t.SHEET_SUBMIT_ERROR)
+      toast.error(t.SHEET_SUBMIT_ERROR);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleExportPDF = () => {
-    if (!member) { return; }
-    const rows = baseline.criteria.map((c) =>
-      `<div class="score-row"><span class="label">${c.label}</span><span class="score">${scores[c.key] ?? c.score}/100</span></div>`
-    ).join("")
-    const html = `<html><head><title>Danh gia - ${member.name}</title>
+    if (!member) {
+      return;
+    }
+    const rows = baseline.criteria
+      .map(
+        (c) =>
+          `<div class="score-row"><span class="label">${c.label}</span><span class="score">${scores[c.key] ?? c.score}${SYSTEM_MESSAGES.SYMBOLS.SLASH}${SYSTEM_MESSAGES.COMMON.MAX_SCORE}</span></div>`,
+      )
+      .join("");
+    const html = `<html><head><title>${t.EXPORT_PDF_TITLE} - ${member.name}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:32px;color:#1e293b}
         h1{font-size:22px;font-weight:bold;margin-bottom:4px}
         .sub{color:#64748b;font-size:13px;margin-bottom:24px}
         .meta{background:#f8fafc;padding:16px;border-radius:8px;margin-bottom:20px}
         .meta p{margin:4px 0;font-size:14px}
-        .total{background:#fef2f2;border-left:4px solid #e41b21;padding:16px;border-radius:4px;margin-bottom:20px}
+        .total{background:oklch(from var(--primary) l c h / 0.05);border-left:4px solid var(--primary);padding:16px;border-radius:4px;margin-bottom:20px}
         .score-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e2e8f0}
         .label{font-weight:600;font-size:14px}
-        .score{font-weight:bold;color:#e41b21;font-size:16px}
+        .score{font-weight:bold;color:var(--primary);font-size:16px}
         .comment{background:#f8fafc;padding:16px;border-radius:8px;font-size:13px;line-height:1.6;margin-top:20px}
         @media print{body{padding:16px}}
       </style></head><body>
-      <h1>Phiếu đánh giá năng lực</h1>
-      <div class="sub">Ngày xuất: ${new Date().toLocaleDateString("vi-VN")}</div>
+      <h1>${t.EXPORT_PDF_TITLE}</h1>
+      <div class="sub">${t.EXPORT_PDF_DATE}: ${new Date().toLocaleDateString("vi-VN")}</div>
       <div class="meta">
-        <p><strong>Họ và tên:</strong> ${member.name}</p>
-        <p><strong>Email:</strong> ${member.email}</p>
-        <p><strong>Vị trí:</strong> ${member.role}</p>
-        <p><strong>Mã NV:</strong> ${member.id}</p>
+        <p><strong>${t.EXPORT_PDF_NAME}:</strong> ${member.name}</p>
+        <p><strong>${t.EXPORT_PDF_EMAIL}:</strong> ${member.email}</p>
+        <p><strong>${t.EXPORT_PDF_ROLE}:</strong> ${member.role}</p>
+        <p><strong>${t.EXPORT_PDF_EMP_CODE}:</strong> ${member.id}</p>
       </div>
-      <div class="total"><strong>Tổng điểm: ${totalScore}/100 — Xếp loại: ${rank}</strong></div>
+      <div class="total"><strong>${t.EXPORT_PDF_TOTAL_SCORE}: ${totalScore}${SYSTEM_MESSAGES.SYMBOLS.SLASH}${SYSTEM_MESSAGES.COMMON.MAX_SCORE} ${SYSTEM_MESSAGES.SYMBOLS.EM_DASH} ${t.EXPORT_PDF_RANK}: ${rank}</strong></div>
       ${rows}
-      <div class="comment"><strong>Nhận xét:</strong><br/>${comment}</div>
-      </body></html>`
-    const win = window.open("", "_blank")
-    if (!win) { toast.error(t.SHEET_EXPORT_POPUP_ERROR); return; }
-    win.document.write(html)
-    win.document.close()
-    win.focus()
-    setTimeout(() => { win.print(); win.close() }, 300)
-    toast.success(t.SHEET_EXPORT_SUCCESS)
-  }
+      <div class="comment"><strong>${t.EXPORT_PDF_COMMENT}:</strong><br/>${comment}</div>
+      </body></html>`;
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error(t.SHEET_EXPORT_POPUP_ERROR);
+      return;
+    }
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+      win.print();
+      win.close();
+    }, 300);
+    toast.success(t.SHEET_EXPORT_SUCCESS);
+  };
 
   const canEdit = mode === "edit";
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) { onOpenChange(false); } }}>
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          onOpenChange(false);
+        }
+      }}
+    >
       <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl">
         <div className="px-5 py-4 border-b bg-muted/10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
@@ -257,8 +314,13 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
                   {member.name}
                 </p>
                 <p className="text-xs text-muted-foreground">{member.email}</p>
-                <p className="text-sm font-medium text-primary mt-1">{member.role}</p>
-                <p className="text-xs text-muted-foreground">{t.SHEET_EMP_CODE_LABEL}{":"} {member.id}</p>
+                <p className="text-sm font-medium text-primary mt-1">
+                  {member.role}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t.SHEET_EMP_CODE_LABEL}
+                  {":"} {member.id}
+                </p>
               </div>
             </div>
 
@@ -291,8 +353,13 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
                   {t.SHEET_TOTAL_SCORE}
                 </p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-primary text-3xl font-bold leading-tight">{totalScore}</span>
-                  <span className="text-slate-400 text-lg font-medium">{"/100"}</span>
+                  <span className="text-primary text-3xl font-bold leading-tight">
+                    {totalScore}
+                  </span>
+                  <span className="text-slate-400 text-lg font-medium">
+                    {SYSTEM_MESSAGES.SYMBOLS.SLASH}
+                    {SYSTEM_MESSAGES.COMMON.MAX_SCORE}
+                  </span>
                 </div>
               </div>
               <div className="flex flex-col gap-1 rounded-lg p-3 bg-white dark:bg-slate-900 shadow-sm border-l-4 border-emerald-500">
@@ -372,7 +439,7 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
                             value={score}
                             onChange={(e) => {
                               const next = Math.min(
-                                100,
+                                SYSTEM_MESSAGES.COMMON.MAX_SCORE,
                                 Math.max(0, Number(e.target.value)),
                               );
                               setScores((prev) => ({
@@ -383,11 +450,16 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
                             placeholder={t.SHEET_SCORE_PLACEHOLDER}
                             className="w-20 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-9 px-2 text-sm font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                           />
-                          <span className="text-sm font-semibold text-slate-500">{"/ 100"}</span>
+                          <span className="text-sm font-semibold text-slate-500">
+                            {SYSTEM_MESSAGES.SYMBOLS.SLASH}{" "}
+                            {SYSTEM_MESSAGES.COMMON.MAX_SCORE}
+                          </span>
                         </div>
                       ) : (
                         <p className="text-slate-900 dark:text-white font-bold text-base">
-                          {score}{"/100"}
+                          {score}
+                          {SYSTEM_MESSAGES.SYMBOLS.SLASH}
+                          {SYSTEM_MESSAGES.COMMON.MAX_SCORE}
                         </p>
                       )}
                       <span
@@ -420,7 +492,9 @@ export function MemberEvaluationSheet({ member, open, mode = "view", initialScor
               </div>
             ) : (
               <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 italic relative">
-                <span className="absolute -top-3 -left-1 text-4xl text-primary/10 font-serif">{'"'}</span>
+                <span className="absolute -top-3 -left-1 text-4xl text-primary/10 font-serif">
+                  {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                </span>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                   {comment}
                 </p>

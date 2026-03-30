@@ -1120,6 +1120,7 @@ export const SYSTEM_MESSAGES = {
     METHOD_MANUAL: "Thủ công",
     CURRENCY_VND: " VNĐ",
     DEFAULT_PAGE_SIZE: 5,
+    MAX_SCORE: 100,
   },
 
   // KPI/OKR Management
@@ -1215,6 +1216,25 @@ export const SYSTEM_MESSAGES = {
     LOADING_LIST: "Đang tải danh sách thành viên…",
     ERROR_FETCH: "Không thể tải danh sách. Vui lòng thử lại.",
     EMPTY_LIST: "Không tìm thấy thành viên nào.",
+    PROMPT_PERIOD: "Nhập kỳ đánh giá (ví dụ: 2026-Q1, 2026-H1, 2026-ANNUAL)",
+    ERROR_PERIOD_FORMAT: "Kỳ đánh giá không đúng định dạng",
+    ERROR_OPEN_CYCLE: "Lỗi khi mở đợt đánh giá",
+    BTN_OPEN_CYCLE_PENDING: "Đang mở đợt...",
+    BTN_OPEN_CYCLE: "Mở đợt đánh giá (3 ngày)",
+    ERROR_NO_ACTIVE_CYCLE: "Hiện chưa có đợt đánh giá đang mở",
+    ACTIVE_CYCLE_INFO: (period: string, date: string) =>
+      `Đợt đánh giá ${period} đang mở đến ${date}`,
+    SUCCESS_OPEN_CYCLE: "Đã mở đợt đánh giá thành công!",
+    PERIOD_EXAMPLE: "Ví dụ: 2026-Q1, 2026-ANNUAL...",
+    EXPORT_PDF_TITLE: "Phiếu đánh giá năng lực",
+    EXPORT_PDF_DATE: "Ngày xuất",
+    EXPORT_PDF_NAME: "Họ và tên",
+    EXPORT_PDF_EMAIL: "Email",
+    EXPORT_PDF_ROLE: "Vị trí",
+    EXPORT_PDF_EMP_CODE: "Mã NV",
+    EXPORT_PDF_TOTAL_SCORE: "Tổng điểm",
+    EXPORT_PDF_RANK: "Xếp loại",
+    EXPORT_PDF_COMMENT: "Nhận xét",
 
     // Evaluation sheet
     SHEET_TITLE: "Chi tiết đánh giá",

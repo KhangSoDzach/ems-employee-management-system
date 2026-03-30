@@ -276,7 +276,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
               placeholder={SYSTEM_MESSAGES.MGMT_ADJ.SEARCH_PLACEHOLDER}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-10 w-full text-sm border-slate-200 focus:border-primary focus:ring-primary shadow-sm"
+              className="pl-9 h-10 w-full text-sm border-border focus:border-primary focus:ring-primary shadow-sm"
             />
             {searchQuery && (
               <button
@@ -292,7 +292,7 @@ const ApproveAdjustmentRequest: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-10 px-4 gap-3 text-sm border-slate-200 shadow-sm"
+                className="h-10 px-4 gap-3 text-sm border-border shadow-sm"
               >
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                 <span className="font-semibold text-slate-700">
