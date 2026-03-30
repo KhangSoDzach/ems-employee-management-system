@@ -191,11 +191,11 @@ export function AppSidebar({
           url: "/payroll-config",
           icon: Settings,
         },
-        {
-          title: "Chạy tính lương",
-          url: "/payroll",
-          icon: CreditCard,
-        },
+        // {
+        //   title: "Chạy tính lương",
+        //   url: "/payroll",
+        //   icon: CreditCard,
+        // },
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
           url: "/audit-logs",
@@ -313,11 +313,11 @@ export function AppSidebar({
           url: "/hr-payroll-period",
           icon: Calendar,
         },
-        {
-          title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
-          url: "/audit-logs",
-          icon: ShieldCheck,
-        },
+        // {
+        //   title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
+        //   url: "/audit-logs",
+        //   icon: ShieldCheck,
+        // },
       ];
       return [
         commonSection,
