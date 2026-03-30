@@ -65,7 +65,7 @@ const RequiredLabel = ({
   children: React.ReactNode;
   asterisk?: string;
 }) => (
-  <FormLabel className="flex items-center gap-1 font-semibold text-slate-700">
+  <FormLabel className="flex items-center gap-1 font-semibold text-foreground/80">
     {children}
     {asterisk && (
       <span className="text-destructive font-bold text-lg leading-none">
@@ -134,7 +134,7 @@ export const AdjustmentForm = ({
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full pl-3 text-left font-normal h-11 rounded-xl border-slate-200 hover:bg-slate-50 transition-colors",
+                          "w-full pl-3 text-left font-normal h-11 rounded-xl border-border hover:bg-accent transition-colors",
                           !field.value && "text-muted-foreground",
                         )}
                       >
@@ -148,7 +148,7 @@ export const AdjustmentForm = ({
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="w-auto p-0 rounded-xl shadow-xl overflow-hidden border-slate-100"
+                    className="w-auto p-0 rounded-xl shadow-xl overflow-hidden border-border"
                     align="start"
                   >
                     <Calendar
@@ -180,11 +180,11 @@ export const AdjustmentForm = ({
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-11 rounded-xl border-slate-200 hover:bg-slate-50 transition-colors">
+                    <SelectTrigger className="h-11 rounded-xl border-border hover:bg-accent transition-colors">
                       <SelectValue placeholder={PLACEHOLDER_TYPE} />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="rounded-xl shadow-xl border-slate-100">
+                  <SelectContent className="rounded-xl shadow-xl border-border">
                     {ADJUSTMENT_TYPE_OPTIONS.map(([value, config]) => (
                       <SelectItem
                         key={value}
@@ -215,11 +215,11 @@ export const AdjustmentForm = ({
                   </RequiredLabel>
                   <FormControl>
                     <div className="relative group">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
                         type="time"
                         {...field}
-                        className="h-11 pl-10 rounded-xl border-slate-200 focus:ring-primary focus:border-primary transition-all"
+                        className="h-11 pl-10 rounded-xl border-border focus:ring-primary focus:border-primary transition-all"
                       />
                     </div>
                   </FormControl>
@@ -240,11 +240,11 @@ export const AdjustmentForm = ({
                   </RequiredLabel>
                   <FormControl>
                     <div className="relative group">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
                         type="time"
                         {...field}
-                        className="h-11 pl-10 rounded-xl border-slate-200 focus:ring-primary focus:border-primary transition-all"
+                        className="h-11 pl-10 rounded-xl border-border focus:ring-primary focus:border-primary transition-all"
                       />
                     </div>
                   </FormControl>
@@ -265,7 +265,7 @@ export const AdjustmentForm = ({
               <FormControl>
                 <Textarea
                   placeholder={PLACEHOLDER_REASON}
-                  className="min-h-[120px] rounded-xl border-slate-200 resize-none focus:ring-primary focus:border-primary transition-all p-4"
+                  className="min-h-[120px] rounded-xl border-border resize-none focus:ring-primary focus:border-primary transition-all p-4"
                   {...field}
                 />
               </FormControl>
@@ -278,7 +278,7 @@ export const AdjustmentForm = ({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 h-12 rounded-xl font-bold border-slate-200 text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
+            className="flex-1 h-12 rounded-xl font-bold border-border text-muted-foreground hover:bg-accent transition-all hover:text-foreground"
             onClick={onCancel}
           >
             {BTN_CANCEL}

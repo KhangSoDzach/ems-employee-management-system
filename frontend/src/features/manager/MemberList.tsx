@@ -26,6 +26,14 @@ import {
   useSaveReview,
 } from "./hooks/usePerformanceReview";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 // Role badge colour is a UI concern only — derive it from position title
@@ -109,6 +117,10 @@ export default function MemberList() {
     search: debouncedSearch || undefined,
   });
 
+  const [isCycleDialogOpen, setIsCycleDialogOpen] = useState(false);
+  const [periodInput, setPeriodInput] = useState("");
+  const [periodError, setPeriodError] = useState<string | null>(null);
+
   const totalPages = data?.totalPages ?? 1;
   const totalElements = data?.totalElements ?? 0;
   const activeCycleQuery = useActiveReviewCycle();
@@ -132,23 +144,34 @@ export default function MemberList() {
     [data, user?.id],
   );
 
-  const handleOpenCycle = async () => {
-    const periodInput = globalThis.prompt(
-      "Nhập kỳ đánh giá (ví dụ: 2026-Q1, 2026-H1, 2026-ANNUAL)",
-    );
-    if (!periodInput) {
-      return;
-    }
-
+  const confirmOpenCycle = async () => {
     const normalized = periodInput.trim().toUpperCase();
     const periodRegex = /^\d{4}-(Q[1-4]|H[12]|ANNUAL)$/;
     if (!periodRegex.test(normalized)) {
-      toast.error("Kỳ đánh giá không đúng định dạng");
+      setPeriodError(t.ERROR_PERIOD_FORMAT);
       return;
     }
 
-    await openCycleMutation.mutateAsync({ reviewPeriod: normalized });
-    await activeCycleQuery.refetch();
+    setPeriodError(null);
+
+    try {
+      await toast.promise(
+        openCycleMutation.mutateAsync({ reviewPeriod: normalized }),
+        {
+          loading: t.BTN_OPEN_CYCLE_PENDING,
+          success: () => {
+            activeCycleQuery.refetch();
+            setIsCycleDialogOpen(false);
+            setPeriodInput("");
+            return t.SUCCESS_OPEN_CYCLE;
+          },
+          error: (err) =>
+            err?.response?.data?.message || err?.message || t.ERROR_OPEN_CYCLE,
+        },
+      );
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -160,10 +183,12 @@ export default function MemberList() {
               <h1 className="page-heading">{t.TITLE}</h1>
               <p className="text-muted-foreground mt-1">{t.DESC}</p>
               {activeCycleQuery.data && (
-                <p className="text-xs text-emerald-600 mt-1 font-medium">
-                  Đợt đánh giá {activeCycleQuery.data.reviewPeriod} đang mở đến{" "}
-                  {new Date(activeCycleQuery.data.endAt).toLocaleString(
-                    "vi-VN",
+                <p className="text-xs text-primary mt-1 font-medium">
+                  {t.ACTIVE_CYCLE_INFO(
+                    activeCycleQuery.data.reviewPeriod,
+                    new Date(activeCycleQuery.data.endAt).toLocaleString(
+                      "vi-VN",
+                    ),
                   )}
                 </p>
               )}
@@ -172,12 +197,12 @@ export default function MemberList() {
               {effectiveRole !== "employee" && (
                 <Button
                   type="button"
-                  onClick={handleOpenCycle}
+                  onClick={() => setIsCycleDialogOpen(true)}
                   disabled={openCycleMutation.isPending}
                 >
                   {openCycleMutation.isPending
-                    ? "Đang mở đợt..."
-                    : "Mở đợt đánh giá (3 ngày)"}
+                    ? t.BTN_OPEN_CYCLE_PENDING
+                    : t.BTN_OPEN_CYCLE}
                 </Button>
               )}
 
@@ -340,7 +365,7 @@ export default function MemberList() {
                     key={i}
                     size="icon"
                     variant={i === page ? "default" : "ghost"}
-                    className={`w-8 h-8 ${i === page ? "bg-[#e41b21] hover:bg-[#c9181d] text-white" : ""}`}
+                    className={`w-8 h-8 ${i === page ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : ""}`}
                     onClick={() => setPage(i)}
                   >
                     {i + 1}
@@ -382,7 +407,7 @@ export default function MemberList() {
             return;
           }
           if (!activeCycleQuery.data?.reviewPeriod) {
-            toast.error("Hiện chưa có đợt đánh giá đang mở");
+            toast.error(t.ERROR_NO_ACTIVE_CYCLE);
             return;
           }
 
@@ -401,6 +426,68 @@ export default function MemberList() {
           setSelectedMember(null);
         }}
       />
+      <Dialog
+        open={isCycleDialogOpen}
+        onOpenChange={(open) => {
+          setIsCycleDialogOpen(open);
+          if (!open) {
+            setPeriodInput("");
+            setPeriodError(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="font-bold text-xl text-primary">
+              {t.BTN_OPEN_CYCLE}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {t.PROMPT_PERIOD}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            <Input
+              placeholder={t.PERIOD_EXAMPLE}
+              value={periodInput}
+              onChange={(e) => {
+                setPeriodInput(e.target.value);
+                setPeriodError(null);
+              }}
+              className={`font-mono uppercase ${periodError ? "border-destructive ring-destructive" : ""}`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  confirmOpenCycle();
+                }
+              }}
+            />
+            {periodError && (
+              <p className="text-[11px] font-medium text-destructive animate-in fade-in slide-in-from-top-1">
+                {periodError} {SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}
+                {t.PERIOD_EXAMPLE}
+                {SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}
+              </p>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="ghost"
+              onClick={() => setIsCycleDialogOpen(false)}
+              className="rounded-xl"
+            >
+              {SYSTEM_MESSAGES.BTN_CANCEL}
+            </Button>
+            <Button
+              onClick={confirmOpenCycle}
+              disabled={openCycleMutation.isPending}
+              className="rounded-xl bg-primary hover:bg-primary/90 text-white shadow-md px-6"
+            >
+              {openCycleMutation.isPending
+                ? t.BTN_OPEN_CYCLE_PENDING
+                : SYSTEM_MESSAGES.BTN_CONFIRM}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -98,7 +98,7 @@ export function ReviewAdjustmentSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md md:max-w-lg p-0 bg-slate-50 rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
+        className="w-full sm:max-w-md md:max-w-lg p-0 bg-background rounded-l-2xl flex flex-col border-l shadow-2xl overflow-hidden"
       >
         {request && (
           <ReviewSheetHeader
@@ -127,13 +127,13 @@ export function ReviewAdjustmentSheet({
                   {SYSTEM_MESSAGES.APPROVE.SECTION_LEAVE_DETAIL}
                 </h4>
                 <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-slate-200 group-hover:bg-blue-400 transition-colors"></div>
+                  <div className="flex items-center justify-between bg-card p-6 rounded-xl border border-border shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-border group-hover:bg-primary transition-colors"></div>
                     <div className="flex flex-col z-10">
-                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1.5">
+                      <span className="text-[10px] text-muted-foreground/60 uppercase font-bold tracking-widest mb-1.5">
                         {SYSTEM_MESSAGES.REVIEW.ORIGINAL}
                       </span>
-                      <span className="font-black text-xl text-slate-700 tracking-tight">
+                      <span className="font-black text-xl text-foreground/80 tracking-tight">
                         {request.originalTimeIn && request.originalTimeOut
                           ? `${request.originalTimeIn} - ${request.originalTimeOut}`
                           : request.originalTimeIn ||
@@ -141,14 +141,14 @@ export function ReviewAdjustmentSheet({
                             SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                       </span>
                     </div>
-                    <div className="bg-slate-50 p-2 rounded-full border border-slate-100 mx-2">
-                      <ArrowRight className="text-slate-300 h-5 w-5" />
+                    <div className="bg-muted p-2 rounded-full border border-border mx-2">
+                      <ArrowRight className="text-muted-foreground/40 h-5 w-5" />
                     </div>
                     <div className="flex flex-col text-right z-10">
                       <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest mb-1.5">
                         {SYSTEM_MESSAGES.REVIEW.PROPOSED}
                       </span>
-                      <span className="font-black text-xl text-slate-900 tracking-tight">
+                      <span className="font-black text-xl text-foreground tracking-tight">
                         {request.proposedTimeIn && request.proposedTimeOut
                           ? `${request.proposedTimeIn} - ${request.proposedTimeOut}`
                           : request.proposedTimeIn ||
@@ -158,10 +158,10 @@ export function ReviewAdjustmentSheet({
                     </div>
                   </div>
                   <div className="flex items-center justify-between px-2">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">
                       {SYSTEM_MESSAGES.LABEL_DATE}
                     </span>
-                    <span className="text-sm font-semibold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">
+                    <span className="text-sm font-semibold text-foreground bg-muted px-3 py-1 rounded-lg">
                       {format(request.adjustmentDate, DATE_FORMAT)}
                     </span>
                   </div>
@@ -173,7 +173,7 @@ export function ReviewAdjustmentSheet({
                 <h4 className="section-title-muted uppercase tracking-wider">
                   {SYSTEM_MESSAGES.APPROVE.SECTION_REASON_DETAIL}
                 </h4>
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm italic text-slate-600 font-medium leading-relaxed decoration-slate-100">
+                <div className="bg-card p-5 rounded-xl border border-border shadow-sm italic text-muted-foreground font-medium leading-relaxed decoration-border">
                   <p>
                     {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                     {request.reason}
