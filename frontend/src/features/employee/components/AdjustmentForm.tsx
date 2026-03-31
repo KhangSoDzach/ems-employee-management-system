@@ -29,11 +29,13 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ADJUSTMENT_TYPE_OPTIONS,
-  adjustmentSchema,
   DATE_FORMAT,
   FORM_DEFAULTS,
-  type AdjustmentFormValues,
 } from "@/constants/adjustment-request";
+import {
+  type AdjustmentFormValues,
+  adjustmentSchema,
+} from "@/features/employee/schemas/adjustment.schema";
 import { CREATE_REQUEST_TEXT } from "@/constants/ui-texts";
 
 export interface AdjustmentFormText {

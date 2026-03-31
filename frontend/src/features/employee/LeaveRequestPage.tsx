@@ -40,11 +40,11 @@ import {
   LEAVE_STATUS_OPTIONS,
   LEAVE_TYPE_CONFIG,
   LEAVE_TYPE_OPTIONS,
-  type LeaveFormValues,
   type LeaveRequest,
   type LeaveStatus,
   type LeaveType,
 } from "@/constants/leave-request";
+import { type LeaveFormValues } from "@/features/employee/schemas/leave-request.schema";
 import { leaveService } from "@/services/leaveService";
 import { employeeService } from "@/services/employeeService";
 import {

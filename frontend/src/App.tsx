@@ -47,9 +47,6 @@ const ApproveAdjustmentRequest = lazy(
   () => import("./features/manager/ApproveAdjustmentRequest"),
 );
 const MyAssetsPage = lazy(() => import("./features/employee/MyAssetsPage"));
-const KpiOkrManagement = lazy(
-  () => import("./features/manager/KpiOkrManagement"),
-);
 const MemberList = lazy(() => import("./features/manager/MemberList"));
 const SalaryComponentPage = lazy(
   () => import("@/features/hr/SalaryComponentPage"),
@@ -245,7 +242,6 @@ function App() {
                       <ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />
                     }
                   >
-                    <Route path="/kpi-okr" element={<KpiOkrManagement />} />
                     <Route
                       path="/view-group-asset"
                       element={<AssetGroupManagement />}

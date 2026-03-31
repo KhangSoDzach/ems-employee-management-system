@@ -1,7 +1,7 @@
 import React from "react";
 import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+
 import { toast } from "sonner";
 import { AlertTriangle, Send, Save, XCircle, Info } from "lucide-react";
 
@@ -34,21 +34,11 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import { ASSET_INCIDENT_TEXT as TEXT } from "@/constants/ui-texts";
-
-const assetIncidentSchema = z.object({
-  assetId: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
-  incidentType: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
-  severity: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
-  description: z
-    .string()
-    .min(10, FORM_VALIDATION_MESSAGES.MIN_LENGTH(10))
-    .max(500, FORM_VALIDATION_MESSAGES.MAX_LENGTH(500)),
-  contactMethod: z.string().optional(),
-});
-
-type AssetIncidentValues = z.infer<typeof assetIncidentSchema>;
+import {
+  assetIncidentSchema,
+  type AssetIncidentValues,
+} from "../schemas/asset-incident.schema";
 
 interface AssetIncidentFormProps {
   onSuccess?: () => void;

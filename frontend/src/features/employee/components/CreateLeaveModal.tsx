@@ -39,11 +39,13 @@ import { cn } from "@/lib/utils";
 
 import {
   DATE_FORMAT,
-  type LeaveFormValues,
-  leaveSchema,
   LEAVE_TYPE_CONFIG,
   LEAVE_TYPE_OPTIONS,
 } from "@/constants/leave-request";
+import {
+  type LeaveFormValues,
+  leaveSchema,
+} from "@/features/employee/schemas/leave-request.schema";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 /* ══════════════ CONSTANTS ══════════════ */
 

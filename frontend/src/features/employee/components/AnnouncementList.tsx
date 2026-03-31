@@ -6,30 +6,26 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   useAnnouncements,
   useMarkAnnouncementRead,
-} from "@/features/announcement/hooks/useAnnouncements";
+} from "@/hooks/useAnnouncements";
 import type { AnnouncementResponse } from "@/features/announcement/announcement.types";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { AnnouncementDetail } from "@/features/announcement/components/AnnouncementDetail";
+
+const TYPE_LABEL: Record<string, string> = {
+  POLICY: SYSTEM_MESSAGES.ANNOUNCEMENT.TYPE_LABEL.POLICY,
+  EVENT: SYSTEM_MESSAGES.ANNOUNCEMENT.TYPE_LABEL.EVENT,
+  OTHER: SYSTEM_MESSAGES.ANNOUNCEMENT.TYPE_LABEL.OTHER,
+};
 
 interface AnnouncementListProps {
   userId: number | null;
   focusedAnnouncementId?: number | null;
 }
-
-const TYPE_LABEL: Record<string, string> = {
-  POLICY: "Chính sách",
-  EVENT: "Sự kiện",
-  OTHER: "Khác",
-};
 
 export function AnnouncementList({
   userId,
@@ -60,14 +56,16 @@ export function AnnouncementList({
   }, [focusedAnnouncement, isLoading]);
 
   const handleMarkRead = async (announcementId: number, isRead: boolean) => {
-    if (isRead || userId === null) {return;}
+    if (isRead || userId === null) {
+      return;
+    }
     try {
       await markReadMutation.mutateAsync(announcementId);
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Không thể cập nhật trạng thái đã đọc",
+          : SYSTEM_MESSAGES.ANNOUNCEMENT.UPDATE_READ_STATUS_ERROR,
       );
     }
   };
@@ -79,7 +77,9 @@ export function AnnouncementList({
 
   if (isLoading) {
     return (
-      <div className="text-sm text-muted-foreground">Đang tải thông báo...</div>
+      <div className="text-sm text-muted-foreground">
+        {SYSTEM_MESSAGES.ANNOUNCEMENT.LOADING_NOTIFICATIONS}
+      </div>
     );
   }
 
@@ -87,7 +87,7 @@ export function AnnouncementList({
     return (
       <Card>
         <CardContent className="py-10 text-center text-muted-foreground">
-          Không có thông báo nào.
+          {SYSTEM_MESSAGES.ANNOUNCEMENT.NO_NOTIFICATIONS}
         </CardContent>
       </Card>
     );
@@ -120,6 +120,9 @@ export function AnnouncementList({
               <CardTitle
                 className={cn("text-base", !announcement.isRead && "font-bold")}
               >
+                <span className="font-bold text-primary">
+                  {SYSTEM_MESSAGES.ANNOUNCEMENT.NOTIFICATION_PREFIX}
+                </span>
                 {announcement.title}
               </CardTitle>
               <div className="flex items-center gap-2">
@@ -130,7 +133,7 @@ export function AnnouncementList({
                 {!announcement.isRead && (
                   <Badge className="bg-blue-100 text-blue-700">
                     <Bell className="mr-1 h-3.5 w-3.5" />
-                    Chưa đọc
+                    {SYSTEM_MESSAGES.ANNOUNCEMENT.STATUS_UNREAD}
                   </Badge>
                 )}
               </div>
@@ -140,7 +143,7 @@ export function AnnouncementList({
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="whitespace-pre-wrap text-sm text-foreground/90">
+            <p className="line-clamp-2 whitespace-pre-wrap text-sm text-foreground/90">
               {announcement.content}
             </p>
             <div>
@@ -152,7 +155,9 @@ export function AnnouncementList({
                   handleMarkRead(announcement.id, announcement.isRead)
                 }
               >
-                {announcement.isRead ? "Đã đọc" : "Đánh dấu đã đọc"}
+                {announcement.isRead
+                  ? SYSTEM_MESSAGES.ANNOUNCEMENT.STATUS_READ
+                  : SYSTEM_MESSAGES.ANNOUNCEMENT.MARK_READ}
               </Button>
             </div>
           </CardContent>
@@ -169,28 +174,7 @@ export function AnnouncementList({
       >
         <DialogContent className="max-w-md p-4">
           {selectedAnnouncement && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-base">
-                  {selectedAnnouncement.title}
-                </DialogTitle>
-                <DialogDescription>
-                  <span className="mr-2 inline-flex">
-                    {TYPE_LABEL[selectedAnnouncement.announcementType] ??
-                      selectedAnnouncement.announcementType}
-                  </span>
-                  <span>
-                    {format(
-                      new Date(selectedAnnouncement.publishedAt),
-                      "dd/MM/yyyy HH:mm",
-                    )}
-                  </span>
-                </DialogDescription>
-              </DialogHeader>
-              <div className="max-h-[260px] overflow-auto whitespace-pre-wrap text-sm text-foreground/90">
-                {selectedAnnouncement.content}
-              </div>
-            </>
+            <AnnouncementDetail announcement={selectedAnnouncement} />
           )}
         </DialogContent>
       </Dialog>

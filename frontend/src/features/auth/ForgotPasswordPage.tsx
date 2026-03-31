@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm, FieldErrors, UseFormRegister } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+
 import {
   User,
   Mail,
@@ -29,7 +29,6 @@ import { forgotPassword, resetPassword, changePassword } from "./authService";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 const TEXT = SYSTEM_MESSAGES.FORGOT_PASSWORD;
 
@@ -41,62 +40,13 @@ interface ForgotPasswordPageProps {
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
-const emailSchema = z.object({
-  email: z
-    .string()
-    .min(1, FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED)
-    .email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
-});
-const passwordSchema = z
-  .string()
-  .min(1, FORM_VALIDATION_MESSAGES.PASSWORD_REQUIRED)
-  .min(8, FORM_VALIDATION_MESSAGES.PASSWORD_MIN)
-  .regex(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
-    FORM_VALIDATION_MESSAGES.PASSWORD_COMPLEX,
-  );
-const otpAndPasswordSchema = z
-  .object({
-    otp: z
-      .string()
-      .min(1, FORM_VALIDATION_MESSAGES.OTP_REQUIRED)
-      .length(6, FORM_VALIDATION_MESSAGES.OTP_LENGTH)
-      .regex(/^\d+$/, FORM_VALIDATION_MESSAGES.OTP_NUMERIC),
-    newPassword: passwordSchema,
-    confirmPassword: z
-      .string()
-      .min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
-  })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
-    path: ["confirmPassword"],
-  });
-
-const profileChangePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, FORM_VALIDATION_MESSAGES.REQUIRED),
-
-    newPassword: passwordSchema,
-
-    confirmPassword: z
-      .string()
-      .min(1, FORM_VALIDATION_MESSAGES.CONFIRM_PASSWORD_REQUIRED),
-  })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    message: FORM_VALIDATION_MESSAGES.PASSWORD_MISMATCH,
-    path: ["confirmPassword"],
-  })
-  .refine((d) => d.currentPassword !== d.newPassword, {
-    message: SYSTEM_MESSAGES.CHANGE_PASSWORD.NEWPASSWORD_DIFFERENT_CURRENT,
-    path: ["newPassword"],
-  });
-
-type EmailFormValues = z.infer<typeof emailSchema>;
-type OtpPasswordFormValues = z.infer<typeof otpAndPasswordSchema>;
-type ProfileChangePasswordFormValues = z.infer<
-  typeof profileChangePasswordSchema
->;
-type ResetFormValues = OtpPasswordFormValues & ProfileChangePasswordFormValues;
+import {
+  emailSchema,
+  otpAndPasswordSchema,
+  profileChangePasswordSchema,
+  type EmailFormValues,
+  type ResetFormValues,
+} from "./schemas/auth.schema";
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -623,12 +573,12 @@ export const ForgotPasswordPage = ({
     });
 
     toast.promise(promise, {
-      loading: "Đang gửi mã OTP...",
-      success: "Mã OTP đã được gửi đến email của bạn.",
+      loading: TEXT.TOAST_LOADING,
+      success: TEXT.TOAST_OTP_SENT,
       error: (err: unknown) => {
         return (
           (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message ?? "Không thể gửi mã. Vui lòng thử lại."
+            ?.data?.message ?? TEXT.TOAST_SEND_ERROR
         );
       },
     });
@@ -641,33 +591,34 @@ export const ForgotPasswordPage = ({
         : resetPassword(savedEmail, data.otp, data.newPassword),
     onMutate: () => {
       toast.dismiss();
-      toast.loading("Đang cập nhật mật khẩu...");
+      toast.loading(TEXT.LOADING);
     },
     onSuccess: () => {
       toast.dismiss();
-      toast.success("Đặt lại mật khẩu thành công!");
+      toast.success(TEXT.TOAST_SUCCESS);
       setStep(3);
     },
     onError: (err: unknown) => {
       toast.dismiss();
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Mã OTP không hợp lệ hoặc đã hết hạn.";
+          ?.message ?? TEXT.TOAST_OTP_INVALID;
       toast.error(message);
       if (isProfileMode) {
         setFormError("currentPassword", {
-          message: "Mật khẩu hiện tại không chính xác",
+          message:
+            SYSTEM_MESSAGES.CHANGE_PASSWORD.NEWPASSWORD_DIFFERENT_CURRENT,
         });
       } else if (
         message.toLowerCase().includes("hết hạn") ||
         message.toLowerCase().includes("expired")
       ) {
         setFormError("otp" as keyof ResetFormValues, {
-          message: "Mã xác thực đã hết hạn",
+          message: TEXT.TOAST_OTP_EXPIRED,
         });
       } else {
         setFormError("otp" as keyof ResetFormValues, {
-          message: "Mã xác thực không hợp lệ",
+          message: TEXT.TOAST_OTP_INVALID,
         });
       }
     },
@@ -695,9 +646,9 @@ export const ForgotPasswordPage = ({
       });
 
     toast.promise(promise, {
-      loading: "Đang gửi lại mã OTP...",
-      success: "Đã gửi lại mã OTP mới.",
-      error: "Không thể gửi lại mã. Vui lòng thử lại.",
+      loading: TEXT.BTN_RESENDING,
+      success: TEXT.TOAST_OTP_RESENT,
+      error: TEXT.TOAST_RESEND_ERROR,
     });
   };
 

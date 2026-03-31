@@ -25,10 +25,10 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 /* ══════════════ SHEET LABELS ══════════════ */
 
 const SHEET_LABELS = {
-  INFO_GROUP: "Thông tin chung",
-  LEAVE_GROUP: "Chi tiết nghỉ phép",
-  REASON_GROUP: "Lý do chi tiết",
-  TIMELINE_GROUP: "Lịch sử hoạt động",
+  INFO_GROUP: SYSTEM_MESSAGES.LEAVE.DETAIL_INFO_GROUP,
+  LEAVE_GROUP: SYSTEM_MESSAGES.LEAVE.DETAIL_LEAVE_GROUP,
+  REASON_GROUP: SYSTEM_MESSAGES.LEAVE.DETAIL_REASON_GROUP,
+  TIMELINE_GROUP: SYSTEM_MESSAGES.LEAVE.DETAIL_TIMELINE_GROUP,
 } as const;
 
 /* ══════════════ AUDIT TIMELINE COMPONENT ══════════════ */

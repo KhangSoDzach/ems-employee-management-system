@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+
 import {
   Lock,
   Mail,
@@ -35,13 +35,7 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import { cn } from "@/lib/utils";
 
-const loginSchema = z.object({
-  email: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.EMAIL_REQUIRED),
-  password: z.string().min(1, SYSTEM_MESSAGES.VALIDATION.PASSWORD_REQUIRED),
-  remember: z.boolean().optional(),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { loginSchema, type LoginFormValues } from "./schemas/auth.schema";
 
 function getRedirectByRole(): string {
   return "/profile";

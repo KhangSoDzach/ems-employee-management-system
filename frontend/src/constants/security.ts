@@ -61,6 +61,8 @@ export const SECURITY_CONSTANTS = {
     LABEL_2FA_TOGGLE: "Xác thực 2 lớp",
     BTN_COPY: "Sao chép",
     BTN_DONE: "Xong",
+    STATUS_ENABLED: "Đã bật",
+    STATUS_DISABLED: "Đang tắt",
   },
   SIDEBAR_SETTINGS: {
     TITLE: "Cài đặt",
