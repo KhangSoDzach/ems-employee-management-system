@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { z } from "zod";
+
 import {
   Clock,
   ExternalLink,
@@ -50,6 +50,7 @@ import {
   LOCATION_ACTION_OPTIONS,
   ATTENDANCE_SETTINGS_SCHEMA,
 } from "@/constants/attendance-settings";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 import {
   officeLocationService,
   OfficeLocationUpsertRequest,
@@ -143,115 +144,11 @@ const NumberField: React.FC<NumberFieldProps> = ({
   />
 );
 
-const attendanceSettingsSchema = z.object({
-  shift1CheckIn: z
-    .string()
-    .min(ATTENDANCE_SETTINGS_SCHEMA.shift1CheckIn.minLength, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.REQUIRED_FIELD,
-    })
-    .regex(ATTENDANCE_SETTINGS_SCHEMA.shift1CheckIn.pattern, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.INVALID_TIME_FORMAT,
-    }),
-  shift1CheckOut: z
-    .string()
-    .min(ATTENDANCE_SETTINGS_SCHEMA.shift1CheckOut.minLength, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.REQUIRED_FIELD,
-    })
-    .regex(ATTENDANCE_SETTINGS_SCHEMA.shift1CheckOut.pattern, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.INVALID_TIME_FORMAT,
-    }),
-  shift2CheckIn: z
-    .string()
-    .min(ATTENDANCE_SETTINGS_SCHEMA.shift2CheckIn.minLength, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.REQUIRED_FIELD,
-    })
-    .regex(ATTENDANCE_SETTINGS_SCHEMA.shift2CheckIn.pattern, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.INVALID_TIME_FORMAT,
-    }),
-  shift2CheckOut: z
-    .string()
-    .min(ATTENDANCE_SETTINGS_SCHEMA.shift2CheckOut.minLength, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.REQUIRED_FIELD,
-    })
-    .regex(ATTENDANCE_SETTINGS_SCHEMA.shift2CheckOut.pattern, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.INVALID_TIME_FORMAT,
-    }),
-  gracePeriod: z.coerce
-    .number()
-    .min(ATTENDANCE_SETTINGS_SCHEMA.gracePeriod.min, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.MUST_BE_NON_NEGATIVE,
-    })
-    .max(ATTENDANCE_SETTINGS_SCHEMA.gracePeriod.max),
-  earlyLeaveThreshold: z.coerce
-    .number()
-    .min(ATTENDANCE_SETTINGS_SCHEMA.earlyLeaveThreshold.min, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.MUST_BE_NON_NEGATIVE,
-    })
-    .max(ATTENDANCE_SETTINGS_SCHEMA.earlyLeaveThreshold.max),
-  gpsEnabled: z.boolean(),
-  latitude: z
-    .string()
-    .refine(
-      (val) => {
-        if (!val) {
-          return true;
-        }
-        const num = parseFloat(val);
-        return !isNaN(num);
-      },
-      { message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.DECIMAL_COORDINATE },
-    )
-    .refine(
-      (val) => {
-        if (!val) {
-          return true;
-        }
-        const num = parseFloat(val);
-        return (
-          num >= ATTENDANCE_SETTINGS_SCHEMA.latitude.min &&
-          num <= ATTENDANCE_SETTINGS_SCHEMA.latitude.max
-        );
-      },
-      { message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.LATITUDE_RANGE },
-    ),
-  longitude: z
-    .string()
-    .refine(
-      (val) => {
-        if (!val) {
-          return true;
-        }
-        const num = parseFloat(val);
-        return !isNaN(num);
-      },
-      { message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.DECIMAL_COORDINATE },
-    )
-    .refine(
-      (val) => {
-        if (!val) {
-          return true;
-        }
-        const num = parseFloat(val);
-        return (
-          num >= ATTENDANCE_SETTINGS_SCHEMA.longitude.min &&
-          num <= ATTENDANCE_SETTINGS_SCHEMA.longitude.max
-        );
-      },
-      { message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.LONGITUDE_RANGE },
-    ),
-  radius: z.coerce
-    .number()
-    .min(ATTENDANCE_SETTINGS_SCHEMA.radius.min, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.MUST_BE_POSITIVE,
-    })
-    .max(ATTENDANCE_SETTINGS_SCHEMA.radius.max, {
-      message: ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.RADIUS_RANGE,
-    }),
-  locationAction: z.enum(["BLOCK", "NOTIFY", "WARN"]),
-});
-
-type AttendanceSettingsFormInput = z.input<typeof attendanceSettingsSchema>;
-type AttendanceSettingsFormValues = z.output<typeof attendanceSettingsSchema>;
+import {
+  attendanceSettingsSchema,
+  type AttendanceSettingsFormInput,
+  type AttendanceSettingsFormValues,
+} from "./schemas/attendance-settings.schema";
 
 const QUERY_KEY_OFFICE_CONFIG = ["office-config"] as const;
 const QUERY_KEY_OFFICE_LOCATIONS = ["office-locations"] as const;
@@ -432,7 +329,9 @@ export default function AttendanceSettings() {
 
   const onUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("Trình duyệt không hỗ trợ định vị.");
+      toast.error(
+        SYSTEM_MESSAGES.ATTENDANCE_SETTINGS.MSG_GEOLOCATION_NOT_SUPPORTED,
+      );
       return;
     }
 
@@ -448,7 +347,9 @@ export default function AttendanceSettings() {
         });
       },
       () => {
-        toast.error("Không thể lấy vị trí hiện tại.");
+        toast.error(
+          SYSTEM_MESSAGES.ATTENDANCE_SETTINGS.MSG_CANNOT_GET_LOCATION,
+        );
       },
     );
   };

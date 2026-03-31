@@ -171,13 +171,13 @@ export default function AssetManagementPage() {
     setDeleting(true);
     try {
       await assetService.deleteAsset(deleteTarget.id);
-      toast.success("Đã xóa tài sản thành công.");
+      toast.success(SYSTEM_MESSAGES.ASSET.MSG_DELETE_SUCCESS);
       setDeleteTarget(null);
       fetchList();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
-      toast.error(msg ?? "Không thể xóa tài sản. Vui lòng thử lại.");
+      toast.error(msg ?? SYSTEM_MESSAGES.ASSET.MSG_DELETE_ERROR);
     } finally {
       setDeleting(false);
     }
@@ -227,7 +227,7 @@ export default function AssetManagementPage() {
               onClick={handleExportAssets}
               disabled={loading}
               className="px-5 py-2 flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition gap-2"
-              title="Tải về danh sách tài sản (CSV)"
+              title={SYSTEM_MESSAGES.ASSET.TITLE_DOWNLOAD_CSV}
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -465,8 +465,8 @@ export default function AssetManagementPage() {
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-5 h-5" />
               {deleteTarget?.status?.toUpperCase() === "ASSIGNED"
-                ? "Không thể xóa tài sản"
-                : "Xác nhận xóa tài sản"}
+                ? SYSTEM_MESSAGES.ASSET.MSG_CANNOT_DELETE
+                : SYSTEM_MESSAGES.ASSET.MSG_CONFIRM_DELETE}
             </DialogTitle>
             <DialogDescription className="pt-2" asChild>
               <div>
@@ -496,13 +496,13 @@ export default function AssetManagementPage() {
                 ) : (
                   // AVAILABLE / RETIRED: normal confirm
                   <p>
-                    Bạn có chắc muốn xóa tài sản{" "}
+                    {SYSTEM_MESSAGES.ASSET.MSG_DELETE_CONFIRM}
                     <span className="font-semibold text-gray-900">
                       "{deleteTarget?.name}"
                     </span>
                     ?
                     <br />
-                    Hành động này không thể hoàn tác.
+                    {SYSTEM_MESSAGES.ASSET.MSG_DELETE_IRREVERSIBLE}
                   </p>
                 )}
               </div>
@@ -514,7 +514,7 @@ export default function AssetManagementPage() {
               disabled={deleting}
               className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
             >
-              Đóng
+              {SYSTEM_MESSAGES.ASSET.BTN_CLOSE}
             </button>
             {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
               // Guide to open detail modal for return
@@ -540,7 +540,9 @@ export default function AssetManagementPage() {
                 className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition flex items-center gap-2"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {deleting ? "Đang xóa..." : "Xóa tài sản"}
+                {deleting
+                  ? SYSTEM_MESSAGES.LOADING_SHORT
+                  : SYSTEM_MESSAGES.ASSET.BTN_DELETE}
               </button>
             )}
           </DialogFooter>

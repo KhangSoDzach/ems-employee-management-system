@@ -128,7 +128,7 @@ export function AssetRequestManagement() {
       const detail = await assetService.getAssetRequestDetailAdmin(id);
       setSelectedRequest(detail);
     } catch (_error) {
-      toast.error("Không thể tải chi tiết yêu cầu.");
+      toast.error(SYSTEM_MESSAGES.ASSET_REQUEST.MSG_FETCH_DETAIL_ERROR);
       setIsSheetOpen(false);
     } finally {
       setDetailLoading(false);
@@ -155,7 +155,10 @@ export function AssetRequestManagement() {
       setIsSheetOpen(false);
       fetchRequests();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Lỗi xử lý yêu cầu.");
+      toast.error(
+        error.response?.data?.message ||
+          SYSTEM_MESSAGES.ASSET_REQUEST.MSG_PROCESS_ERROR,
+      );
     } finally {
       setProcessing(false);
     }
@@ -255,14 +258,24 @@ export function AssetRequestManagement() {
             <Filter className="w-4 h-4 text-muted-foreground hidden sm:block" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[140px] h-9 bg-white">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue
+                  placeholder={SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_STATUS}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Tất cả</SelectItem>
-                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
-                <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-                <SelectItem value="REJECTED">Từ chối</SelectItem>
-                <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                <SelectItem value="ALL">{SYSTEM_MESSAGES.LABEL_ALL}</SelectItem>
+                <SelectItem value="PENDING">
+                  {SYSTEM_MESSAGES.STATUS.PENDING}
+                </SelectItem>
+                <SelectItem value="APPROVED">
+                  {SYSTEM_MESSAGES.STATUS.APPROVED}
+                </SelectItem>
+                <SelectItem value="REJECTED">
+                  {SYSTEM_MESSAGES.STATUS.REJECTED}
+                </SelectItem>
+                <SelectItem value="CANCELLED">
+                  {SYSTEM_MESSAGES.STATUS.CANCELLED}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -454,7 +467,9 @@ export function AssetRequestManagement() {
                       {SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_REVIEW_NOTE}
                     </h4>
                     <Textarea
-                      placeholder="Ghi chú thêm hoặc lý do từ chối..."
+                      placeholder={
+                        SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_NOTE
+                      }
                       value={processNote}
                       onChange={(e) => setProcessNote(e.target.value)}
                       className="resize-none h-24"

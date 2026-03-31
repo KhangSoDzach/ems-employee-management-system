@@ -180,7 +180,7 @@ export function AppSidebar({
           icon: Settings,
         },
         {
-          title: "Cấu hình chính sách",
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_POLICY_SETTINGS,
           url: "/payroll-config",
           icon: Settings,
         },
@@ -277,7 +277,7 @@ export function AppSidebar({
           icon: Users,
         },
         {
-          title: "Chạy tính lương",
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_RUN_PAYROLL,
           url: "/payroll",
           icon: CreditCard,
         },

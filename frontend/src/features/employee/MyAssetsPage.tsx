@@ -52,8 +52,8 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 const INCIDENT_TYPES = [
-  { value: "DAMAGED", label: "Hư hỏng / Lỗi thiết bị" },
-  { value: "LOST", label: "Mất mát / Thất lạc" },
+  { value: "DAMAGED", label: SYSTEM_MESSAGES.MY_ASSETS.STATUS_DAMAGED },
+  { value: "LOST", label: SYSTEM_MESSAGES.MY_ASSETS.STATUS_LOST },
 ];
 
 /* ─────────────── ASSET CARD ─────────────── */

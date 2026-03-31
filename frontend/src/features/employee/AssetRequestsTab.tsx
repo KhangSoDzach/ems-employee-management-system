@@ -87,10 +87,10 @@ export function AssetRequestsTab() {
   const handleSubmit = async () => {
     const newErrors: { assetType?: string; reason?: string } = {};
     if (!assetType.trim()) {
-      newErrors.assetType = "Vui lòng nhập loại tài sản.";
+      newErrors.assetType = SYSTEM_MESSAGES.ASSET_REQUEST_TAB.ERR_ASSET_TYPE;
     }
     if (!reason.trim() || reason.trim().length < 10) {
-      newErrors.reason = "Vui lòng nhập lý do tối thiểu 10 ký tự.";
+      newErrors.reason = SYSTEM_MESSAGES.ASSET_REQUEST_TAB.ERR_REASON;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -278,11 +278,17 @@ export function AssetRequestsTab() {
                 onValueChange={(val: any) => setPriority(val)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn ưu tiên" />
+                  <SelectValue
+                    placeholder={
+                      SYSTEM_MESSAGES.ASSET_REQUEST_TAB.PLACEHOLDER_PRIORITY
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="LOW">Thấp</SelectItem>
-                  <SelectItem value="NORMAL">Bình thường</SelectItem>
+                  <SelectItem value="NORMAL">
+                    {SYSTEM_MESSAGES.ASSET_REQUEST_TAB.PRIORITY_NORMAL}
+                  </SelectItem>
                   <SelectItem value="HIGH">Cao</SelectItem>
                   <SelectItem value="URGENT">Khẩn cấp</SelectItem>
                 </SelectContent>

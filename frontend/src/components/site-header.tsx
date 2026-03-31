@@ -16,10 +16,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   useAnnouncements,
   useMarkAnnouncementRead,
-} from "@/features/announcement/hooks/useAnnouncements";
+} from "@/hooks/useAnnouncements";
 import type { AnnouncementResponse } from "@/features/announcement/announcement.types";
-import { useNavigate } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AnnouncementDetail } from "@/features/announcement/components/AnnouncementDetail";
 
 const formatTime = (value: string) => {
   const date = new Date(value);
@@ -27,14 +28,27 @@ const formatTime = (value: string) => {
 };
 
 export function SiteHeader() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { state, isMobile } = useSidebar();
+  const [selectedAnnouncement, setSelectedAnnouncement] =
+    useState<AnnouncementResponse | null>(null);
   const { data: announcements = [], isLoading } = useAnnouncements(
     user?.id ?? null,
   );
   const markReadMutation = useMarkAnnouncementRead(user?.id ?? null);
   const [notificationOpen, setNotificationOpen] = useState(false);
+
+  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(() => {
+    const saved = localStorage.getItem("notifications_enabled");
+    return saved !== "false";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      "notifications_enabled",
+      isNotificationsEnabled.toString(),
+    );
+  }, [isNotificationsEnabled]);
 
   const unreadCount = useMemo(
     () => announcements.filter((item) => !item.isRead).length,
@@ -51,11 +65,11 @@ export function SiteHeader() {
       try {
         await markReadMutation.mutateAsync(announcement.id);
       } catch {
-        // still navigate to announcement details
+        // still show the details
       }
     }
     setNotificationOpen(false);
-    navigate(`/announcements?announcementId=${announcement.id}`);
+    setSelectedAnnouncement(announcement);
   };
 
   return (
@@ -88,7 +102,7 @@ export function SiteHeader() {
               className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
             >
               <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
+              {isNotificationsEnabled && unreadCount > 0 && (
                 <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
@@ -97,18 +111,20 @@ export function SiteHeader() {
           </PopoverTrigger>
           <PopoverContent align="end" className="w-[360px] p-0">
             <div className="border-b px-3 py-2">
-              <p className="text-sm font-semibold">Thông báo</p>
+              <p className="text-sm font-semibold">
+                {SYSTEM_MESSAGES.ANNOUNCEMENT.HEADER_TITLE}
+              </p>
             </div>
             <div className="max-h-96 overflow-auto p-2">
               {isLoading && (
                 <p className="px-2 py-3 text-sm text-muted-foreground">
-                  Đang tải...
+                  {SYSTEM_MESSAGES.LOADING_SHORT}
                 </p>
               )}
 
               {!isLoading && topAnnouncements.length === 0 && (
                 <p className="px-2 py-3 text-sm text-muted-foreground">
-                  Bạn chưa có thông báo nào.
+                  {SYSTEM_MESSAGES.ANNOUNCEMENT.NO_NOTIFICATIONS_USER}
                 </p>
               )}
 
@@ -126,7 +142,7 @@ export function SiteHeader() {
                       </p>
                       {!announcement.isRead && (
                         <Badge className="h-5 bg-blue-100 text-blue-700">
-                          Mới
+                          {SYSTEM_MESSAGES.ANNOUNCEMENT.NOTIFICATION_BADGE}
                         </Badge>
                       )}
                     </div>
@@ -156,10 +172,27 @@ export function SiteHeader() {
             align="end"
             className="p-0 border-none shadow-2xl rounded-2xl overflow-hidden w-72"
           >
-            <SidebarSettings />
+            <SidebarSettings
+              isNotificationsEnabled={isNotificationsEnabled}
+              setIsNotificationsEnabled={setIsNotificationsEnabled}
+            />
           </PopoverContent>
         </Popover>
       </div>
+      <Dialog
+        open={selectedAnnouncement !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedAnnouncement(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md p-4">
+          {selectedAnnouncement && (
+            <AnnouncementDetail announcement={selectedAnnouncement} />
+          )}
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

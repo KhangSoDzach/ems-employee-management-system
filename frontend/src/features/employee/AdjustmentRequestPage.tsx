@@ -42,8 +42,8 @@ import {
   AdjustmentStatus,
   AdjustmentType,
   AuditEntry,
-  type AdjustmentFormValues,
 } from "@/constants/adjustment-request";
+import { type AdjustmentFormValues } from "@/features/employee/schemas/adjustment.schema";
 import {
   ActiveFilterBadge,
   StatusBadge,

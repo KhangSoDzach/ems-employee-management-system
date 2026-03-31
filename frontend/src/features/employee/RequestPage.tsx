@@ -40,11 +40,11 @@ import {
   LEAVE_STATUS_OPTIONS,
   LEAVE_TYPE_CONFIG,
   LEAVE_TYPE_OPTIONS,
-  type LeaveFormValues,
   type LeaveRequest,
   type LeaveStatus,
   type LeaveType,
 } from "@/constants/leave-request";
+import { type LeaveFormValues } from "@/features/employee/schemas/leave-request.schema";
 import { leaveService } from "@/services/leaveService";
 import { employeeService } from "@/services/employeeService";
 import {
@@ -61,11 +61,11 @@ import {
   ADJUSTMENT_TYPE_CONFIG,
   ADJUSTMENT_TYPE_OPTIONS,
   DATE_FORMAT as ADJ_DATE_FORMAT,
-  type AdjustmentFormValues,
   type AdjustmentRequest,
   type AdjustmentStatus,
   type AdjustmentType,
 } from "@/constants/adjustment-request";
+import { type AdjustmentFormValues } from "@/features/employee/schemas/adjustment.schema";
 import {
   ActiveFilterBadge as ActiveAdjustmentBadge,
   StatusBadge as AdjustmentStatusBadge,
@@ -368,7 +368,7 @@ export default function RequestPage() {
 
   const handleCreateLeave = async (data: LeaveFormValues) => {
     if (employeeId === null) {
-      throw new Error("Không lấy được thông tin nhân viên hiện tại");
+      throw new Error(SYSTEM_MESSAGES.LEAVE.MSG_FETCH_EMPLOYEE_ERROR);
     }
 
     await leaveService.createLeave({

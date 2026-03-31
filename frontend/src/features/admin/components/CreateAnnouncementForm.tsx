@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+
 import { toast } from "sonner";
 import { Check, ChevronsUpDown } from "lucide-react";
 
@@ -30,7 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
-import { useCreateAnnouncement } from "@/features/announcement/hooks/useAnnouncements";
+import { useCreateAnnouncement } from "@/hooks/useAnnouncements";
 import type { TargetAudience } from "@/features/announcement/announcement.types";
 import {
   lookupService,
@@ -40,18 +40,10 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
-const formSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Tiêu đề là bắt buộc")
-    .max(255, "Tiêu đề tối đa 255 ký tự"),
-  content: z.string().min(1, "Nội dung là bắt buộc"),
-  announcementType: z.enum(["POLICY", "EVENT", "OTHER"]),
-  targetAudience: z.enum(["ALL_COMPANY", "BY_DEPARTMENT", "BY_ROLE"]),
-  targetIds: z.array(z.number()),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import {
+  announcementFormSchema,
+  type AnnouncementFormValues,
+} from "../schemas/announcement.schema";
 
 const TYPE_OPTIONS = [
   { value: "POLICY", label: SYSTEM_MESSAGES.ANNOUNCEMENT.TYPE_POLICY },
@@ -60,16 +52,22 @@ const TYPE_OPTIONS = [
 ] as const;
 
 const TARGET_OPTIONS = [
-  { value: "ALL_COMPANY", label: "Toàn công ty" },
-  { value: "BY_DEPARTMENT", label: "Theo phòng ban" },
-  { value: "BY_ROLE", label: "Theo vai trò" },
+  {
+    value: "ALL_COMPANY",
+    label: SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_AUDIENCE_ALL,
+  },
+  {
+    value: "BY_DEPARTMENT",
+    label: SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_AUDIENCE_DEPARTMENT,
+  },
+  { value: "BY_ROLE", label: SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_AUDIENCE_ROLE },
 ] as const;
 
 export function CreateAnnouncementForm() {
   const createMutation = useCreateAnnouncement();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<AnnouncementFormValues>({
+    resolver: zodResolver(announcementFormSchema),
     defaultValues: {
       title: "",
       content: "",
@@ -139,7 +137,7 @@ export function CreateAnnouncementForm() {
 
   const selectedTargetLabels = useMemo(() => {
     if (selectedTargetIds.length === 0) {
-      return "Chọn đối tượng";
+      return SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_SELECT_AUDIENCE;
     }
     const labels = availableTargets
       .filter((item) => selectedTargetIds.includes(item.id))
@@ -165,10 +163,13 @@ export function CreateAnnouncementForm() {
     });
   };
 
-  const submitAnnouncement = async (values: FormValues, sendEmail: boolean) => {
+  const submitAnnouncement = async (
+    values: AnnouncementFormValues,
+    sendEmail: boolean,
+  ) => {
     if (requiresIds && values.targetIds.length === 0) {
       form.setError("targetIds", {
-        message: "Vui lòng chọn ít nhất một đối tượng",
+        message: SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_SELECT_AT_LEAST_ONE,
       });
       return;
     }
@@ -184,10 +185,15 @@ export function CreateAnnouncementForm() {
       });
       const emailText =
         sendEmail && (result.emailedRecipientCount ?? 0) > 0
-          ? `, đã gửi email ${result.emailedRecipientCount} người`
+          ? SYSTEM_MESSAGES.ANNOUNCEMENT.EMAIL_SENT_COUNT(
+              result.emailedRecipientCount ?? 0,
+            )
           : "";
       toast.success(
-        `Tạo thông báo thành công (${result.recipientCount} người nhận${emailText})`,
+        SYSTEM_MESSAGES.ANNOUNCEMENT.SUCCESS_RECIPIENTS(
+          result.recipientCount,
+          emailText,
+        ),
       );
       form.reset({
         title: "",
@@ -198,7 +204,9 @@ export function CreateAnnouncementForm() {
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Không thể tạo thông báo",
+        error instanceof Error
+          ? error.message
+          : SYSTEM_MESSAGES.ANNOUNCEMENT.MSG_CREATE_ERROR,
       );
     }
   };
@@ -224,9 +232,16 @@ export function CreateAnnouncementForm() {
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tiêu đề</FormLabel>
+                <FormLabel>
+                  {SYSTEM_MESSAGES.ANNOUNCEMENT.LABEL_TITLE}
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="Nhập tiêu đề thông báo" {...field} />
+                  <Input
+                    placeholder={
+                      SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_PLACEHOLDER_TITLE
+                    }
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -238,11 +253,15 @@ export function CreateAnnouncementForm() {
             name="content"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nội dung</FormLabel>
+                <FormLabel>
+                  {SYSTEM_MESSAGES.ANNOUNCEMENT.LABEL_CONTENT}
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     rows={6}
-                    placeholder="Nhập nội dung thông báo"
+                    placeholder={
+                      SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_PLACEHOLDER_CONTENT
+                    }
                     {...field}
                   />
                 </FormControl>
@@ -257,11 +276,15 @@ export function CreateAnnouncementForm() {
               name="announcementType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phân loại</FormLabel>
+                  <FormLabel>
+                    {SYSTEM_MESSAGES.ANNOUNCEMENT.LABEL_TYPE}
+                  </FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn phân loại" />
+                        <SelectValue
+                          placeholder={SYSTEM_MESSAGES.SELECT_TYPE}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -282,7 +305,9 @@ export function CreateAnnouncementForm() {
               name="targetAudience"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Đối tượng nhận</FormLabel>
+                  <FormLabel>
+                    {SYSTEM_MESSAGES.ANNOUNCEMENT.LABEL_TARGET}
+                  </FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={(value) => {
@@ -294,7 +319,11 @@ export function CreateAnnouncementForm() {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn đối tượng" />
+                        <SelectValue
+                          placeholder={
+                            SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_SELECT_AUDIENCE
+                          }
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -319,8 +348,8 @@ export function CreateAnnouncementForm() {
                 <FormItem>
                   <FormLabel>
                     {selectedAudience === "BY_DEPARTMENT"
-                      ? "Phòng ban nhận"
-                      : "Vai trò nhận"}
+                      ? SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_AUDIENCE_DEPARTMENT
+                      : SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_AUDIENCE_ROLE}
                   </FormLabel>
                   <Popover
                     open={openTargetDropdown}
@@ -340,7 +369,7 @@ export function CreateAnnouncementForm() {
                     </PopoverTrigger>
                     <PopoverContent className="w-[420px] p-2" align="start">
                       <Input
-                        placeholder="Tìm kiếm..."
+                        placeholder={SYSTEM_MESSAGES.SEARCH_PLACEHOLDER}
                         value={targetSearch}
                         onChange={(event) =>
                           setTargetSearch(event.target.value)
@@ -350,7 +379,7 @@ export function CreateAnnouncementForm() {
                       <div className="max-h-56 overflow-auto rounded-md border p-1">
                         {filteredTargets.length === 0 && (
                           <p className="p-2 text-sm text-muted-foreground">
-                            Không có dữ liệu phù hợp
+                            {SYSTEM_MESSAGES.ANNOUNCEMENT.NO_DATA_MATCHES}
                           </p>
                         )}
                         {filteredTargets.map((target) => {
@@ -388,8 +417,8 @@ export function CreateAnnouncementForm() {
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending
-                ? "Đang tạo..."
-                : "Tạo thông báo nội bộ"}
+                ? SYSTEM_MESSAGES.LOADING
+                : SYSTEM_MESSAGES.ANNOUNCEMENT.FORM_TITLE}
             </Button>
             <Button
               type="button"
@@ -397,7 +426,9 @@ export function CreateAnnouncementForm() {
               disabled={createMutation.isPending}
               onClick={onSubmitAndSendGmail}
             >
-              {createMutation.isPending ? "Đang gửi..." : "Tạo & Gửi Gmail"}
+              {createMutation.isPending
+                ? SYSTEM_MESSAGES.LOADING
+                : SYSTEM_MESSAGES.ANNOUNCEMENT.LABEL_SEND_EMAIL}
             </Button>
           </div>
         </form>

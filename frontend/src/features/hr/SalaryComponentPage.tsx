@@ -57,7 +57,7 @@ const SALARY_COMPONENT_STATUS_LABELS: Record<string, string> =
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 function getApiErrorMessage(error: unknown): string {
-  const fallback = "Không thể xử lý yêu cầu. Vui lòng thử lại.";
+  const fallback = SYSTEM_MESSAGES.SALARY_COMPONENT.MSG_PROCESS_ERROR;
   if (!error || typeof error !== "object") {
     return fallback;
   }

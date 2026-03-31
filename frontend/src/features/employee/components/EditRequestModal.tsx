@@ -6,10 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  type AdjustmentFormValues,
-  type AdjustmentRequest,
-} from "@/constants/adjustment-request";
+import { type AdjustmentRequest } from "@/constants/adjustment-request";
+import { type AdjustmentFormValues } from "@/features/employee/schemas/adjustment.schema";
 import { EDIT_REQUEST_TEXT as TEXT } from "@/constants/ui-texts";
 import { AdjustmentForm } from "./AdjustmentForm";
 
