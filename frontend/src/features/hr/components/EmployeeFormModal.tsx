@@ -15,6 +15,7 @@ import {
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+import { EMPLOYEE_CONSTANTS } from "../employee.constants";
 import EmployeeFormFields from "./EmployeeFormFields";
 
 interface Props {
@@ -50,7 +51,7 @@ const INITIAL_FORM_STATE: EmployeeRequest = {
   contractType: "FULL_TIME",
   contractStartDate: new Date().toISOString().slice(0, 10),
   contractDurationMonths: 12,
-  nationality: "Việt Nam",
+  nationality: EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONALITY,
   address: "",
   city: "",
   state: "",
@@ -131,7 +132,9 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
     if (!formData.email?.trim()) {
       newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED;
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+    } else if (
+      !EMPLOYEE_CONSTANTS.VALIDATION.EMAIL_REGEX.test(formData.email)
+    ) {
       newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_INVALID;
     }
 
@@ -167,7 +170,9 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
     if (!formData.nationalId?.trim()) {
       newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_REQUIRED;
-    } else if (!/^\d{9}(\d{3})?$/.test(formData.nationalId.trim())) {
+    } else if (
+      !EMPLOYEE_CONSTANTS.VALIDATION.ID_REGEX.test(formData.nationalId.trim())
+    ) {
       newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_FORMAT;
     }
 
@@ -189,14 +194,15 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
     if (formData.contractType === "CONTRACT") {
       if (!formData.contractStartDate) {
-        newErrors.contractStartDate = "Vui lòng chọn ngày bắt đầu hợp đồng";
+        newErrors.contractStartDate =
+          FORM_VALIDATION_MESSAGES.CONTRACT_START_DATE_REQUIRED;
       }
       if (
         !formData.contractDurationMonths ||
         ![12, 24, 36].includes(formData.contractDurationMonths)
       ) {
         newErrors.contractDurationMonths =
-          "Hợp đồng có thời hạn chỉ được 12, 24 hoặc 36 tháng";
+          FORM_VALIDATION_MESSAGES.CONTRACT_DURATION_INVALID;
       }
     }
 
@@ -206,7 +212,11 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
     if (!formData.bankAccountNumber?.trim()) {
       newErrors.bankAccountNumber = FORM_VALIDATION_MESSAGES.BANK_ACC_REQUIRED;
-    } else if (!/^\d{4,20}$/.test(formData.bankAccountNumber.trim())) {
+    } else if (
+      !EMPLOYEE_CONSTANTS.VALIDATION.BANK_ACC_REGEX.test(
+        formData.bankAccountNumber.trim(),
+      )
+    ) {
       newErrors.bankAccountNumber = FORM_VALIDATION_MESSAGES.BANK_ACC_FORMAT;
     }
 
@@ -223,16 +233,16 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
   const hasError = (field: string) => !!errors[field];
   const inputClass = (field: string) =>
-    `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${
+    `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium bg-card ${
       hasError(field)
         ? "border-red-500 focus:ring-red-500"
-        : "border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary"
+        : "border border-border focus:ring-2 focus:ring-primary"
     }`;
   const selectClass = (field: string) =>
-    `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-white ${
+    `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-card ${
       hasError(field)
         ? "border-red-500 focus:ring-red-500"
-        : "border border-gray-200 dark:border-gray-800"
+        : "border border-border"
     }`;
 
   const selectedPosition = positions.find((p) => p.id === formData.positionId);
@@ -292,7 +302,8 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
           contractEndDate: employee.contractEndDate || undefined,
           contractDurationMonths: employee.contractDurationMonths || 12,
           workLocation: employee.workLocation || "",
-          nationality: employee.nationality || "Việt Nam",
+          nationality:
+            employee.nationality || EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONALITY,
           bloodGroup: employee.bloodGroup || "",
           gender: employee.gender || "MALE",
           avatarUrl: employee.avatarUrl || "",
@@ -517,17 +528,17 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
 
   const title =
     mode === "create"
-      ? SYSTEM_MESSAGES.EMPLOYEE.MODAL_CREATE_TITLE
-      : SYSTEM_MESSAGES.EMPLOYEE.MODAL_UPDATE_TITLE;
+      ? EMPLOYEE_CONSTANTS.TITLE_CREATE
+      : EMPLOYEE_CONSTANTS.TITLE_EDIT;
   const submitBtnText =
     mode === "create"
-      ? SYSTEM_MESSAGES.EMPLOYEE.BTN_CREATE
-      : SYSTEM_MESSAGES.EMPLOYEE.BTN_SAVE_PROFILE;
+      ? EMPLOYEE_CONSTANTS.BTNS.CREATE
+      : EMPLOYEE_CONSTANTS.BTNS.EDIT;
   const infoText =
     mode === "create"
-      ? SYSTEM_MESSAGES.EMPLOYEE.INFO_EMP_CODE
-      : SYSTEM_MESSAGES.EMPLOYEE.INFO_NOTE;
-  const statusColor = mode === "create" ? "bg-emerald-500" : "bg-blue-500";
+      ? EMPLOYEE_CONSTANTS.MESSAGES.AUTO_CODE_INFO
+      : EMPLOYEE_CONSTANTS.MESSAGES.AUTO_CODE_INFO;
+  const statusColor = mode === "create" ? "bg-emerald-500" : "bg-primary";
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4 overflow-hidden">
@@ -536,9 +547,9 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
         onClick={onClose}
       />
 
-      <div className="relative bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col transition-all animate-in fade-in zoom-in duration-200 overflow-hidden">
+      <div className="relative bg-card w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col transition-all animate-in fade-in zoom-in duration-200 overflow-hidden border border-border">
         {/* HEADER */}
-        <div className="px-8 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl z-10 rounded-t-2xl">
+        <div className="px-8 py-5 border-b border-border flex items-center justify-between sticky top-0 bg-card/80 backdrop-blur-xl z-10 rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-primary/10 text-primary rounded-xl shadow-inner-sm">
               <User size={22} className="drop-shadow-sm" />
@@ -551,7 +562,7 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${statusColor} animate-pulse`}
                 ></span>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                   {SYSTEM_MESSAGES.EMPLOYEE.SYSTEM_HR}
                 </span>
               </div>
@@ -559,7 +570,7 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors"
+            className="p-2 hover:bg-muted rounded-full text-muted-foreground transition-colors"
           >
             <X size={20} />
           </button>
@@ -589,22 +600,22 @@ export default function EmployeeFormModal(props: ReadonlyProps) {
           />
 
           {/* ACTIONS */}
-          <div className="mt-12 pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <div className="text-xs text-gray-400 flex items-center gap-1">
+          <div className="mt-12 pt-6 border-t border-border flex items-center justify-between">
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Info size={14} /> {infoText}
             </div>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-200 dark:border-gray-800 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition drop-shadow-sm"
+                className="px-6 py-2 border border-border rounded-xl font-bold text-muted-foreground hover:bg-muted transition active:scale-95"
               >
                 {SYSTEM_MESSAGES.BTN_CANCEL}
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/25 flex items-center gap-2"
+                className="px-8 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/25 flex items-center gap-2 active:scale-95"
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
