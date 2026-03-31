@@ -6,6 +6,8 @@ import {
   type SalaryComponentPayload,
   type SalaryComponentResponse,
 } from "@/services/salaryComponentApi";
+import { PAYROLL_ADMIN_CONSTANTS } from "../payroll.constants";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 interface SalaryComponentFormProps {
   open: boolean;
@@ -178,7 +180,9 @@ export function SalaryComponentForm({
 
   const title = useMemo(
     () =>
-      mode === "create" ? "Tạo thành phần lương" : "Cập nhật thành phần lương",
+      mode === "create"
+        ? PAYROLL_ADMIN_CONSTANTS.MODAL.TITLE_CREATE
+        : PAYROLL_ADMIN_CONSTANTS.MODAL.TITLE_EDIT,
     [mode],
   );
 
@@ -191,45 +195,50 @@ export function SalaryComponentForm({
     const rule = TYPE_RULES[f.type];
 
     if (!f.code.trim()) {
-      errs.code = "Mã là bắt buộc";
-    } else if (!/^[A-Z0-9_]+$/i.test(f.code.trim())) {
-      errs.code = "Mã chỉ được chứa chữ cái, số và dấu gạch dưới (_)";
-    } else if (f.code.trim().length > 50) {
-      errs.code = "Mã không được vượt quá 50 ký tự";
+      errs.code = PAYROLL_ADMIN_CONSTANTS.VALIDATION.CODE_REQUIRED;
+    } else if (
+      !PAYROLL_ADMIN_CONSTANTS.VALIDATION.CODE_REGEX.test(f.code.trim())
+    ) {
+      errs.code = PAYROLL_ADMIN_CONSTANTS.VALIDATION.CODE_INVALID_FORMAT;
+    } else if (
+      f.code.trim().length > PAYROLL_ADMIN_CONSTANTS.VALIDATION.CODE_MAX_LENGTH
+    ) {
+      errs.code = PAYROLL_ADMIN_CONSTANTS.VALIDATION.CODE_TOO_LONG;
     }
 
     if (!f.name.trim()) {
-      errs.name = "Tên là bắt buộc";
-    } else if (f.name.trim().length > 255) {
-      errs.name = "Tên không được vượt quá 255 ký tự";
+      errs.name = PAYROLL_ADMIN_CONSTANTS.VALIDATION.NAME_REQUIRED;
+    } else if (
+      f.name.trim().length > PAYROLL_ADMIN_CONSTANTS.VALIDATION.NAME_MAX_LENGTH
+    ) {
+      errs.name = PAYROLL_ADMIN_CONSTANTS.VALIDATION.NAME_TOO_LONG;
     }
 
     if (rule.showAmount) {
       if (!f.amount.trim()) {
-        errs.amount = "Số tiền là bắt buộc";
+        errs.amount = PAYROLL_ADMIN_CONSTANTS.VALIDATION.AMOUNT_REQUIRED;
       } else {
         const n = Number(f.amount);
-        if (Number.isNaN(n)) {
-          errs.amount = "Số tiền phải là số hợp lệ";
-        } else if (n < 0) {
-          errs.amount = "Số tiền không được âm";
-        } else if (n > 999_999_999) {
-          errs.amount = "Số tiền quá lớn (tối đa 999,999,999)";
+        if (
+          Number.isNaN(n) ||
+          n < PAYROLL_ADMIN_CONSTANTS.VALIDATION.AMOUNT_MIN
+        ) {
+          errs.amount = PAYROLL_ADMIN_CONSTANTS.VALIDATION.AMOUNT_INVALID;
         }
       }
     }
 
     if (rule.showRatePercent) {
       if (!f.ratePercent.trim()) {
-        errs.ratePercent = "Hệ số (%) là bắt buộc";
+        errs.ratePercent = PAYROLL_ADMIN_CONSTANTS.VALIDATION.RATE_REQUIRED;
       } else {
         const r = Number(f.ratePercent);
-        if (Number.isNaN(r)) {
-          errs.ratePercent = "Hệ số phải là số hợp lệ";
-        } else if (r < 0) {
-          errs.ratePercent = "Hệ số không được âm";
-        } else if (r > 100) {
-          errs.ratePercent = "Hệ số không được vượt quá 100%";
+        if (
+          Number.isNaN(r) ||
+          r < PAYROLL_ADMIN_CONSTANTS.VALIDATION.RATE_MIN ||
+          r > PAYROLL_ADMIN_CONSTANTS.VALIDATION.RATE_MAX
+        ) {
+          errs.ratePercent = PAYROLL_ADMIN_CONSTANTS.VALIDATION.RATE_INVALID;
         }
       }
     }
@@ -307,9 +316,12 @@ export function SalaryComponentForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
-      <div className="relative z-10 w-full max-w-2xl rounded-xl border bg-white p-6 shadow-xl dark:bg-slate-900">
+      <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-border bg-card p-8 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">{title}</h2>
@@ -327,17 +339,17 @@ export function SalaryComponentForm({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Mã */}
             <div>
-              <Label required>Mã</Label>
+              <Label required>{PAYROLL_ADMIN_CONSTANTS.MODAL.LABEL_CODE}</Label>
               <Input
                 value={form.code}
                 onChange={(e) => updateField("code", e.target.value)}
                 onBlur={() => handleBlur("code")}
-                placeholder="VD: LUONG_CO_BAN"
+                placeholder={PAYROLL_ADMIN_CONSTANTS.MODAL.PLACEHOLDER_CODE}
                 disabled={submitting}
                 className={
                   fieldError("code")
-                    ? "border-red-500 focus-visible:ring-red-500"
-                    : ""
+                    ? "border-red-500 focus-visible:ring-red-500 rounded-xl"
+                    : "rounded-xl border-border bg-muted/20"
                 }
               />
               <FieldError message={fieldError("code")} />
@@ -345,17 +357,17 @@ export function SalaryComponentForm({
 
             {/* Tên */}
             <div>
-              <Label required>Tên</Label>
+              <Label required>{PAYROLL_ADMIN_CONSTANTS.MODAL.LABEL_NAME}</Label>
               <Input
                 value={form.name}
                 onChange={(e) => updateField("name", e.target.value)}
                 onBlur={() => handleBlur("name")}
-                placeholder="VD: Lương cơ bản"
+                placeholder={PAYROLL_ADMIN_CONSTANTS.MODAL.PLACEHOLDER_NAME}
                 disabled={submitting}
                 className={
                   fieldError("name")
-                    ? "border-red-500 focus-visible:ring-red-500"
-                    : ""
+                    ? "border-red-500 focus-visible:ring-red-500 rounded-xl"
+                    : "rounded-xl border-border bg-muted/20"
                 }
               />
               <FieldError message={fieldError("name")} />
@@ -363,7 +375,7 @@ export function SalaryComponentForm({
 
             {/* Loại */}
             <div>
-              <Label required>Loại</Label>
+              <Label required>{PAYROLL_ADMIN_CONSTANTS.MODAL.LABEL_TYPE}</Label>
               <select
                 value={form.type}
                 onChange={(e) =>
@@ -371,36 +383,54 @@ export function SalaryComponentForm({
                     e.target.value as SalaryComponentPayload["type"],
                   )
                 }
-                className="h-10 w-full rounded-md border px-3 text-sm"
+                className="h-10 w-full rounded-xl border border-border bg-muted/20 px-3 text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all"
                 disabled={submitting}
               >
                 {form.type === "BASE" && (
-                  <option value="BASE">Lương cơ bản (BASE)</option>
+                  <option value="BASE">
+                    {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.BASE} (BASE)
+                  </option>
                 )}
-                <option value="ALLOWANCE">Phụ cấp (ALLOWANCE)</option>
-                <option value="COMMISSION">Hoa hồng (COMMISSION)</option>
-                <option value="BONUS">Thưởng (BONUS)</option>
-                <option value="DEDUCTION">Khấu trừ (DEDUCTION)</option>
-                <option value="INSURANCE">Bảo hiểm (INSURANCE)</option>
+                <option value="ALLOWANCE">
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.ALLOWANCE} (ALLOWANCE)
+                </option>
+                <option value="COMMISSION">
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.COMMISSION} (COMMISSION)
+                </option>
+                <option value="BONUS">
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.BONUS} (BONUS)
+                </option>
+                <option value="DEDUCTION">
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.DEDUCTION} (DEDUCTION)
+                </option>
+                <option value="INSURANCE">
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.INSURANCE} (INSURANCE)
+                </option>
               </select>
             </div>
 
             {/* Tính chất (auto-locked) */}
             <div>
-              <Label>Tính chất</Label>
+              <Label>{PAYROLL_ADMIN_CONSTANTS.MODAL.LABEL_NATURE}</Label>
               <select
                 value={form.nature}
-                className="h-10 w-full rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground"
+                className="h-10 w-full rounded-xl border border-border bg-muted px-3 text-sm font-medium text-muted-foreground cursor-not-allowed opacity-70"
                 disabled
               >
-                <option value="INCOME">Thu nhập (Income)</option>
-                <option value="DEDUCTION">Khấu trừ (Deduction)</option>
+                <option value="INCOME">
+                  {PAYROLL_ADMIN_CONSTANTS.NATURE_LABELS.INCOME} (Income)
+                </option>
+                <option value="DEDUCTION">
+                  {PAYROLL_ADMIN_CONSTANTS.NATURE_LABELS.DEDUCTION} (Deduction)
+                </option>
               </select>
             </div>
 
             {/* Trạng thái */}
             <div>
-              <Label required>Trạng thái</Label>
+              <Label required>
+                {PAYROLL_ADMIN_CONSTANTS.MODAL.LABEL_STATUS}
+              </Label>
               <select
                 value={form.status}
                 onChange={(e) =>
@@ -409,18 +439,24 @@ export function SalaryComponentForm({
                     e.target.value as SalaryComponentPayload["status"],
                   )
                 }
-                className="h-10 w-full rounded-md border px-3 text-sm"
+                className="h-10 w-full rounded-xl border border-border bg-muted/20 px-3 text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all"
                 disabled={submitting}
               >
-                <option value="ACTIVE">Đang áp dụng (ACTIVE)</option>
-                <option value="INACTIVE">Ngừng áp dụng (INACTIVE)</option>
+                <option value="ACTIVE">
+                  {PAYROLL_ADMIN_CONSTANTS.STATUS_LABELS.ACTIVE} (ACTIVE)
+                </option>
+                <option value="INACTIVE">
+                  {PAYROLL_ADMIN_CONSTANTS.STATUS_LABELS.INACTIVE} (INACTIVE)
+                </option>
               </select>
             </div>
 
             {/* Số tiền */}
             {rule.showAmount && (
               <div>
-                <Label required>Số tiền (VND)</Label>
+                <Label required>
+                  {PAYROLL_ADMIN_CONSTANTS.MODAL.LABEL_AMOUNT}
+                </Label>
                 <Input
                   type="number"
                   min={0}
@@ -428,12 +464,12 @@ export function SalaryComponentForm({
                   value={form.amount}
                   onChange={(e) => updateField("amount", e.target.value)}
                   onBlur={() => handleBlur("amount")}
-                  placeholder="VD: 500000"
+                  placeholder={PAYROLL_ADMIN_CONSTANTS.MODAL.PLACEHOLDER_AMOUNT}
                   disabled={submitting}
                   className={
                     fieldError("amount")
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
+                      ? "border-red-500 focus-visible:ring-red-500 rounded-xl"
+                      : "rounded-xl border-border bg-muted/20"
                   }
                 />
                 <FieldError message={fieldError("amount")} />
@@ -443,7 +479,9 @@ export function SalaryComponentForm({
             {/* Hệ số % */}
             {rule.showRatePercent && (
               <div>
-                <Label required>Hệ số / Phần trăm (%)</Label>
+                <Label required>
+                  {PAYROLL_ADMIN_CONSTANTS.MODAL.LABEL_RATE}
+                </Label>
                 <Input
                   type="number"
                   min={0}
@@ -452,12 +490,12 @@ export function SalaryComponentForm({
                   value={form.ratePercent}
                   onChange={(e) => updateField("ratePercent", e.target.value)}
                   onBlur={() => handleBlur("ratePercent")}
-                  placeholder="VD: 8"
+                  placeholder={PAYROLL_ADMIN_CONSTANTS.MODAL.PLACEHOLDER_RATE}
                   disabled={submitting}
                   className={
                     fieldError("ratePercent")
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
+                      ? "border-red-500 focus-visible:ring-red-500 rounded-xl"
+                      : "rounded-xl border-border bg-muted/20"
                   }
                 />
                 <FieldError message={fieldError("ratePercent")} />
@@ -467,12 +505,8 @@ export function SalaryComponentForm({
 
           {/* Helper text */}
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">
-              Tính chất được tự động khóa theo loại: Bảo hiểm → Khấu trừ, Thưởng
-              → Thu nhập.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-red-500">*</span> Trường bắt buộc
+            <p className="text-xs text-muted-foreground italic">
+              {PAYROLL_ADMIN_CONSTANTS.MODAL.HELPER_LOCK}
             </p>
           </div>
 
@@ -484,21 +518,26 @@ export function SalaryComponentForm({
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-3 pt-6 border-t border-border">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={submitting}
+              className="rounded-xl px-6 h-11 font-bold text-muted-foreground"
             >
-              Hủy
+              {SYSTEM_MESSAGES.BTN_CANCEL}
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="rounded-xl px-8 h-11 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+            >
               {submitting
-                ? "Đang lưu..."
+                ? SYSTEM_MESSAGES.SAVING
                 : mode === "create"
-                  ? "Tạo mới"
-                  : "Lưu thay đổi"}
+                  ? PAYROLL_ADMIN_CONSTANTS.BTN_CREATE
+                  : SYSTEM_MESSAGES.BTN_SAVE}
             </Button>
           </div>
         </form>

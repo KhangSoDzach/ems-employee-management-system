@@ -45,24 +45,14 @@ const INITIAL_MODAL_STATE: ModalState = {
   selected: null,
 };
 
-const SALARY_COMPONENT_TYPE_LABELS: Record<string, string> = {
-  BASE: "Lương cơ bản",
-  ALLOWANCE: "Phụ cấp",
-  COMMISSION: "Hoa hồng",
-  BONUS: "Thưởng",
-  DEDUCTION: "Khấu trừ",
-  INSURANCE: "Bảo hiểm",
-};
+const SALARY_COMPONENT_TYPE_LABELS: Record<string, string> =
+  PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS;
 
-const SALARY_COMPONENT_NATURE_LABELS: Record<string, string> = {
-  INCOME: "Thu nhập",
-  DEDUCTION: "Khấu trừ",
-};
+const SALARY_COMPONENT_NATURE_LABELS: Record<string, string> =
+  PAYROLL_ADMIN_CONSTANTS.NATURE_LABELS;
 
-const SALARY_COMPONENT_STATUS_LABELS: Record<string, string> = {
-  ACTIVE: "Đang áp dụng",
-  INACTIVE: "Ngừng áp dụng",
-};
+const SALARY_COMPONENT_STATUS_LABELS: Record<string, string> =
+  PAYROLL_ADMIN_CONSTANTS.STATUS_LABELS;
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
@@ -267,8 +257,16 @@ export default function SalaryComponentPage() {
                     <TableCell>
                       {SALARY_COMPONENT_TYPE_LABELS[row.type] ?? row.type}
                     </TableCell>
-                    <TableCell>{row.isTaxable ? "Có" : "Không"}</TableCell>
-                    <TableCell>{row.isInsurable ? "Có" : "Không"}</TableCell>
+                    <TableCell>
+                      {row.isTaxable
+                        ? SYSTEM_MESSAGES.COMMON.YES
+                        : SYSTEM_MESSAGES.COMMON.NO}
+                    </TableCell>
+                    <TableCell>
+                      {row.isInsurable
+                        ? SYSTEM_MESSAGES.COMMON.YES
+                        : SYSTEM_MESSAGES.COMMON.NO}
+                    </TableCell>
                     <TableCell>
                       {SALARY_COMPONENT_NATURE_LABELS[row.nature] ?? row.nature}
                     </TableCell>
@@ -303,8 +301,9 @@ export default function SalaryComponentPage() {
         </div>
 
         <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-sm text-muted-foreground">
-          <div>
-            Tổng cộng {totalElements} kết quả. Trang{" "}
+          <div className="text-sm font-medium text-muted-foreground">
+            {SYSTEM_MESSAGES.COMMON.TOTAL} {totalElements}{" "}
+            {SYSTEM_MESSAGES.COMMON.RESULT}. {SYSTEM_MESSAGES.COMMON.PAGE}{" "}
             {totalPages === 0 ? 0 : page + 1}/{totalPages}
           </div>
           <div className="flex items-center gap-2">
@@ -313,18 +312,18 @@ export default function SalaryComponentPage() {
               size="sm"
               disabled={page === 0}
               onClick={() => setPage((p) => p - 1)}
-              className="h-8 gap-1"
+              className="h-8 gap-1 rounded-lg"
             >
-              <ChevronLeft className="h-4 w-4" /> Trước
+              <ChevronLeft className="h-4 w-4" /> {SYSTEM_MESSAGES.COMMON.PREV}
             </Button>
             <Button
               variant="outline"
               size="sm"
               disabled={page >= totalPages - 1 || totalPages === 0}
               onClick={() => setPage((p) => p + 1)}
-              className="h-8 gap-1"
+              className="h-8 gap-1 rounded-lg"
             >
-              Sau <ChevronRight className="h-4 w-4" />
+              {SYSTEM_MESSAGES.COMMON.NEXT} <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

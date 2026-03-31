@@ -6,7 +6,9 @@ import {
   EmployeeResponse,
   OfficialContractRequest,
 } from "@/services/employeeService";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useConvertToOfficial } from "./hooks/useEmployeeLifecycle";
+import { EMPLOYEE_CONSTANTS } from "./employee.constants";
 
 type ContractTerm = OfficialContractRequest["contractTerm"];
 
@@ -50,7 +52,12 @@ export default function ConfirmOfficialModal({
     }
 
     const baseline = employee.probationSalary ?? employee.salary ?? 0;
-    const suggestedSalary = baseline > 0 ? Math.round(baseline * 1.1) : 0;
+    const suggestedSalary =
+      baseline > 0
+        ? Math.round(
+            baseline * EMPLOYEE_CONSTANTS.VALIDATION.SUGGESTED_INCREASE_RATE,
+          )
+        : 0;
 
     reset({
       contractStartDate: new Date().toISOString().slice(0, 10),
@@ -75,32 +82,32 @@ export default function ConfirmOfficialModal({
           officialSalary: Number(values.officialSalary),
         },
       });
-      toast.success("Xác nhận chính thức thành công");
+      toast.success(SYSTEM_MESSAGES.EMPLOYEE.MSG_CONVERT_SUCCESS);
       onSuccess();
       onClose();
     } catch (error: any) {
       const message =
         error?.response?.data?.message ??
-        "Không thể xác nhận chính thức. Vui lòng thử lại.";
+        SYSTEM_MESSAGES.EMPLOYEE.MSG_CONVERT_ERROR;
       toast.error(message);
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="w-full max-w-lg rounded-2xl bg-card border border-border shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              Xác nhận chính thức
+            <h3 className="text-lg font-bold text-foreground">
+              {SYSTEM_MESSAGES.EMPLOYEE.MODAL_CONVERT_TITLE}
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {employee.firstName} {employee.lastName} • {employee.employeeCode}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
             type="button"
           >
             <X size={18} />
@@ -111,16 +118,16 @@ export default function ConfirmOfficialModal({
           <div className="space-y-1.5">
             <label
               htmlFor="official-contract-start-date"
-              className="text-xs font-semibold text-gray-500 uppercase"
+              className="text-xs font-semibold text-muted-foreground uppercase"
             >
-              Ngày ký HĐ chính thức
+              {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SIGNING_DATE}
             </label>
             <input
               id="official-contract-start-date"
               type="date"
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              className="w-full px-3 py-2.5 rounded-xl border border-border bg-card"
               {...register("contractStartDate", {
-                required: "Vui lòng chọn ngày ký hợp đồng",
+                required: SYSTEM_MESSAGES.EMPLOYEE.PLACEHOLDER_SIGNING_DATE,
               })}
             />
             {errors.contractStartDate && (
@@ -133,23 +140,31 @@ export default function ConfirmOfficialModal({
           <div className="space-y-1.5">
             <label
               htmlFor="official-contract-term"
-              className="text-xs font-semibold text-gray-500 uppercase"
+              className="text-xs font-semibold text-muted-foreground uppercase"
             >
-              Loại hợp đồng chính thức
+              {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPE_OFFICIAL}
             </label>
             <select
               id="official-contract-term"
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              className="w-full px-3 py-2.5 rounded-xl border border-border bg-card"
               {...register("contractTerm", { required: true })}
             >
-              <option value="ONE_YEAR">1 năm</option>
-              <option value="TWO_YEARS">2 năm</option>
-              <option value="THREE_YEARS">3 năm</option>
-              <option value="INDEFINITE">Không thời hạn</option>
+              <option value="ONE_YEAR">
+                {SYSTEM_MESSAGES.EMPLOYEE.TERM_ONE_YEAR}
+              </option>
+              <option value="TWO_YEARS">
+                {SYSTEM_MESSAGES.EMPLOYEE.TERM_TWO_YEARS}
+              </option>
+              <option value="THREE_YEARS">
+                {SYSTEM_MESSAGES.EMPLOYEE.TERM_THREE_YEARS}
+              </option>
+              <option value="INDEFINITE">
+                {SYSTEM_MESSAGES.EMPLOYEE.TERM_INDEFINITE}
+              </option>
             </select>
             {contractTerm !== "INDEFINITE" && (
               <p className="text-xs text-amber-600">
-                Hệ thống sẽ tự tính ngày hết hạn hợp đồng theo kỳ hạn đã chọn.
+                {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TERM_AUTO}
               </p>
             )}
           </div>
@@ -157,20 +172,23 @@ export default function ConfirmOfficialModal({
           <div className="space-y-1.5">
             <label
               htmlFor="official-salary"
-              className="text-xs font-semibold text-gray-500 uppercase"
+              className="text-xs font-semibold text-muted-foreground uppercase"
             >
-              Mức lương chính thức mới (VNĐ)
+              {SYSTEM_MESSAGES.EMPLOYEE.LABEL_OFFICIAL_SALARY_VND}
             </label>
             <input
               id="official-salary"
               type="number"
-              min={1}
-              step="1000"
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              min={EMPLOYEE_CONSTANTS.VALIDATION.MIN_OFFICIAL_SALARY}
+              step={EMPLOYEE_CONSTANTS.VALIDATION.SALARY_STEP}
+              className="w-full px-3 py-2.5 rounded-xl border border-border bg-card"
               {...register("officialSalary", {
-                required: "Vui lòng nhập mức lương chính thức",
+                required: SYSTEM_MESSAGES.EMPLOYEE.PLACEHOLDER_OFFICIAL_SALARY,
                 valueAsNumber: true,
-                min: { value: 1, message: "Mức lương phải lớn hơn 0" },
+                min: {
+                  value: EMPLOYEE_CONSTANTS.VALIDATION.MIN_OFFICIAL_SALARY,
+                  message: SYSTEM_MESSAGES.EMPLOYEE.MSG_SALARY_MIN,
+                },
               })}
             />
             {errors.officialSalary && (
@@ -184,23 +202,23 @@ export default function ConfirmOfficialModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"
+              className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:bg-muted"
               disabled={convertMutation.isPending}
             >
-              Hủy
+              {SYSTEM_MESSAGES.BTN_CANCEL}
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 disabled:opacity-60"
+              className="px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 disabled:opacity-60 shadow-lg shadow-primary/20 transition-all active:scale-95"
               disabled={convertMutation.isPending}
             >
               {convertMutation.isPending ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
-                  Đang lưu...
+                  {SYSTEM_MESSAGES.SAVING}
                 </span>
               ) : (
-                "Xác nhận chính thức"
+                SYSTEM_MESSAGES.EMPLOYEE.BTN_CONFIRM_OFFICIAL
               )}
             </button>
           </div>

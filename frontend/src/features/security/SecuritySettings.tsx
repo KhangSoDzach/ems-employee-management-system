@@ -7,17 +7,10 @@ import {
   AlertTriangle,
   Bell,
   Moon,
-  User,
-  Lock,
   ChevronRight,
   LogOut,
-  ExternalLink,
-  Mail,
-  UserCircle,
-  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -52,7 +45,6 @@ import {
 
 export default function SidebarSettings() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // 2FA States
@@ -212,7 +204,7 @@ export default function SidebarSettings() {
               {recoveryCodes.slice(0, 4).map((code) => (
                 <div
                   key={code}
-                  className="bg-white dark:bg-black border p-1.5 text-center rounded text-[9px] font-mono font-bold shadow-sm"
+                  className="bg-card border-border border p-1.5 text-center rounded text-[9px] font-mono font-bold shadow-sm"
                 >
                   {code}
                 </div>
@@ -237,110 +229,8 @@ export default function SidebarSettings() {
     );
   }
 
-  function renderAccountContent() {
-    return (
-      <div className="w-72 p-5 space-y-5">
-        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">
-          {TEXT.SIDEBAR_SETTINGS.ACCOUNT_SETTINGS}
-        </h3>
-        <div className="space-y-2">
-          <button
-            className="flex items-center justify-between w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-left"
-            onClick={() => navigate("/profile")}
-          >
-            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-              <UserCircle size={18} />
-              <span className="text-xs font-medium">
-                {TEXT.SIDEBAR_SETTINGS.ACCOUNT_VIEW.EDIT_PROFILE}
-              </span>
-            </div>
-            <ExternalLink size={14} className="text-slate-300" />
-          </button>
-
-          <button className="flex items-center justify-between w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-left">
-            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-              <Mail size={18} />
-              <span className="text-xs font-medium">
-                {TEXT.SIDEBAR_SETTINGS.ACCOUNT_VIEW.EMAIL}
-              </span>
-            </div>
-            <span className="text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded uppercase font-bold">
-              {TEXT.SIDEBAR_SETTINGS.ACCOUNT_VIEW.PRIMARY}
-            </span>
-          </button>
-
-          <button className="flex items-center justify-between w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-left">
-            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-              <Globe size={18} />
-              <span className="text-xs font-medium">
-                {TEXT.SIDEBAR_SETTINGS.ACCOUNT_VIEW.LANGUAGE}
-              </span>
-            </div>
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-              {TEXT.SIDEBAR_SETTINGS.ACCOUNT_VIEW.LANG_VAL}
-            </span>
-          </button>
-        </div>
-        <p className="text-[10px] text-slate-400 italic px-2 leading-relaxed">
-          {TEXT.SIDEBAR_SETTINGS.ACCOUNT_VIEW.DESC}
-        </p>
-      </div>
-    );
-  }
-
-  function renderPrivacyContent() {
-    return (
-      <div className="w-72 p-5 space-y-5">
-        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">
-          {TEXT.SIDEBAR_SETTINGS.PRIVACY}
-        </h3>
-        <div className="space-y-4">
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 space-y-2.5 text-left">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">
-                {TEXT.SIDEBAR_SETTINGS.PRIVACY_VIEW.VISIBILITY}
-              </span>
-              <Switch defaultChecked className="scale-75" />
-            </div>
-            <p className="text-[9px] text-slate-500 leading-relaxed">
-              {TEXT.SIDEBAR_SETTINGS.PRIVACY_VIEW.VISIBILITY_DESC}
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 space-y-2.5 text-left">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">
-                {TEXT.SIDEBAR_SETTINGS.PRIVACY_VIEW.LOGGING}
-              </span>
-              <Switch defaultChecked className="scale-75" />
-            </div>
-            <p className="text-[9px] text-slate-500 leading-relaxed">
-              {TEXT.SIDEBAR_SETTINGS.PRIVACY_VIEW.LOGGING_DESC}
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-xl border border-red-100 dark:border-red-900/30 bg-red-50/10 dark:bg-red-950/20 text-left">
-            <h4 className="text-[10px] font-bold text-red-600 mb-1 uppercase tracking-wider">
-              {TEXT.SIDEBAR_SETTINGS.PRIVACY_VIEW.DATA_MGMT}
-            </h4>
-            <p className="text-[9px] text-red-500 opacity-80 mb-3">
-              {TEXT.SIDEBAR_SETTINGS.PRIVACY_VIEW.DATA_MGMT_DESC}
-            </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full h-8 text-[9px] text-red-600 hover:bg-red-600 hover:text-white border border-red-200 uppercase font-bold"
-            >
-              {TEXT.SIDEBAR_SETTINGS.PRIVACY_VIEW.BTN_EXPORT}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-72 bg-white dark:bg-slate-950 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="w-72 bg-card overflow-hidden animate-in fade-in zoom-in-95 duration-200">
       {/* Header */}
       <div className="p-4 pb-2">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -414,39 +304,6 @@ export default function SidebarSettings() {
             <button className="flex items-center justify-between w-full group py-1 outline-none">
               <div className="flex items-center gap-3">
                 <div className="text-slate-500 group-hover:text-primary transition-colors">
-                  <User size={18} />
-                </div>
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-slate-900 transition-colors">
-                  {TEXT.SIDEBAR_SETTINGS.ACCOUNT_SETTINGS}
-                </span>
-              </div>
-              <ChevronRight
-                size={14}
-                className="text-slate-300 group-hover:text-slate-500 transition-colors"
-              />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            sideOffset={24}
-            alignOffset={-14}
-            className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950"
-          >
-            <PopoverArrow
-              className="fill-white dark:fill-slate-950"
-              width={12}
-              height={6}
-            />
-            {renderAccountContent()}
-          </PopoverContent>
-        </Popover>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className="flex items-center justify-between w-full group py-1 outline-none">
-              <div className="flex items-center gap-3">
-                <div className="text-slate-500 group-hover:text-primary transition-colors">
                   <ShieldCheck size={18} />
                 </div>
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-slate-900 transition-colors">
@@ -464,47 +321,10 @@ export default function SidebarSettings() {
             align="start"
             sideOffset={24}
             alignOffset={-14}
-            className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950"
+            className="p-0 border border-border shadow-2xl rounded-2xl overflow-visible bg-card"
           >
-            <PopoverArrow
-              className="fill-white dark:fill-slate-950"
-              width={12}
-              height={6}
-            />
+            <PopoverArrow className="fill-card" width={12} height={6} />
             {render2FAContent()}
-          </PopoverContent>
-        </Popover>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className="flex items-center justify-between w-full group py-1 outline-none">
-              <div className="flex items-center gap-3">
-                <div className="text-slate-500 group-hover:text-primary transition-colors">
-                  <Lock size={18} />
-                </div>
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-slate-900 transition-colors">
-                  {TEXT.SIDEBAR_SETTINGS.PRIVACY}
-                </span>
-              </div>
-              <ChevronRight
-                size={14}
-                className="text-slate-300 group-hover:text-slate-500 transition-colors"
-              />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            sideOffset={24}
-            alignOffset={-14}
-            className="p-0 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl overflow-visible bg-white dark:bg-slate-950"
-          >
-            <PopoverArrow
-              className="fill-white dark:fill-slate-950"
-              width={12}
-              height={6}
-            />
-            {renderPrivacyContent()}
           </PopoverContent>
         </Popover>
       </div>
@@ -541,15 +361,15 @@ export default function SidebarSettings() {
           <div className="p-8 pt-6 space-y-6">
             {twoFaStep === "setup" && (
               <>
-                <div className="flex justify-center bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-inner">
+                <div className="flex justify-center bg-card p-4 rounded-2xl border-2 border-border shadow-inner">
                   {setupQrCode ? (
                     <img
                       src={setupQrCode}
                       alt="2FA QR"
-                      className="w-40 h-40 border-4 border-slate-50 rounded-lg"
+                      className="w-40 h-40 border-4 border-muted rounded-lg"
                     />
                   ) : (
-                    <div className="w-40 h-40 bg-gray-100 flex items-center justify-center border-4 border-slate-50">
+                    <div className="w-40 h-40 bg-muted flex items-center justify-center border-4 border-muted">
                       <QrCode size={100} className="text-slate-300" />
                     </div>
                   )}

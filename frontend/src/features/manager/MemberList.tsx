@@ -44,29 +44,29 @@ function roleColor(positionTitle: string | null): string {
     title.includes("react") ||
     title.includes("ui")
   ) {
-    return "bg-blue-100 text-blue-700 hover:bg-blue-100";
+    return "bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/40";
   }
   if (
     title.includes("backend") ||
     title.includes("java") ||
     title.includes("server")
   ) {
-    return "bg-purple-100 text-purple-700 hover:bg-purple-100";
+    return "bg-purple-100 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/40";
   }
   if (title.includes("manager") || title.includes("lead")) {
-    return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
+    return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/40";
   }
   if (title.includes("design") || title.includes("ux")) {
-    return "bg-amber-100 text-amber-700 hover:bg-amber-100";
+    return "bg-amber-100 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/40";
   }
   if (
     title.includes("devops") ||
     title.includes("cloud") ||
     title.includes("infra")
   ) {
-    return "bg-orange-100 text-orange-700 hover:bg-orange-100";
+    return "bg-orange-100 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/40";
   }
-  return "bg-gray-100 text-gray-700 hover:bg-gray-100";
+  return "bg-gray-100 text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-800/80";
 }
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
@@ -436,7 +436,7 @@ export default function MemberList() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md bg-white">
+        <DialogContent className="sm:max-w-md bg-card">
           <DialogHeader>
             <DialogTitle className="font-bold text-xl text-primary">
               {t.BTN_OPEN_CYCLE}

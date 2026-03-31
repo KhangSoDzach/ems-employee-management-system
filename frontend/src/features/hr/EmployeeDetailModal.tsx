@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { employeeService, EmployeeResponse } from "@/services/employeeService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { EMPLOYEE_CONSTANTS } from "./employee.constants";
 
 interface Props {
   open: boolean;
@@ -64,17 +65,17 @@ export default function EmployeeDetailModal({
               <User size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {SYSTEM_MESSAGES.EMPLOYEE.MODAL_DETAIL_TITLE}
+              <h2 className="text-xl font-bold text-foreground">
+                {EMPLOYEE_CONSTANTS.TITLE_DETAIL}
               </h2>
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                 {employee?.employeeCode ?? SYSTEM_MESSAGES.LOADING}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 hover:text-gray-900 transition-colors"
+            className="p-2 hover:bg-muted rounded-full text-muted-foreground transition-colors"
           >
             <X size={20} />
           </button>
@@ -105,9 +106,9 @@ export default function EmployeeDetailModal({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50 dark:bg-gray-800 font-bold text-4xl">
-                      {employee.firstName[0]}
-                      {employee.lastName[0]}
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted font-bold text-4xl">
+                      {employee.firstName?.[0]}
+                      {employee.lastName?.[0]}
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -120,18 +121,18 @@ export default function EmployeeDetailModal({
                 <div className="flex-1 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white uppercase">
+                      <h3 className="text-2xl font-bold text-foreground uppercase">
                         {employee.firstName} {employee.lastName}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="px-2.5 py-0.5 bg-primary/10 text-primary text-xs font-bold rounded-full border border-primary/20">
                           {employee.position}
                         </span>
-                        <span className="text-gray-400 text-xs font-medium">
+                        <span className="text-muted-foreground text-xs font-medium">
                           •
                         </span>
-                        <span className="text-gray-500 text-xs font-semibold uppercase tracking-wide">
-                          {SYSTEM_MESSAGES.LABEL_DEPARTMENT}
+                        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+                          {EMPLOYEE_CONSTANTS.LABELS.DEPARTMENT}
                           {SYSTEM_MESSAGES.SYMBOLS.SPACE}
                           {employee.department}
                         </span>
@@ -154,34 +155,37 @@ export default function EmployeeDetailModal({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm">
-                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                      <Mail size={16} className="text-gray-400" />
-                      <span className="font-medium text-gray-900 dark:text-white">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Mail size={16} className="text-muted-foreground/60" />
+                      <span className="font-medium text-foreground">
                         {employee.email}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                      <Phone size={16} className="text-gray-400" />
-                      <span className="font-medium text-gray-900 dark:text-white">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Phone size={16} className="text-muted-foreground/60" />
+                      <span className="font-medium text-foreground">
                         {employee.phone ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                      <Calendar size={16} className="text-gray-400" />
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Calendar
+                        size={16}
+                        className="text-muted-foreground/60"
+                      />
                       <div>
-                        <p className="text-[10px] text-gray-400 uppercase font-bold leading-tight">
-                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_JOIN_DATE}
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold leading-tight">
+                          {EMPLOYEE_CONSTANTS.LABELS.HIRE_DATE}
                         </p>
-                        <span className="font-medium text-gray-900 dark:text-white">
+                        <span className="font-medium text-foreground">
                           {employee.hireDate}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                      <MapPin size={16} className="text-gray-400" />
-                      <span className="font-medium text-gray-900 dark:text-white">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <MapPin size={16} className="text-muted-foreground/60" />
+                      <span className="font-medium text-foreground">
                         {employee.workLocation ??
-                          SYSTEM_MESSAGES.EMPLOYEE.DEFAULT_WORK_LOCATION}
+                          EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONALITY}
                       </span>
                     </div>
                   </div>
@@ -192,37 +196,36 @@ export default function EmployeeDetailModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* PERSONAL INFO */}
                 <div className="space-y-4">
-                  <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white border-l-4 border-primary pl-3 uppercase tracking-wider">
-                    <User size={16} />{" "}
-                    {SYSTEM_MESSAGES.EMPLOYEE.SECTION_PERSONAL}
+                  <h4 className="flex items-center gap-2 text-sm font-bold text-foreground border-l-4 border-primary pl-3 uppercase tracking-wider">
+                    <User size={16} /> {EMPLOYEE_CONSTANTS.SECTIONS.BASIC}
                   </h4>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                  <div className="grid grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border border-border">
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DOB}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.DOB}
                       </p>
                       <p className="text-sm font-semibold">
                         {employee.dateOfBirth}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_GENDER}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.GENDER}
                       </p>
                       <p className="text-sm font-semibold">
                         {employee.gender === "MALE"
-                          ? SYSTEM_MESSAGES.EMPLOYEE.GENDER_MALE
+                          ? EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.MALE
                           : employee.gender === "FEMALE"
-                            ? SYSTEM_MESSAGES.EMPLOYEE.GENDER_FEMALE
+                            ? EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.FEMALE
                             : employee.gender === "OTHER"
-                              ? SYSTEM_MESSAGES.EMPLOYEE.GENDER_OTHER
+                              ? EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.OTHER
                               : (employee.gender ??
                                 SYSTEM_MESSAGES.COMMON.EMPTY_VALUE)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONAL_ID}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.NATIONAL_ID}
                       </p>
                       <p className="text-sm font-semibold">
                         {employee.nationalId ??
@@ -230,17 +233,17 @@ export default function EmployeeDetailModal({
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONALITY}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.NATIONALITY}
                       </p>
                       <p className="text-sm font-semibold">
                         {employee.nationality ??
-                          SYSTEM_MESSAGES.EMPLOYEE.DEFAULT_NATIONALITY}
+                          EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONALITY}
                       </p>
                     </div>
                     <div className="col-span-2">
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_ADDRESS}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.ADDRESS}
                       </p>
                       <p className="text-sm font-semibold">
                         {employee.address
@@ -253,39 +256,41 @@ export default function EmployeeDetailModal({
 
                 {/* EMPLOYMENT INFO */}
                 <div className="space-y-4">
-                  <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white border-l-4 border-blue-500 pl-3 uppercase tracking-wider">
-                    <Briefcase size={16} />{" "}
-                    {SYSTEM_MESSAGES.EMPLOYEE.SECTION_JOB}
+                  <h4 className="flex items-center gap-2 text-sm font-bold text-foreground border-l-4 border-blue-500 pl-3 uppercase tracking-wider">
+                    <Briefcase size={16} /> {EMPLOYEE_CONSTANTS.SECTIONS.JOB}
                   </h4>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                  <div className="grid grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border border-border">
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_CONTRACT}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_TYPE}
                       </p>
                       <p className="text-sm font-semibold">
                         {employee.contractType === "FULL_TIME"
-                          ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.FULL_TIME
+                          ? EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.FULL_TIME
                           : employee.contractType === "PART_TIME"
-                            ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.PART_TIME
+                            ? EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS
+                                .PART_TIME
                             : employee.contractType === "CONTRACT"
-                              ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.CONTRACT
+                              ? EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS
+                                  .CONTRACT
                               : employee.contractType === "INTERN"
-                                ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.INTERN
+                                ? EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS
+                                    .INTERN
                                 : employee.contractType === "CONSULTANT"
-                                  ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES
+                                  ? EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS
                                       .CONSULTANT
                                   : employee.contractType === "TEMPORARY"
-                                    ? SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES
+                                    ? EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS
                                         .TEMPORARY
                                     : (employee.contractType ??
                                       SYSTEM_MESSAGES.COMMON.EMPTY_VALUE)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SALARY}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.SALARY}
                       </p>
-                      <p className="text-sm font-bold text-blue-600">
+                      <p className="text-sm font-bold text-primary">
                         {employee.salary
                           ? employee.salary.toLocaleString() +
                             SYSTEM_MESSAGES.COMMON.CURRENCY_VND
@@ -293,26 +298,26 @@ export default function EmployeeDetailModal({
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_MANAGER}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.MANAGER}
                       </p>
-                      <p className="text-sm font-semibold flex items-center gap-1.5 underline decoration-gray-200 cursor-help">
+                      <p className="text-sm font-semibold flex items-center gap-1.5 underline decoration-border cursor-help">
                         {employee.reportingManagerName ??
                           SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_PROBATION_END}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.HIRE_DATE}
                       </p>
                       <p className="text-sm font-semibold">
-                        {employee.probationEndDate ??
+                        {employee.hireDate ??
                           SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_LEAVE_ANNUAL}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        Phep nam
                       </p>
                       <p className="text-sm font-bold text-green-600">
                         {employee.annualLeaveBalance ?? 0}{" "}
@@ -320,8 +325,8 @@ export default function EmployeeDetailModal({
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_LEAVE_SICK}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        Phep benh
                       </p>
                       <p className="text-sm font-bold text-amber-600">
                         {employee.sickLeaveBalance ?? 0}{" "}
@@ -333,14 +338,14 @@ export default function EmployeeDetailModal({
 
                 {/* EMERGENCY CONTACT */}
                 <div className="space-y-4">
-                  <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white border-l-4 border-red-500 pl-3 uppercase tracking-wider">
+                  <h4 className="flex items-center gap-2 text-sm font-bold text-foreground border-l-4 border-red-500 pl-3 uppercase tracking-wider">
                     <Users size={16} />{" "}
-                    {SYSTEM_MESSAGES.EMPLOYEE.SECTION_EMERGENCY}
+                    {EMPLOYEE_CONSTANTS.SECTIONS.CONTACT_ADDRESS}
                   </h4>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                  <div className="grid grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border border-border">
                     <div className="col-span-2">
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMERGENCY_NAME}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.EMERGENCY_NAME}
                       </p>
                       <p className="text-sm font-semibold">
                         {employee.emergencyContactName ??
@@ -349,8 +354,8 @@ export default function EmployeeDetailModal({
                     </div>
 
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.PHONE}
                       </p>
                       <p className="text-sm font-bold text-red-600">
                         {employee.emergencyContactPhone ??
@@ -362,26 +367,26 @@ export default function EmployeeDetailModal({
 
                 {/* TAX & BANKING */}
                 <div className="space-y-4">
-                  <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white border-l-4 border-amber-500 pl-3 uppercase tracking-wider">
+                  <h4 className="flex items-center gap-2 text-sm font-bold text-foreground border-l-4 border-amber-500 pl-3 uppercase tracking-wider">
                     <CreditCard size={16} />{" "}
-                    {SYSTEM_MESSAGES.EMPLOYEE.SECTION_FINANCE}
+                    {EMPLOYEE_CONSTANTS.SECTIONS.FINANCE}
                   </h4>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                  <div className="grid grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border border-border">
                     <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SOCIAL_ID}
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.NATIONALITY}
                       </p>
                       <p className="text-sm font-semibold">
                         {employee.socialSecurityNumber ??
                           SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                       </p>
                     </div>
-                    <div className="col-span-2 border-t border-gray-100 dark:border-gray-700 pt-3 mt-1">
-                      <p className="text-[10px] text-gray-400 uppercase font-bold">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_BANK_ACCOUNT}
+                    <div className="col-span-2 border-t border-border pt-3 mt-1">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {EMPLOYEE_CONSTANTS.LABELS.BANK_ACCOUNT}
                       </p>
                       <p className="text-sm font-bold flex items-center gap-2 uppercase">
-                        <Building size={14} className="text-gray-400" />
+                        <Building size={14} className="text-muted-foreground" />
                         {employee.bankName}
                         {SYSTEM_MESSAGES.SYMBOLS.DASH}
                         {employee.bankAccountNumber ??
@@ -396,10 +401,10 @@ export default function EmployeeDetailModal({
         </div>
 
         {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end bg-gray-50/50 dark:bg-gray-900">
+        <div className="px-6 py-4 border-t border-border flex justify-end bg-card">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+            className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-semibold hover:bg-muted transition active:scale-95"
           >
             {SYSTEM_MESSAGES.BTN_CLOSE}
           </button>

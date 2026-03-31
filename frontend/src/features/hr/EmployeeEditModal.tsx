@@ -15,6 +15,7 @@ import {
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+import { EMPLOYEE_CONSTANTS } from "./employee.constants";
 
 type ApiError = {
   response?: {
@@ -98,13 +99,13 @@ export default function EmployeeEditModal({
     `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${
       hasError(field)
         ? "border-red-500 focus:ring-red-500"
-        : "border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary"
+        : "border border-border focus:ring-2 focus:ring-primary bg-card"
     }`;
   const selectClass = (field: string) =>
-    `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-white ${
+    `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-card ${
       hasError(field)
         ? "border-red-500 focus:ring-red-500"
-        : "border border-gray-200 dark:border-gray-800"
+        : "border border-border"
     }`;
 
   const validateForm = () => {
@@ -118,7 +119,9 @@ export default function EmployeeEditModal({
     }
     if (!formData.email.trim()) {
       newErrors.email = FORM_VALIDATION_MESSAGES.REQUIRED;
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+    } else if (
+      !EMPLOYEE_CONSTANTS.VALIDATION.EMAIL_REGEX.test(formData.email)
+    ) {
       newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_INVALID;
     }
 
@@ -197,7 +200,8 @@ export default function EmployeeEditModal({
         probationEndDate: employee.probationEndDate || undefined,
         contractEndDate: employee.contractEndDate || undefined,
         workLocation: employee.workLocation || "",
-        nationality: employee.nationality || "Việt Nam",
+        nationality:
+          employee.nationality || EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONALITY,
         bloodGroup: employee.bloodGroup || "",
         gender: employee.gender || "MALE",
         avatarUrl: employee.avatarUrl || "",
@@ -304,19 +308,19 @@ export default function EmployeeEditModal({
         onClick={onClose}
       />
 
-      <div className="relative bg-white dark:bg-gray-900 w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col my-auto animate-in fade-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900 z-10 rounded-t-2xl">
+      <div className="relative bg-card w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col my-auto animate-in fade-in zoom-in duration-200 border border-border">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between sticky top-0 bg-card z-10 rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-2 bg-blue-50/50 text-blue-600 rounded-lg">
               <Briefcase size={20} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">
-              {SYSTEM_MESSAGES.EMPLOYEE.MODAL_UPDATE_TITLE}
+            <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">
+              {EMPLOYEE_CONSTANTS.TITLE_EDIT}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors"
+            className="p-2 hover:bg-muted rounded-full text-muted-foreground transition-colors"
           >
             <X size={20} />
           </button>
@@ -334,8 +338,8 @@ export default function EmployeeEditModal({
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_LAST_NAME}{" "}
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.LAST_NAME}{" "}
                       <span className="text-red-500">
                         {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
                       </span>
@@ -354,8 +358,8 @@ export default function EmployeeEditModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_FIRST_NAME}{" "}
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.FIRST_NAME}{" "}
                       <span className="text-red-500">
                         {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
                       </span>
@@ -374,8 +378,8 @@ export default function EmployeeEditModal({
                     )}
                   </div>
                   <div className="space-y-1 col-span-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_COMP_EMAIL}{" "}
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.EMAIL}{" "}
                       <span className="text-red-500">
                         {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
                       </span>
@@ -395,19 +399,19 @@ export default function EmployeeEditModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.PHONE}
                     </label>
                     <input
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-card"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_GENDER}
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.GENDER}
                     </label>
                     <select
                       name="gender"
@@ -416,13 +420,13 @@ export default function EmployeeEditModal({
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white"
                     >
                       <option value="MALE">
-                        {SYSTEM_MESSAGES.EMPLOYEE.GENDER_MALE}
+                        {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.MALE}
                       </option>
                       <option value="FEMALE">
-                        {SYSTEM_MESSAGES.EMPLOYEE.GENDER_FEMALE}
+                        {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.FEMALE}
                       </option>
                       <option value="OTHER">
-                        {SYSTEM_MESSAGES.EMPLOYEE.GENDER_OTHER}
+                        {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.OTHER}
                       </option>
                     </select>
                   </div>
@@ -435,8 +439,8 @@ export default function EmployeeEditModal({
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SALARY}{" "}
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.SALARY}{" "}
                       <span className="text-red-500">
                         {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
                       </span>
@@ -457,31 +461,31 @@ export default function EmployeeEditModal({
                     )}
                   </div>
                   <div className="col-span-2 space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NOTES}
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.NOTES}
                     </label>
                     <textarea
                       name="notes"
                       value={formData.notes || ""}
                       onChange={handleChange}
                       rows={3}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 resize-none"
-                      placeholder={SYSTEM_MESSAGES.EMPLOYEE.PLACEHOLDER_NOTES}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-card resize-none"
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.NOTES}
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-8 bg-blue-50/20 dark:bg-gray-800/50 p-6 rounded-2xl border border-blue-100 dark:border-gray-800">
+            <div className="space-y-8 bg-muted/20 p-6 rounded-2xl border border-border">
               <div className="space-y-4">
                 <h4 className="flex items-center gap-2 text-xs font-bold text-blue-700 uppercase tracking-widest">
                   {SYSTEM_MESSAGES.EMPLOYEE.SECTION_CURRENT_JOB}
                 </h4>
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DEPARTMENT}{" "}
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">
+                      {EMPLOYEE_CONSTANTS.LABELS.DEPARTMENT}{" "}
                       <span className="text-red-500">
                         {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
                       </span>
@@ -493,7 +497,7 @@ export default function EmployeeEditModal({
                       className={selectClass("departmentId")}
                     >
                       <option value={0}>
-                        {SYSTEM_MESSAGES.EMPLOYEE.SELECT_DEPT}
+                        {EMPLOYEE_CONSTANTS.PLACEHOLDERS.DEPT_SELECT}
                       </option>
                       {departments.map((d) => (
                         <option key={d.id} value={d.id}>
@@ -508,8 +512,8 @@ export default function EmployeeEditModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
-                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_POSITION}{" "}
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">
+                      {EMPLOYEE_CONSTANTS.LABELS.POSITION}{" "}
                       <span className="text-red-500">
                         {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
                       </span>
@@ -524,7 +528,7 @@ export default function EmployeeEditModal({
                       disabled={!formData.departmentId}
                     >
                       <option value={0}>
-                        {SYSTEM_MESSAGES.EMPLOYEE.SELECT_POSITION}
+                        {EMPLOYEE_CONSTANTS.PLACEHOLDERS.POS_SELECT}
                       </option>
                       {positions.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -541,8 +545,8 @@ export default function EmployeeEditModal({
 
                   {!isManagerPosition ? (
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
-                        {SYSTEM_MESSAGES.EMPLOYEE.LABEL_REPORTING_MANAGER}
+                      <label className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">
+                        {EMPLOYEE_CONSTANTS.LABELS.MANAGER}
                       </label>
                       <select
                         name="reportingManagerId"
@@ -552,7 +556,7 @@ export default function EmployeeEditModal({
                         className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold bg-white disabled:opacity-50"
                       >
                         <option value="">
-                          {SYSTEM_MESSAGES.EMPLOYEE.OPTION_NO_MANAGER}
+                          {EMPLOYEE_CONSTANTS.PLACEHOLDERS.MANAGER_NONE}
                         </option>
                         {managers.map((m) => (
                           <option key={m.id} value={m.id}>
@@ -564,7 +568,7 @@ export default function EmployeeEditModal({
                   ) : (
                     <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30">
                       <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                        {SYSTEM_MESSAGES.EMPLOYEE.MSG_MANAGER_LEVEL}
+                        {EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_LEVEL_INFO}
                       </p>
                     </div>
                   )}
@@ -577,31 +581,31 @@ export default function EmployeeEditModal({
                       name="contractType"
                       value={formData.contractType}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold bg-white"
+                      className="w-full px-3 py-2.5 rounded-xl border border-border text-sm font-bold bg-card"
                     >
                       <option value="FULL_TIME">
-                        {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.FULL_TIME}
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.FULL_TIME}
                       </option>
                       <option value="PART_TIME">
-                        {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.PART_TIME}
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.PART_TIME}
                       </option>
                       <option value="CONTRACT">
-                        {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.CONTRACT}
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.CONTRACT}
                       </option>
                       <option value="INTERN">
-                        {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.INTERN}
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.INTERN}
                       </option>
                       <option value="CONSULTANT">
-                        {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.CONSULTANT}
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.CONSULTANT}
                       </option>
                       <option value="TEMPORARY">
-                        {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPES.TEMPORARY}
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.TEMPORARY}
                       </option>
                     </select>
                   </div>
-                  <div className="bg-white/50 dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  <div className="bg-card p-4 rounded-xl border border-border flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">
                         {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE_SHORT}
                       </p>
                       <p className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
@@ -629,14 +633,14 @@ export default function EmployeeEditModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/25 flex items-center gap-2"
+              className="px-8 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/25 flex items-center gap-2 active:scale-95"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Save size={18} />
               )}
-              {SYSTEM_MESSAGES.EMPLOYEE.BTN_SAVE_PROFILE}
+              {EMPLOYEE_CONSTANTS.BTNS.EDIT}
             </button>
           </div>
         </form>

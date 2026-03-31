@@ -10,6 +10,7 @@ export const SYSTEM_MESSAGES = {
   SELECT_PLACEHOLDER: "Chọn giá trị",
   SUCCESS_UPDATE: "Cập nhật thành công!",
   ERROR: "Có lỗi xảy ra",
+  SAVING: "Đang lưu...",
   // Actions
   BTN_CANCEL: "Hủy bỏ",
   BTN_UPDATE: "Cập nhật",
@@ -575,6 +576,29 @@ export const SYSTEM_MESSAGES = {
     MSG_DELETE_DESC:
       "Hành động này có thể bị chặn nếu nhân viên có dữ liệu ràng buộc.",
     TXT_REMOVE: "Xóa",
+    LABEL_CONTRACT_TERM: "Kỳ hạn hợp đồng có thời hạn",
+    LABEL_MONTHS: (count: number) => `${count} tháng`,
+    LABEL_CONTRACT_START: "Ngày bắt đầu hợp đồng",
+    LABEL_AVATAR_PREVIEW: "Ảnh đại diện xem trước",
+    PLACEHOLDER_AVATAR_URL: "Nhập URL ảnh đại diện (Tùy chọn)",
+    LABEL_SELECT_AVATAR: "Chọn ảnh đại diện",
+    STATUS_PROBATION: "Thử việc",
+    BTN_CONFIRM_OFFICIAL: "Xác nhận chính thức",
+    MSG_CONVERT_SUCCESS: "Xác nhận chính thức thành công",
+    MSG_CONVERT_ERROR: "Không thể xác nhận chính thức. Vui lòng thử lại.",
+    MODAL_CONVERT_TITLE: "Xác nhận chính thức",
+    LABEL_SIGNING_DATE: "Ngày ký HĐ chính thức",
+    LABEL_OFFICIAL_SALARY_VND: "Mức lương chính thức mới (VNĐ)",
+    CONTRACT_TERM_AUTO:
+      "Hệ thống sẽ tự tính ngày hết hạn hợp đồng theo kỳ hạn đã chọn.",
+    TERM_ONE_YEAR: "1 năm",
+    TERM_TWO_YEARS: "2 năm",
+    TERM_THREE_YEARS: "3 năm",
+    TERM_INDEFINITE: "Không thời hạn",
+    CONTRACT_TYPE_OFFICIAL: "Loại hợp đồng chính thức",
+    PLACEHOLDER_SIGNING_DATE: "Vui lòng chọn ngày ký hợp đồng",
+    PLACEHOLDER_OFFICIAL_SALARY: "Vui lòng nhập mức lương chính thức",
+    MSG_SALARY_MIN: "Mức lương phải lớn hơn 0",
   },
 
   // Common Toast Messages
@@ -1119,8 +1143,15 @@ export const SYSTEM_MESSAGES = {
     METHOD_CAMERA_GPS: "Camera+GPS",
     METHOD_MANUAL: "Thủ công",
     CURRENCY_VND: " VNĐ",
-    DEFAULT_PAGE_SIZE: 5,
+    DEFAULT_PAGE_SIZE: 10,
     MAX_SCORE: 100,
+    YES: "Có",
+    NO: "Không",
+    PREV: "Trước",
+    NEXT: "Sau",
+    TOTAL: "Tổng cộng",
+    RESULT: "kết quả",
+    PAGE: "Trang",
   },
 
   // KPI/OKR Management
@@ -1283,7 +1314,6 @@ export const SYSTEM_MESSAGES = {
     SHEET_EXPORT_POPUP_ERROR: "Vui lòng cho phép mở popup để xuất PDF",
     SHEET_CANCEL: "Hủy",
   },
-
   // Validation Messages
   VALIDATION: {
     EMAIL_REQUIRED: "Vui lòng nhập Username/Email",

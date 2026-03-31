@@ -223,11 +223,6 @@ export function AppSidebar({
           icon: Users,
         },
         {
-          title: SYSTEM_MESSAGES.SIDEBAR.MENU_KPI,
-          url: "/kpi-okr",
-          icon: Target,
-        },
-        {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_GROUP_ASSET,
           url: "/view-group-asset",
           icon: Package,
