@@ -162,7 +162,11 @@ export default function SalaryHistoryPage() {
 
               <Select value={selectedMonth} onValueChange={handleMonthChange}>
                 <SelectTrigger className="w-[130px] bg-background">
-                  <SelectValue placeholder="Chọn tháng" />
+                  <SelectValue
+                    placeholder={
+                      SYSTEM_MESSAGES.SALARY_HISTORY.PLACEHOLDER_MONTH
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả tháng</SelectItem>
@@ -176,12 +180,20 @@ export default function SalaryHistoryPage() {
 
               <Select value={selectedStatus} onValueChange={handleStatusChange}>
                 <SelectTrigger className="w-[150px] bg-background">
-                  <SelectValue placeholder="Trạng thái" />
+                  <SelectValue
+                    placeholder={
+                      SYSTEM_MESSAGES.SALARY_HISTORY.PLACEHOLDER_STATUS
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="paid">Đã thanh toán</SelectItem>
-                  <SelectItem value="pending">Chờ thanh toán</SelectItem>
+                  <SelectItem value="paid">
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.STATUS_PAID}
+                  </SelectItem>
+                  <SelectItem value="pending">
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.STATUS_PENDING}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -309,7 +321,7 @@ export default function SalaryHistoryPage() {
             <div className="px-5 py-3 flex items-center justify-between border-t bg-muted/20 flex-wrap gap-2">
               <span className="text-sm text-muted-foreground">
                 {filteredData.length === 0
-                  ? "Không có dữ liệu"
+                  ? SYSTEM_MESSAGES.SALARY_HISTORY.NO_DATA
                   : `${t.PAGINATION_SHOW} ${startItem}–${endItem} ${t.PAGINATION_ON_TOTAL} ${filteredData.length} ${t.PAGINATION_PERIODS}`}
               </span>
               <div className="flex items-center gap-1">

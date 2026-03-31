@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { format, differenceInYears } from "date-fns";
+
+import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarIcon,
@@ -51,7 +51,11 @@ import {
   CONTRACT_OPTIONS,
   WORK_STATUS_OPTIONS,
 } from "@/constants/options";
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+import {
+  profileSchema,
+  defaultProfileValues,
+  type ProfileFormValues,
+} from "./schemas/profile.schema";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { attendanceService } from "@/services/attendanceService";
 
@@ -63,59 +67,12 @@ const CONTRACT_CLASSES: Record<string, string> = {
   DEFAULT: "bg-gray-100 text-gray-700",
 };
 
-const profileSchema = z.object({
-  employeeCode: z.string(),
-  fullName: z
-    .string()
-    .min(2, FORM_VALIDATION_MESSAGES.NAME_MIN)
-    .max(255, FORM_VALIDATION_MESSAGES.NAME_MAX),
-  nationalId: z
-    .string()
-    .regex(/^(\d{9}|\d{12})$/, FORM_VALIDATION_MESSAGES.ID_FORMAT),
-  companyEmail: z.string().email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
-  phoneNumber: z
-    .string()
-    .regex(/^\d{10,13}$/, FORM_VALIDATION_MESSAGES.PHONE_FORMAT)
-    .optional()
-    .or(z.literal("")),
-  dateOfBirth: z
-    .date({
-      message: FORM_VALIDATION_MESSAGES.DOB_REQUIRED,
-    })
-    .refine(
-      (date) => differenceInYears(new Date(), date) >= 18,
-      FORM_VALIDATION_MESSAGES.AGE_MIN,
-    ),
-  contractType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]),
-  startDate: z.date({
-    message: FORM_VALIDATION_MESSAGES.START_DATE_REQUIRED,
-  }),
-  endDate: z.date().optional().nullable(),
-  department: z.string().min(1, FORM_VALIDATION_MESSAGES.DEPT_REQUIRED),
-  jobRole: z.string().min(1, FORM_VALIDATION_MESSAGES.ROLE_REQUIRED),
-  workStatus: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]),
-});
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
-
-const defaultValues: Partial<ProfileFormValues> = {
-  employeeCode: "",
-  fullName: "",
-  nationalId: "",
-  companyEmail: "",
-  phoneNumber: "",
-  contractType: "FULL_TIME",
-  department: "",
-  jobRole: "",
-  workStatus: "ACTIVE",
-};
-
 export default function ProfilePage() {
   const canEdit = false; // Toàn bộ người dùng không được phép tự ý chỉnh sửa thông tin cá nhân (US-07 AC-04)
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues,
+    defaultValues: defaultProfileValues,
     mode: "onChange",
   });
 
@@ -201,7 +158,7 @@ export default function ProfilePage() {
       return (
         <div
           key={doc.id}
-          className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100/70 dark:hover:bg-gray-800 transition-colors"
+          className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50 transition-colors"
         >
           <div className="flex items-center gap-3 overflow-hidden">
             {isPdf ? (
@@ -469,10 +426,11 @@ export default function ProfilePage() {
                               variant="outline"
                               disabled={!canEdit}
                               className={cn(
-                                "w-full pl-3 text-left font-normal bg-gray-50/50",
-                                canEdit && "bg-background text-foreground",
+                                "w-full pl-3 text-left font-normal bg-gray-50/50 hover:bg-gray-50/50 hover:text-foreground",
+                                canEdit &&
+                                  "bg-background text-foreground hover:bg-background",
                                 !canEdit &&
-                                  "disabled:opacity-100 dark:disabled:opacity-100",
+                                  "disabled:opacity-100 dark:disabled:opacity-100 cursor-default",
                                 !field.value && "text-muted-foreground",
                               )}
                             >
@@ -738,10 +696,11 @@ export default function ProfilePage() {
                               variant="outline"
                               disabled={!canEdit}
                               className={cn(
-                                "w-full pl-3 text-left font-normal bg-gray-50/50",
-                                canEdit && "bg-background text-foreground",
+                                "w-full pl-3 text-left font-normal bg-gray-50/50 hover:bg-gray-50/50 hover:text-foreground",
+                                canEdit &&
+                                  "bg-background text-foreground hover:bg-background",
                                 !canEdit &&
-                                  "disabled:opacity-100 dark:disabled:opacity-100",
+                                  "disabled:opacity-100 dark:disabled:opacity-100 cursor-default",
                                 !field.value && "text-muted-foreground",
                               )}
                             >
@@ -786,10 +745,11 @@ export default function ProfilePage() {
                               variant="outline"
                               disabled={!canEdit}
                               className={cn(
-                                "w-full pl-3 text-left font-normal bg-gray-50/50",
-                                canEdit && "bg-background text-foreground",
+                                "w-full pl-3 text-left font-normal bg-gray-50/50 hover:bg-gray-50/50 hover:text-foreground",
+                                canEdit &&
+                                  "bg-background text-foreground hover:bg-background",
                                 !canEdit &&
-                                  "disabled:opacity-100 dark:disabled:opacity-100",
+                                  "disabled:opacity-100 dark:disabled:opacity-100 cursor-default",
                                 !field.value && "text-muted-foreground",
                               )}
                             >

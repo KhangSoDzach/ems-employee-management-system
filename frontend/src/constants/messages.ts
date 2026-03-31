@@ -11,6 +11,12 @@ export const SYSTEM_MESSAGES = {
   SUCCESS_UPDATE: "Cập nhật thành công!",
   ERROR: "Có lỗi xảy ra",
   SAVING: "Đang lưu...",
+  AUTH_LOADING: "Đang xác thực...",
+  LOADING_SHORT: "Đang tải...",
+  SELECT_TYPE: "Chọn phân loại",
+  SELECT_STATUS: "Chọn trạng thái",
+  SEARCH: "Tìm kiếm...",
+  CURRENCY_SUFFIX: " đ",
   // Actions
   BTN_CANCEL: "Hủy bỏ",
   BTN_UPDATE: "Cập nhật",
@@ -48,6 +54,8 @@ export const SYSTEM_MESSAGES = {
     MENU_CHECKIN: "Chấm công",
     MENU_REQUEST: "Tạo đơn nghỉ phép",
     MENU_ATTENDANCE_SETTINGS: "Cấu hình chấm công",
+    MENU_POLICY_SETTINGS: "Cấu hình chính sách",
+    MENU_RUN_PAYROLL: "Chạy tính lương",
     MENU_MY_ASSETS: "Tài sản của tôi",
     MENU_MEMBERS: "Thành viên nhóm",
     MENU_KPI: "Thiết lập KPI/OKR",
@@ -161,7 +169,21 @@ export const SYSTEM_MESSAGES = {
     SHEET_NET_PAY: "Tổng thực lĩnh",
     SHEET_DOWNLOAD: "Tải phiếu lương (PDF)",
     SHEET_CLOSE: "Đóng",
+    PLACEHOLDER_MONTH: "Chọn tháng",
+    PLACEHOLDER_STATUS: "Trạng thái",
+    LABEL_SALARY: "Lương",
+    BTN_SAVE: "Lưu",
+    LABEL_PAYMENT_METHOD: "Phương thức",
+    LABEL_REFERENCE_CODE: "Mã tham chiếu",
+    STATUS_PAID: "Đã thanh toán",
+    STATUS_PENDING: "Chờ thanh toán",
+    BTN_ADD_ALLOWANCE: "Thêm phụ cấp",
+    BTN_ADD_DEDUCTION: "Thêm khấu trừ",
+    LOADING_SALARY: "Đang tải dữ liệu lương...",
+    ERROR_LOAD_SALARY: "Không thể tải dữ liệu. Vui lòng thử lại.",
+    NO_DATA: "Không có dữ liệu",
   },
+
   // Check-in Page
   CHECKIN: {
     BREADCRUMB: "Cổng thông tin > Chấm công",
@@ -235,6 +257,7 @@ export const SYSTEM_MESSAGES = {
     APPROVED: "Đã duyệt",
     REJECTED: "Từ chối",
     RETURNED: "Trả về",
+    CANCELLED: "Đã hủy",
     ACTIVE: "Hoạt động",
     INACTIVE: "Không hoạt động",
     SUSPENDED: "Đình chỉ",
@@ -304,6 +327,11 @@ export const SYSTEM_MESSAGES = {
     TYPE_PERSONAL: "Việc riêng",
     EMPTY_PENDING: "Không có yêu cầu nghỉ phép nào đang chờ duyệt.",
     MSG_SUBMIT_SUCCESS: "Đơn xin nghỉ phép đã được gửi thành công!",
+    MSG_FETCH_EMPLOYEE_ERROR: "Không lấy được thông tin nhân viên hiện tại",
+    DETAIL_INFO_GROUP: "Thông tin chung",
+    DETAIL_LEAVE_GROUP: "Chi tiết nghỉ phép",
+    DETAIL_REASON_GROUP: "Lý do chi tiết",
+    DETAIL_TIMELINE_GROUP: "Lịch sử hoạt động",
   },
   // File Uploads
   DOCUMENTS: {
@@ -417,6 +445,25 @@ export const SYSTEM_MESSAGES = {
     PAGINATION_SHOW: "Hiển thị",
     PAGINATION_ON: "trên",
     PAGINATION_ITEMS: "tài sản",
+    MSG_DELETE_SUCCESS: "Đã xóa tài sản thành công.",
+    MSG_DELETE_ERROR: "Không thể xóa tài sản. Vui lòng thử lại.",
+    MSG_CANNOT_DELETE: "Không thể xóa tài sản",
+    MSG_CONFIRM_DELETE: "Xác nhận xóa tài sản",
+    MSG_DELETE_WARNING: "đang được cấp phát. Phải ",
+    MSG_DELETE_CONFIRM: "Bạn có chắc muốn xóa tài sản ",
+    MSG_DELETE_IRREVERSIBLE: "Hành động này không thể hoàn tác.",
+    BTN_CLOSE: "Đóng",
+    BTN_DELETE: "Xóa tài sản",
+    LOADING_DELETE: "Đang xóa...",
+    TITLE_DOWNLOAD_CSV: "Tải về danh sách tài sản (CSV)",
+  },
+
+  // Asset Requests Tab
+  ASSET_REQUEST_TAB: {
+    ERR_ASSET_TYPE: "Vui lòng nhập loại tài sản.",
+    ERR_REASON: "Vui lòng nhập lý do tối thiểu 10 ký tự.",
+    PLACEHOLDER_PRIORITY: "Chọn ưu tiên",
+    PRIORITY_NORMAL: "Bình thường",
   },
 
   // Internal Announcement Management
@@ -443,6 +490,32 @@ export const SYSTEM_MESSAGES = {
     STATUS_READ: "Đã đọc",
     STATUS_UNREAD: "Chưa đọc",
     MARK_READ: "Đánh dấu đã đọc",
+    TYPE_LABEL: {
+      POLICY: "Chính sách",
+      EVENT: "Sự kiện",
+      OTHER: "Khác",
+    },
+    LOADING_NOTIFICATIONS: "Đang tải thông báo...",
+    NO_NOTIFICATIONS: "Không có thông báo nào.",
+    NOTIFICATION_BADGE: "Mới",
+    UPDATE_READ_STATUS_ERROR: "Không thể cập nhật trạng thái đã đọc",
+    NOTIFICATION_PREFIX: "Thông báo: ",
+    HEADER_TITLE: "Thông báo",
+    NO_NOTIFICATIONS_USER: "Bạn chưa có thông báo nào.",
+    FORM_TITLE_REQUIRED: "Tiêu đề là bắt buộc",
+    FORM_TITLE_MAX: "Tiêu đề tối đa 255 ký tự",
+    FORM_CONTENT_REQUIRED: "Nội dung là bắt buộc",
+    FORM_SELECT_AUDIENCE: "Chọn đối tượng",
+    FORM_AUDIENCE_ALL: "Toàn công ty",
+    FORM_AUDIENCE_DEPARTMENT: "Theo phòng ban",
+    FORM_AUDIENCE_ROLE: "Theo vai trò",
+    FORM_SELECT_AT_LEAST_ONE: "Vui lòng chọn ít nhất một đối tượng",
+    FORM_PLACEHOLDER_TITLE: "Nhập tiêu đề thông báo",
+    FORM_PLACEHOLDER_CONTENT: "Nhập nội dung thông báo",
+    NO_DATA_MATCHES: "Không có dữ liệu phù hợp",
+    EMAIL_SENT_COUNT: (count: number) => `, đã gửi email ${count} người`,
+    SUCCESS_RECIPIENTS: (count: number, emailText: string) =>
+      `Tạo thông báo thành công (${count} người nhận${emailText})`,
   },
 
   // Employee Management (Admin Dashboard + HR)
@@ -626,6 +699,12 @@ export const SYSTEM_MESSAGES = {
     METHOD_CAMERA_GPS: "Camera+GPS",
     METHOD_MANUAL: "Thủ công",
     NO_DATA: "Chưa có dữ liệu",
+  },
+
+  // Attendance Settings
+  ATTENDANCE_SETTINGS: {
+    MSG_GEOLOCATION_NOT_SUPPORTED: "Trình duyệt không hỗ trợ định vị.",
+    MSG_CANNOT_GET_LOCATION: "Không thể lấy vị trí hiện tại.",
   },
 
   // Approve Leave/Adjustment (Manager)
@@ -875,6 +954,31 @@ export const SYSTEM_MESSAGES = {
     LABEL_FEEDBACK_NOTE: "Ghi chú phản hồi",
     PLACEHOLDER_FEEDBACK: "Nhập phản hồi hoặc lý do xử lý cho nhân viên...",
     UNIT_REPORT: "báo cáo",
+    PLACEHOLDER_STATUS: "Trạng thái",
+  },
+
+  // Audit Logs
+  AUDIT_LOGS: {
+    TITLE: "Nhật ký kiểm toán",
+    DESC: "Theo dõi ai đã thao tác gì, vào thời điểm nào và từ đâu.",
+    PLACEHOLDER_ACTION_TYPE: "Loại hành động",
+    OPTION_ALL_ACTIONS: "Tất cả hành động",
+    TABLE_ACTION: "Hành động",
+    ACTION_OPTIONS: {
+      LOGIN_SUCCESS: "Đăng nhập thành công",
+      LOGIN_FAILED: "Đăng nhập thất bại",
+      PASSWORD_CHANGED: "Đổi mật khẩu",
+      TOKEN_REFRESH_SUCCESS: "Làm mới token thành công",
+      TOKEN_REFRESH_FAILED: "Làm mới token thất bại",
+      TOKEN_EXPIRED: "Token hết hạn",
+      TOKEN_INVALID: "Token không hợp lệ",
+      TOKEN_REVOKED: "Thu hồi token",
+      LOGOUT: "Đăng xuất",
+      ACCESS_DENIED: "Từ chối truy cập",
+      ASSET_REPORT_SUBMITTED: "Gửi báo cáo sự cố",
+      ASSET_REPORT_APPROVED: "Duyệt báo cáo sự cố",
+      ASSET_REPORT_REJECTED: "Từ chối báo cáo sự cố",
+    },
   },
 
   // Asset Incident Management
@@ -951,6 +1055,8 @@ export const SYSTEM_MESSAGES = {
     UNIT_MB: "MB",
     LABEL_ASSET_TAG: "Asset Tag",
     LABEL_REPORT_COUNT: "Tổng số báo cáo: ",
+    STATUS_DAMAGED: "Hư hỏng / Lỗi thiết bị",
+    STATUS_LOST: "Mất mát / Thất lạc",
   },
 
   // Asset Request (Employee & Admin)
@@ -1006,6 +1112,10 @@ export const SYSTEM_MESSAGES = {
     EMPTY_DESC: "Bạn chưa gửi yêu cầu cấp phát tài sản nào.",
     EMPTY_ADMIN_DESC: "Không có yêu cầu cấp phát tài sản nào chờ xử lý.",
     MSG_FETCH_ERROR: "Không thể tải danh sách yêu cầu.",
+    MSG_FETCH_DETAIL_ERROR: "Không thể tải chi tiết yêu cầu.",
+    MSG_PROCESS_ERROR: "Lỗi xử lý yêu cầu.",
+    PLACEHOLDER_STATUS: "Trạng thái",
+    PLACEHOLDER_NOTE: "Ghi chú thêm hoặc lý do từ chối...",
     UNIT_REQUEST: "yêu cầu",
   },
 
@@ -1122,6 +1232,9 @@ export const SYSTEM_MESSAGES = {
     TOAST_SEND_ERROR: "Không thể gửi mã. Vui lòng thử lại.",
     TOAST_RESEND_ERROR: "Không thể gửi lại mã. Vui lòng thử lại.",
     TOAST_SUCCESS: "Đặt lại mật khẩu thành công!",
+    TOAST_LOADING: "Đang gửi mã OTP...",
+    LOADING: "Đang cập nhật mật khẩu...",
+    TOAST_OTP_EXPIRED: "Mã xác thực đã hết hạn",
   },
   CHANGE_PASSWORD: {
     NEWPASSWORD_DIFFERENT_CURRENT: "Mật khẩu mới phải khác mật khẩu hiện tại.",
@@ -1227,6 +1340,11 @@ export const SYSTEM_MESSAGES = {
     TABLE_ACTIONS: "Thao tác",
     PAGINATION_TEXT:
       "Hiển thị {{from}} đến {{to}} trong tổng số {{total}} nhân viên",
+  },
+
+  // Salary Component
+  SALARY_COMPONENT: {
+    MSG_PROCESS_ERROR: "Không thể xử lý yêu cầu. Vui lòng thử lại.",
   },
 
   // Member List (Danh sách thành viên)

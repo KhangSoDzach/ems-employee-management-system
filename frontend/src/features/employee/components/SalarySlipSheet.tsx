@@ -69,27 +69,31 @@ export const SalarySlipSheet = ({
 
   useEffect(() => {
     const t = setTimeout(() => {
-      setForm(normalizeSlip(slip))
-      setIsEditing(false)
-    }, 0)
-    return () => clearTimeout(t)
-  }, [slip])
+      setForm(normalizeSlip(slip));
+      setIsEditing(false);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [slip]);
 
   if (!form) {
     return null;
   }
 
   const totalAllowances = form.allowances.reduce((acc, cur) => {
-    const parsed = Number(cur.amount.replace(/[^\d]/g, ""))
-    return acc + (Number.isNaN(parsed) ? 0 : parsed)
-  }, 0)
+    const parsed = Number(cur.amount.replace(/[^\d]/g, ""));
+    return acc + (Number.isNaN(parsed) ? 0 : parsed);
+  }, 0);
 
   const totalDeductions = form.deductions
-    .filter(d => !d.label.toLowerCase().includes('thuế') && !d.label.toLowerCase().includes('tncn'))
+    .filter(
+      (d) =>
+        !d.label.toLowerCase().includes("thuế") &&
+        !d.label.toLowerCase().includes("tncn"),
+    )
     .reduce((acc, cur) => {
-      const parsed = Number(cur.amount.replace(/[^\d]/g, ""))
-      return acc + (Number.isNaN(parsed) ? 0 : parsed)
-    }, 0)
+      const parsed = Number(cur.amount.replace(/[^\d]/g, ""));
+      return acc + (Number.isNaN(parsed) ? 0 : parsed);
+    }, 0);
 
   return (
     <Sheet
@@ -139,7 +143,7 @@ export const SalarySlipSheet = ({
                           setIsEditing(false);
                         }}
                       >
-                        {"Lưu"}
+                        {SYSTEM_MESSAGES.SALARY_HISTORY.BTN_SAVE}
                       </Button>
                     </>
                   ) : (
@@ -148,7 +152,7 @@ export const SalarySlipSheet = ({
                       size="sm"
                       onClick={() => setIsEditing(true)}
                     >
-                      {"Chỉnh sửa"}
+                      {SYSTEM_MESSAGES.BTN_EDIT}
                     </Button>
                   )}
                 </div>
@@ -177,8 +181,8 @@ export const SalarySlipSheet = ({
                       className="text-[11px] px-2 py-1"
                     >
                       {form.status === "paid"
-                        ? "Đã thanh toán"
-                        : "Chờ thanh toán"}
+                        ? SYSTEM_MESSAGES.SALARY_HISTORY.STATUS_PAID
+                        : SYSTEM_MESSAGES.SALARY_HISTORY.STATUS_PENDING}
                     </Badge>
                   </div>
 
@@ -199,7 +203,9 @@ export const SalarySlipSheet = ({
                       <div className="space-y-1">
                         <Input
                           value={form.paymentMethod ?? ""}
-                          placeholder="Phương thức"
+                          placeholder={
+                            SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_PAYMENT_METHOD
+                          }
                           onChange={(e) =>
                             setForm({ ...form, paymentMethod: e.target.value })
                           }
@@ -207,7 +213,9 @@ export const SalarySlipSheet = ({
                         />
                         <Input
                           value={form.paymentReference ?? ""}
-                          placeholder="Mã tham chiếu"
+                          placeholder={
+                            SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_REFERENCE_CODE
+                          }
                           onChange={(e) =>
                             setForm({
                               ...form,
@@ -270,7 +278,6 @@ export const SalarySlipSheet = ({
               </div>
             </section>
 
-
             {/* Allowances */}
             <section className="space-y-3">
               <div className="flex items-center gap-2">
@@ -330,8 +337,12 @@ export const SalarySlipSheet = ({
                       </div>
                     ) : (
                       <div className="flex justify-between w-full">
-                        <span className="text-sm text-muted-foreground">{a.label}</span>
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{"+"}{" "}{a.amount}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {a.label}
+                        </span>
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                          {"+"} {a.amount}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -352,7 +363,7 @@ export const SalarySlipSheet = ({
                     }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    {"Thêm phụ cấp"}
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.BTN_ADD_ALLOWANCE}
                   </Button>
                 )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
@@ -361,7 +372,7 @@ export const SalarySlipSheet = ({
                   </span>
                   <span className="text-emerald-600 dark:text-emerald-400">
                     {"+"} {totalAllowances.toLocaleString("vi-VN")}
-                    {" đ"}
+                    {SYSTEM_MESSAGES.CURRENCY_SUFFIX}
                   </span>
                 </div>
               </div>
@@ -376,63 +387,75 @@ export const SalarySlipSheet = ({
                 </h3>
               </div>
               <div className="bg-muted/20 rounded-xl p-4 space-y-3">
-                {form.deductions.filter(d => !d.label.toLowerCase().includes('thuế') && !d.label.toLowerCase().includes('tncn')).map((d, idx) => (
-                  <div key={d.label} className="flex justify-between items-center">
-                    {isEditing ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        <Input
-                          value={d.label}
-                          onChange={(e) => {
-                            const next = [...form.deductions];
-                            const current = next[idx];
-                            if (!current) {
-                              return;
-                            }
-                            next[idx] = { ...current, label: e.target.value };
-                            setForm({ ...form, deductions: next });
-                          }}
-                          className="flex-1 text-sm"
-                          placeholder="Loại khấu trừ"
-                        />
-                        <Input
-                          value={d.amount}
-                          onChange={(e) => {
-                            const next = [...form.deductions];
-                            const current = next[idx];
-                            if (!current) {
-                              return;
-                            }
-                            next[idx] = { ...current, amount: e.target.value };
-                            setForm({ ...form, deductions: next });
-                          }}
-                          className="w-28 text-right"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500"
-                          onClick={() => {
-                            const next = form.deductions.filter(
-                              (_, i) => i !== idx,
-                            );
-                            setForm({ ...form, deductions: next });
-                          }}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="text-sm text-muted-foreground">
-                          {d.label}
-                        </span>
-                        <span className="font-medium text-primary">
-                          {"-"} {d.amount}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                ))}
+                {form.deductions
+                  .filter(
+                    (d) =>
+                      !d.label.toLowerCase().includes("thuế") &&
+                      !d.label.toLowerCase().includes("tncn"),
+                  )
+                  .map((d, idx) => (
+                    <div
+                      key={d.label}
+                      className="flex justify-between items-center"
+                    >
+                      {isEditing ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={d.label}
+                            onChange={(e) => {
+                              const next = [...form.deductions];
+                              const current = next[idx];
+                              if (!current) {
+                                return;
+                              }
+                              next[idx] = { ...current, label: e.target.value };
+                              setForm({ ...form, deductions: next });
+                            }}
+                            className="flex-1 text-sm"
+                            placeholder="Loại khấu trừ"
+                          />
+                          <Input
+                            value={d.amount}
+                            onChange={(e) => {
+                              const next = [...form.deductions];
+                              const current = next[idx];
+                              if (!current) {
+                                return;
+                              }
+                              next[idx] = {
+                                ...current,
+                                amount: e.target.value,
+                              };
+                              setForm({ ...form, deductions: next });
+                            }}
+                            className="w-28 text-right"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500"
+                            onClick={() => {
+                              const next = form.deductions.filter(
+                                (_, i) => i !== idx,
+                              );
+                              setForm({ ...form, deductions: next });
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="text-sm text-muted-foreground">
+                            {d.label}
+                          </span>
+                          <span className="font-medium text-primary">
+                            {"-"} {d.amount}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 {isEditing && (
                   <Button
                     variant="outline"
@@ -449,7 +472,7 @@ export const SalarySlipSheet = ({
                     }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    {"Thêm khấu trừ"}
+                    {SYSTEM_MESSAGES.SALARY_HISTORY.BTN_ADD_DEDUCTION}
                   </Button>
                 )}
                 <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
@@ -458,7 +481,7 @@ export const SalarySlipSheet = ({
                   </span>
                   <span className="text-primary">
                     {"-"} {totalDeductions.toLocaleString("vi-VN")}
-                    {" đ"}
+                    {SYSTEM_MESSAGES.CURRENCY_SUFFIX}
                   </span>
                 </div>
               </div>
@@ -481,14 +504,32 @@ export const SalarySlipSheet = ({
             variant="secondary"
             className="flex-1 flex items-center justify-center gap-2"
             onClick={() => {
-              if (!form) { return }
+              if (!form) {
+                return;
+              }
               const allowanceRows = (form.allowances ?? [])
-                .map(a => `<tr><td style="padding:5px 0 5px 8px;color:#444">${a.label}</td><td style="text-align:right;color:#16a34a">+ ${a.amount}</td></tr>`).join("")
+                .map(
+                  (a) =>
+                    `<tr><td style="padding:5px 0 5px 8px;color:#444">${a.label}</td><td style="text-align:right;color:#16a34a">+ ${a.amount}</td></tr>`,
+                )
+                .join("");
               const deductionRows = (form.deductions ?? [])
-                .filter((d: {label:string}) => !d.label.toLowerCase().includes('thuế') && !d.label.toLowerCase().includes('tncn'))
-                .map((d: {label:string;amount:string}) => `<tr><td style="padding:5px 0 5px 8px;color:#444">${d.label}</td><td style="text-align:right;color:#dc2626">- ${d.amount}</td></tr>`).join("")
-              const totalAllowancesNum = (form.allowances ?? []).reduce((s,a)=>s+Number(a.amount.replace(/[^\d]/g,"")||0),0)
-              const totalAllowancesStr = totalAllowancesNum.toLocaleString("vi-VN") + "đ"
+                .filter(
+                  (d: { label: string }) =>
+                    !d.label.toLowerCase().includes("thuế") &&
+                    !d.label.toLowerCase().includes("tncn"),
+                )
+                .map(
+                  (d: { label: string; amount: string }) =>
+                    `<tr><td style="padding:5px 0 5px 8px;color:#444">${d.label}</td><td style="text-align:right;color:#dc2626">- ${d.amount}</td></tr>`,
+                )
+                .join("");
+              const totalAllowancesNum = (form.allowances ?? []).reduce(
+                (s, a) => s + Number(a.amount.replace(/[^\d]/g, "") || 0),
+                0,
+              );
+              const totalAllowancesStr =
+                totalAllowancesNum.toLocaleString("vi-VN") + "đ";
               const html = `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"/><title>Phieu luong - ${form.period}</title>
               <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#111}
               .page{max-width:600px;margin:32px auto;padding:0 16px}
@@ -509,22 +550,32 @@ export const SalarySlipSheet = ({
                     <span class="badge">${form.status === "paid" ? "Da thanh toan" : "Cho thanh toan"}</span></div></div>
                 <div class="section"><div class="section-title">Luong co ban</div>
                   <div class="base-row"><span>Luong co ban</span><strong>${form.baseSalary}</strong></div></div>
-                ${allowanceRows ? `<div class="section"><div class="section-title">Phu cap</div>
+                ${
+                  allowanceRows
+                    ? `<div class="section"><div class="section-title">Phu cap</div>
                   <table><tbody>${allowanceRows}</tbody></table>
-                  <div class="total-row"><span>Tong phu cap</span><span style="color:#16a34a">+ ${totalAllowancesStr}</span></div></div>` : ""}
+                  <div class="total-row"><span>Tong phu cap</span><span style="color:#16a34a">+ ${totalAllowancesStr}</span></div></div>`
+                    : ""
+                }
                 <hr/>
                 <div class="section"><div class="section-title">Khau tru</div>
                   <table><tbody>${deductionRows}</tbody></table>
                   <div class="total-row"><span>Tong khau tru</span><span style="color:#dc2626">- ${form.totalDeductions}</span></div></div>
                 <div class="net-box"><div class="net-label">TONG THUC LINH</div>
                   <div class="net-amount">${form.netPay}</div></div>
-              </div></body></html>`
-              const blob = new Blob([html], { type: "text/html;charset=utf-8" })
-              const url  = URL.createObjectURL(blob)
-              const a    = document.createElement("a")
-              a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"
-              document.body.appendChild(a); a.click(); document.body.removeChild(a)
-              setTimeout(() => URL.revokeObjectURL(url), 15000)
+              </div></body></html>`;
+              const blob = new Blob([html], {
+                type: "text/html;charset=utf-8",
+              });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.target = "_blank";
+              a.rel = "noopener noreferrer";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(() => URL.revokeObjectURL(url), 15000);
             }}
           >
             <FileText className="w-4 h-4" />

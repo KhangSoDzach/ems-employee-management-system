@@ -43,7 +43,15 @@ import {
 
 // --- SidebarSettings Component ---
 
-export default function SidebarSettings() {
+interface SidebarSettingsProps {
+  isNotificationsEnabled?: boolean;
+  setIsNotificationsEnabled?: (value: boolean) => void;
+}
+
+export default function SidebarSettings({
+  isNotificationsEnabled: externalNotificationsEnabled,
+  setIsNotificationsEnabled: setExternalNotificationsEnabled,
+}: SidebarSettingsProps = {}) {
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
 
@@ -157,8 +165,14 @@ export default function SidebarSettings() {
   };
 
   const { isDark, setTheme } = useTheme();
-  const [isNotificationsEnabled, setIsNotificationsEnabled] =
+
+  const [internalNotificationsEnabled, setInternalNotificationsEnabled] =
     React.useState(true);
+
+  const isNotificationsEnabled =
+    externalNotificationsEnabled ?? internalNotificationsEnabled;
+  const setIsNotificationsEnabled =
+    setExternalNotificationsEnabled ?? setInternalNotificationsEnabled;
 
   const handleDarkModeToggle = (checked: boolean) => {
     setTheme(checked ? "dark" : "light");
@@ -185,7 +199,9 @@ export default function SidebarSettings() {
               {TEXT.TWO_FACTOR.LABEL_2FA_TOGGLE}
             </p>
             <p className="text-[10px] text-muted-foreground">
-              {is2faEnabled ? "Đã bật" : "Đang tắt"}
+              {is2faEnabled
+                ? TEXT.TWO_FACTOR.STATUS_ENABLED
+                : TEXT.TWO_FACTOR.STATUS_DISABLED}
             </p>
           </div>
           <Switch

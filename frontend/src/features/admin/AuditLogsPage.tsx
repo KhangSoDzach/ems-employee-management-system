@@ -36,19 +36,55 @@ import {
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 const ACTION_OPTIONS: Array<{ value: AuditActionType; label: string }> = [
-  { value: "LOGIN_SUCCESS", label: "Đăng nhập thành công" },
-  { value: "LOGIN_FAILED", label: "Đăng nhập thất bại" },
-  { value: "PASSWORD_CHANGED", label: "Đổi mật khẩu" },
-  { value: "TOKEN_REFRESH_SUCCESS", label: "Làm mới token thành công" },
-  { value: "TOKEN_REFRESH_FAILED", label: "Làm mới token thất bại" },
-  { value: "TOKEN_EXPIRED", label: "Token hết hạn" },
-  { value: "TOKEN_INVALID", label: "Token không hợp lệ" },
-  { value: "TOKEN_REVOKED", label: "Thu hồi token" },
-  { value: "LOGOUT", label: "Đăng xuất" },
-  { value: "ACCESS_DENIED", label: "Từ chối truy cập" },
-  { value: "ASSET_REPORT_SUBMITTED", label: "Gửi báo cáo sự cố" },
-  { value: "ASSET_REPORT_APPROVED", label: "Duyệt báo cáo sự cố" },
-  { value: "ASSET_REPORT_REJECTED", label: "Từ chối báo cáo sự cố" },
+  {
+    value: "LOGIN_SUCCESS",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.LOGIN_SUCCESS,
+  },
+  {
+    value: "LOGIN_FAILED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.LOGIN_FAILED,
+  },
+  {
+    value: "PASSWORD_CHANGED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.PASSWORD_CHANGED,
+  },
+  {
+    value: "TOKEN_REFRESH_SUCCESS",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.TOKEN_REFRESH_SUCCESS,
+  },
+  {
+    value: "TOKEN_REFRESH_FAILED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.TOKEN_REFRESH_FAILED,
+  },
+  {
+    value: "TOKEN_EXPIRED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.TOKEN_EXPIRED,
+  },
+  {
+    value: "TOKEN_INVALID",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.TOKEN_INVALID,
+  },
+  {
+    value: "TOKEN_REVOKED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.TOKEN_REVOKED,
+  },
+  { value: "LOGOUT", label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.LOGOUT },
+  {
+    value: "ACCESS_DENIED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.ACCESS_DENIED,
+  },
+  {
+    value: "ASSET_REPORT_SUBMITTED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.ASSET_REPORT_SUBMITTED,
+  },
+  {
+    value: "ASSET_REPORT_APPROVED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.ASSET_REPORT_APPROVED,
+  },
+  {
+    value: "ASSET_REPORT_REJECTED",
+    label: SYSTEM_MESSAGES.AUDIT_LOGS.ACTION_OPTIONS.ASSET_REPORT_REJECTED,
+  },
 ];
 
 type FilterState = {
@@ -319,9 +355,9 @@ export default function AuditLogsPage() {
     <>
       <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
         <div className="space-y-1">
-          <h1 className="page-heading">Nhật ký kiểm toán</h1>
+          <h1 className="page-heading">{SYSTEM_MESSAGES.AUDIT_LOGS.TITLE}</h1>
           <p className="text-sm text-muted-foreground">
-            Theo dõi ai đã thao tác gì, vào thời điểm nào và từ đâu.
+            {SYSTEM_MESSAGES.AUDIT_LOGS.DESC}
           </p>
         </div>
 
@@ -342,10 +378,16 @@ export default function AuditLogsPage() {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Loại hành động" />
+                <SelectValue
+                  placeholder={
+                    SYSTEM_MESSAGES.AUDIT_LOGS.PLACEHOLDER_ACTION_TYPE
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả hành động</SelectItem>
+                <SelectItem value="all">
+                  {SYSTEM_MESSAGES.AUDIT_LOGS.OPTION_ALL_ACTIONS}
+                </SelectItem>
                 {ACTION_OPTIONS.map((action) => (
                   <SelectItem key={action.value} value={action.value}>
                     {action.label}
@@ -397,11 +439,13 @@ export default function AuditLogsPage() {
               <TableRow>
                 <TableHead>Thời gian</TableHead>
                 <TableHead>Actor</TableHead>
-                <TableHead>Hành động</TableHead>
+                <TableHead>{SYSTEM_MESSAGES.AUDIT_LOGS.TABLE_ACTION}</TableHead>
                 <TableHead>IP</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Identifier</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableHead className="text-right">
+                  {SYSTEM_MESSAGES.LABEL_ACTION}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>{listContent}</TableBody>
@@ -446,4 +490,4 @@ export default function AuditLogsPage() {
   );
 }
 
-const COMMON_LOADING_TEXT = "Đang tải dữ liệu…";
+const COMMON_LOADING_TEXT = SYSTEM_MESSAGES.LOADING;

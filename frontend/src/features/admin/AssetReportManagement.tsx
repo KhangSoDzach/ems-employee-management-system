@@ -262,13 +262,21 @@ export default function AssetReportManagement() {
             <Filter className="w-4 h-4 text-muted-foreground hidden sm:block" />
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger className="w-[140px] h-9 bg-white">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue
+                  placeholder={SYSTEM_MESSAGES.ASSET_REPORT.PLACEHOLDER_STATUS}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Tất cả</SelectItem>
-                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
-                <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-                <SelectItem value="REJECTED">Từ chối</SelectItem>
+                <SelectItem value="ALL">{SYSTEM_MESSAGES.LABEL_ALL}</SelectItem>
+                <SelectItem value="PENDING">
+                  {SYSTEM_MESSAGES.STATUS.PENDING}
+                </SelectItem>
+                <SelectItem value="APPROVED">
+                  {SYSTEM_MESSAGES.STATUS.APPROVED}
+                </SelectItem>
+                <SelectItem value="REJECTED">
+                  {SYSTEM_MESSAGES.STATUS.REJECTED}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
