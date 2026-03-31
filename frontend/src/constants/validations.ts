@@ -42,4 +42,6 @@ export const FORM_VALIDATION_MESSAGES = {
   // Social Warranty Number
   SOCIAL_WARRANTY_NUMBER_REQUIRED: "Vui lòng nhập số BHXH",
   SOCIAL_WARRANTY_NUMBER_FORMAT: "Số BHXH phải gồm 10 chữ số",
+  CONTRACT_START_DATE_REQUIRED: "Vui lòng chọn ngày bắt đầu hợp đồng",
+  CONTRACT_DURATION_INVALID: "Kỳ hạn hợp đồng chỉ được 12, 24 hoặc 36 tháng",
 };

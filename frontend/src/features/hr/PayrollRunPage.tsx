@@ -42,14 +42,16 @@ function formatVND(amount: number): string {
 
 function getApiErrorMessage(error: unknown): string {
   if (!error || typeof error !== "object") {
-    return "Có lỗi xảy ra. Vui lòng thử lại.";
+    return PAYROLL_HR_CONSTANTS.MESSAGES.ERROR_DEFAULT;
   }
   const e = error as {
     response?: { data?: { message?: string } };
     message?: string;
   };
   return (
-    e.response?.data?.message ?? e.message ?? "Có lỗi xảy ra. Vui lòng thử lại."
+    e.response?.data?.message ??
+    e.message ??
+    PAYROLL_HR_CONSTANTS.MESSAGES.ERROR_DEFAULT
   );
 }
 
@@ -65,18 +67,18 @@ function ResultSummary({ result }: ResultSummaryProps) {
           <CheckCircle2 className="h-5 w-5" />
         </div>
         <span className="text-lg font-bold">
-          Tính lương thành công — kỳ {result.period}
+          {PAYROLL_HR_CONSTANTS.SUMMARY_SUCCESS} {result.period}
         </span>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border flex items-center gap-4 shadow-sm transition-all hover:shadow-md">
+        <div className="bg-card p-6 rounded-2xl border dark:border-slate-800 flex items-center gap-4 shadow-sm transition-all hover:shadow-md">
           <div className="bg-blue-50 p-3 rounded-xl dark:bg-blue-900/30">
             <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Nhân viên đã tính
+              {PAYROLL_HR_CONSTANTS.LABEL_PROCESSED}
             </p>
             <p className="text-3xl font-bold tabular-nums">
               {result.processedEmployees}
@@ -84,13 +86,13 @@ function ResultSummary({ result }: ResultSummaryProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border flex items-center gap-4 shadow-sm transition-all hover:shadow-md">
+        <div className="bg-card p-6 rounded-2xl border dark:border-slate-800 flex items-center gap-4 shadow-sm transition-all hover:shadow-md">
           <div className="bg-emerald-50 p-3 rounded-xl dark:bg-emerald-900/30">
             <Wallet className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Tổng lương net
+              {PAYROLL_HR_CONSTANTS.LABEL_TOTAL_NET}
             </p>
             <p className="text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
               {formatVND(result.totalPayroll)}
@@ -102,8 +104,7 @@ function ResultSummary({ result }: ResultSummaryProps) {
       {result.skippedEmployees > 0 && (
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50/50 px-4 py-3 text-sm text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          {result.skippedEmployees} nhân viên bị bỏ qua do chưa có bản ghi
-          lương.
+          {result.skippedEmployees} {PAYROLL_HR_CONSTANTS.LABEL_SKIPPED}
         </div>
       )}
     </div>
@@ -170,14 +171,14 @@ export default function PayrollRunPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8">
-          <Card className="shadow-md border-none ring-1 ring-slate-200 overflow-hidden">
-            <CardHeader className="bg-slate-50/50 border-b pb-6 pt-6">
+          <Card className="shadow-md border-none ring-1 ring-border overflow-hidden bg-card">
+            <CardHeader className="bg-muted/30 border-b border-border pb-6 pt-6">
               <div className="flex items-center gap-3 mb-2">
-                <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                <div className="bg-primary/10 p-2 rounded-lg text-primary dark:bg-primary/20">
                   <RefreshCw className="h-5 w-5" />
                 </div>
                 <CardTitle className="text-xl font-bold">
-                  Thực hiện tính lương
+                  {PAYROLL_HR_CONSTANTS.CARD_TITLE}
                 </CardTitle>
               </div>
               <CardDescription className="text-sm leading-relaxed max-w-2xl">
@@ -185,11 +186,11 @@ export default function PayrollRunPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
-              <div className="flex flex-col sm:flex-row items-end gap-6 bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200">
+              <div className="flex flex-col sm:flex-row items-end gap-6 bg-muted/30 p-6 rounded-2xl border-2 border-dashed border-border">
                 <div className="flex flex-col gap-2 w-full sm:w-auto min-w-[200px]">
                   <label
                     htmlFor="payroll-period"
-                    className="text-sm font-bold text-gray-700"
+                    className="text-sm font-bold text-gray-700 dark:text-gray-300"
                   >
                     {PAYROLL_HR_CONSTANTS.LABEL_PERIOD}
                   </label>
@@ -202,7 +203,7 @@ export default function PayrollRunPage() {
                       setLastResult(null);
                     }}
                     disabled={isLoading}
-                    className="h-12 w-full rounded-xl border border-input bg-white px-4 py-2 text-base font-medium shadow-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-mono"
+                    className="h-12 w-full rounded-xl border border-input bg-card px-4 py-2 text-base font-medium shadow-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-mono text-foreground"
                   />
                 </div>
 
@@ -229,7 +230,7 @@ export default function PayrollRunPage() {
                     variant="outline"
                     onClick={handleRecalculate}
                     disabled={isLoading || !period}
-                    className="h-12 flex-1 sm:flex-none sm:px-6 gap-3 font-bold text-base bg-white transition-all hover:bg-slate-100 active:scale-[0.98]"
+                    className="h-12 flex-1 sm:flex-none sm:px-6 gap-3 font-bold text-base bg-card dark:hover:bg-muted border-border transition-all hover:bg-muted active:scale-[0.98]"
                   >
                     {recalculateMutation.isPending ? (
                       <>
@@ -255,23 +256,15 @@ export default function PayrollRunPage() {
           <div className="bg-amber-50 dark:bg-amber-950/20 p-6 rounded-2xl border border-amber-200 dark:border-amber-900">
             <h3 className="text-amber-800 dark:text-amber-400 font-bold flex items-center gap-2 mb-3">
               <AlertCircle className="h-5 w-5" />
-              Lưu ý quan trọng
+              {PAYROLL_HR_CONSTANTS.NOTE_TITLE}
             </h3>
             <ul className="space-y-3 text-sm text-amber-900/80 dark:text-amber-300/80">
-              <li className="flex gap-2">
-                <span className="text-amber-500 font-bold">•</span>
-                Vui lòng chốt bảng công trước khi thực hiện chạy tính lương.
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-500 font-bold">•</span>
-                Dữ liệu bảo hiểm và thuế TNCN sẽ được tính dựa trên cấu hình
-                chính sách hiện hành.
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-500 font-bold">•</span>
-                Nếu có thay đổi về hệ số lương trong kỳ, hãy sử dụng tính năng
-                "Tính lại".
-              </li>
+              {PAYROLL_HR_CONSTANTS.NOTES.map((note, idx) => (
+                <li key={idx} className="flex gap-2">
+                  <span className="text-amber-500 font-bold">•</span>
+                  {note}
+                </li>
+              ))}
             </ul>
           </div>
         </div>

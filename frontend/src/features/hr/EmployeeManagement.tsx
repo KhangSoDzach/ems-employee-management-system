@@ -22,6 +22,7 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 import EmployeeDetailModal from "./EmployeeDetailModal";
 import EmployeeFormModal from "./components/EmployeeFormModal";
 import ConfirmOfficialModal from "./ConfirmOfficialModal";
+import { EMPLOYEE_CONSTANTS } from "./employee.constants";
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
@@ -83,32 +84,29 @@ export default function EmployeeManagementPage() {
   const handleDelete = (id: number) => {
     toast.custom(
       (t) => (
-        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl p-5 w-[360px] animate-in slide-in-from-right-full">
+        <div className="bg-card border border-border rounded-2xl shadow-xl p-5 w-[360px] animate-in slide-in-from-right-full">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center shrink-0 mt-0.5">
-              <AlertTriangle
-                className="text-red-600 dark:text-red-500"
-                size={20}
-              />
+            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle className="text-destructive" size={20} />
             </div>
 
             <div className="flex-1">
-              <p className="font-bold text-gray-900 dark:text-white text-base">
+              <p className="font-bold text-foreground text-base">
                 {SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_CONFIRM}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
                 {SYSTEM_MESSAGES.EMPLOYEE.MSG_DELETE_DESC}
               </p>
 
               <div className="flex justify-end gap-2 mt-5">
                 <button
                   onClick={() => toast.dismiss(t)}
-                  className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  className="px-4 py-2 rounded-xl bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
                 >
                   {SYSTEM_MESSAGES.BTN_CANCEL}
                 </button>
                 <button
-                  className="px-4 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-md shadow-red-500/20 transition"
+                  className="px-4 py-2 rounded-xl bg-destructive text-destructive-foreground font-semibold hover:bg-destructive/90 shadow-md shadow-destructive/20 transition"
                   onClick={async () => {
                     toast.dismiss(t);
                     try {
@@ -160,7 +158,7 @@ export default function EmployeeManagementPage() {
   const getWorkStatusMeta = (status: string | null) => {
     if (status === "PROBATION") {
       return {
-        label: "Thử việc",
+        label: SYSTEM_MESSAGES.EMPLOYEE.STATUS_PROBATION,
         className:
           "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
       };
@@ -185,34 +183,34 @@ export default function EmployeeManagementPage() {
 
   return (
     <>
-      <main className="flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950">
+      <main className="flex flex-1 flex-col p-6 gap-6 bg-background">
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="page-heading">{SYSTEM_MESSAGES.EMPLOYEE.TITLE}</h1>
-            <p className="text-sm text-gray-500">
-              {SYSTEM_MESSAGES.EMPLOYEE.DESC_MGMT}
+            <h1 className="page-heading">{EMPLOYEE_CONSTANTS.TITLE_MGMT}</h1>
+            <p className="text-sm text-muted-foreground">
+              {EMPLOYEE_CONSTANTS.DESC_MGMT}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 placeholder={SYSTEM_MESSAGES.SEARCH_PLACEHOLDER}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 pr-4 py-2 w-64 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                className="pl-10 pr-4 py-2 w-64 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground/50"
               />
             </div>
 
             <button
               onClick={() => setOpenCreate(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition shadow-sm shadow-primary/20"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition shadow-sm shadow-primary/20 active:scale-95"
             >
               <UserPlus size={18} />
               <span className="hidden sm:inline">
-                {SYSTEM_MESSAGES.EMPLOYEE.BTN_ADD}
+                {EMPLOYEE_CONSTANTS.BTNS.ADD}
               </span>
             </button>
           </div>
@@ -226,7 +224,7 @@ export default function EmployeeManagementPage() {
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
                 statusFilter === ""
                   ? "bg-primary/10 text-primary border border-primary/20"
-                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-50"
+                  : "bg-card text-muted-foreground border border-border hover:bg-muted"
               }`}
             >
               {SYSTEM_MESSAGES.LABEL_ALL}
@@ -235,8 +233,8 @@ export default function EmployeeManagementPage() {
               onClick={() => setStatusFilter("ACTIVE")}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
                 statusFilter === "ACTIVE"
-                  ? "bg-green-50 text-green-600 border border-green-200"
-                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-50"
+                  ? "bg-green-50/50 text-green-600 border border-green-200"
+                  : "bg-card text-muted-foreground border border-border hover:bg-muted"
               }`}
             >
               {SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE}
@@ -245,11 +243,11 @@ export default function EmployeeManagementPage() {
               onClick={() => setStatusFilter("PROBATION")}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
                 statusFilter === "PROBATION"
-                  ? "bg-amber-50 text-amber-700 border border-amber-200"
-                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-50"
+                  ? "bg-amber-50/50 text-amber-700 border border-amber-200"
+                  : "bg-card text-muted-foreground border border-border hover:bg-muted"
               }`}
             >
-              Thử việc
+              {SYSTEM_MESSAGES.EMPLOYEE.STATUS_PROBATION}
             </button>
 
             {(statusFilter || search) && (
@@ -258,53 +256,54 @@ export default function EmployeeManagementPage() {
                   setStatusFilter("");
                   setSearch("");
                 }}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 transition ml-2"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition ml-2"
               >
                 <FilterX size={14} />
-                {SYSTEM_MESSAGES.EMPLOYEE.BTN_CLEAR_FILTER}
+                {EMPLOYEE_CONSTANTS.BTNS.CLEAR_FILTER}
               </button>
             )}
           </div>
 
-          <div className="text-sm font-medium text-gray-500 bg-white dark:bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800">
-            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_TOTAL}{" "}
-            <span className="text-gray-900 dark:text-white">
-              {totalElements}
-            </span>{" "}
-            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_UNIT}
+          <div className="text-sm font-medium text-muted-foreground bg-card px-3 py-1.5 rounded-lg border border-border">
+            {EMPLOYEE_CONSTANTS.VIEW.TOTAL}{" "}
+            <span className="text-foreground">{totalElements}</span>{" "}
+            {EMPLOYEE_CONSTANTS.VIEW.UNIT}
           </div>
         </div>
 
         {/* TABLE CONTAINER */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col min-h-[400px]">
+        <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col min-h-[400px]">
           <div className="overflow-x-auto text-nowrap">
             <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
+              <thead className="bg-muted/50 text-muted-foreground border-b border-border">
                 <tr>
-                  <th className="px-6 py-4 font-semibold">
-                    {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">
+                    {EMPLOYEE_CONSTANTS.LABELS.EMP_CODE}
                   </th>
-                  <th className="px-6 py-4 font-semibold">
-                    {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NAME}
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">
+                    {EMPLOYEE_CONSTANTS.LABELS.FULL_NAME}
                   </th>
-                  <th className="px-6 py-4 font-semibold">
-                    {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DEPARTMENT}
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">
+                    {EMPLOYEE_CONSTANTS.LABELS.DEPARTMENT}
                   </th>
-                  <th className="px-6 py-4 font-semibold">
-                    {SYSTEM_MESSAGES.EMPLOYEE.LABEL_POSITION}
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">
+                    {EMPLOYEE_CONSTANTS.LABELS.POSITION}
                   </th>
-                  <th className="px-6 py-4 font-semibold">
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">
                     {SYSTEM_MESSAGES.LABEL_STATUS}
                   </th>
-                  <th className="px-6 py-4 text-right font-semibold">
+                  <th className="px-6 py-4 text-right font-semibold uppercase tracking-wider text-[11px]">
                     {SYSTEM_MESSAGES.LABEL_ACTION}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-20 text-center text-gray-400">
+                    <td
+                      colSpan={6}
+                      className="py-20 text-center text-muted-foreground"
+                    >
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="animate-pulse">
@@ -315,9 +314,12 @@ export default function EmployeeManagementPage() {
                   </tr>
                 ) : employees.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-20 text-center text-gray-400">
+                    <td
+                      colSpan={6}
+                      className="py-20 text-center text-muted-foreground"
+                    >
                       <div className="flex flex-col items-center gap-2">
-                        <Search className="w-10 h-10 text-gray-200" />
+                        <Search className="w-10 h-10 text-muted-foreground/30" />
                         <p>{SYSTEM_MESSAGES.NO_DATA}</p>
                       </div>
                     </td>
@@ -330,14 +332,14 @@ export default function EmployeeManagementPage() {
                     return (
                       <tr
                         key={emp.id}
-                        className="group hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors"
+                        className="group hover:bg-muted/30 transition-colors"
                       >
                         <td className="px-6 py-4 font-bold text-primary">
                           {emp.employeeCode}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0 border border-gray-200 dark:border-gray-700">
+                            <div className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 border border-border">
                               {emp.avatarUrl ? (
                                 <img
                                   src={emp.avatarUrl}
@@ -345,26 +347,26 @@ export default function EmployeeManagementPage() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">
-                                  {emp.firstName.charAt(0)}
-                                  {emp.lastName.charAt(0)}
+                                <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
+                                  {emp.firstName?.[0]}
+                                  {emp.lastName?.[0]}
                                 </div>
                               )}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-semibold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                              <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
                                 {emp.firstName} {emp.lastName}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted-foreground">
                                 {emp.email}
                               </span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                        <td className="px-6 py-4 text-muted-foreground">
                           {emp.department}
                         </td>
-                        <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                        <td className="px-6 py-4 text-muted-foreground">
                           {emp.position}
                         </td>
                         <td className="px-6 py-4">
@@ -380,28 +382,30 @@ export default function EmployeeManagementPage() {
                               <button
                                 onClick={() => handleOpenConfirmOfficial(emp)}
                                 className="px-2.5 py-1.5 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition"
-                                title="Xác nhận chính thức"
+                                title={
+                                  SYSTEM_MESSAGES.EMPLOYEE.BTN_CONFIRM_OFFICIAL
+                                }
                               >
-                                Xác nhận chính thức
+                                {SYSTEM_MESSAGES.EMPLOYEE.BTN_CONFIRM_OFFICIAL}
                               </button>
                             )}
                             <button
                               onClick={() => handleOpenDetail(emp)}
-                              className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition"
+                              className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition"
                               title={SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
                             >
                               <Eye size={18} />
                             </button>
                             <button
                               onClick={() => handleOpenEdit(emp)}
-                              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                              className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
                               title={SYSTEM_MESSAGES.BTN_EDIT}
                             >
                               <Pencil size={18} />
                             </button>
                             <button
                               onClick={() => handleDelete(emp.id)}
-                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                              className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition"
                               title={SYSTEM_MESSAGES.BTN_DELETE}
                             >
                               <Trash2 size={18} />
@@ -417,17 +421,17 @@ export default function EmployeeManagementPage() {
           </div>
 
           {/* PAGINATION */}
-          <div className="mt-auto flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/20 text-sm">
-            <div className="text-gray-500">
+          <div className="mt-auto flex items-center justify-between px-6 py-4 border-t border-border bg-muted/20 text-sm">
+            <div className="text-muted-foreground">
               {totalElements === 0
                 ? SYSTEM_MESSAGES.NO_DATA
-                : `${SYSTEM_MESSAGES.ASSET.PAGINATION_SHOW} ${from}–${to} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ON} ${totalElements} ${SYSTEM_MESSAGES.EMPLOYEE.LABEL_UNIT}`}
+                : `${SYSTEM_MESSAGES.ASSET.PAGINATION_SHOW} ${from}–${to} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ON} ${totalElements} ${EMPLOYEE_CONSTANTS.VIEW.UNIT}`}
             </div>
             <div className="flex items-center gap-1.5">
               <button
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
-                className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 transition"
+                className="p-2 rounded-lg hover:bg-muted disabled:opacity-40 transition"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -452,7 +456,7 @@ export default function EmployeeManagementPage() {
                     className={`w-9 h-9 rounded-lg font-bold transition ${
                       pg === page
                         ? "bg-primary text-white shadow-md shadow-primary/30"
-                        : "hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+                        : "hover:bg-muted text-muted-foreground"
                     }`}
                   >
                     {pg + 1}
@@ -462,7 +466,7 @@ export default function EmployeeManagementPage() {
               <button
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage((p) => p + 1)}
-                className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 transition"
+                className="p-2 rounded-lg hover:bg-muted disabled:opacity-40 transition"
               >
                 <ChevronRight size={16} />
               </button>

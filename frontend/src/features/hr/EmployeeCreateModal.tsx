@@ -11,6 +11,7 @@ import {
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
+import { EMPLOYEE_CONSTANTS } from "./employee.constants";
 
 type ApiError = {
   response?: {
@@ -51,7 +52,7 @@ export default function EmployeeCreateModal({
     gender: "MALE",
     workStatus: "PROBATION",
     contractType: "FULL_TIME",
-    nationality: "Việt Nam",
+    nationality: EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONALITY,
     address: "",
     city: "",
     state: "",
@@ -117,7 +118,9 @@ export default function EmployeeCreateModal({
     }
     if (!formData.email.trim()) {
       newErrors.email = FORM_VALIDATION_MESSAGES.REQUIRED;
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+    } else if (
+      !EMPLOYEE_CONSTANTS.VALIDATION.EMAIL_REGEX.test(formData.email)
+    ) {
       newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_INVALID;
     }
 
@@ -159,13 +162,13 @@ export default function EmployeeCreateModal({
     `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${
       hasError(field)
         ? "border-red-500 focus:ring-red-500"
-        : "border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary"
+        : "border border-border focus:ring-2 focus:ring-primary bg-card"
     }`;
   const selectClass = (field: string) =>
-    `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-white ${
+    `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-card ${
       hasError(field)
         ? "border-red-500 focus:ring-red-500"
-        : "border border-gray-200 dark:border-gray-800"
+        : "border border-border"
     }`;
 
   // ✅ AFTER formData is declared — safe to access formData.positionId
@@ -303,13 +306,13 @@ export default function EmployeeCreateModal({
             <div className="p-2 bg-primary/10 text-primary rounded-lg">
               <User size={20} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">
-              Thêm nhân viên mới
+            <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">
+              {EMPLOYEE_CONSTANTS.TITLE_CREATE}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors"
+            className="p-2 hover:bg-muted rounded-full text-muted-foreground transition-colors"
           >
             <X size={20} />
           </button>
@@ -325,12 +328,13 @@ export default function EmployeeCreateModal({
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-4">
                 <h4 className="flex items-center gap-2 text-xs font-bold text-primary border-l-4 border-primary pl-3 uppercase tracking-widest">
-                  Thông tin cơ bản
+                  {EMPLOYEE_CONSTANTS.SECTIONS.BASIC}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Họ <span className="text-red-500">*</span>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.LAST_NAME}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -338,7 +342,7 @@ export default function EmployeeCreateModal({
                       value={formData.lastName}
                       onChange={handleChange}
                       className={inputClass("lastName")}
-                      placeholder="VD: Nguyễn Văn"
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.LAST_NAME}
                     />
                     {errors.lastName && (
                       <p className="text-xs text-red-500 mt-1">
@@ -347,8 +351,9 @@ export default function EmployeeCreateModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Tên <span className="text-red-500">*</span>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.FIRST_NAME}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -356,7 +361,7 @@ export default function EmployeeCreateModal({
                       value={formData.firstName}
                       onChange={handleChange}
                       className={inputClass("firstName")}
-                      placeholder="VD: A"
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.FIRST_NAME}
                     />
                     {errors.firstName && (
                       <p className="text-xs text-red-500 mt-1">
@@ -365,8 +370,9 @@ export default function EmployeeCreateModal({
                     )}
                   </div>
                   <div className="space-y-1 col-span-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Email công ty <span className="text-red-500">*</span>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.EMAIL}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -375,7 +381,7 @@ export default function EmployeeCreateModal({
                       value={formData.email}
                       onChange={handleChange}
                       className={inputClass("email")}
-                      placeholder="email@company.com"
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.EMAIL}
                     />
                     {errors.email && (
                       <p className="text-xs text-red-500 mt-1">
@@ -384,30 +390,36 @@ export default function EmployeeCreateModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Số điện thoại
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.PHONE}
                     </label>
                     <input
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium"
-                      placeholder="091xxxxxxx"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.PHONE}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Giới tính
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.GENDER}
                     </label>
                     <select
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 outline-none transition-all text-sm font-medium bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border outline-none transition-all text-sm font-medium bg-card"
                     >
-                      <option value="MALE">Nam</option>
-                      <option value="FEMALE">Nữ</option>
-                      <option value="OTHER">Khác</option>
+                      <option value="MALE">
+                        {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.MALE}
+                      </option>
+                      <option value="FEMALE">
+                        {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.FEMALE}
+                      </option>
+                      <option value="OTHER">
+                        {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.OTHER}
+                      </option>
                     </select>
                   </div>
                   <div className="space-y-1">
@@ -429,8 +441,9 @@ export default function EmployeeCreateModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      CCCD/CMND <span className="text-red-500">*</span>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.NATIONAL_ID}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -438,7 +451,7 @@ export default function EmployeeCreateModal({
                       value={formData.nationalId}
                       onChange={handleChange}
                       className={inputClass("nationalId")}
-                      placeholder="12 số"
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONAL_ID}
                     />
                     {errors.nationalId && (
                       <p className="text-xs text-red-500 mt-1">
@@ -451,12 +464,13 @@ export default function EmployeeCreateModal({
 
               <div className="space-y-4">
                 <h4 className="flex items-center gap-2 text-xs font-bold text-blue-500 border-l-4 border-blue-500 pl-3 uppercase tracking-widest">
-                  Địa chỉ & Liên hệ
+                  {EMPLOYEE_CONSTANTS.SECTIONS.CONTACT_ADDRESS}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2 space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Địa chỉ cụ thể <span className="text-red-500">*</span>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.ADDRESS}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -464,7 +478,7 @@ export default function EmployeeCreateModal({
                       value={formData.address || ""}
                       onChange={handleChange}
                       className={inputClass("address")}
-                      placeholder="Số nhà, tên đường..."
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.ADDRESS}
                     />
                     {errors.address && (
                       <p className="text-xs text-red-500 mt-1">
@@ -473,50 +487,54 @@ export default function EmployeeCreateModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Thành phố
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.CITY}
                     </label>
                     <input
                       name="city"
                       value={formData.city || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium"
-                      placeholder="VD: Hà Nội"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.CITY}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Quốc tịch
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.NATIONALITY}
                     </label>
                     <input
                       name="nationality"
                       value={formData.nationality || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Liên hệ khẩn cấp
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.EMERGENCY_NAME}
                     </label>
                     <input
                       name="emergencyContactName"
                       value={formData.emergencyContactName || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium"
-                      placeholder="Tên người thân"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      placeholder={
+                        EMPLOYEE_CONSTANTS.PLACEHOLDERS.EMERGENCY_NAME
+                      }
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      SĐT khẩn cấp
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.EMERGENCY_PHONE}
                     </label>
                     <input
                       name="emergencyContactPhone"
                       value={formData.emergencyContactPhone || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium"
-                      placeholder="Số điện thoại"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      placeholder={
+                        EMPLOYEE_CONSTANTS.PLACEHOLDERS.EMERGENCY_PHONE
+                      }
                     />
                   </div>
                 </div>
@@ -527,12 +545,13 @@ export default function EmployeeCreateModal({
             <div className="space-y-8 bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
               <div className="space-y-4">
                 <h4 className="flex items-center gap-2 text-xs font-bold text-indigo-500 border-l-4 border-indigo-500 pl-3 uppercase tracking-widest">
-                  Công việc
+                  {EMPLOYEE_CONSTANTS.SECTIONS.JOB}
                 </h4>
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Phòng ban <span className="text-red-500">*</span>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.DEPARTMENT}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <select
                       required
@@ -541,7 +560,9 @@ export default function EmployeeCreateModal({
                       onChange={handleChange}
                       className={selectClass("departmentId")}
                     >
-                      <option value={0}>Chọn phòng ban...</option>
+                      <option value={0}>
+                        {EMPLOYEE_CONSTANTS.PLACEHOLDERS.DEPT_SELECT}
+                      </option>
                       {departments.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name}
@@ -555,8 +576,9 @@ export default function EmployeeCreateModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Vị trí <span className="text-red-500">*</span>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.POSITION}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <select
                       required
@@ -571,12 +593,12 @@ export default function EmployeeCreateModal({
                     >
                       <option value={0}>
                         {!formData.departmentId
-                          ? "— Chọn phòng ban trước —"
+                          ? `— ${EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_HINT} —`
                           : positionsLoading
-                            ? "Đang tải vị trí..."
+                            ? "..."
                             : positions.length === 0
-                              ? "Không có vị trí trong phòng ban này"
-                              : "Chọn vị trí..."}
+                              ? EMPLOYEE_CONSTANTS.MESSAGES.NO_POSITIONS
+                              : EMPLOYEE_CONSTANTS.PLACEHOLDERS.POS_SELECT}
                       </option>
                       {positions.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -596,25 +618,33 @@ export default function EmployeeCreateModal({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Hợp đồng
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_TYPE}
                     </label>
                     <select
                       name="contractType"
                       value={formData.contractType}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-bold bg-white"
+                      className="w-full px-3 py-2.5 rounded-xl border border-border outline-none text-sm font-bold bg-card"
                     >
                       <option value="FULL_TIME">
-                        Toàn thời gian (Full-time)
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.FULL_TIME}
                       </option>
                       <option value="PART_TIME">
-                        Bán thời gian (Part-time)
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.PART_TIME}
                       </option>
-                      <option value="CONTRACT">Hợp đồng có thời hạn</option>
-                      <option value="INTERN">Thực tập sinh</option>
-                      <option value="CONSULTANT">Tư vấn viên</option>
-                      <option value="TEMPORARY">Thời vụ</option>
+                      <option value="CONTRACT">
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.CONTRACT}
+                      </option>
+                      <option value="INTERN">
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.INTERN}
+                      </option>
+                      <option value="CONSULTANT">
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.CONSULTANT}
+                      </option>
+                      <option value="TEMPORARY">
+                        {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.TEMPORARY}
+                      </option>
                     </select>
                   </div>
                   <div className="space-y-1">
@@ -639,11 +669,11 @@ export default function EmployeeCreateModal({
                   {/* Reporting Manager — chỉ hiện khi vị trí KHÔNG phải manager */}
                   {!isManagerPosition && (
                     <div className="col-span-2 space-y-1">
-                      <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1.5">
-                        Người quản lý trực tiếp
+                      <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                        {EMPLOYEE_CONSTANTS.LABELS.MANAGER}
                         {!formData.positionId && (
-                          <span className="text-[10px] font-normal text-gray-400 italic normal-case">
-                            (chọn vị trí trước)
+                          <span className="text-[10px] font-normal text-muted-foreground italic normal-case">
+                            ({EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_HINT})
                           </span>
                         )}
                       </label>
@@ -652,9 +682,11 @@ export default function EmployeeCreateModal({
                         value={formData.reportingManagerId ?? ""}
                         onChange={handleChange}
                         disabled={!formData.positionId}
-                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-medium bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-3 py-2.5 rounded-xl border border-border outline-none text-sm font-medium bg-card disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <option value="">— Không chỉ định —</option>
+                        <option value="">
+                          {EMPLOYEE_CONSTANTS.PLACEHOLDERS.MANAGER_NONE}
+                        </option>
                         {managers.map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.name} {m.position ? `(${m.position})` : ""}
@@ -663,7 +695,7 @@ export default function EmployeeCreateModal({
                       </select>
                       {managers.length === 0 && formData.positionId > 0 && (
                         <p className="text-[10px] text-amber-500 italic">
-                          Chưa có trưởng phòng nào trong hệ thống
+                          {EMPLOYEE_CONSTANTS.MESSAGES.NO_MANAGERS}
                         </p>
                       )}
                     </div>
@@ -672,22 +704,21 @@ export default function EmployeeCreateModal({
                     <div className="col-span-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-2.5 flex items-center gap-2">
                       <Info size={14} className="text-blue-500 shrink-0" />
                       <p className="text-xs text-blue-600 dark:text-blue-400">
-                        Vị trí này là <strong>Trưởng phòng</strong> — không cần
-                        chỉ định người quản lý trực tiếp.
+                        {EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_LEVEL_INFO}
                       </p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="space-y-4 pt-4 border-t border-border">
                 <h4 className="flex items-center gap-2 text-xs font-bold text-amber-500 border-l-4 border-amber-500 pl-3 uppercase tracking-widest">
-                  Tài chính
+                  {EMPLOYEE_CONSTANTS.SECTIONS.FINANCE}
                 </h4>
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Lương cơ bản (Gross){" "}
+                    <label className="text-xs font-bold text-muted-foreground uppercase">
+                      {EMPLOYEE_CONSTANTS.LABELS.SALARY}{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -701,8 +732,8 @@ export default function EmployeeCreateModal({
                           " pl-4 pr-12 text-blue-600 font-bold"
                         }
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">
-                        VNĐ
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">
+                        {EMPLOYEE_CONSTANTS.PLACEHOLDERS.CURRENCY}
                       </span>
                     </div>
                     {errors.salary && (
@@ -743,30 +774,29 @@ export default function EmployeeCreateModal({
           </div>
 
           {/* ACTIONS */}
-          <div className="mt-12 pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <div className="text-xs text-gray-400 flex items-center gap-1">
-              <Info size={14} /> Hệ thống sẽ tự động tạo Mã nhân viên dựa trên
-              phòng ban.
+          <div className="mt-12 pt-6 border-t border-border flex items-center justify-between">
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Info size={14} /> {EMPLOYEE_CONSTANTS.MESSAGES.AUTO_CODE_INFO}
             </div>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-200 dark:border-gray-800 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition drop-shadow-sm"
+                className="px-6 py-2 border border-border rounded-xl font-bold text-muted-foreground hover:bg-muted transition"
               >
-                Bỏ qua
+                {SYSTEM_MESSAGES.BTN_CANCEL}
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/25 flex items-center gap-2"
+                className="px-8 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/25 flex items-center gap-2 active:scale-95"
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Save size={18} />
                 )}
-                Tạo nhân viên
+                {EMPLOYEE_CONSTANTS.BTNS.CREATE}
               </button>
             </div>
           </div>
