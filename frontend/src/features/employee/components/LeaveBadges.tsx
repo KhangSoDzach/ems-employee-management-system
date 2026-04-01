@@ -37,7 +37,11 @@ export const StatusBadge = ({ status }: { status: LeaveStatus }) => {
 /* ══════════════ TYPE BADGE ══════════════ */
 
 export const TypeBadge = ({ type }: { type: LeaveType }) => {
-  const config = LEAVE_TYPE_CONFIG[type];
+  const config = LEAVE_TYPE_CONFIG[type] || {
+    label: type,
+    badgeClass: "bg-muted text-muted-foreground border-slate-200",
+    dotClass: "bg-slate-400",
+  };
 
   return (
     <span
@@ -49,10 +53,7 @@ export const TypeBadge = ({ type }: { type: LeaveType }) => {
       <span
         className={cn(
           "w-1.5 h-1.5 rounded-full inline-block",
-          type === "annual" && "bg-indigo-500",
-          type === "sick" && "bg-rose-500",
-          type === "unpaid" && "bg-slate-500",
-          type === "personal" && "bg-violet-500",
+          config.dotClass || "bg-slate-400",
         )}
       />
       {config.label}

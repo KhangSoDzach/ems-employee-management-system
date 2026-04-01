@@ -1,12 +1,11 @@
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -37,11 +36,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-import {
-  DATE_FORMAT,
-  LEAVE_TYPE_CONFIG,
-  LEAVE_TYPE_OPTIONS,
-} from "@/constants/leave-request";
+import { DATE_FORMAT, LEAVE_TYPE_OPTIONS } from "@/constants/leave-request";
 import {
   type LeaveFormValues,
   leaveSchema,
@@ -81,11 +76,6 @@ export const CreateLeaveModal = ({
       reason: "",
     },
     mode: "onChange",
-  });
-
-  const watchType = useWatch({
-    control: form.control,
-    name: "leaveType",
   });
 
   const handleClose = () => {
@@ -173,17 +163,6 @@ export const CreateLeaveModal = ({
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs font-medium" />
-                  {watchType && (
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "mt-1 text-[11px] font-semibold w-fit",
-                        LEAVE_TYPE_CONFIG[watchType].badgeClass,
-                      )}
-                    >
-                      {LEAVE_TYPE_CONFIG[watchType].label}
-                    </Badge>
-                  )}
                 </FormItem>
               )}
             />

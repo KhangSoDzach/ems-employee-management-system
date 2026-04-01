@@ -34,6 +34,11 @@ import ApproveLeaveDialog from "./components/ApproveLeaveModal";
 import { leaveService, type LeaveResponseDTO } from "@/services/leaveService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges";
+import {
+  LEAVE_TYPE_CONFIG,
+  LEAVE_TYPE_OPTIONS,
+  type LeaveType,
+} from "@/constants/leave-request";
 import { cn } from "@/lib/utils";
 
 /* ================= TYPES ================= */
@@ -57,7 +62,7 @@ function mapDto(dto: LeaveResponseDTO): LeaveRequest {
     id: dto.id,
     name: dto.employeeName ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
     dept: SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
-    leaveType: dto.leaveType,
+    leaveType: dto.leaveType.toLowerCase(),
     startDate: dto.startDate,
     endDate: dto.endDate,
     duration: dto.duration,
@@ -70,31 +75,14 @@ function mapDto(dto: LeaveResponseDTO): LeaveRequest {
 
 /* ================= TYPE BADGE ================= */
 
-const LEAVE_TYPE_MAP: Record<string, { label: string; cls: string }> = {
-  ANNUAL: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL,
-    cls: "badge-info-hover",
-  },
-  SICK: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_SICK,
-    cls: "badge-success-hover",
-  },
-  UNPAID: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID,
-    cls: "badge-error-hover",
-  },
-  PERSONAL: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL,
-    cls: "badge-purple-hover",
-  },
-};
-
+/* ================= RENDER LEAVE TYPE ================= */
 const renderLeaveType = (type: string) => {
-  const cfg = LEAVE_TYPE_MAP[type] ?? {
+  const normType = type.toLowerCase() as LeaveType;
+  const cfg = LEAVE_TYPE_CONFIG[normType] || {
     label: type,
-    cls: "bg-muted text-muted-foreground",
+    badgeClass: "bg-muted text-muted-foreground",
   };
-  return <Badge className={cfg.cls}>{cfg.label}</Badge>;
+  return <Badge className={cfg.badgeClass}>{cfg.label}</Badge>;
 };
 
 /* ================= STATUS BADGE ================= */
@@ -122,27 +110,7 @@ const STATUS_MAP = {
   },
 } as const;
 
-const LEAVE_TYPE_FILTER_CONFIG: Record<
-  string,
-  { label: string; filterClass: string }
-> = {
-  ANNUAL: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL,
-    filterClass: "badge-info border-blue-200",
-  },
-  SICK: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_SICK,
-    filterClass: "badge-success border-emerald-200",
-  },
-  UNPAID: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID,
-    filterClass: "badge-error border-rose-200",
-  },
-  PERSONAL: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL,
-    filterClass: "badge-purple border-violet-200",
-  },
-};
+/* ================= STATUS RENDER ================= */
 
 const renderStatus = (status: string) => {
   const isPendingStatus = status.startsWith("PENDING");
@@ -369,10 +337,12 @@ export default function ApproveLeaveRequest() {
                 {filterType !== "ALL" && (
                   <ActiveFilterBadge
                     value={
-                      LEAVE_TYPE_FILTER_CONFIG[filterType]?.label || filterType
+                      LEAVE_TYPE_CONFIG[filterType.toLowerCase() as LeaveType]
+                        ?.label || filterType
                     }
                     colorClass={
-                      LEAVE_TYPE_FILTER_CONFIG[filterType]?.filterClass || ""
+                      LEAVE_TYPE_CONFIG[filterType.toLowerCase() as LeaveType]
+                        ?.filterClass || ""
                     }
                     onClear={() => setFilterType("ALL")}
                   />
@@ -389,13 +359,13 @@ export default function ApproveLeaveRequest() {
               >
                 {SYSTEM_MESSAGES.LABEL_ALL}
               </DropdownMenuItem>
-              {Object.entries(LEAVE_TYPE_FILTER_CONFIG).map(([key, cfg]) => (
+              {LEAVE_TYPE_OPTIONS.map(([value, cfg]) => (
                 <DropdownMenuItem
-                  key={key}
-                  onClick={() => setFilterType(key)}
+                  key={value}
+                  onClick={() => setFilterType(value.toUpperCase())}
                   className={cn(
                     "cursor-pointer",
-                    filterType === key
+                    filterType === value.toUpperCase()
                       ? "bg-muted font-medium"
                       : "hover:bg-slate-50",
                   )}
@@ -404,10 +374,7 @@ export default function ApproveLeaveRequest() {
                     <span
                       className={cn(
                         "w-2 h-2 rounded-full inline-block shrink-0",
-                        key === "ANNUAL" && "bg-blue-500",
-                        key === "SICK" && "bg-emerald-500",
-                        key === "UNPAID" && "bg-rose-500",
-                        key === "PERSONAL" && "bg-violet-500",
+                        cfg.dotClass,
                       )}
                     />
                     {cfg.label}
