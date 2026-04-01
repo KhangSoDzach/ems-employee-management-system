@@ -24,7 +24,25 @@ CREATE TABLE IF NOT EXISTS asset_incident_reports (
     FOREIGN KEY (processed_by) REFERENCES users(id)
     );
 
-CREATE INDEX IF NOT EXISTS idx_air_asset_id    ON asset_incident_reports (asset_id);
-CREATE INDEX IF NOT EXISTS idx_air_reported_by ON asset_incident_reports (reported_by);
-CREATE INDEX IF NOT EXISTS idx_air_status      ON asset_incident_reports (status);
-CREATE INDEX IF NOT EXISTS idx_air_reported_at ON asset_incident_reports (reported_at);
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS add_asset_incident_indexes$$
+CREATE PROCEDURE add_asset_incident_indexes()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_incident_reports' AND index_name = 'idx_air_asset_id') THEN
+        CREATE INDEX idx_air_asset_id ON asset_incident_reports (asset_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_incident_reports' AND index_name = 'idx_air_reported_by') THEN
+        CREATE INDEX idx_air_reported_by ON asset_incident_reports (reported_by);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_incident_reports' AND index_name = 'idx_air_status') THEN
+        CREATE INDEX idx_air_status ON asset_incident_reports (status);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_incident_reports' AND index_name = 'idx_air_reported_at') THEN
+        CREATE INDEX idx_air_reported_at ON asset_incident_reports (reported_at);
+    END IF;
+END$$
+
+DELIMITER ;
+CALL add_asset_incident_indexes();
+DROP PROCEDURE IF EXISTS add_asset_incident_indexes;

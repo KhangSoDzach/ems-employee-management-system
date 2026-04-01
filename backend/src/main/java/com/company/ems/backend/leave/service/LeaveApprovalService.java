@@ -3,6 +3,8 @@ package com.company.ems.backend.leave.service;
 import com.company.ems.backend.leave.dto.LeaveApprovalHistoryResponse;
 import com.company.ems.backend.leave.dto.LeaveApprovalRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
+import com.company.ems.backend.leave.entity.Leave;
+import com.company.ems.backend.workflow.entity.WorkflowTemplate;
 
 import java.util.List;
 
@@ -33,4 +35,10 @@ public interface LeaveApprovalService {
      * @return chronologically ordered list of history entries
      */
     List<LeaveApprovalHistoryResponse> getHistory(Long leaveId);
+
+    /**
+     * Initializes approval-level fields for a newly created leave request using
+     * the active workflow template.
+     */
+    void initialiseApprovalLevels(Leave leave, WorkflowTemplate template);
 }

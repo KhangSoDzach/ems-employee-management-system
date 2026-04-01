@@ -36,6 +36,86 @@ import { ATTENDANCE_STATUS } from "@/constants/options";
 
 type StatusKey = NonNullable<AttendanceCalendarDay["status"]>;
 
+type CalendarMetric = AttendanceCalendarData["fullWorkDays"];
+
+type CalendarMetricSet = {
+  fullWorkDays: CalendarMetric;
+  lateDays: CalendarMetric;
+  noClockOutDays: CalendarMetric;
+  absentDays: CalendarMetric;
+};
+
+function zeroMetric(): CalendarMetric {
+  return { current: 0, changePercent: 0 };
+}
+
+function buildMetricsFromDays(
+  days: AttendanceCalendarDay[],
+): CalendarMetricSet {
+  const fullWorkDays = days.filter(
+    (day) =>
+      day.hasRecord &&
+      day.status !== "ABSENT" &&
+      day.status !== "ON_LEAVE" &&
+      Boolean(day.checkInTime),
+  ).length;
+
+  const lateDays = days.filter(
+    (day) => day.hasRecord && (day.status === "LATE" || day.isLate === true),
+  ).length;
+
+  const noClockOutDays = days.filter(
+    (day) =>
+      day.hasRecord &&
+      (day.missingClockOut === true ||
+        (Boolean(day.checkInTime) && !day.checkOutTime)),
+  ).length;
+
+  const absentDays = days.filter(
+    (day) => day.hasRecord && day.status === "ABSENT",
+  ).length;
+
+  return {
+    fullWorkDays: { current: fullWorkDays, changePercent: 0 },
+    lateDays: { current: lateDays, changePercent: 0 },
+    noClockOutDays: { current: noClockOutDays, changePercent: 0 },
+    absentDays: { current: absentDays, changePercent: 0 },
+  };
+}
+
+function resolveCalendarMetrics(
+  data: AttendanceCalendarData | undefined,
+): CalendarMetricSet {
+  if (!data) {
+    return {
+      fullWorkDays: zeroMetric(),
+      lateDays: zeroMetric(),
+      noClockOutDays: zeroMetric(),
+      absentDays: zeroMetric(),
+    };
+  }
+
+  const apiMetrics: CalendarMetricSet = {
+    fullWorkDays: data.fullWorkDays ?? zeroMetric(),
+    lateDays: data.lateDays ?? zeroMetric(),
+    noClockOutDays: data.noClockOutDays ?? zeroMetric(),
+    absentDays: data.absentDays ?? zeroMetric(),
+  };
+
+  const hasAnyRecord = data.days.some((day) => day.hasRecord);
+  const allApiMetricsZero =
+    apiMetrics.fullWorkDays.current === 0 &&
+    apiMetrics.lateDays.current === 0 &&
+    apiMetrics.noClockOutDays.current === 0 &&
+    apiMetrics.absentDays.current === 0;
+
+  if (hasAnyRecord && allApiMetricsZero) {
+    return buildMetricsFromDays(data.days);
+  }
+
+  return apiMetrics;
+}
+
 function statusInfo(status: AttendanceCalendarDay["status"]) {
   const map: Record<StatusKey, { label: string; cls: string }> = {
     PRESENT: {
@@ -196,6 +276,11 @@ export default function AttendanceHistoryPage() {
   }, [calendarQuery.data, dayMap, monthParam, selectedDateOverride]);
 
   const selectedDay = selectedDate ? dayMap.get(selectedDate) : null;
+  const metrics = useMemo(
+    () => resolveCalendarMetrics(calendarQuery.data),
+    [calendarQuery.data],
+  );
+
   return (
     <main className="page-layout-wrapper">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
@@ -212,29 +297,29 @@ export default function AttendanceHistoryPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         <MetricCard
           title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_FULL_WORK_DAYS}
-          value={calendarQuery.data?.fullWorkDays.current ?? 0}
-          trend={calendarQuery.data?.fullWorkDays.changePercent ?? 0}
+          value={metrics.fullWorkDays.current}
+          trend={metrics.fullWorkDays.changePercent}
           color="text-emerald-600"
           loading={calendarQuery.isLoading}
         />
         <MetricCard
           title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_LATE_DAYS}
-          value={calendarQuery.data?.lateDays.current ?? 0}
-          trend={calendarQuery.data?.lateDays.changePercent ?? 0}
+          value={metrics.lateDays.current}
+          trend={metrics.lateDays.changePercent}
           color="text-amber-600"
           loading={calendarQuery.isLoading}
         />
         <MetricCard
           title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_NO_CLOCK_OUT_DAYS}
-          value={calendarQuery.data?.noClockOutDays.current ?? 0}
-          trend={calendarQuery.data?.noClockOutDays.changePercent ?? 0}
+          value={metrics.noClockOutDays.current}
+          trend={metrics.noClockOutDays.changePercent}
           color="text-violet-600"
           loading={calendarQuery.isLoading}
         />
         <MetricCard
           title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_ABSENT_DAYS}
-          value={calendarQuery.data?.absentDays.current ?? 0}
-          trend={calendarQuery.data?.absentDays.changePercent ?? 0}
+          value={metrics.absentDays.current}
+          trend={metrics.absentDays.changePercent}
           color="text-rose-600"
           loading={calendarQuery.isLoading}
         />

@@ -33,6 +33,8 @@ export interface LeaveRequest {
   status: LeaveStatus;
   reason: string;
   auditTrail: AuditEntry[];
+  currentApprovalLevel?: number;
+  maxApprovalLevel?: number;
 }
 
 /* ══════════════ DATE FORMATS ══════════════ */

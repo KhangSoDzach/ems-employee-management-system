@@ -2,6 +2,7 @@ package com.company.ems.backend.leave.repository;
 
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.leave.entity.Leave;
+import com.company.ems.backend.leave.enums.LeaveStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -139,4 +140,36 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
 
        @Query("SELECT l FROM Leave l WHERE l.employee.reportingManager.user.id = :managerUserId ORDER BY l.createdAt DESC")
        Page<Leave> findByReportingManagerUserId(@Param("managerUserId") Long managerUserId, Pageable pageable);
+
+                      @Query("""
+                                                                       SELECT l FROM Leave l
+                                                                       LEFT JOIN WorkflowLevel wl
+                                                                              ON wl.template.id = l.workflowTemplateId
+                                                                             AND wl.levelNumber = l.currentApprovalLevel
+                                                                             AND wl.isDeleted = false
+                                                                       WHERE l.status IN :pendingStatuses
+                                                                              AND (:excludeEmployeeId IS NULL OR l.employee.id <> :excludeEmployeeId)
+                                                                              AND (
+                                                                                                  (
+                                                                                                                wl.id IS NOT NULL
+                                                                                                                AND (
+                                                                                                                               (wl.assigneeType = 'ROLE' AND wl.assigneeRole IN :roleNames)
+                                                                                                                               OR (wl.assigneeType = 'USER' AND wl.assigneeUser.id = :approverUserId)
+                                                                                                                )
+                                                                                                  )
+                                                                                                  OR (
+                                                                                                                :canApproveLongLeaveFallback = true
+                                                                                                                AND l.longLeaveHrRequired = true
+                                                                                                                AND l.currentApprovalLevel = l.maxApprovalLevel
+                                                                                                  )
+                                                                              )
+                                                                       ORDER BY l.createdAt ASC
+                                                                       """)
+                      Page<Leave> findPendingForApprover(
+                                                                       @Param("pendingStatuses") List<LeaveStatus> pendingStatuses,
+                                                                       @Param("roleNames") List<String> roleNames,
+                                                                       @Param("approverUserId") Long approverUserId,
+                                                                       @Param("excludeEmployeeId") Long excludeEmployeeId,
+                                                                       @Param("canApproveLongLeaveFallback") boolean canApproveLongLeaveFallback,
+                                                                       Pageable pageable);
 }

@@ -11,6 +11,7 @@ import com.company.ems.backend.attendance.repository.AttendanceAdjustmentRequest
 import com.company.ems.backend.attendance.repository.AttendanceRepository;
 import com.company.ems.backend.attendance.mapper.AttendanceMapper;
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.common.dto.PageResponse;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.service.NotificationService;
 import com.company.ems.backend.employee.entity.Employee;
@@ -57,6 +58,10 @@ import static org.mockito.Mockito.*;
  */
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import com.company.ems.backend.attendance.dto.adjustment.AdjustmentRequestSummaryResponse;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -300,5 +305,42 @@ class AttendanceAdjustmentServiceImplTest {
                         assertThat(request.getStatus()).isEqualTo(AdjustmentRequestStatus.REJECTED);
                         verify(historyRepository).save(any(AttendanceAdjustmentHistory.class));
                 }
+        }
+
+        @Test
+        @DisplayName("getPendingForApprover() includes all approver roles for multi-level inbox")
+        void getPendingForApprover_multiRoleApprover_usesCombinedRoleQuery() {
+                AttendanceAdjustmentRequest request = AttendanceAdjustmentRequest.builder()
+                                .employee(employee)
+                                .requestDate(LocalDate.now().minusDays(1))
+                                .proposedCheckInTime(LocalDateTime.now().minusDays(1).withHour(8))
+                                .reasonType(AdjustmentReason.FORGOT_CHECKIN)
+                                .reasonText("Reason text with enough characters.")
+                                .status(AdjustmentRequestStatus.PENDING_LEVEL_2)
+                                .currentApprovalLevel(2)
+                                .maxApprovalLevel(2)
+                                .workflowTemplateId(1L)
+                                .build();
+                request.setId(99L);
+
+                var approverAuthorities = List.of(
+                                (org.springframework.security.core.GrantedAuthority) new SimpleGrantedAuthority("ROLE_MANAGER"),
+                                (org.springframework.security.core.GrantedAuthority) new SimpleGrantedAuthority("ROLE_HR"));
+                doReturn(approverAuthorities).when(principal).getAuthorities();
+                when(employeeRepository.findByUserId(1L)).thenReturn(Optional.of(employee));
+
+                when(requestRepository.findPendingForApprover(any(), any(), eq(1L), eq(employee.getId()), any()))
+                                .thenReturn(new PageImpl<>(List.of(request)));
+                when(attendanceMapper.toSummaryResponse(request)).thenReturn(
+                                AdjustmentRequestSummaryResponse.builder().id(99L).build());
+
+                PageResponse<AdjustmentRequestSummaryResponse> result = service.getPendingForApprover(0, 20, principal);
+
+                assertThat(result.getContent()).hasSize(1);
+
+                @SuppressWarnings("unchecked")
+                ArgumentCaptor<List<String>> roleCaptor = ArgumentCaptor.forClass(List.class);
+                verify(requestRepository).findPendingForApprover(any(), roleCaptor.capture(), eq(1L), eq(employee.getId()), any());
+                assertThat(roleCaptor.getValue()).contains("ROLE_MANAGER", "ROLE_HR");
         }
 }

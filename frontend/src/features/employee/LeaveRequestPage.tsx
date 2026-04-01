@@ -144,6 +144,8 @@ export default function LeaveRequestPage() {
             status: mapBackendStatus(dto.status),
             reason: dto.reason,
             auditTrail: [],
+            currentApprovalLevel: dto.currentApprovalLevel ?? undefined,
+            maxApprovalLevel: dto.maxApprovalLevel ?? undefined,
           })),
         );
       } catch {
@@ -212,6 +214,8 @@ export default function LeaveRequestPage() {
       type: dto.leaveType.toLowerCase() as LeaveType,
       status: mapBackendStatus(dto.status),
       reason: dto.reason,
+      currentApprovalLevel: dto.currentApprovalLevel ?? undefined,
+      maxApprovalLevel: dto.maxApprovalLevel ?? undefined,
       auditTrail: [
         {
           id: "a1",
@@ -475,7 +479,17 @@ export default function LeaveRequestPage() {
                       <TypeBadge type={req.type} />
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      <StatusBadge status={req.status} />
+                      <div className="flex flex-col">
+                        <StatusBadge status={req.status} />
+                        {req.status === "PENDING" &&
+                          req.currentApprovalLevel &&
+                          req.maxApprovalLevel && (
+                            <span className="text-xs text-muted-foreground mt-1">
+                              Lv {req.currentApprovalLevel}/
+                              {req.maxApprovalLevel}
+                            </span>
+                          )}
+                      </div>
                     </TableCell>
                     <TableCell
                       className="py-4 text-right"
