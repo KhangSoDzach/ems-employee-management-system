@@ -26,7 +26,7 @@ SELECT
             WHEN e.contract_type = 'PART_TIME' THEN 7000000
             WHEN e.contract_type = 'CONTRACT' THEN 10000000
             ELSE 12000000
-        ),
+        END,
         2
     ) AS basic_salary,
     0 AS allowances,
@@ -40,7 +40,7 @@ SELECT
             WHEN e.contract_type = 'PART_TIME' THEN 7000000
             WHEN e.contract_type = 'CONTRACT' THEN 10000000
             ELSE 12000000
-        ),
+        END,
         2
     ) AS net_salary,
     COALESCE(e.hire_date, CURDATE()) AS effective_from,

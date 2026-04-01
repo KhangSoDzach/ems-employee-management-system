@@ -3,8 +3,9 @@ services:
     # Dev: dùng Maven build stage (có Maven sẵn) thay vì runtime stage (JRE-only)
     build:
       target: build
-    # Dùng script polling để tự compile + restart khi source Java thay đổi trong Docker (Windows-friendly)
-    command: ["sh", "./dev-hot-reload.sh"]
+    # Dùng script polling để tự compile + restart khi source Java thay đổi trong Docker (Windows-friendly).
+    # Normalize CRLF at runtime để tránh lỗi "set: illegal option -" khi host dùng line endings kiểu Windows.
+    command: ["sh", "-c", "tr -d '\\r' < ./dev-hot-reload.sh | sh"]
     volumes:
       # Mount source code backend để map sự thay đổi vào container
       - ./backend/src:/app/src

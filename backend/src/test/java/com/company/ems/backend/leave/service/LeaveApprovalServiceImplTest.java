@@ -155,6 +155,27 @@ class LeaveApprovalServiceImplTest {
     }
 
     @Test
+    void processApproval_approveLastLevel_throwsWhenBalanceDeductionFails() {
+        leave.setCurrentApprovalLevel(2); // At last level
+        leave.setStatus(LeaveStatus.PENDING_LEVEL_2);
+
+        LeaveApprovalRequest req = new LeaveApprovalRequest();
+        req.setAction(LeaveApprovalAction.APPROVE);
+        req.setComments("Final OK");
+
+        when(workflowEngineService.getActiveTemplate(WorkflowType.LEAVE)).thenReturn(template);
+        when(workflowEngineService.getLevel(template, 2)).thenReturn(Optional.of(l2));
+        when(workflowEngineService.resolveApproverUserIds(l2)).thenReturn(List.of(approverId));
+        doThrow(new RuntimeException("Balance update failed"))
+                .when(leaveBalanceService)
+                .deductBalance(leave.getEmployee().getId(), LeaveType.ANNUAL, 2);
+
+        assertThrows(RuntimeException.class, () -> leaveApprovalService.processApproval(leaveId, approverId, req));
+        verify(leaveRepository, never()).save(any(Leave.class));
+        verify(leaveApprovalHistoryRepository, never()).save(any(LeaveApprovalHistory.class));
+    }
+
+    @Test
     void processApproval_reject_setsRejected() {
         LeaveApprovalRequest req = new LeaveApprovalRequest();
         req.setAction(LeaveApprovalAction.REJECT);
