@@ -301,7 +301,7 @@
   }
 
   .search-input-full {
-    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+    @apply w-full px-3 py-2 bg-background border border-border rounded-md text-sm focus:ring-ring focus:border-primary text-foreground placeholder:text-muted-foreground;
   }
 
   /* =========================================
@@ -327,7 +327,7 @@
      DATA TABLE
      ========================================= */
   .data-table-container {
-    @apply bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden;
+    @apply bg-card rounded-2xl border border-border shadow-sm overflow-hidden;
   }
 
   .data-table {
@@ -335,7 +335,7 @@
   }
 
   .data-table-header {
-    @apply bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase text-xs;
+    @apply bg-muted/50 text-muted-foreground uppercase text-xs;
   }
 
   .data-table-header-cell {
@@ -347,7 +347,7 @@
   }
 
   .data-table-row {
-    @apply border-t hover:bg-gray-50 dark:hover:bg-gray-800 transition;
+    @apply border-t border-border/50 hover:bg-muted/30 transition-colors;
   }
 
   .data-table-cell-primary {
@@ -373,7 +373,7 @@
      PAGINATION
      ========================================= */
   .pagination-container {
-    @apply flex items-center justify-between px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 text-sm;
+    @apply flex items-center justify-between px-6 py-4 border-t border-border bg-muted/20 text-sm;
   }
 
   .pagination-info {
@@ -396,19 +396,19 @@
      MODAL / DIALOG
      ========================================= */
   .modal-overlay {
-    @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm;
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm;
   }
 
   .modal-content {
-    @apply bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-lg shadow-2xl flex flex-col;
+    @apply bg-background w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl flex flex-col border border-border;
   }
 
   .modal-header {
-    @apply px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center;
+    @apply px-8 py-6 border-b border-border flex justify-between items-center bg-card/50;
   }
 
   .modal-title {
-    @apply text-xl font-bold text-slate-800 dark:text-white;
+    @apply text-2xl font-black text-foreground uppercase tracking-tight;
   }
 
   .modal-body {
@@ -416,14 +416,14 @@
   }
 
   .modal-footer {
-    @apply px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-slate-50/50;
+    @apply px-8 py-6 border-t border-border flex justify-end gap-4 bg-muted/20;
   }
 
   /* =========================================
      FORM ELEMENTS
      ========================================= */
   .form-label-required {
-    @apply text-xs font-bold text-slate-500 uppercase;
+    @apply text-[10px] font-black text-muted-foreground uppercase tracking-widest;
   }
 
   .form-label-required::after {
@@ -451,26 +451,26 @@
   }
 
   .form-label-secondary {
-    @apply text-xs font-bold text-slate-500;
+    @apply text-[10px] font-black text-muted-foreground uppercase tracking-widest;
   }
 
   .form-input {
-    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+    @apply w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground placeholder:text-muted-foreground/50 font-medium;
   }
 
   .form-textarea {
-    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm resize-none focus:ring-primary focus:border-primary;
+    @apply w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground placeholder:text-muted-foreground/50 font-medium resize-none;
   }
 
   .form-select {
-    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+    @apply w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground font-medium cursor-pointer;
   }
 
   /* =========================================
      SECTION HEADERS
      ========================================= */
   .section-header {
-    @apply flex items-center gap-2 text-primary border-b border-slate-100 pb-2;
+    @apply flex items-center gap-3 text-primary border-b border-border/50 pb-4 mb-6;
   }
 
   .section-header-title {
@@ -504,11 +504,11 @@
   }
 
   .btn-secondary {
-    @apply px-6 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-md hover:bg-slate-50 transition-colors text-slate-600;
+    @apply px-6 py-2.5 text-xs font-black uppercase tracking-widest border border-border bg-background rounded-xl hover:bg-muted transition-all text-muted-foreground hover:text-foreground;
   }
 
   .btn-action {
-    @apply px-8 py-2 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary/90 transition-all shadow-md;
+    @apply px-8 py-2.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground bg-primary rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20 active:scale-95;
   }
 
   .btn-icon {
@@ -774,7 +774,7 @@
      DIALOG/CONTENT
      ========================================= */
   .dialog-content-base {
-    @apply w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-lg shadow-2xl flex flex-col bg-white dark:bg-slate-900;
+    @apply w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl flex flex-col bg-background border border-border;
   }
 
   .dialog-content-sm {

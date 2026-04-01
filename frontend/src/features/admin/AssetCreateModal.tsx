@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
-import {
-  assetService,
-  AssetCreatePayload,
-} from "@/services/assetService";
+import { assetService, AssetCreatePayload } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import { AssetForm, AssetFormData } from "./components/AssetForm";
@@ -22,7 +19,10 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
 
   useEffect(() => {
     if (open) {
-      assetService.getNextCode().then(setNextCode).catch(() => setNextCode("—"));
+      assetService
+        .getNextCode()
+        .then(setNextCode)
+        .catch(() => setNextCode("—"));
       setErrors({});
     }
   }, [open]);
@@ -40,7 +40,18 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
       newErrors.type = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
     }
     if (!formData.locationOrUser.trim()) {
-      newErrors.locationOrUser = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+      newErrors.locationOrUser =
+        SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+    }
+    if (formData.value !== undefined && formData.value < 0) {
+      newErrors.value = SYSTEM_MESSAGES.ASSET_CREATE.MSG_ERROR_VALUE;
+    }
+
+    // Date validations
+    const todayStr = new Date().toISOString().split("T")[0] || "";
+    if (formData.purchaseDate && formData.purchaseDate > todayStr) {
+      newErrors.purchaseDate =
+        SYSTEM_MESSAGES.ASSET_CREATE.MSG_ERROR_PURCHASE_DATE;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -82,14 +93,24 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
     <div className="modal-overlay">
       <div className="dialog-content-base">
         <div className="modal-header">
-          <h2 className="modal-title">
-            {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_ADD} 
-            <span className="text-primary ml-2 font-mono">{"#"}{nextCode}</span>
-          </h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
+          <div>
+            <h2 className="modal-title">
+              {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_ADD}
+            </h2>
+            <p className="text-[10px] font-black text-primary mt-1 tracking-[0.2em] uppercase font-mono">
+              {"#"}
+              {nextCode}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-muted rounded-full transition-colors group"
+          >
+            <X className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <AssetForm 
+          <AssetForm
             onSubmit={handleFormSubmit}
             onCancel={onClose}
             loading={saving}
