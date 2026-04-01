@@ -12,7 +12,6 @@ import {
   Calendar,
   Users,
   CreditCard,
-  Target,
   ShieldCheck,
   ClipboardList,
   AlertCircle,
@@ -185,6 +184,11 @@ export function AppSidebar({
           icon: Settings,
         },
         {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
+          url: "/assets",
+          icon: Package,
+        },
+        {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_MANAGE_ANNOUNCEMENTS,
           url: "/announcements/manage",
           icon: Bell,
@@ -275,6 +279,11 @@ export function AppSidebar({
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
           url: "/hr-employees",
           icon: Users,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
+          url: "/assets",
+          icon: Package,
         },
         {
           title: SYSTEM_MESSAGES.SIDEBAR.MENU_RUN_PAYROLL,

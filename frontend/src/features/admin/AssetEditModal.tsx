@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  assetService,
-  AssetUpdatePayload,
-} from "@/services/assetService";
+import { assetService, AssetUpdatePayload } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import { AssetForm, AssetFormData } from "./components/AssetForm";
@@ -16,7 +13,12 @@ interface Props {
   onUpdated: () => void;
 }
 
-export default function AssetEditModal({ open, onClose, assetId, onUpdated }: Props) {
+export default function AssetEditModal({
+  open,
+  onClose,
+  assetId,
+  onUpdated,
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [initialData, setInitialData] = useState<Partial<AssetFormData>>({});
@@ -67,7 +69,18 @@ export default function AssetEditModal({ open, onClose, assetId, onUpdated }: Pr
       newErrors.type = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
     }
     if (!formData.locationOrUser.trim()) {
-      newErrors.locationOrUser = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+      newErrors.locationOrUser =
+        SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
+    }
+    if (formData.value !== undefined && formData.value < 0) {
+      newErrors.value = SYSTEM_MESSAGES.ASSET_CREATE.MSG_ERROR_VALUE;
+    }
+
+    // Date validations
+    const todayStr = new Date().toISOString().split("T")[0] || "";
+    if (formData.purchaseDate && formData.purchaseDate > todayStr) {
+      newErrors.purchaseDate =
+        SYSTEM_MESSAGES.ASSET_CREATE.MSG_ERROR_PURCHASE_DATE;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -107,11 +120,21 @@ export default function AssetEditModal({ open, onClose, assetId, onUpdated }: Pr
     <div className="modal-overlay">
       <div className="dialog-content-base">
         <div className="modal-header">
-          <h2 className="modal-title">
-            {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_EDIT} 
-            <span className="text-primary ml-2 font-mono">{"#"}{assetCode}</span>
-          </h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
+          <div>
+            <h2 className="modal-title">
+              {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_EDIT}
+            </h2>
+            <p className="text-[10px] font-black text-primary mt-1 tracking-[0.2em] uppercase font-mono">
+              {"#"}
+              {assetCode}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-muted rounded-full transition-colors group"
+          >
+            <X className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+          </button>
         </div>
 
         {loading ? (
@@ -121,7 +144,7 @@ export default function AssetEditModal({ open, onClose, assetId, onUpdated }: Pr
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto">
-            <AssetForm 
+            <AssetForm
               initialData={initialData}
               isEdit={true}
               onSubmit={handleFormSubmit}

@@ -10,7 +10,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
-import AssetDetailModal from "./AssetDetailModal";
+import AssetDetailSheet from "./components/AssetDetailSheet";
 import AssetCreateModal from "./AssetCreateModal";
 import AssetEditModal from "./AssetEditModal";
 import {
@@ -211,22 +211,41 @@ export default function AssetManagementPage() {
 
   return (
     <>
-      <main className="flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950">
+      <main className="flex flex-1 flex-col p-6 gap-6 bg-background">
         {/* ===== HEADER ===== */}
         <div className="flex items-center justify-between">
           <h1 className="page-heading">{SYSTEM_MESSAGES.ASSET.TITLE}</h1>
 
           <div className="flex items-center gap-4">
-            <input
-              placeholder={SYSTEM_MESSAGES.ASSET.SEARCH_PLACEHOLDER}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="px-4 py-2 w-64 rounded-full bg-gray-100 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <div className="relative">
+              <input
+                placeholder={SYSTEM_MESSAGES.ASSET.SEARCH_PLACEHOLDER}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 pr-4 py-2 w-64 rounded-full bg-muted border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+              />
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-search"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.3-4.3"></path>
+                </svg>
+              </span>
+            </div>
             <button
               onClick={handleExportAssets}
               disabled={loading}
-              className="px-5 py-2 flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition gap-2"
+              className="px-5 py-2 flex items-center justify-center bg-muted border border-border text-muted-foreground rounded-full font-semibold hover:bg-muted/80 transition gap-2"
               title={SYSTEM_MESSAGES.ASSET.TITLE_DOWNLOAD_CSV}
             >
               {loading ? (
@@ -237,7 +256,7 @@ export default function AssetManagementPage() {
             </button>
             <button
               onClick={() => setOpenCreate(true)}
-              className="px-5 py-2 bg-primary text-white rounded-full font-semibold hover:bg-primary/90"
+              className="px-5 py-2 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 shadow-lg shadow-primary/20"
             >
               {SYSTEM_MESSAGES.ASSET.BTN_ADD}
             </button>
@@ -253,7 +272,7 @@ export default function AssetManagementPage() {
               className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
                 statusFilter === tab.value
                   ? "bg-primary text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               {tab.label}
@@ -262,9 +281,9 @@ export default function AssetManagementPage() {
         </div>
 
         {/* ===== TABLE ===== */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase text-xs">
+            <thead className="bg-muted/50 text-muted-foreground uppercase text-[10px] font-bold tracking-widest">
               <tr>
                 <th className="px-6 py-4 text-left">
                   {SYSTEM_MESSAGES.ASSET.TABLE_ID}
@@ -290,14 +309,20 @@ export default function AssetManagementPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-gray-400">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                  <td
+                    colSpan={6}
+                    className="py-16 text-center text-muted-foreground"
+                  >
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
                     {SYSTEM_MESSAGES.LOADING}
                   </td>
                 </tr>
               ) : assets.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-gray-400">
+                  <td
+                    colSpan={6}
+                    className="py-16 text-center text-muted-foreground"
+                  >
                     {SYSTEM_MESSAGES.NO_DATA}
                   </td>
                 </tr>
@@ -305,56 +330,66 @@ export default function AssetManagementPage() {
                 assets.map((asset) => (
                   <tr
                     key={asset.id}
-                    className="border-t hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                    onClick={() => handleOpenDetail(asset)}
+                    className="border-t border-border/50 hover:bg-muted/50 transition group cursor-pointer"
                   >
-                    <td className="px-6 py-4 font-medium text-gray-700">
+                    <td className="px-6 py-4 font-mono text-muted-foreground text-xs">
                       {asset.id}
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900 dark:text-white">
+                      <div className="font-bold text-foreground">
                         {asset.name}
                       </div>
                       {asset.desc && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground italic">
                           {asset.desc}
                         </div>
                       )}
                     </td>
 
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-muted-foreground">
                       {asset.type ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                     </td>
 
                     <td className="px-6 py-4">
                       <span
-                        className={`text-xs font-bold px-3 py-1 rounded-full ${asset.statusColor}`}
+                        className={`text-[10px] font-black tracking-widest px-3 py-1 rounded-full uppercase border ${asset.statusColor}`}
                       >
                         {ASSET_STATUS_LABELS[asset.status as AssetStatus] ??
                           asset.status}
                       </span>
                     </td>
 
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-foreground font-medium">
                       {asset.user ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
                     </td>
 
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-3 text-gray-500">
-                        <Eye
-                          size={18}
-                          className="cursor-pointer hover:text-primary"
-                          onClick={() => handleOpenDetail(asset)}
-                        />
-                        <Pencil
-                          size={18}
-                          className="cursor-pointer hover:text-primary"
-                          onClick={() => handleOpenEdit(asset)}
-                        />
-                        <Trash2
-                          size={18}
-                          className="cursor-pointer hover:text-red-500"
-                          onClick={() => {
+                      <div className="flex justify-end gap-3 text-muted-foreground">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDetail(asset);
+                          }}
+                          className="p-2 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
+                          title="View Details"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEdit(asset);
+                          }}
+                          className="p-2 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
+                          title="Edit"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             const identifier = resolveAssetIdentifier(asset);
                             if (
                               identifier === null ||
@@ -369,7 +404,11 @@ export default function AssetManagementPage() {
                               asset.status?.toUpperCase() ?? "",
                             );
                           }}
-                        />
+                          className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -379,8 +418,8 @@ export default function AssetManagementPage() {
           </table>
 
           {/* ===== PAGINATION ===== */}
-          <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 text-sm">
-            <div className="text-gray-500">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/20 text-xs">
+            <div className="text-muted-foreground font-medium uppercase tracking-wider">
               {totalElements === 0
                 ? SYSTEM_MESSAGES.NO_DATA
                 : `${SYSTEM_MESSAGES.ASSET.PAGINATION_SHOW} ${from}–${to} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ON} ${totalElements} ${SYSTEM_MESSAGES.ASSET.PAGINATION_ITEMS}`}
@@ -389,7 +428,7 @@ export default function AssetManagementPage() {
               <button
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40"
+                className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-muted disabled:opacity-40"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -402,10 +441,10 @@ export default function AssetManagementPage() {
                   <button
                     key={pg}
                     onClick={() => setPage(pg)}
-                    className={`w-8 h-8 rounded-full font-bold ${
+                    className={`w-8 h-8 rounded-xl font-black ${
                       pg === page
-                        ? "bg-primary text-white"
-                        : "hover:bg-gray-200"
+                        ? "bg-primary text-white shadow-lg shadow-primary/20"
+                        : "hover:bg-muted"
                     }`}
                   >
                     {pg + 1}
@@ -415,7 +454,7 @@ export default function AssetManagementPage() {
               <button
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage((p) => p + 1)}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-40"
+                className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-muted disabled:opacity-40"
               >
                 <ChevronRight size={16} />
               </button>
@@ -432,7 +471,7 @@ export default function AssetManagementPage() {
           setOpenCreate(false);
         }}
       />
-      <AssetDetailModal
+      <AssetDetailSheet
         open={openDetail}
         assetId={selectedId}
         onClose={() => setOpenDetail(false)}
@@ -460,59 +499,69 @@ export default function AssetManagementPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-background border-border text-foreground">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
+            <DialogTitle className="flex items-center gap-2 text-destructive uppercase font-black tracking-tight">
               <AlertTriangle className="w-5 h-5" />
               {deleteTarget?.status?.toUpperCase() === "ASSIGNED"
                 ? SYSTEM_MESSAGES.ASSET.MSG_CANNOT_DELETE
                 : SYSTEM_MESSAGES.ASSET.MSG_CONFIRM_DELETE}
             </DialogTitle>
-            <DialogDescription className="pt-2" asChild>
+            <DialogDescription
+              className="pt-2 text-muted-foreground font-medium"
+              asChild
+            >
               <div>
                 {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
                   // ASSIGNED: show guidance to return first
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <p>
                       Tài sản{" "}
-                      <span className="font-semibold text-gray-900">
+                      <span className="font-bold text-foreground">
                         "{deleteTarget?.name}"
                       </span>{" "}
-                      đang được cấp phát. Phải{" "}
-                      <span className="font-semibold text-orange-600">
-                        thu hồi trước
-                      </span>{" "}
-                      khi xóa.
+                      {SYSTEM_MESSAGES.ASSET.MSG_DELETE_WARNING}
+                      <span className="font-bold text-amber-500 underline underline-offset-4">
+                        {SYSTEM_MESSAGES.ASSET.MSG_STEP_2}
+                      </span>
+                      .
                     </p>
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
-                      <p className="font-semibold mb-1">Cách thực hiện:</p>
-                      <p>
-                        Mở chi tiết tài sản → bấm{" "}
-                        <span className="font-bold">Thu hồi</span> → quay lại và
-                        xóa.
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-xs">
+                      <p className="font-black text-amber-600 dark:text-amber-400 mb-2 uppercase tracking-widest">
+                        {SYSTEM_MESSAGES.ASSET.MSG_HOW_TO}
+                      </p>
+                      <p className="text-amber-700/80 dark:text-amber-200/60 leading-relaxed font-bold">
+                        {SYSTEM_MESSAGES.ASSET.MSG_STEP_1}
+                        <span className="text-amber-600 dark:text-amber-400 font-black">
+                          {SYSTEM_MESSAGES.ASSET.MSG_STEP_2}
+                        </span>
+                        {SYSTEM_MESSAGES.ASSET.MSG_STEP_3}
                       </p>
                     </div>
                   </div>
                 ) : (
                   // AVAILABLE / RETIRED: normal confirm
-                  <p>
-                    {SYSTEM_MESSAGES.ASSET.MSG_DELETE_CONFIRM}
-                    <span className="font-semibold text-gray-900">
-                      "{deleteTarget?.name}"
-                    </span>
-                    ?
-                    <br />
-                    {SYSTEM_MESSAGES.ASSET.MSG_DELETE_IRREVERSIBLE}
-                  </p>
+                  <div className="space-y-2">
+                    <p>
+                      {SYSTEM_MESSAGES.ASSET.MSG_DELETE_CONFIRM}
+                      <span className="font-bold text-foreground mx-1">
+                        "{deleteTarget?.name}"
+                      </span>
+                      ?
+                    </p>
+                    <p className="text-xs text-destructive font-black uppercase tracking-widest bg-destructive/10 px-3 py-1 rounded-full inline-block">
+                      {SYSTEM_MESSAGES.ASSET.MSG_DELETE_IRREVERSIBLE}
+                    </p>
+                  </div>
                 )}
               </div>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 pt-2">
+          <DialogFooter className="gap-2 pt-6">
             <button
               onClick={() => setDeleteTarget(null)}
               disabled={deleting}
-              className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
+              className="btn-secondary flex-1"
             >
               {SYSTEM_MESSAGES.ASSET.BTN_CLOSE}
             </button>
@@ -529,15 +578,15 @@ export default function AssetManagementPage() {
                     handleOpenDetail(asset);
                   }
                 }}
-                className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition flex items-center gap-2"
+                className="btn-action flex-1"
               >
-                Mở chi tiết để thu hồi
+                {SYSTEM_MESSAGES.ASSET.BTN_OPEN_DETAIL}
               </button>
             ) : (
               <button
                 onClick={confirmDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition flex items-center gap-2"
+                className="btn-action flex-1 bg-destructive text-destructive-foreground"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {deleting
