@@ -327,6 +327,7 @@ export const SYSTEM_MESSAGES = {
     TYPE_PERSONAL: "Việc riêng",
     EMPTY_PENDING: "Không có yêu cầu nghỉ phép nào đang chờ duyệt.",
     MSG_SUBMIT_SUCCESS: "Đơn xin nghỉ phép đã được gửi thành công!",
+    MSG_INSUFFICIENT_BALANCE: "Số dư phép không đủ cho yêu cầu này.",
     MSG_FETCH_EMPLOYEE_ERROR: "Không lấy được thông tin nhân viên hiện tại",
     DETAIL_INFO_GROUP: "Thông tin chung",
     DETAIL_LEAVE_GROUP: "Chi tiết nghỉ phép",

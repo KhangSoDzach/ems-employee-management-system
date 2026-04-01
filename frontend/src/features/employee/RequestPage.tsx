@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import {
   Loader2,
   MoreHorizontal,
@@ -225,6 +226,7 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
 );
 
 export default function RequestPage() {
+  const queryClient = useQueryClient();
   // Leave state
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [leaveLoading, setLeaveLoading] = useState(true);
@@ -235,6 +237,7 @@ export default function RequestPage() {
   const [leaveType, setLeaveType] = useState<LeaveType | "ALL">("ALL");
   const [leaveDetail, setLeaveDetail] = useState<LeaveRequest | null>(null);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
 
   // Adjustment state
   const [adjRequests, setAdjRequests] = useState<AdjustmentRequest[]>([]);
@@ -251,14 +254,22 @@ export default function RequestPage() {
   const fetchLeaves = useCallback(async () => {
     setLeaveLoading(true);
     try {
-      const [leaveRes, profile] = await Promise.all([
+      const [leaveRes, profileData] = await Promise.all([
         leaveService.getMyLeaves({ page: 0, size: 1000 }),
         employeeService.getMyProfile(),
       ]);
-      setEmployeeId(profile.id);
+      setEmployeeId(profileData.id);
+      setProfile(profileData);
       setLeaveRequests(
         leaveRes.content.map((dto) => ({
           id: String(dto.id),
+          employeeName:
+            dto.employeeName ||
+            (profileData.firstName && profileData.lastName
+              ? profileData.firstName + " " + profileData.lastName
+              : "—"),
+          employeeCode: profileData.employeeCode || "—",
+          department: profileData.department || "—",
           dateCreated: new Date(dto.createdAt),
           startDate: new Date(dto.startDate + "T00:00:00"),
           endDate: new Date(dto.endDate + "T00:00:00"),
@@ -371,6 +382,17 @@ export default function RequestPage() {
       throw new Error(SYSTEM_MESSAGES.LEAVE.MSG_FETCH_EMPLOYEE_ERROR);
     }
 
+    // ─── Validate leave balance ───
+    const requestedType = data.leaveType.toUpperCase();
+    if (requestedType !== "UNPAID") {
+      const requestedDays = differenceInDays(data.endDate, data.startDate) + 1;
+      const leaveBalance = profile?.annualLeaveBalance ?? 0;
+
+      if (requestedDays > leaveBalance) {
+        throw new Error(SYSTEM_MESSAGES.LEAVE.MSG_INSUFFICIENT_BALANCE);
+      }
+    }
+
     await leaveService.createLeave({
       employeeId,
       leaveType: data.leaveType.toUpperCase(),
@@ -379,6 +401,9 @@ export default function RequestPage() {
       reason: data.reason,
     });
     await fetchLeaves();
+    setIsLeaveModalOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+    queryClient.invalidateQueries({ queryKey: ["profile"] });
   };
 
   const handleCancelLeave = async (id: string) => {
@@ -574,7 +599,15 @@ export default function RequestPage() {
                         leaveType === value && "bg-muted font-medium",
                       )}
                     >
-                      {config.label}
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "w-2 h-2 rounded-full inline-block shrink-0",
+                            config.dotClass,
+                          )}
+                        />
+                        {config.label}
+                      </div>
                     </DropdownMenuItem>
                   ),
                 )}
