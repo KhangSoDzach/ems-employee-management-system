@@ -31,13 +31,16 @@ compile_sources() {
 
 start_app() {
   echo "[dev-hot-reload] Starting Spring Boot application..."
-  ./mvnw -q -DskipTests spring-boot:run &
+  # Run without forking so APP_PID is the actual app process tree owner.
+  ./mvnw -DskipTests -Dspring-boot.run.fork=false spring-boot:run &
   APP_PID=$!
 }
 
 stop_app() {
   if [ -n "$APP_PID" ] && kill -0 "$APP_PID" 2>/dev/null; then
     echo "[dev-hot-reload] Stopping Spring Boot application..."
+    # Kill child processes first (if any), then parent to avoid orphan Java processes.
+    pkill -TERM -P "$APP_PID" 2>/dev/null || true
     kill "$APP_PID" 2>/dev/null || true
     wait "$APP_PID" 2>/dev/null || true
   fi

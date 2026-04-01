@@ -32,6 +32,7 @@ public class WorkflowEngineServiceImpl implements WorkflowEngineService {
     private final UserRepository             userRepository;
 
     @Override
+    @Transactional(readOnly = true, noRollbackFor = BusinessException.class)
     public WorkflowTemplate getActiveTemplate(WorkflowType workflowType) {
         return templateRepository
                 .findByWorkflowTypeAndIsActiveTrueAndIsDeletedFalse(workflowType)

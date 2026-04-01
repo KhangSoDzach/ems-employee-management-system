@@ -325,27 +325,31 @@ public class AttendanceAdjustmentServiceImpl implements AttendanceAdjustmentServ
                                 AdjustmentRequestStatus.PENDING_LEVEL_4,
                                 AdjustmentRequestStatus.PENDING_LEVEL_5);
 
-                boolean isAdmin = hasRole(principal, "ROLE_ADMIN");
-                boolean isHr = hasRole(principal, "ROLE_HR");
-                boolean isManager = hasRole(principal, "ROLE_MANAGER");
+                List<String> approverRoles = principal.getAuthorities().stream()
+                                .map(a -> a.getAuthority())
+                                .filter(a -> a.startsWith("ROLE_"))
+                                .distinct()
+                                .toList();
 
-                if (!isAdmin && !isHr && !isManager) {
+                boolean hasApprovalRole = approverRoles.stream()
+                                .anyMatch(role -> "ROLE_ADMIN".equals(role)
+                                                || "ROLE_HR".equals(role)
+                                                || "ROLE_MANAGER".equals(role));
+
+                if (!hasApprovalRole) {
                         throw new ForbiddenException();
                 }
 
                 // Resolve the approver's own employee (to exclude their own requests from
                 // inbox)
-                Long myEmployeeId = 0L;
+                Long myEmployeeId = null;
                 try {
                         myEmployeeId = resolveEmployee(principal).getId();
                 } catch (Exception ignored) {
                         /* admin may have no employee record */ }
 
-                // Determine primary role for ROLE-based lookup
-                String approverRole = isManager ? "ROLE_MANAGER" : (isHr ? "ROLE_HR" : "ROLE_ADMIN");
-
-                Page<AttendanceAdjustmentRequest> pageResult = requestRepository.findPendingByRoleApprover(
-                                pendingStatuses, approverRole, myEmployeeId,
+                Page<AttendanceAdjustmentRequest> pageResult = requestRepository.findPendingForApprover(
+                                pendingStatuses, approverRoles, principal.getUserId(), myEmployeeId,
                                 PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt")));
 
                 return PageResponse.of(pageResult.map(attendanceMapper::toSummaryResponse));

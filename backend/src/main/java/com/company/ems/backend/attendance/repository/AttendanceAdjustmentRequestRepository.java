@@ -79,6 +79,31 @@ public interface AttendanceAdjustmentRequestRepository
             @Param("userId")          Long userId,
             Pageable pageable);
 
+    /**
+     * Returns pending requests actionable by the current approver across all of their
+     * role assignments and direct USER assignments at the current workflow level.
+     */
+    @Query("""
+            SELECT r FROM AttendanceAdjustmentRequest r
+            JOIN WorkflowLevel wl
+              ON wl.template.id     = r.workflowTemplateId
+             AND wl.levelNumber      = r.currentApprovalLevel
+             AND wl.isDeleted        = false
+            WHERE r.status IN :pendingStatuses
+              AND (:excludeEmployeeId IS NULL OR r.employee.id <> :excludeEmployeeId)
+              AND (
+                    (wl.assigneeType = 'ROLE' AND wl.assigneeRole IN :roleNames)
+                    OR (wl.assigneeType = 'USER' AND wl.assigneeUser.id = :approverUserId)
+                  )
+            ORDER BY r.createdAt ASC
+            """)
+    Page<AttendanceAdjustmentRequest> findPendingForApprover(
+            @Param("pendingStatuses")   List<AdjustmentRequestStatus> pendingStatuses,
+            @Param("roleNames")         List<String> roleNames,
+            @Param("approverUserId")    Long approverUserId,
+            @Param("excludeEmployeeId") Long excludeEmployeeId,
+            Pageable pageable);
+
     // ─── Count helpers for notification badges ────────────────────────────────
 
     /**

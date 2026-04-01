@@ -23,13 +23,13 @@ public enum LeaveStatus {
     PENDING_LEVEL_2,
 
     /** Awaiting Level-3 approver action. */
-    // PENDING_LEVEL_3,
+    PENDING_LEVEL_3,
 
-    // /** Awaiting Level-4 approver action. */
-    // PENDING_LEVEL_4,
+    /** Awaiting Level-4 approver action. */
+    PENDING_LEVEL_4,
 
-    // /** Awaiting Level-5 approver action. */
-    // PENDING_LEVEL_5,
+    /** Awaiting Level-5 approver action. */
+    PENDING_LEVEL_5,
 
     // ─── Terminal states ─────────────────────────────────────────────────────
 
@@ -49,9 +49,9 @@ public enum LeaveStatus {
     public boolean isPending() {
         return this == PENDING_LEVEL_1
                 || this == PENDING_LEVEL_2
-                // || this == PENDING_LEVEL_3
-                // || this == PENDING_LEVEL_4
-                // || this == PENDING_LEVEL_5
+                || this == PENDING_LEVEL_3
+                || this == PENDING_LEVEL_4
+                || this == PENDING_LEVEL_5
                 || this == PENDING; // legacy
     }
 
@@ -65,9 +65,9 @@ public enum LeaveStatus {
         return switch (levelNumber) {
             case 1 -> PENDING_LEVEL_1;
             case 2 -> PENDING_LEVEL_2;
-            // case 3 -> PENDING_LEVEL_3;
-            // case 4 -> PENDING_LEVEL_4;
-            // case 5 -> PENDING_LEVEL_5;
+            case 3 -> PENDING_LEVEL_3;
+            case 4 -> PENDING_LEVEL_4;
+            case 5 -> PENDING_LEVEL_5;
             default -> throw new IllegalArgumentException(
                     "Approval level must be between 1 and 5, got: " + levelNumber);
         };

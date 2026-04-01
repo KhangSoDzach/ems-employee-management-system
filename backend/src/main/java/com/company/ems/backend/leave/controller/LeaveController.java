@@ -89,6 +89,19 @@ public class LeaveController {
     }
 
     /**
+     * Get leave requests that are pending at the current approver's actionable level(s).
+     * GET /api/v1/leaves/pending
+     */
+    @GetMapping("/pending")
+    @PreAuthorize("hasPermission(null, 'LEAVE_APPROVE')")
+    public ResponseEntity<ApiResponse<PageResponse<LeaveResponse>>> getPendingApprovals(
+            @RequestParam(defaultValue = AppConstant.DEFAULT_PAGE_NUMBER) int page,
+            @RequestParam(defaultValue = AppConstant.DEFAULT_PAGE_SIZE) int size) {
+        PageResponse<LeaveResponse> response = leaveService.getPendingForApprover(page, size);
+        return ResponseEntity.ok(ApiResponse.success(MSG_SUCCESS, response));
+    }
+
+    /**
      * Get leave request by ID
      * GET /api/v1/leaves/{id}
      */
@@ -122,16 +135,15 @@ public class LeaveController {
             @PathVariable Long id,
             @Valid @RequestBody com.company.ems.backend.leave.dto.LeaveActionRequest actionRequest) {
         String action = actionRequest.getAction() != null ? actionRequest.getAction().trim().toUpperCase() : null;
-        String status;
-        if (ACTION_APPROVE.equals(action)) {
-            status = AppConstant.LEAVE_APPROVED;
-        } else if (ACTION_REJECT.equals(action)) {
-            status = AppConstant.LEAVE_REJECTED;
-        } else if (ACTION_SEND_BACK.equals(action)) {
-            status = STATUS_RETURNED_TO_EMPLOYEE;
-        } else {
+        if (action == null || action.isBlank()) {
             throw new IllegalArgumentException(ERR_UNSUPPORTED_ACTION_PREFIX + action);
         }
+        String status = switch (action) {
+            case ACTION_APPROVE -> AppConstant.LEAVE_APPROVED;
+            case ACTION_REJECT -> AppConstant.LEAVE_REJECTED;
+            case ACTION_SEND_BACK -> STATUS_RETURNED_TO_EMPLOYEE;
+            default -> throw new IllegalArgumentException(ERR_UNSUPPORTED_ACTION_PREFIX + action);
+        };
 
         ApproveLeaveRequest req = ApproveLeaveRequest.builder()
                 .status(status)

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search,
   SlidersHorizontal,
@@ -49,6 +49,8 @@ export type LeaveRequest = {
   reason: string;
   status: string;
   createdAt: string;
+  currentApprovalLevel?: number | null;
+  maxApprovalLevel?: number | null;
   requesterUserId?: number;
 };
 
@@ -64,6 +66,8 @@ function mapDto(dto: LeaveResponseDTO): LeaveRequest {
     reason: dto.reason,
     status: dto.status,
     createdAt: dto.createdAt,
+    currentApprovalLevel: dto.currentApprovalLevel ?? null,
+    maxApprovalLevel: dto.maxApprovalLevel ?? null,
     requesterUserId: dto.requesterUserId,
   };
 }
@@ -190,7 +194,7 @@ export default function ApproveLeaveRequest() {
 
   /* ================= LOAD TEAM LEAVES ================= */
 
-  useEffect(() => {
+  const fetchLeaves = useCallback(() => {
     setIsLoading(true);
     leaveService
       .getTeamLeaves({ page: 0, size: 1000 })
@@ -201,17 +205,21 @@ export default function ApproveLeaveRequest() {
       .finally(() => setIsLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchLeaves();
+  }, [fetchLeaves]);
+
   /* ================= FILTER LOGIC ================= */
 
   const filtered = data.filter((r) => {
     const matchSearch = r.name.toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === "ALL" ? true : r.leaveType === filterType;
-    const matchStatus =
-      statusFilter === "ALL"
-        ? true
-        : statusFilter === "PENDING"
-          ? r.status.startsWith("PENDING")
-          : r.status === statusFilter;
+    let matchStatus = true;
+    if (statusFilter === "PENDING") {
+      matchStatus = r.status.startsWith("PENDING");
+    } else if (statusFilter !== "ALL") {
+      matchStatus = r.status === statusFilter;
+    }
     return matchSearch && matchType && matchStatus;
   });
 
@@ -233,6 +241,84 @@ export default function ApproveLeaveRequest() {
     setFilterType("ALL");
     setStatusFilter("ALL");
   };
+
+  let tableBodyContent = <EmptyState />;
+  if (isLoading) {
+    tableBodyContent = (
+      <TableRow>
+        <TableCell colSpan={6} className="h-64 text-center">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-sm">
+              {SYSTEM_MESSAGES.APPROVE.LOADING_DATA}
+            </span>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  } else if (paginatedData.length > 0) {
+    tableBodyContent = (
+      <>
+        {paginatedData.map((row) => (
+          <TableRow
+            key={row.id}
+            className="hover:bg-muted/30 cursor-pointer"
+            onClick={() => setSelectedRequest(row)}
+          >
+            <TableCell>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback>{row.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="font-semibold">{row.name}</span>
+              </div>
+            </TableCell>
+            <TableCell>{row.dept}</TableCell>
+            <TableCell>{renderLeaveType(row.leaveType)}</TableCell>
+            <TableCell className="text-sm">
+              {format(new Date(row.startDate + "T00:00:00"), "dd/MM")}
+              {row.startDate !== row.endDate &&
+                `${SYSTEM_MESSAGES.SYMBOLS.DASH}${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
+              {row.duration !== null && (
+                <span className="ml-1 text-muted-foreground">
+                  {SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}
+                  {row.duration}
+                  {SYSTEM_MESSAGES.APPROVE.UNIT_DAYS}
+                  {SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}
+                </span>
+              )}
+            </TableCell>
+            <TableCell>
+              <div className="flex flex-col">
+                {renderStatus(row.status)}
+                {row.status.startsWith("PENDING") &&
+                  row.currentApprovalLevel &&
+                  row.maxApprovalLevel && (
+                    <span className="text-xs text-muted-foreground mt-1">
+                      Lv {row.currentApprovalLevel}/{row.maxApprovalLevel}
+                    </span>
+                  )}
+              </div>
+            </TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setSelectedRequest(row)}>
+                    {SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
+      </>
+    );
+  }
 
   /* ================= UPDATE STATUS LOCALLY ================= */
 
@@ -449,71 +535,7 @@ export default function ApproveLeaveRequest() {
               </TableRow>
             </TableHeader>
 
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-64 text-center">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span className="text-sm">
-                        {SYSTEM_MESSAGES.APPROVE.LOADING_DATA}
-                      </span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : paginatedData.length === 0 ? (
-                <EmptyState />
-              ) : (
-                paginatedData.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    className="hover:bg-muted/30 cursor-pointer"
-                    onClick={() => setSelectedRequest(row)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarFallback>{row.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-semibold">{row.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{row.dept}</TableCell>
-                    <TableCell>{renderLeaveType(row.leaveType)}</TableCell>
-                    <TableCell className="text-sm">
-                      {format(new Date(row.startDate + "T00:00:00"), "dd/MM")}
-                      {row.startDate !== row.endDate &&
-                        `${SYSTEM_MESSAGES.SYMBOLS.DASH}${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
-                      {row.duration !== null && (
-                        <span className="ml-1 text-muted-foreground">
-                          {SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}
-                          {row.duration}
-                          {SYSTEM_MESSAGES.APPROVE.UNIT_DAYS}
-                          {SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{renderStatus(row.status)}</TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => setSelectedRequest(row)}
-                          >
-                            {SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
+            <TableBody>{tableBodyContent}</TableBody>
           </Table>
 
           <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">

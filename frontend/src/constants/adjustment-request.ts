@@ -27,6 +27,8 @@ export interface AdjustmentRequest {
   status: AdjustmentStatus;
   reason: string;
   auditTrail: AuditEntry[];
+  currentApprovalLevel?: number;
+  maxApprovalLevel?: number;
 }
 
 /* ══════════════ DATE FORMATS ══════════════ */
