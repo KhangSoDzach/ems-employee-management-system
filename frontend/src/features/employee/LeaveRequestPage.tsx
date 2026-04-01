@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
+import { format, differenceInDays } from "date-fns";
 import {
   Loader2,
   MoreHorizontal,
@@ -34,7 +35,6 @@ import { cn } from "@/lib/utils";
 
 import {
   ALL_LABEL,
-  CURRENT_USER,
   DATE_FORMAT,
   LEAVE_STATUS_CONFIG,
   LEAVE_STATUS_OPTIONS,
@@ -89,6 +89,7 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
 /* ══════════════ MAIN PAGE ══════════════ */
 
 export default function LeaveRequestPage() {
+  const queryClient = useQueryClient();
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [employeeId, setEmployeeId] = useState<number | null>(null);
@@ -98,6 +99,7 @@ export default function LeaveRequestPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null);
   const [page, setPage] = useState(0);
+  const [profile, setProfile] = useState<any>(null);
 
   const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
@@ -119,14 +121,22 @@ export default function LeaveRequestPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [leavePage, profile] = await Promise.all([
+        const [leavePage, profileData] = await Promise.all([
           leaveService.getMyLeaves(),
           employeeService.getMyProfile(),
         ]);
-        setEmployeeId(profile.id);
+        setEmployeeId(profileData.id);
+        setProfile(profileData);
         setRequests(
           leavePage.content.map((dto) => ({
             id: String(dto.id),
+            employeeName:
+              dto.employeeName ||
+              (profileData.firstName && profileData.lastName
+                ? profileData.firstName + " " + profileData.lastName
+                : "—"),
+            employeeCode: profileData.employeeCode || "—",
+            department: profileData.department || "—",
             dateCreated: new Date(dto.createdAt),
             startDate: new Date(dto.startDate + "T00:00:00"),
             endDate: new Date(dto.endDate + "T00:00:00"),
@@ -134,6 +144,8 @@ export default function LeaveRequestPage() {
             status: mapBackendStatus(dto.status),
             reason: dto.reason,
             auditTrail: [],
+            currentApprovalLevel: dto.currentApprovalLevel ?? undefined,
+            maxApprovalLevel: dto.maxApprovalLevel ?? undefined,
           })),
         );
       } catch {
@@ -170,6 +182,17 @@ export default function LeaveRequestPage() {
 
   /* ── Handlers ── */
   const handleCreate = async (data: LeaveFormValues) => {
+    // ─── Validate leave balance ───
+    const requestedType = data.leaveType.toUpperCase();
+    if (requestedType !== "UNPAID") {
+      const requestedDays = differenceInDays(data.endDate, data.startDate) + 1;
+      const leaveBalance = profile?.annualLeaveBalance ?? 0;
+
+      if (requestedDays > leaveBalance) {
+        throw new Error(SYSTEM_MESSAGES.LEAVE.MSG_INSUFFICIENT_BALANCE);
+      }
+    }
+
     const dto = await leaveService.createLeave({
       employeeId: employeeId ?? 1,
       leaveType: data.leaveType.toUpperCase(),
@@ -177,24 +200,37 @@ export default function LeaveRequestPage() {
       endDate: format(data.endDate, "yyyy-MM-dd"),
       reason: data.reason,
     });
+    const employeeFullName = profile
+      ? profile.firstName + " " + profile.lastName
+      : "—";
     const newReq: LeaveRequest = {
       id: String(dto.id),
+      employeeName: employeeFullName,
+      employeeCode: profile?.employeeCode || "—",
+      department: profile?.department || "—",
       dateCreated: new Date(dto.createdAt),
       startDate: new Date(dto.startDate + "T00:00:00"),
       endDate: new Date(dto.endDate + "T00:00:00"),
       type: dto.leaveType.toLowerCase() as LeaveType,
       status: mapBackendStatus(dto.status),
       reason: dto.reason,
+      currentApprovalLevel: dto.currentApprovalLevel ?? undefined,
+      maxApprovalLevel: dto.maxApprovalLevel ?? undefined,
       auditTrail: [
         {
           id: "a1",
           action: "CREATED",
-          actor: CURRENT_USER.name,
+          actor: profile
+            ? profile.firstName + " " + profile.lastName
+            : "Hệ thống",
           timestamp: new Date(),
         },
       ],
     };
     setRequests((prev) => [newReq, ...prev]);
+    setIsModalOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+    queryClient.invalidateQueries({ queryKey: ["profile"] });
   };
 
   const handleCancel = async (id: string) => {
@@ -353,10 +389,7 @@ export default function LeaveRequestPage() {
                   <span
                     className={cn(
                       "w-2 h-2 rounded-full inline-block",
-                      value === "annual" && "bg-indigo-500",
-                      value === "sick" && "bg-rose-500",
-                      value === "unpaid" && "bg-slate-500",
-                      value === "personal" && "bg-violet-500",
+                      config.dotClass,
                     )}
                   />
                   {config.label}
@@ -446,7 +479,17 @@ export default function LeaveRequestPage() {
                       <TypeBadge type={req.type} />
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      <StatusBadge status={req.status} />
+                      <div className="flex flex-col">
+                        <StatusBadge status={req.status} />
+                        {req.status === "PENDING" &&
+                          req.currentApprovalLevel &&
+                          req.maxApprovalLevel && (
+                            <span className="text-xs text-muted-foreground mt-1">
+                              Lv {req.currentApprovalLevel}/
+                              {req.maxApprovalLevel}
+                            </span>
+                          )}
+                      </div>
                     </TableCell>
                     <TableCell
                       className="py-4 text-right"

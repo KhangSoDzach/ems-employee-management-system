@@ -227,15 +227,14 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
     private void deductLeaveBalance(Leave leave) {
         if (leave.getTotalDays() == null || leave.getTotalDays() <= 0)
             return;
-        try {
-            leaveBalanceService.deductBalance(
-                    leave.getEmployee().getId(),
-                    leave.getLeaveType(),
-                    leave.getTotalDays());
-        } catch (Exception ex) {
-            // Log but do not fail the approval — balance adjustment can be done manually
-            log.warn("Could not deduct leave balance for leave [{}]: {}", leave.getId(), ex.getMessage());
-        }
+
+        leaveBalanceService.deductBalance(
+                leave.getEmployee().getId(),
+                leave.getLeaveType(),
+                leave.getTotalDays());
+
+        log.info("Deducted leave balance for leave [{}], employeeId={}, leaveType={}, days={}",
+                leave.getId(), leave.getEmployee().getId(), leave.getLeaveType(), leave.getTotalDays());
     }
 
     private boolean lastLevelIsHr(List<WorkflowLevel> levels) {

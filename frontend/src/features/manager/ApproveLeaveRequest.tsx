@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search,
   SlidersHorizontal,
@@ -34,6 +34,11 @@ import ApproveLeaveDialog from "./components/ApproveLeaveModal";
 import { leaveService, type LeaveResponseDTO } from "@/services/leaveService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges";
+import {
+  LEAVE_TYPE_CONFIG,
+  LEAVE_TYPE_OPTIONS,
+  type LeaveType,
+} from "@/constants/leave-request";
 import { cn } from "@/lib/utils";
 
 /* ================= TYPES ================= */
@@ -49,6 +54,8 @@ export type LeaveRequest = {
   reason: string;
   status: string;
   createdAt: string;
+  currentApprovalLevel?: number | null;
+  maxApprovalLevel?: number | null;
   requesterUserId?: number;
 };
 
@@ -57,44 +64,29 @@ function mapDto(dto: LeaveResponseDTO): LeaveRequest {
     id: dto.id,
     name: dto.employeeName ?? SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
     dept: SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
-    leaveType: dto.leaveType,
+    leaveType: dto.leaveType.toLowerCase(),
     startDate: dto.startDate,
     endDate: dto.endDate,
     duration: dto.duration,
     reason: dto.reason,
     status: dto.status,
     createdAt: dto.createdAt,
+    currentApprovalLevel: dto.currentApprovalLevel ?? null,
+    maxApprovalLevel: dto.maxApprovalLevel ?? null,
     requesterUserId: dto.requesterUserId,
   };
 }
 
 /* ================= TYPE BADGE ================= */
 
-const LEAVE_TYPE_MAP: Record<string, { label: string; cls: string }> = {
-  ANNUAL: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL,
-    cls: "badge-info-hover",
-  },
-  SICK: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_SICK,
-    cls: "badge-success-hover",
-  },
-  UNPAID: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID,
-    cls: "badge-error-hover",
-  },
-  PERSONAL: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL,
-    cls: "badge-purple-hover",
-  },
-};
-
+/* ================= RENDER LEAVE TYPE ================= */
 const renderLeaveType = (type: string) => {
-  const cfg = LEAVE_TYPE_MAP[type] ?? {
+  const normType = type.toLowerCase() as LeaveType;
+  const cfg = LEAVE_TYPE_CONFIG[normType] || {
     label: type,
-    cls: "bg-muted text-muted-foreground",
+    badgeClass: "bg-muted text-muted-foreground",
   };
-  return <Badge className={cfg.cls}>{cfg.label}</Badge>;
+  return <Badge className={cfg.badgeClass}>{cfg.label}</Badge>;
 };
 
 /* ================= STATUS BADGE ================= */
@@ -122,27 +114,7 @@ const STATUS_MAP = {
   },
 } as const;
 
-const LEAVE_TYPE_FILTER_CONFIG: Record<
-  string,
-  { label: string; filterClass: string }
-> = {
-  ANNUAL: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_ANNUAL,
-    filterClass: "badge-info border-blue-200",
-  },
-  SICK: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_SICK,
-    filterClass: "badge-success border-emerald-200",
-  },
-  UNPAID: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_UNPAID,
-    filterClass: "badge-error border-rose-200",
-  },
-  PERSONAL: {
-    label: SYSTEM_MESSAGES.LEAVE.TYPE_PERSONAL,
-    filterClass: "badge-purple border-violet-200",
-  },
-};
+/* ================= STATUS RENDER ================= */
 
 const renderStatus = (status: string) => {
   const isPendingStatus = status.startsWith("PENDING");
@@ -190,7 +162,7 @@ export default function ApproveLeaveRequest() {
 
   /* ================= LOAD TEAM LEAVES ================= */
 
-  useEffect(() => {
+  const fetchLeaves = useCallback(() => {
     setIsLoading(true);
     leaveService
       .getTeamLeaves({ page: 0, size: 1000 })
@@ -201,17 +173,21 @@ export default function ApproveLeaveRequest() {
       .finally(() => setIsLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchLeaves();
+  }, [fetchLeaves]);
+
   /* ================= FILTER LOGIC ================= */
 
   const filtered = data.filter((r) => {
     const matchSearch = r.name.toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === "ALL" ? true : r.leaveType === filterType;
-    const matchStatus =
-      statusFilter === "ALL"
-        ? true
-        : statusFilter === "PENDING"
-          ? r.status.startsWith("PENDING")
-          : r.status === statusFilter;
+    let matchStatus = true;
+    if (statusFilter === "PENDING") {
+      matchStatus = r.status.startsWith("PENDING");
+    } else if (statusFilter !== "ALL") {
+      matchStatus = r.status === statusFilter;
+    }
     return matchSearch && matchType && matchStatus;
   });
 
@@ -233,6 +209,84 @@ export default function ApproveLeaveRequest() {
     setFilterType("ALL");
     setStatusFilter("ALL");
   };
+
+  let tableBodyContent = <EmptyState />;
+  if (isLoading) {
+    tableBodyContent = (
+      <TableRow>
+        <TableCell colSpan={6} className="h-64 text-center">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-sm">
+              {SYSTEM_MESSAGES.APPROVE.LOADING_DATA}
+            </span>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  } else if (paginatedData.length > 0) {
+    tableBodyContent = (
+      <>
+        {paginatedData.map((row) => (
+          <TableRow
+            key={row.id}
+            className="hover:bg-muted/30 cursor-pointer"
+            onClick={() => setSelectedRequest(row)}
+          >
+            <TableCell>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback>{row.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="font-semibold">{row.name}</span>
+              </div>
+            </TableCell>
+            <TableCell>{row.dept}</TableCell>
+            <TableCell>{renderLeaveType(row.leaveType)}</TableCell>
+            <TableCell className="text-sm">
+              {format(new Date(row.startDate + "T00:00:00"), "dd/MM")}
+              {row.startDate !== row.endDate &&
+                `${SYSTEM_MESSAGES.SYMBOLS.DASH}${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
+              {row.duration !== null && (
+                <span className="ml-1 text-muted-foreground">
+                  {SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}
+                  {row.duration}
+                  {SYSTEM_MESSAGES.APPROVE.UNIT_DAYS}
+                  {SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}
+                </span>
+              )}
+            </TableCell>
+            <TableCell>
+              <div className="flex flex-col">
+                {renderStatus(row.status)}
+                {row.status.startsWith("PENDING") &&
+                  row.currentApprovalLevel &&
+                  row.maxApprovalLevel && (
+                    <span className="text-xs text-muted-foreground mt-1">
+                      Lv {row.currentApprovalLevel}/{row.maxApprovalLevel}
+                    </span>
+                  )}
+              </div>
+            </TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setSelectedRequest(row)}>
+                    {SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
+      </>
+    );
+  }
 
   /* ================= UPDATE STATUS LOCALLY ================= */
 
@@ -369,10 +423,12 @@ export default function ApproveLeaveRequest() {
                 {filterType !== "ALL" && (
                   <ActiveFilterBadge
                     value={
-                      LEAVE_TYPE_FILTER_CONFIG[filterType]?.label || filterType
+                      LEAVE_TYPE_CONFIG[filterType.toLowerCase() as LeaveType]
+                        ?.label || filterType
                     }
                     colorClass={
-                      LEAVE_TYPE_FILTER_CONFIG[filterType]?.filterClass || ""
+                      LEAVE_TYPE_CONFIG[filterType.toLowerCase() as LeaveType]
+                        ?.filterClass || ""
                     }
                     onClear={() => setFilterType("ALL")}
                   />
@@ -389,13 +445,13 @@ export default function ApproveLeaveRequest() {
               >
                 {SYSTEM_MESSAGES.LABEL_ALL}
               </DropdownMenuItem>
-              {Object.entries(LEAVE_TYPE_FILTER_CONFIG).map(([key, cfg]) => (
+              {LEAVE_TYPE_OPTIONS.map(([value, cfg]) => (
                 <DropdownMenuItem
-                  key={key}
-                  onClick={() => setFilterType(key)}
+                  key={value}
+                  onClick={() => setFilterType(value.toUpperCase())}
                   className={cn(
                     "cursor-pointer",
-                    filterType === key
+                    filterType === value.toUpperCase()
                       ? "bg-muted font-medium"
                       : "hover:bg-slate-50",
                   )}
@@ -404,10 +460,7 @@ export default function ApproveLeaveRequest() {
                     <span
                       className={cn(
                         "w-2 h-2 rounded-full inline-block shrink-0",
-                        key === "ANNUAL" && "bg-blue-500",
-                        key === "SICK" && "bg-emerald-500",
-                        key === "UNPAID" && "bg-rose-500",
-                        key === "PERSONAL" && "bg-violet-500",
+                        cfg.dotClass,
                       )}
                     />
                     {cfg.label}
@@ -449,71 +502,7 @@ export default function ApproveLeaveRequest() {
               </TableRow>
             </TableHeader>
 
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-64 text-center">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span className="text-sm">
-                        {SYSTEM_MESSAGES.APPROVE.LOADING_DATA}
-                      </span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : paginatedData.length === 0 ? (
-                <EmptyState />
-              ) : (
-                paginatedData.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    className="hover:bg-muted/30 cursor-pointer"
-                    onClick={() => setSelectedRequest(row)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarFallback>{row.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-semibold">{row.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{row.dept}</TableCell>
-                    <TableCell>{renderLeaveType(row.leaveType)}</TableCell>
-                    <TableCell className="text-sm">
-                      {format(new Date(row.startDate + "T00:00:00"), "dd/MM")}
-                      {row.startDate !== row.endDate &&
-                        `${SYSTEM_MESSAGES.SYMBOLS.DASH}${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
-                      {row.duration !== null && (
-                        <span className="ml-1 text-muted-foreground">
-                          {SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}
-                          {row.duration}
-                          {SYSTEM_MESSAGES.APPROVE.UNIT_DAYS}
-                          {SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{renderStatus(row.status)}</TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => setSelectedRequest(row)}
-                          >
-                            {SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
+            <TableBody>{tableBodyContent}</TableBody>
           </Table>
 
           <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">

@@ -103,6 +103,8 @@ function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
       : undefined,
     status: mapStatus(s.status),
     reason: s.reasonText,
+    currentApprovalLevel: s.currentApprovalLevel,
+    maxApprovalLevel: s.maxApprovalLevel,
     auditTrail: [],
   };
 }
@@ -521,7 +523,17 @@ export default function AdjustmentRequestPage() {
                       </span>
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      <StatusBadge status={req.status} />
+                      <div className="flex flex-col">
+                        <StatusBadge status={req.status} />
+                        {req.status === "PENDING" &&
+                          req.currentApprovalLevel &&
+                          req.maxApprovalLevel && (
+                            <span className="text-xs text-muted-foreground mt-1">
+                              Lv {req.currentApprovalLevel}/
+                              {req.maxApprovalLevel}
+                            </span>
+                          )}
+                      </div>
                     </TableCell>
                     <TableCell
                       className="py-4 text-right"

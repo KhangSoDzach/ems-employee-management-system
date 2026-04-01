@@ -88,6 +88,8 @@ function mapToFrontend(s: AdjustmentRequestSummary): AdjustmentRequest {
       : undefined,
     status: mapStatus(s.status),
     reason: s.reasonText,
+    currentApprovalLevel: s.currentApprovalLevel,
+    maxApprovalLevel: s.maxApprovalLevel,
     auditTrail: [
       {
         id: "0",
@@ -223,23 +225,33 @@ const ApproveAdjustmentRequest: React.FC = () => {
     setSearchQuery("");
   };
 
+  const updateRequestStatus = (
+    id: string,
+    status: AdjustmentRequest["status"],
+  ) => {
+    setRequests((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, status } : item)),
+    );
+    setDetailRequest((prev) => (prev?.id === id ? { ...prev, status } : prev));
+  };
+
   // ── Approval actions ──────────────────────────────────────────────────────
   const handleApprove = async (id: string, reason: string) => {
     await attendanceService.approveAdjustment(Number(id), { reason });
+    updateRequestStatus(id, "APPROVED");
     toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_APPROVE_SUCCESS);
-    await fetchData();
   };
 
   const handleReject = async (id: string, reason: string) => {
     await attendanceService.rejectAdjustment(Number(id), { reason });
+    updateRequestStatus(id, "REJECTED");
     toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_REJECT_SUCCESS);
-    await fetchData();
   };
 
   const handleReturn = async (id: string, reason: string) => {
     await attendanceService.returnAdjustment(Number(id), { reason });
+    updateRequestStatus(id, "RETURNED");
     toast.success(SYSTEM_MESSAGES.MGMT_ADJ.MSG_RETURN_SUCCESS);
-    await fetchData();
   };
 
   return (
@@ -439,7 +451,17 @@ const ApproveAdjustmentRequest: React.FC = () => {
                       <TypeBadge type={row.type} />
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      <StatusBadge status={row.status} />
+                      <div className="flex flex-col">
+                        <StatusBadge status={row.status} />
+                        {row.status === "PENDING" &&
+                          row.currentApprovalLevel &&
+                          row.maxApprovalLevel && (
+                            <span className="text-xs text-muted-foreground mt-1">
+                              Lv {row.currentApprovalLevel}/
+                              {row.maxApprovalLevel}
+                            </span>
+                          )}
+                      </div>
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">
                       <div

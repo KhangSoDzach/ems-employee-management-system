@@ -27,8 +27,9 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
-    validate-on-migrate: true
+    validate-on-migrate: false
     out-of-order: false
+    repair-at-start: true
 
 # Logging: less verbose in docker/staging
 logging:

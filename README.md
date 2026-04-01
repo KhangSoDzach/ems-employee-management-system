@@ -35,6 +35,9 @@ docker compose build backend
 
 # Xem logs của service (ví dụ: backend)
 docker compose logs -f backend
+
+# Validate nhanh Docker stack (Windows PowerShell)
+powershell -ExecutionPolicy Bypass -File ./scripts/validate-docker.ps1
 ```
 
 **Lưu ý (Đặc tính & Rủi ro):**

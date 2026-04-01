@@ -23,6 +23,9 @@ export interface AuditEntry {
 
 export interface LeaveRequest {
   id: string;
+  employeeName?: string;
+  employeeCode?: string;
+  department?: string;
   dateCreated: Date;
   startDate: Date;
   endDate: Date;
@@ -30,6 +33,8 @@ export interface LeaveRequest {
   status: LeaveStatus;
   reason: string;
   auditTrail: AuditEntry[];
+  currentApprovalLevel?: number;
+  maxApprovalLevel?: number;
 }
 
 /* ══════════════ DATE FORMATS ══════════════ */
@@ -55,27 +60,31 @@ export const ALL_LABEL = "Tất cả";
 /* ── THUỘC TÍNH LOẠI NGHỈ PHÉP ── */
 export const LEAVE_TYPE_CONFIG: Record<
   LeaveType,
-  { label: string; badgeClass: string; filterClass: string }
+  { label: string; badgeClass: string; filterClass: string; dotClass: string }
 > = {
   annual: {
     label: "Nghỉ phép năm",
     badgeClass: "text-indigo-700 bg-indigo-50 border-indigo-200",
     filterClass: "bg-indigo-100 text-indigo-700 border-indigo-300",
+    dotClass: "bg-indigo-500",
   },
   sick: {
     label: "Nghỉ ốm",
     badgeClass: "text-rose-700 bg-rose-50 border-rose-200",
     filterClass: "bg-rose-100 text-rose-700 border-rose-300",
+    dotClass: "bg-rose-500",
   },
   unpaid: {
     label: "Nghỉ không lương",
     badgeClass: "text-slate-700 bg-slate-50 border-slate-200",
     filterClass: "bg-slate-200 text-slate-700 border-slate-300",
+    dotClass: "bg-slate-500",
   },
   personal: {
     label: "Việc riêng",
     badgeClass: "text-violet-700 bg-violet-50 border-violet-200",
     filterClass: "bg-violet-100 text-violet-700 border-violet-300",
+    dotClass: "bg-violet-500",
   },
 };
 

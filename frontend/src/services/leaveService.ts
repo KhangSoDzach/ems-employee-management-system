@@ -30,6 +30,8 @@ export interface LeaveResponseDTO {
   status: string; // "PENDING_LEVEL_1" | "APPROVED" | "REJECTED" | "RETURNED_TO_EMPLOYEE" | ...
   attachmentUrl: string | null;
   createdAt: string; // ISO datetime e.g. "2026-03-01T08:30:00"
+  currentApprovalLevel?: number | null;
+  maxApprovalLevel?: number | null;
   requesterUserId?: number;
 }
 
@@ -93,6 +95,22 @@ export const leaveService = {
       api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>("/leaves", {
         params,
       }) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
+    ).then((res) => res.data),
+
+  /**
+   * GET /api/v1/leaves/pending – approver inbox scoped by current workflow level.
+   */
+  getPendingLeaves: (params?: {
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<LeaveResponseDTO>> =>
+    (
+      api.get<unknown, ApiResponse<PageResponse<LeaveResponseDTO>>>(
+        "/leaves/pending",
+        {
+          params,
+        },
+      ) as Promise<ApiResponse<PageResponse<LeaveResponseDTO>>>
     ).then((res) => res.data),
 
   /**
