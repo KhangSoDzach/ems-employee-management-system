@@ -9,6 +9,8 @@ import {
   FileCheck,
   ChevronLeft,
   ChevronRight,
+  User,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,13 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import {
   assetService,
@@ -178,69 +174,69 @@ export function AssetRequestManagement() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Tổng số
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                {SYSTEM_MESSAGES.ASSET_REPORT.STATS.TOTAL}
               </p>
-              <p className="text-2xl font-bold mt-1 text-foreground">
+              <p className="text-2xl font-black mt-1 text-foreground">
                 {stats.total}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10 text-primary">
               <FileCheck className="w-5 h-5" />
             </div>
           </div>
         </div>
-        <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Chờ duyệt
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                {SYSTEM_MESSAGES.STATUS.PENDING}
               </p>
-              <p className="text-2xl font-bold mt-1 text-yellow-600">
+              <p className="text-2xl font-black mt-1 text-amber-500">
                 {stats.pending}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100 text-yellow-600">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-500/10 text-amber-500">
               <Clock className="w-5 h-5" />
             </div>
           </div>
         </div>
-        <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm border-l-4 border-l-emerald-500/50">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Đã duyệt
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                {SYSTEM_MESSAGES.STATUS.APPROVED}
               </p>
-              <p className="text-2xl font-bold mt-1 text-emerald-600">
+              <p className="text-2xl font-black mt-1 text-emerald-500">
                 {stats.approved}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-500">
               <CheckCircle className="w-5 h-5" />
             </div>
           </div>
         </div>
-        <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm border-l-4 border-l-rose-500/50">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Từ chối
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                {SYSTEM_MESSAGES.STATUS.REJECTED}
               </p>
-              <p className="text-2xl font-bold mt-1 text-red-600">
+              <p className="text-2xl font-black mt-1 text-rose-500">
                 {stats.rejected}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-600">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/10 text-rose-500">
               <XCircle className="w-5 h-5" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-background border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="p-4 border-b border-border bg-muted/10 flex items-center justify-between gap-4">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -250,30 +246,47 @@ export function AssetRequestManagement() {
               }
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              className="pl-9 h-9 bg-white"
+              className="pl-9 h-11 bg-background border-border/50 focus-visible:ring-primary rounded-xl font-bold text-sm"
               onKeyDown={(e) => e.key === "Enter" && fetchRequests()}
             />
           </div>
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-muted-foreground hidden sm:block" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] h-9 bg-white">
+              <SelectTrigger className="w-[180px] h-11 bg-background border-border/50 rounded-xl font-bold text-xs uppercase tracking-widest">
                 <SelectValue
                   placeholder={SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_STATUS}
                 />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">{SYSTEM_MESSAGES.LABEL_ALL}</SelectItem>
-                <SelectItem value="PENDING">
+              <SelectContent className="rounded-xl border-border">
+                <SelectItem
+                  value="ALL"
+                  className="font-bold text-xs uppercase tracking-widest"
+                >
+                  {SYSTEM_MESSAGES.LABEL_ALL}
+                </SelectItem>
+                <SelectItem
+                  value="PENDING"
+                  className="font-bold text-xs uppercase tracking-widest"
+                >
                   {SYSTEM_MESSAGES.STATUS.PENDING}
                 </SelectItem>
-                <SelectItem value="APPROVED">
+                <SelectItem
+                  value="APPROVED"
+                  className="font-bold text-xs uppercase tracking-widest"
+                >
                   {SYSTEM_MESSAGES.STATUS.APPROVED}
                 </SelectItem>
-                <SelectItem value="REJECTED">
+                <SelectItem
+                  value="REJECTED"
+                  className="font-bold text-xs uppercase tracking-widest"
+                >
                   {SYSTEM_MESSAGES.STATUS.REJECTED}
                 </SelectItem>
-                <SelectItem value="CANCELLED">
+                <SelectItem
+                  value="CANCELLED"
+                  className="font-bold text-xs uppercase tracking-widest"
+                >
                   {SYSTEM_MESSAGES.STATUS.CANCELLED}
                 </SelectItem>
               </SelectContent>
@@ -284,23 +297,23 @@ export function AssetRequestManagement() {
         <div className="overflow-x-auto min-h-[400px]">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40">
-                <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
+              <TableRow className="bg-muted/5 hover:bg-muted/5 border-b border-border">
+                <TableHead className="h-14 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
                   {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_REQUEST_ID}
                 </TableHead>
-                <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
+                <TableHead className="h-14 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
                   {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_EMPLOYEE}
                 </TableHead>
-                <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
+                <TableHead className="h-14 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
                   {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_ASSET_TYPE}
                 </TableHead>
-                <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
+                <TableHead className="h-14 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
                   {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_PRIORITY}
                 </TableHead>
-                <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
+                <TableHead className="h-14 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
                   {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_DATE}
                 </TableHead>
-                <TableHead className="py-3 px-5 text-xs font-semibold text-muted-foreground">
+                <TableHead className="h-14 px-8 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
                   {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_STATUS}
                 </TableHead>
               </TableRow>
@@ -390,146 +403,176 @@ export function AssetRequestManagement() {
 
       {/* Detail Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader className="mb-6">
-            <SheetTitle>
-              {SYSTEM_MESSAGES.ASSET_REQUEST.MODAL_DETAIL_TITLE}
-            </SheetTitle>
-            <SheetDescription>
-              {selectedRequest ? `#${selectedRequest.requestId}` : ""}
-            </SheetDescription>
-          </SheetHeader>
-
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-2xl p-0 gap-0 border-l shadow-2xl overflow-hidden flex flex-col"
+        >
           {detailLoading ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : selectedRequest ? (
-            <div className="space-y-6">
-              <div className="space-y-4 rounded-lg bg-muted/20 p-4 border border-border">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Trạng thái
-                  </span>
-                  <Badge className={selectedRequest.statusColor}>
-                    {selectedRequest.statusLabel}
-                  </Badge>
+            <>
+              {/* HEADER */}
+              <div className="px-10 pt-20 pb-12 bg-background border-b border-border text-foreground relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                  <FileCheck className="w-48 h-48 stroke-[0.5] text-primary" />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Nhân viên
-                  </span>
-                  <span className="font-medium">
-                    {selectedRequest.requestedBy}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Loại tài sản
-                  </span>
-                  <span className="font-medium">
-                    {selectedRequest.assetType}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Ưu tiên</span>
-                  <Badge className={selectedRequest.priorityColor}>
-                    {selectedRequest.priorityLabel}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Ngày gửi
-                  </span>
-                  <span className="text-sm">{selectedRequest.requestedAt}</span>
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">
-                  {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REASON}
-                </h4>
-                <div className="bg-muted/10 border border-border p-3 rounded-lg text-sm text-foreground whitespace-pre-wrap">
-                  {selectedRequest.reason}
-                </div>
-              </div>
-
-              {selectedRequest.status === "PENDING" ? (
-                user?.id === selectedRequest.requesterUserId ? (
-                  <div className="space-y-4 pt-4 border-t border-border">
-                    <div className="bg-amber-50 text-amber-600 border border-amber-200 p-3 rounded-md text-sm text-center">
-                      Bạn không thể tự duyệt yêu cầu cấp phát của bản thân.
+                <div className="relative z-10 flex flex-col gap-6">
+                  <div className="flex items-center gap-3">
+                    <Badge
+                      className={`${selectedRequest.statusColor} border-none px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}
+                    >
+                      {selectedRequest.statusLabel}
+                    </Badge>
+                    <span className="font-black text-muted-foreground text-sm tracking-tighter uppercase font-mono">
+                      #{selectedRequest.requestId}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-4xl font-black tracking-tighter leading-none text-foreground uppercase">
+                      {SYSTEM_MESSAGES.ASSET_REQUEST.MODAL_DETAIL_TITLE}
+                    </h2>
+                    <div className="flex items-center gap-4 text-muted-foreground font-bold text-[11px] uppercase tracking-widest">
+                      <div className="flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-primary" />
+                        {selectedRequest.requestedBy}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-primary" />
+                        {selectedRequest.requestedAt}
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-2 pt-4 border-t border-border">
-                    <h4 className="text-sm font-semibold">
-                      {SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_REVIEW_NOTE}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar bg-background">
+                <div className="grid grid-cols-1 gap-10">
+                  <div className="space-y-8">
+                    <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      Thông tin yêu cầu
                     </h4>
-                    <Textarea
-                      placeholder={
-                        SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_NOTE
-                      }
-                      value={processNote}
-                      onChange={(e) => setProcessNote(e.target.value)}
-                      className="resize-none h-24"
-                    />
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => handleProcess("REJECT")}
-                        disabled={processing}
-                      >
-                        {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_REJECT}
-                      </Button>
-                      <Button
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => handleProcess("APPROVE")}
-                        disabled={processing}
-                      >
-                        {processing && (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        )}
-                        {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_APPROVE}
-                      </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/20 p-8 rounded-[2rem] border border-border/50">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                          Loại tài sản
+                        </p>
+                        <p className="font-black text-foreground text-lg tracking-tight uppercase">
+                          {selectedRequest.assetType}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                          Ưu tiên
+                        </p>
+                        <Badge
+                          className={`${selectedRequest.priorityColor} border-none px-3 py-1 font-black text-[10px] uppercase tracking-widest shadow-sm`}
+                        >
+                          {selectedRequest.priorityLabel}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                )
-              ) : (
-                <div className="space-y-4 pt-4 border-t border-border">
-                  <h4 className="text-sm font-semibold bg-muted/40 p-2 rounded-t-lg border border-b-0 border-border">
-                    Lịch sử xử lý
-                  </h4>
-                  <div className="border border-border rounded-b-lg p-3 space-y-2 text-sm bg-muted/10">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REVIEWED_BY}
-                      </span>
-                      <span className="font-medium">
-                        {selectedRequest.reviewedBy || "—"}
-                      </span>
+
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REASON}
+                    </h4>
+                    <div className="bg-muted/10 p-8 rounded-[2.5rem] border-2 border-dashed border-border/50 italic text-sm text-muted-foreground leading-relaxed">
+                      "{selectedRequest.reason}"
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REVIEWED_AT}
-                      </span>
-                      <span>{selectedRequest.reviewedAt || "—"}</span>
-                    </div>
-                    {selectedRequest.reviewNote && (
-                      <div className="pt-2">
-                        <span className="text-muted-foreground block mb-1">
-                          {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REVIEW_NOTE}
-                        </span>
-                        <div className="bg-background border border-border p-2 rounded whitespace-pre-wrap text-xs">
-                          {selectedRequest.reviewNote}
+                  </div>
+
+                  {selectedRequest.status === "PENDING" ? (
+                    user?.id === selectedRequest.requesterUserId ? (
+                      <div className="p-8 bg-amber-500/5 border-2 border-amber-500/10 rounded-[2.5rem] text-center space-y-3">
+                        <Clock className="w-10 h-10 text-amber-500 mx-auto" />
+                        <p className="text-sm font-bold text-amber-600">
+                          Bạn không thể tự duyệt yêu cầu của bản thân.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6 pt-10 border-t">
+                        <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          {
+                            SYSTEM_MESSAGES.ASSET_REQUEST
+                              .PLACEHOLDER_REVIEW_NOTE
+                          }
+                        </h4>
+                        <Textarea
+                          placeholder={
+                            SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_NOTE
+                          }
+                          value={processNote}
+                          onChange={(e) => setProcessNote(e.target.value)}
+                          className="min-h-32 rounded-[2rem] border-2 border-border focus:border-primary font-medium p-6 bg-muted/30"
+                        />
+                        <div className="flex gap-4 pt-4">
+                          <Button
+                            variant="ghost"
+                            className="flex-1 h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 hover:text-rose-600"
+                            onClick={() => handleProcess("REJECT")}
+                            disabled={processing}
+                          >
+                            {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_REJECT}
+                          </Button>
+                          <Button
+                            className="flex-1 h-16 bg-emerald-600 hover:bg-black text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] gap-3 shadow-xl shadow-emerald-500/20"
+                            onClick={() => handleProcess("APPROVE")}
+                            disabled={processing}
+                          >
+                            {processing && (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            )}
+                            {SYSTEM_MESSAGES.ASSET_REQUEST.BTN_APPROVE}
+                          </Button>
                         </div>
                       </div>
-                    )}
-                  </div>
+                    )
+                  ) : (
+                    <div className="space-y-8 pt-10 border-t">
+                      <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        Lịch sử xử lý
+                      </h4>
+                      <div className="bg-muted/20 p-8 rounded-[2.5rem] border border-border/50 space-y-6 text-sm">
+                        <div className="flex justify-between items-center pb-4 border-b border-border/30">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REVIEWED_BY}
+                          </span>
+                          <span className="font-black text-foreground">
+                            {selectedRequest.reviewedBy || "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pb-4 border-b border-border/30">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REVIEWED_AT}
+                          </span>
+                          <span className="font-bold text-foreground font-mono">
+                            {selectedRequest.reviewedAt || "—"}
+                          </span>
+                        </div>
+                        {selectedRequest.reviewNote && (
+                          <div className="space-y-2">
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">
+                              {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REVIEW_NOTE}
+                            </span>
+                            <div className="bg-background border border-border p-6 rounded-2xl italic text-muted-foreground leading-relaxed">
+                              "{selectedRequest.reviewNote}"
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            </>
           ) : null}
         </SheetContent>
       </Sheet>
