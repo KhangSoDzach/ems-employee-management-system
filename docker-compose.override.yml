@@ -1,26 +1,36 @@
-version: '3.8'
-
 services:
   backend:
     # Dev: dùng Maven build stage (có Maven sẵn) thay vì runtime stage (JRE-only)
     build:
       target: build
-    # Dùng sh để tránh lỗi Permission denied do Git trên Windows không giữ execute bit (+x)
-    command: [ "sh", "./mvnw", "spring-boot:run" ]
+    # Dùng script polling để tự compile + restart khi source Java thay đổi trong Docker (Windows-friendly)
+    command: ["sh", "./dev-hot-reload.sh"]
     volumes:
       # Mount source code backend để map sự thay đổi vào container
       - ./backend/src:/app/src
       - ./backend/pom.xml:/app/pom.xml
       - ./backend/mvnw:/app/mvnw
       - ./backend/.mvn:/app/.mvn
+      - ./backend/dev-hot-reload.sh:/app/dev-hot-reload.sh
       # (Tuỳ chọn nhưng RẤT quan trọng) Cache thư mục .m2 để không phải tải lại dependencies mỗi lần restart
       - maven_cache:/root/.m2
+    environment:
+      # Restart is handled by backend/dev-hot-reload.sh; disable DevTools restart to avoid double-restart loops
+      - SPRING_DEVTOOLS_RESTART_ENABLED=false
+      # Polling interval (seconds) used by backend/dev-hot-reload.sh
+      - HOT_RELOAD_POLL_INTERVAL=2
 
   frontend:
     # Ở docker-compose.yml gốc đã map các file source,
     # Chặn node_modules sync lại ra ngoài Window host (cải thiện hiệu năng trên WSL2/Windows)
     volumes:
       - /app/node_modules
+    environment:
+      # Cực kỳ quan trọng: ép Vite dùng polling để nhận diện thay đổi file trên Windows Docker
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - VITE_POLLING=true
+      - TAILWIND_MODE=watch
 
 volumes:
   maven_cache:
