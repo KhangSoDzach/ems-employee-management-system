@@ -174,5 +174,3 @@ export const VALIDATION_MSGS = {
   NO_WEEKEND: "Không được chọn ngày nghỉ vào cuối tuần",
   START_BEFORE_END: "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu",
 };
-
-export const MOCK_DATA: LeaveRequest[] = [];

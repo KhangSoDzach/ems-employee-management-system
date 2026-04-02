@@ -141,7 +141,7 @@ export default function AssetIncidentReviewModal({
 
           {isPending && incident.requesterUserId === user?.id ? (
             <div className="bg-amber-50 text-amber-600 border border-amber-200 p-3 rounded-md text-sm text-center">
-              Bạn không thể tự duyệt báo cáo sự cố của bản thân.
+              {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.MSG_SELF_RESOLVE_ERROR}
             </div>
           ) : (
             isPending && <ReviewSheetFeedback value={note} onChange={setNote} />

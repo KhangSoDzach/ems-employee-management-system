@@ -263,7 +263,8 @@ export default function ApproveLeaveRequest() {
                   row.currentApprovalLevel &&
                   row.maxApprovalLevel && (
                     <span className="text-xs text-muted-foreground mt-1">
-                      Lv {row.currentApprovalLevel}/{row.maxApprovalLevel}
+                      {SYSTEM_MESSAGES.SYMBOLS.LEVEL} {row.currentApprovalLevel}
+                      /{row.maxApprovalLevel}
                     </span>
                   )}
               </div>
@@ -510,7 +511,7 @@ export default function ApproveLeaveRequest() {
               {SYSTEM_MESSAGES.APPROVE.DISPLAY_PREFIX}{" "}
               <span className="font-medium text-foreground">
                 {totalElementsFiltered === 0 ? 0 : page * PAGE_SIZE + 1}
-                {" – "}
+                {SYSTEM_MESSAGES.SYMBOLS.DASH}
                 {Math.min((page + 1) * PAGE_SIZE, totalElementsFiltered)}
               </span>{" "}
               {SYSTEM_MESSAGES.MEMBER_LIST.PAGINATION_IN}{" "}

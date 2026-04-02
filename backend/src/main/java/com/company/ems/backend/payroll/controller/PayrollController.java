@@ -33,84 +33,70 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class PayrollController {
 
-    private final RunPayrollUseCase runPayrollUseCase;
-    private final RecalculatePayrollUseCase  recalculatePayrollUseCase;
-    private final GetMyPayrollHistoryUseCase getMyPayrollHistoryUseCase;
-    private final GetPayrollByPeriodUseCase  getPayrollByPeriodUseCase;
-    private final ExportPayrollCsvUseCase    exportPayrollCsvUseCase;
+        private final RunPayrollUseCase runPayrollUseCase;
+        private final RecalculatePayrollUseCase recalculatePayrollUseCase;
+        private final GetMyPayrollHistoryUseCase getMyPayrollHistoryUseCase;
+        private final GetPayrollByPeriodUseCase getPayrollByPeriodUseCase;
+        private final ExportPayrollCsvUseCase exportPayrollCsvUseCase;
 
-    public record RunPayrollRequest(
-            @NotBlank(message = "Period must not be blank")
-            @Pattern(regexp = "\\d{4}-\\d{2}",
-                    message = "Period must be in yyyy-MM format (e.g. 2026-03)")
-            String period
-    ) {}
+        public record RunPayrollRequest(
+                        @NotBlank(message = "Period must not be blank") @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be in yyyy-MM format (e.g. 2026-03)") String period) {
+        }
 
-    @GetMapping("/my-history")
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Get my payroll history",
-            description = "Identity from JWT only — no employeeId parameter accepted.")
-    public ResponseEntity<ApiResponse<List<GetMyPayrollHistoryUseCase.PayrollSlipDto>>>
-    getMyHistory() {
-        return ResponseEntity.ok(
-                ApiResponse.success("Lịch sử lương", getMyPayrollHistoryUseCase.execute()));
-    }
+        @GetMapping("/my-history")
+        @PreAuthorize("isAuthenticated()")
+        @Operation(summary = "Get my payroll history", description = "Identity from JWT only — no employeeId parameter accepted.")
+        public ResponseEntity<ApiResponse<List<GetMyPayrollHistoryUseCase.PayrollSlipDto>>> getMyHistory() {
+                return ResponseEntity.ok(
+                                ApiResponse.success("Lịch sử lương", getMyPayrollHistoryUseCase.execute()));
+        }
 
-    @GetMapping("/period/{period}")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
-    @Operation(summary = "Get payroll by period (HR/ADMIN)",
-            description = "All employees for the period. N+1-safe JOIN FETCH. Format: yyyy-MM")
-    public ResponseEntity<ApiResponse<GetPayrollByPeriodUseCase.PeriodPayrollResult>>
-    getByPeriod(
-            @PathVariable
-            @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM")
-            String period) {
-        return ResponseEntity.ok(
-                ApiResponse.success("Bảng lương kỳ " + period,
-                        getPayrollByPeriodUseCase.execute(period)));
-    }
+        @GetMapping("/period/{period}")
+        @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+        @Operation(summary = "Get payroll by period (HR/ADMIN)", description = "All employees for the period. N+1-safe JOIN FETCH. Format: yyyy-MM")
+        public ResponseEntity<ApiResponse<GetPayrollByPeriodUseCase.PeriodPayrollResult>> getByPeriod(
+                        @PathVariable @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM") String period) {
+                return ResponseEntity.ok(
+                                ApiResponse.success("Bảng lương kỳ " + period,
+                                                getPayrollByPeriodUseCase.execute(period)));
+        }
 
-    @GetMapping("/period/{period}/export")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
-    @Operation(summary = "Export payroll CSV (HR/ADMIN)",
-            description = "UTF-8 CSV with BOM. Streaming — safe for large datasets.")
-    public void exportCsv(
-            @PathVariable
-            @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM")
-            String period,
-            HttpServletResponse response,
-            Authentication auth) throws IOException {
+        @GetMapping("/period/{period}/export")
+        @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+        @Operation(summary = "Export payroll CSV (HR/ADMIN)", description = "UTF-8 CSV with BOM. Streaming — safe for large datasets.")
+        public void exportCsv(
+                        @PathVariable @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM") String period,
+                        HttpServletResponse response,
+                        Authentication auth) throws IOException {
 
-        response.setContentType("text/csv; charset=UTF-8");
-        response.setHeader("Content-Disposition",
-                "attachment; filename=\"bang-luong-" + period + ".csv\"");
-        response.setCharacterEncoding("UTF-8");
+                response.setContentType("text/csv; charset=UTF-8");
+                response.setHeader("Content-Disposition",
+                                "attachment; filename=\"bang-luong-" + period + ".csv\"");
+                response.setCharacterEncoding("UTF-8");
 
-        exportPayrollCsvUseCase.execute(period, response.getOutputStream());
-    }
+                exportPayrollCsvUseCase.execute(period, response.getOutputStream());
+        }
 
-    @PostMapping("/run")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
-    @Operation(summary = "Run payroll for a period")
-    public ResponseEntity<ApiResponse<RunPayrollResult>> runPayroll(
-            @Valid @RequestBody RunPayrollRequest request,
-            Authentication auth) {
-        RunPayrollCommand cmd = new RunPayrollCommand(request.period(), auth.getName());
-        return ResponseEntity.ok(
-                ApiResponse.success("Tính lương thành công", runPayrollUseCase.execute(cmd)));
-    }
+        @PostMapping("/run")
+        @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+        @Operation(summary = "Run payroll for a period")
+        public ResponseEntity<ApiResponse<RunPayrollResult>> runPayroll(
+                        @Valid @RequestBody RunPayrollRequest request,
+                        Authentication auth) {
+                RunPayrollCommand cmd = new RunPayrollCommand(request.period(), auth.getName());
+                return ResponseEntity.ok(
+                                ApiResponse.success("Tính lương thành công", runPayrollUseCase.execute(cmd)));
+        }
 
-    @PostMapping("/recalculate/{period}")
-    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
-    @Operation(summary = "Recalculate payroll for existing period (AC-03)")
-    public ResponseEntity<ApiResponse<RunPayrollResult>> recalculatePayroll(
-            @PathVariable
-            @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM")
-            String period,
-            Authentication auth) {
-        RunPayrollCommand cmd = new RunPayrollCommand(period, auth.getName());
-        return ResponseEntity.ok(
-                ApiResponse.success("Tính lại lương thành công",
-                        recalculatePayrollUseCase.execute(cmd)));
-    }
+        @PostMapping("/recalculate/{period}")
+        @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+        @Operation(summary = "Recalculate payroll for existing period (AC-03)")
+        public ResponseEntity<ApiResponse<RunPayrollResult>> recalculatePayroll(
+                        @PathVariable @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM") String period,
+                        Authentication auth) {
+                RunPayrollCommand cmd = new RunPayrollCommand(period, auth.getName());
+                return ResponseEntity.ok(
+                                ApiResponse.success("Tính lại lương thành công",
+                                                recalculatePayrollUseCase.execute(cmd)));
+        }
 }

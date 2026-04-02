@@ -151,7 +151,7 @@ export default function SalaryHistoryPage() {
                   <SelectValue placeholder={t.LABEL_YEAR} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả năm</SelectItem>
+                  <SelectItem value="all">{t.ALL_YEARS}</SelectItem>
                   {["2026", "2025", "2024", "2023"].map((y) => (
                     <SelectItem key={y} value={y}>
                       {y}
@@ -169,10 +169,10 @@ export default function SalaryHistoryPage() {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả tháng</SelectItem>
+                  <SelectItem value="all">{t.ALL_MONTHS}</SelectItem>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <SelectItem key={m} value={String(m)}>
-                      Tháng {m}
+                      {t.MONTH_PREFIX} {m}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -187,7 +187,7 @@ export default function SalaryHistoryPage() {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="all">{t.ALL_STATUS}</SelectItem>
                   <SelectItem value="paid">
                     {SYSTEM_MESSAGES.SALARY_HISTORY.STATUS_PAID}
                   </SelectItem>
@@ -219,7 +219,9 @@ export default function SalaryHistoryPage() {
               <p className="text-sm text-muted-foreground mb-2">
                 {t.STATS_NEXT_PERIOD}
               </p>
-              <p className="text-2xl font-bold text-primary">05/06/2024</p>
+              <p className="text-2xl font-bold text-primary">
+                {t.NEXT_PAYMENT_DATE}
+              </p>
             </div>
           </div>
 
@@ -245,7 +247,7 @@ export default function SalaryHistoryPage() {
                     <TableCell colSpan={6} className="h-24 text-center">
                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Đang tải dữ liệu lương...
+                        {t.LOADING_SALARY}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -255,7 +257,7 @@ export default function SalaryHistoryPage() {
                       colSpan={6}
                       className="h-24 text-center text-destructive text-sm"
                     >
-                      Không thể tải dữ liệu. Vui lòng thử lại.
+                      {t.ERROR_LOAD_SALARY}
                     </TableCell>
                   </TableRow>
                 ) : pagedData.length === 0 ? (

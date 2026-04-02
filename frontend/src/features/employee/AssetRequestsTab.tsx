@@ -87,10 +87,10 @@ export function AssetRequestsTab() {
   const handleSubmit = async () => {
     const newErrors: { assetType?: string; reason?: string } = {};
     if (!assetType.trim()) {
-      newErrors.assetType = SYSTEM_MESSAGES.ASSET_REQUEST_TAB.ERR_ASSET_TYPE;
+      newErrors.assetType = SYSTEM_MESSAGES.ASSET_REQUEST.ERR_ASSET_TYPE;
     }
     if (!reason.trim() || reason.trim().length < 10) {
-      newErrors.reason = SYSTEM_MESSAGES.ASSET_REQUEST_TAB.ERR_REASON;
+      newErrors.reason = SYSTEM_MESSAGES.ASSET_REQUEST.ERR_REASON;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -170,7 +170,8 @@ export function AssetRequestsTab() {
               paginatedItems.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell className="px-5 py-3 text-sm font-medium text-foreground">
-                    #{request.requestId}
+                    {SYSTEM_MESSAGES.SYMBOLS.HASH}
+                    {request.requestId}
                   </TableCell>
                   <TableCell className="px-5 py-3 text-sm font-medium text-foreground">
                     {request.assetType}
@@ -254,7 +255,9 @@ export function AssetRequestsTab() {
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_ASSET_TYPE}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500">
+                  {SYSTEM_MESSAGES.SYMBOLS.REQUIRED}
+                </span>
               </label>
               <Input
                 placeholder={SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_TYPE}
@@ -280,17 +283,23 @@ export function AssetRequestsTab() {
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
-                      SYSTEM_MESSAGES.ASSET_REQUEST_TAB.PLACEHOLDER_PRIORITY
+                      SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_PRIORITY
                     }
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LOW">Thấp</SelectItem>
-                  <SelectItem value="NORMAL">
-                    {SYSTEM_MESSAGES.ASSET_REQUEST_TAB.PRIORITY_NORMAL}
+                  <SelectItem value="LOW">
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.PRIORITY_LOW}
                   </SelectItem>
-                  <SelectItem value="HIGH">Cao</SelectItem>
-                  <SelectItem value="URGENT">Khẩn cấp</SelectItem>
+                  <SelectItem value="NORMAL">
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.PRIORITY_NORMAL}
+                  </SelectItem>
+                  <SelectItem value="HIGH">
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.PRIORITY_HIGH}
+                  </SelectItem>
+                  <SelectItem value="URGENT">
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.PRIORITY_URGENT}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -298,7 +307,9 @@ export function AssetRequestsTab() {
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_REASON}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500">
+                  {SYSTEM_MESSAGES.SYMBOLS.REQUIRED}
+                </span>
               </label>
               <Textarea
                 placeholder={SYSTEM_MESSAGES.ASSET_REQUEST.PLACEHOLDER_REASON}

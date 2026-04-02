@@ -55,7 +55,7 @@ public class AuthenticationService {
     public AuthResponse login(LoginRequest request, RequestContext ctx) {
         log.debug("Login attempt for user: {}", request.getUsername());
 
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUsernameOrEmail(request.getUsername())
                 .orElseThrow(() -> {
                     auditLogService.logAuthEvent(
                             AuthActionType.LOGIN_FAILED, "ANONYMOUS", null,
@@ -249,7 +249,7 @@ public class AuthenticationService {
 
     @Transactional(readOnly = true)
     public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
+        return userRepository.findByUsernameOrEmail(username)
                 .orElseThrow(() -> new BadCredentialsException("User not found: " + username));
     }
 

@@ -540,7 +540,7 @@ export default function AssetReportManagement() {
                               className="text-[10px] font-black text-blue-600 border-blue-500/20 bg-blue-500/10 tracking-widest uppercase"
                             >
                               {ASSET_STATUS_LABELS[
-                                selectedReport?.assetStatus as AssetStatus
+                                selectedReport?.assetStatus?.toUpperCase() as AssetStatus
                               ] || selectedReport?.assetStatus}
                             </Badge>
                           </div>
@@ -549,7 +549,7 @@ export default function AssetReportManagement() {
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/30">
                           <div>
                             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
-                              Mã thiết bị
+                              {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_DEVICE_CODE}
                             </p>
                             <p className="font-bold text-foreground font-mono">
                               {selectedReport?.assetCode}
@@ -557,7 +557,10 @@ export default function AssetReportManagement() {
                           </div>
                           <div className="text-right">
                             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
-                              Tag tài sản
+                              {
+                                SYSTEM_MESSAGES.ASSET_REPORT
+                                  .LABEL_ASSET_TAG_SHORT
+                              }
                             </p>
                             <Badge className="bg-slate-900 text-white font-mono text-[10px]">
                               {selectedReport?.assetTag}
@@ -577,7 +580,7 @@ export default function AssetReportManagement() {
                               </p>
                               <p className="text-sm font-bold text-foreground">
                                 {ASSET_CONDITION_LABELS[
-                                  selectedReport?.assetCondition as AssetCondition
+                                  selectedReport?.assetCondition?.toUpperCase() as AssetCondition
                                 ] || selectedReport?.assetCondition}
                               </p>
                             </div>
@@ -611,7 +614,7 @@ export default function AssetReportManagement() {
                             {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_ISSUE_TYPE}
                           </p>
                           <p className="text-lg font-black text-foreground tracking-tight">
-                            {selectedReport?.incidentTypeLabel}
+                            {getIssueTypeLabel(selectedReport?.incidentType)}
                           </p>
                         </div>
                         <div>
@@ -620,7 +623,9 @@ export default function AssetReportManagement() {
                           </p>
                           <div className="bg-white/50 dark:bg-black/20 p-4 rounded-2xl border border-border shadow-inner-sm">
                             <p className="text-sm font-bold text-muted-foreground italic leading-relaxed">
-                              "{selectedReport?.description}"
+                              {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                              {selectedReport?.description}
+                              {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                             </p>
                           </div>
                         </div>
@@ -694,10 +699,10 @@ export default function AssetReportManagement() {
                               {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_PROCESS_NOTE}
                             </p>
                             <p className="text-xs font-bold text-slate-400 leading-relaxed italic">
-                              "
+                              {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                               {selectedReport?.processNote ||
                                 SYSTEM_MESSAGES.ASSET_REPORT.TXT_NO_NOTE}
-                              "
+                              {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                             </p>
                           </div>
                         </div>

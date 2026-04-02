@@ -269,7 +269,7 @@ export default function AuditLogsPage() {
                 size="sm"
                 onClick={() => openDetail(item)}
               >
-                Chi tiết
+                {SYSTEM_MESSAGES.AUDIT_LOGS.BTN_DETAIL}
               </Button>
             </TableCell>
           </TableRow>
@@ -296,53 +296,73 @@ export default function AuditLogsPage() {
     detailContent = (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <div>
-          <p className="text-muted-foreground">ID</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_ID}
+          </p>
           <p className="font-medium">{detailQuery.data.id}</p>
         </div>
         <div>
-          <p className="text-muted-foreground">Thời gian</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_TIME}
+          </p>
           <p className="font-medium">
             {formatDateTime(detailQuery.data.createdAt)}
           </p>
         </div>
         <div>
-          <p className="text-muted-foreground">Actor</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_ACTOR}
+          </p>
           <p className="font-medium">{detailQuery.data.actor || "ANONYMOUS"}</p>
         </div>
         <div>
-          <p className="text-muted-foreground">Action</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_ACTION}
+          </p>
           <p className="font-medium">
             {actionLabel(detailQuery.data.actionType)}
           </p>
         </div>
         <div>
-          <p className="text-muted-foreground">IP Address</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_IP}
+          </p>
           <p className="font-medium">{detailQuery.data.ipAddress || "—"}</p>
         </div>
         <div>
-          <p className="text-muted-foreground">Client Type</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_CLIENT_TYPE}
+          </p>
           <p className="font-medium">{detailQuery.data.clientType || "—"}</p>
         </div>
         <div>
-          <p className="text-muted-foreground">Identifier</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_IDENTIFIER}
+          </p>
           <p className="font-medium">
             {maskIdentifier(detailQuery.data.identifierAttempted)}
           </p>
         </div>
         <div>
-          <p className="text-muted-foreground">Correlation ID</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_CORRELATION_ID}
+          </p>
           <p className="font-medium break-all">
             {detailQuery.data.correlationId || "—"}
           </p>
         </div>
         <div className="md:col-span-2">
-          <p className="text-muted-foreground">User Agent</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_USER_AGENT}
+          </p>
           <p className="font-medium break-all">
             {detailQuery.data.userAgent || "—"}
           </p>
         </div>
         <div className="md:col-span-2">
-          <p className="text-muted-foreground">New Value</p>
+          <p className="text-muted-foreground">
+            {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_NEW_VALUE}
+          </p>
           <p className="font-medium break-all">
             {detailQuery.data.newValue || "—"}
           </p>
@@ -425,24 +445,31 @@ export default function AuditLogsPage() {
             <Button variant="outline" onClick={resetFilters}>
               {SYSTEM_MESSAGES.BTN_CANCEL}
             </Button>
-            <Button onClick={applyFilters}>Lọc</Button>
+            <Button onClick={applyFilters}>
+              {SYSTEM_MESSAGES.AUDIT_LOGS.BTN_FILTER}
+            </Button>
           </div>
         </div>
 
         <div className="card-soft">
           <div className="px-4 md:px-6 py-4 border-b text-sm text-muted-foreground">
-            Tổng {totalElements} bản ghi
+            {SYSTEM_MESSAGES.AUDIT_LOGS.TOTAL_REC} {totalElements}{" "}
+            {SYSTEM_MESSAGES.AUDIT_LOGS.REC_UNIT}
           </div>
 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Thời gian</TableHead>
-                <TableHead>Actor</TableHead>
+                <TableHead>{SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_TIME}</TableHead>
+                <TableHead>{SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_ACTOR}</TableHead>
                 <TableHead>{SYSTEM_MESSAGES.AUDIT_LOGS.TABLE_ACTION}</TableHead>
-                <TableHead>IP</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Identifier</TableHead>
+                <TableHead>{SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_IP}</TableHead>
+                <TableHead>
+                  {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_CLIENT_TYPE}
+                </TableHead>
+                <TableHead>
+                  {SYSTEM_MESSAGES.AUDIT_LOGS.LABEL_IDENTIFIER}
+                </TableHead>
                 <TableHead className="text-right">
                   {SYSTEM_MESSAGES.LABEL_ACTION}
                 </TableHead>
@@ -453,7 +480,8 @@ export default function AuditLogsPage() {
 
           <div className="flex items-center justify-between px-4 md:px-6 py-4 border-t">
             <span className="text-sm text-muted-foreground">
-              Trang {totalPages === 0 ? 0 : page + 1}/{totalPages}
+              {SYSTEM_MESSAGES.AUDIT_LOGS.PAGE_PREFIX}{" "}
+              {totalPages === 0 ? 0 : page + 1}/{totalPages}
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -462,7 +490,7 @@ export default function AuditLogsPage() {
                 disabled={page <= 0}
                 onClick={() => setPage((prev) => Math.max(0, prev - 1))}
               >
-                Trước
+                {SYSTEM_MESSAGES.AUDIT_LOGS.BTN_PREV}
               </Button>
               <Button
                 variant="outline"
@@ -470,7 +498,7 @@ export default function AuditLogsPage() {
                 disabled={totalPages === 0 || page >= totalPages - 1}
                 onClick={() => setPage((prev) => prev + 1)}
               >
-                Sau
+                {SYSTEM_MESSAGES.AUDIT_LOGS.BTN_NEXT}
               </Button>
             </div>
           </div>
@@ -480,7 +508,9 @@ export default function AuditLogsPage() {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Chi tiết audit log</DialogTitle>
+            <DialogTitle>
+              {SYSTEM_MESSAGES.AUDIT_LOGS.MODAL_DETAIL_TITLE}
+            </DialogTitle>
           </DialogHeader>
 
           {detailContent}

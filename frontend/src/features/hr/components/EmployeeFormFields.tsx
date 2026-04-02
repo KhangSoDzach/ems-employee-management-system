@@ -1,6 +1,6 @@
 import React from "react";
+import { useFormContext } from "react-hook-form";
 import { Info, UploadCloud } from "lucide-react";
-import { EmployeeRequest } from "@/services/employeeService";
 import {
   DepartmentOption,
   PositionOption,
@@ -8,22 +8,14 @@ import {
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { EMPLOYEE_CONSTANTS } from "../employee.constants";
+import { EmployeeFormValues } from "../schemas/employee.schema";
 
 interface EmployeeFormFieldsProps {
-  formData: EmployeeRequest;
-  errors: Record<string, string>;
-  handleChange: (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => void;
   departments: DepartmentOption[];
   positions: PositionOption[];
   managers: ManagerOption[];
   positionsLoading: boolean;
   isManagerPosition: boolean;
-  inputClass: (field: string) => string;
-  selectClass: (field: string) => string;
   handleImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   attachments?: File[];
   onAttachmentsSelected?: (files: FileList | null) => void;
@@ -34,24 +26,43 @@ type Props = Readonly<EmployeeFormFieldsProps>;
 
 export default function EmployeeFormFields(props: Props) {
   const {
-    formData,
-    errors,
-    handleChange,
     departments,
     positions,
     managers,
     positionsLoading,
     isManagerPosition,
-    inputClass,
-    selectClass,
     handleImageUpload,
     attachments = [],
     onAttachmentsSelected,
     onRemoveAttachment,
   } = props;
 
-  let positionLabel = "";
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<EmployeeFormValues>();
 
+  const formData = watch();
+
+  const hasError = (field: keyof EmployeeFormValues) => !!errors[field];
+
+  const inputClass = (field: keyof EmployeeFormValues) =>
+    `w-full px-4 py-2.5 rounded-xl border outline-none transition-all text-sm font-medium ${
+      hasError(field)
+        ? "border-red-500 ring-2 ring-red-500/10 focus:ring-red-500 focus:border-red-500 bg-red-50/10"
+        : "border-border focus:ring-2 focus:ring-primary/20 focus:border-primary bg-card"
+    }`;
+
+  const selectClass = (field: keyof EmployeeFormValues) =>
+    `w-full px-3 py-2.5 rounded-xl border outline-none transition-all text-sm font-bold bg-card ${
+      hasError(field)
+        ? "border-red-500 ring-2 ring-red-500/10 focus:ring-red-500 focus:border-red-500 bg-red-50/10"
+        : "border-border focus:ring-2 focus:ring-primary/20 focus:border-primary"
+    }`;
+
+  let positionLabel = "";
   if (!formData.departmentId) {
     positionLabel = EMPLOYEE_CONSTANTS.PLACEHOLDERS.DEPT_SELECT;
   } else if (positionsLoading) {
@@ -76,50 +87,56 @@ export default function EmployeeFormFields(props: Props) {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.LAST_NAME}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
-                name="lastName"
-                value={formData.lastName || ""}
-                onChange={handleChange}
+                {...register("lastName")}
                 className={inputClass("lastName")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.LAST_NAME}
               />
               {errors.lastName && (
-                <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.lastName.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.FIRST_NAME}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
-                name="firstName"
-                value={formData.firstName || ""}
-                onChange={handleChange}
+                {...register("firstName")}
                 className={inputClass("firstName")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.FIRST_NAME}
               />
               {errors.firstName && (
-                <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.firstName.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.EMAIL}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
                 type="email"
-                name="email"
-                value={formData.email || ""}
-                onChange={handleChange}
+                {...register("email")}
                 className={inputClass("email")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.EMAIL}
               />
               {errors.email && (
-                <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -127,26 +144,21 @@ export default function EmployeeFormFields(props: Props) {
                 {EMPLOYEE_CONSTANTS.LABELS.PHONE}
               </label>
               <input
-                name="phone"
-                value={formData.phone || ""}
-                onChange={handleChange}
+                {...register("phone")}
                 className={inputClass("phone")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.PHONE}
               />
               {errors.phone && (
-                <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.phone.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.GENDER}
               </label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                className={selectClass("gender")}
-              >
+              <select {...register("gender")} className={selectClass("gender")}>
                 <option value="MALE">
                   {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.MALE}
                 </option>
@@ -161,46 +173,48 @@ export default function EmployeeFormFields(props: Props) {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.DOB}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
                 type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth || ""}
-                onChange={handleChange}
+                {...register("dateOfBirth")}
                 className={inputClass("dateOfBirth")}
               />
               {errors.dateOfBirth && (
                 <p className="text-xs text-red-500 mt-1">
-                  {errors.dateOfBirth}
+                  {errors.dateOfBirth.message}
                 </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.NATIONAL_ID}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
-                name="nationalId"
-                value={formData.nationalId || ""}
-                onChange={handleChange}
+                {...register("nationalId")}
                 className={inputClass("nationalId")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONAL_ID}
               />
               {errors.nationalId && (
-                <p className="text-xs text-red-500 mt-1">{errors.nationalId}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.nationalId.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.SOCIAL_ID}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
-                name="socialSecurityNumber"
-                value={formData.socialSecurityNumber || ""}
-                onChange={handleChange}
+                {...register("socialSecurityNumber")}
                 className={inputClass("socialSecurityNumber")}
                 placeholder={
                   SYSTEM_MESSAGES.EMPLOYEE.PLACEHOLDER_SOCIAL_WARRANTY_NUMBER
@@ -208,7 +222,7 @@ export default function EmployeeFormFields(props: Props) {
               />
               {errors.socialSecurityNumber && (
                 <p className="text-xs text-red-500 mt-1">
-                  {errors.socialSecurityNumber}
+                  {errors.socialSecurityNumber.message}
                 </p>
               )}
             </div>
@@ -224,17 +238,19 @@ export default function EmployeeFormFields(props: Props) {
             <div className="sm:col-span-2 space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.ADDRESS}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
-                name="address"
-                value={formData.address || ""}
-                onChange={handleChange}
+                {...register("address")}
                 className={inputClass("address")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.ADDRESS}
               />
               {errors.address && (
-                <p className="text-xs text-red-500 mt-1">{errors.address}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.address.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -242,14 +258,14 @@ export default function EmployeeFormFields(props: Props) {
                 {EMPLOYEE_CONSTANTS.LABELS.CITY}
               </label>
               <input
-                name="city"
-                value={formData.city || ""}
-                onChange={handleChange}
+                {...register("city")}
                 className={inputClass("city")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.CITY}
               />
               {errors.city && (
-                <p className="text-xs text-red-500 mt-1">{errors.city}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.city.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -257,14 +273,12 @@ export default function EmployeeFormFields(props: Props) {
                 {EMPLOYEE_CONSTANTS.LABELS.NATIONALITY}
               </label>
               <input
-                name="nationality"
-                value={formData.nationality || ""}
-                onChange={handleChange}
+                {...register("nationality")}
                 className={inputClass("nationality")}
               />
               {errors.nationality && (
                 <p className="text-xs text-red-500 mt-1">
-                  {errors.nationality}
+                  {errors.nationality.message}
                 </p>
               )}
             </div>
@@ -273,15 +287,13 @@ export default function EmployeeFormFields(props: Props) {
                 {EMPLOYEE_CONSTANTS.LABELS.EMERGENCY_NAME}
               </label>
               <input
-                name="emergencyContactName"
-                value={formData.emergencyContactName || ""}
-                onChange={handleChange}
+                {...register("emergencyContactName")}
                 className={inputClass("emergencyContactName")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.EMERGENCY_NAME}
               />
               {errors.emergencyContactName && (
                 <p className="text-xs text-red-500 mt-1">
-                  {errors.emergencyContactName}
+                  {errors.emergencyContactName.message}
                 </p>
               )}
             </div>
@@ -290,15 +302,13 @@ export default function EmployeeFormFields(props: Props) {
                 {EMPLOYEE_CONSTANTS.LABELS.EMERGENCY_PHONE}
               </label>
               <input
-                name="emergencyContactPhone"
-                value={formData.emergencyContactPhone || ""}
-                onChange={handleChange}
+                {...register("emergencyContactPhone")}
                 className={inputClass("emergencyContactPhone")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.PHONE}
               />
               {errors.emergencyContactPhone && (
                 <p className="text-xs text-red-500 mt-1">
-                  {errors.emergencyContactPhone}
+                  {errors.emergencyContactPhone.message}
                 </p>
               )}
             </div>
@@ -328,9 +338,9 @@ export default function EmployeeFormFields(props: Props) {
           </div>
           {attachments.length > 0 && (
             <div className="space-y-2 mt-4">
-              {attachments.map((file) => (
+              {attachments.map((file, idx) => (
                 <div
-                  key={`${file.name}-${file.lastModified}`}
+                  key={`${file.name}-${file.lastModified}-${idx}`}
                   className="flex justify-between items-center p-3 bg-muted/40 border border-border rounded-xl text-sm"
                 >
                   <span className="truncate max-w-[200px] text-foreground font-medium">
@@ -338,9 +348,7 @@ export default function EmployeeFormFields(props: Props) {
                   </span>
                   <button
                     type="button"
-                    onClick={() =>
-                      onRemoveAttachment?.(attachments.indexOf(file))
-                    }
+                    onClick={() => onRemoveAttachment?.(idx)}
                     className="text-red-500 hover:text-red-700 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-lg text-[10px] uppercase tracking-wider font-bold transition-colors"
                   >
                     {SYSTEM_MESSAGES.EMPLOYEE.TXT_REMOVE}
@@ -384,10 +392,8 @@ export default function EmployeeFormFields(props: Props) {
             />
           </div>
           <input
-            name="avatarUrl"
+            {...register("avatarUrl")}
             placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.FIRST_NAME}
-            value={formData.avatarUrl || ""}
-            onChange={handleChange}
             className={inputClass("avatarUrl") + " mt-3 text-xs w-full"}
           />
         </div>
@@ -401,12 +407,18 @@ export default function EmployeeFormFields(props: Props) {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.DEPARTMENT}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <select
-                name="departmentId"
-                value={formData.departmentId}
-                onChange={handleChange}
+                {...register("departmentId", {
+                  valueAsNumber: true,
+                  onChange: () => {
+                    setValue("positionId", 0);
+                    setValue("reportingManagerId", undefined);
+                  },
+                })}
                 className={selectClass("departmentId")}
               >
                 <option value={0}>
@@ -420,19 +432,19 @@ export default function EmployeeFormFields(props: Props) {
               </select>
               {errors.departmentId && (
                 <p className="text-xs text-red-500 mt-1">
-                  {errors.departmentId}
+                  {errors.departmentId.message}
                 </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.POSITION}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <select
-                name="positionId"
-                value={formData.positionId}
-                onChange={handleChange}
+                {...register("positionId", { valueAsNumber: true })}
                 disabled={!formData.departmentId || positionsLoading}
                 className={
                   selectClass("positionId") +
@@ -452,7 +464,9 @@ export default function EmployeeFormFields(props: Props) {
                 </p>
               )}
               {errors.positionId && (
-                <p className="text-xs text-red-500 mt-1">{errors.positionId}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.positionId.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -460,10 +474,8 @@ export default function EmployeeFormFields(props: Props) {
                 {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_TYPE}
               </label>
               <select
-                name="contractType"
-                value={formData.contractType}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl border border-border outline-none text-sm font-bold bg-card transition-all focus:ring-2 focus:ring-primary/20"
+                {...register("contractType")}
+                className={selectClass("contractType")}
               >
                 <option value="FULL_TIME">
                   {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.FULL_TIME}
@@ -496,9 +508,9 @@ export default function EmployeeFormFields(props: Props) {
                   </label>
                   <select
                     id="contractDurationMonths"
-                    name="contractDurationMonths"
-                    value={formData.contractDurationMonths ?? 12}
-                    onChange={handleChange}
+                    {...register("contractDurationMonths", {
+                      valueAsNumber: true,
+                    })}
                     className={selectClass("contractDurationMonths")}
                   >
                     <option value={12}>
@@ -513,7 +525,7 @@ export default function EmployeeFormFields(props: Props) {
                   </select>
                   {errors.contractDurationMonths && (
                     <p className="text-xs text-red-500 mt-1">
-                      {errors.contractDurationMonths}
+                      {errors.contractDurationMonths.message}
                     </p>
                   )}
                 </div>
@@ -527,14 +539,12 @@ export default function EmployeeFormFields(props: Props) {
                   <input
                     id="contractStartDate"
                     type="date"
-                    name="contractStartDate"
-                    value={formData.contractStartDate || ""}
-                    onChange={handleChange}
+                    {...register("contractStartDate")}
                     className={inputClass("contractStartDate")}
                   />
                   {errors.contractStartDate && (
                     <p className="text-xs text-red-500 mt-1">
-                      {errors.contractStartDate}
+                      {errors.contractStartDate.message}
                     </p>
                   )}
                 </div>
@@ -543,17 +553,19 @@ export default function EmployeeFormFields(props: Props) {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.HIRE_DATE}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
                 type="date"
-                name="hireDate"
-                value={formData.hireDate || ""}
-                onChange={handleChange}
+                {...register("hireDate")}
                 className={inputClass("hireDate")}
               />
               {errors.hireDate && (
-                <p className="text-xs text-red-500 mt-1">{errors.hireDate}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.hireDate.message}
+                </p>
               )}
             </div>
 
@@ -566,13 +578,15 @@ export default function EmployeeFormFields(props: Props) {
                       {EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_HINT}
                     </span>
                   ) : (
-                    <span className="text-red-500">*</span>
+                    <span className="text-red-500" aria-hidden="true">
+                      {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                    </span>
                   )}
                 </label>
                 <select
-                  name="reportingManagerId"
-                  value={formData.reportingManagerId ?? ""}
-                  onChange={handleChange}
+                  {...register("reportingManagerId", {
+                    setValueAs: (v) => (v === "" ? undefined : Number(v)),
+                  })}
                   disabled={!formData.positionId}
                   className={
                     selectClass("reportingManagerId") +
@@ -590,7 +604,7 @@ export default function EmployeeFormFields(props: Props) {
                 </select>
                 {errors.reportingManagerId && (
                   <p className="text-xs text-red-500 mt-1">
-                    {errors.reportingManagerId}
+                    {errors.reportingManagerId.message}
                   </p>
                 )}
                 {managers.length === 0 && formData.positionId > 0 && (
@@ -619,14 +633,14 @@ export default function EmployeeFormFields(props: Props) {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.SALARY}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <div className="relative">
                 <input
                   type="number"
-                  name="salary"
-                  value={formData.salary}
-                  onChange={handleChange}
+                  {...register("salary", { valueAsNumber: true })}
                   className={
                     inputClass("salary") + " pl-4 pr-12 text-blue-600 font-bold"
                   }
@@ -636,34 +650,38 @@ export default function EmployeeFormFields(props: Props) {
                 </span>
               </div>
               {errors.salary && (
-                <p className="text-xs text-red-500 mt-1">{errors.salary}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.salary.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.BANK_NAME}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
-                name="bankName"
-                value={formData.bankName || ""}
-                onChange={handleChange}
+                {...register("bankName")}
                 className={inputClass("bankName")}
                 placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.BANK_NAME}
               />
               {errors.bankName && (
-                <p className="text-xs text-red-500 mt-1">{errors.bankName}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.bankName.message}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.BANK_ACCOUNT}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
-                name="bankAccountNumber"
-                value={formData.bankAccountNumber || ""}
-                onChange={handleChange}
+                {...register("bankAccountNumber")}
                 className={
                   inputClass("bankAccountNumber") +
                   " tracking-widest font-bold font-mono"
@@ -671,7 +689,7 @@ export default function EmployeeFormFields(props: Props) {
               />
               {errors.bankAccountNumber && (
                 <p className="text-xs text-red-500 mt-1">
-                  {errors.bankAccountNumber}
+                  {errors.bankAccountNumber.message}
                 </p>
               )}
             </div>

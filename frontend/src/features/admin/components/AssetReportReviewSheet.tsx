@@ -288,7 +288,7 @@ export function AssetReportReviewSheet({
 
               {isOwnPendingReport && (
                 <div className="bg-amber-50 text-amber-600 border border-amber-200 p-3 rounded-md text-sm text-center">
-                  Bạn không thể tự duyệt báo cáo sự cố của bản thân.
+                  {SYSTEM_MESSAGES.ASSET_REPORT.MSG_SELF_REVIEW_ERROR}
                 </div>
               )}
 

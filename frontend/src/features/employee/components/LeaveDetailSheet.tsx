@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { CalendarIcon, History, MessageSquare, User } from "lucide-react";
+import { CalendarIcon, MessageSquare, User } from "lucide-react";
 
 import {
   Sheet,
@@ -11,11 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import {
-  type AuditEntry,
-  AUDIT_ACTION_CONFIG,
   DATE_FORMAT,
   DATETIME_FORMAT,
-  DATETIME_LOG_FORMAT,
   type LeaveRequest,
 } from "@/constants/leave-request";
 import { StatusBadge } from "./LeaveBadges";
@@ -29,70 +26,6 @@ const SHEET_LABELS = {
   REASON_GROUP: SYSTEM_MESSAGES.LEAVE.DETAIL_REASON_GROUP,
   TIMELINE_GROUP: SYSTEM_MESSAGES.LEAVE.DETAIL_TIMELINE_GROUP,
 } as const;
-
-/* ══════════════ AUDIT TIMELINE COMPONENT ══════════════ */
-
-const AuditTimeline = ({ entries }: { entries: AuditEntry[] }) => {
-  // Sort descending by timestamp
-  const sorted = [...entries].sort(
-    (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-  );
-
-  return (
-    <div className="relative pl-4 space-y-6 before:absolute before:inset-y-2 before:left-[11px] before:w-0.5 before:bg-border/60">
-      {sorted.map((entry) => {
-        const config = AUDIT_ACTION_CONFIG[entry.action];
-        const Icon = config.icon;
-
-        return (
-          <div key={entry.id} className="relative">
-            {/* Timeline Icon Node */}
-            <div
-              className={`absolute -left-7 w-6 h-6 rounded-full flex items-center justify-center ring-4 ring-background ${config.iconClass}`}
-            >
-              <Icon className="w-3 h-3 block m-auto" />
-            </div>
-
-            {/* Content */}
-            <div className="flex flex-col gap-1.5 ml-3">
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-sm font-semibold text-foreground">
-                  {config.label}
-                </span>
-                <time className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                  {format(entry.timestamp, DATETIME_LOG_FORMAT)}
-                </time>
-              </div>
-
-              <div className="flex items-center gap-2 mt-0.5">
-                <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0 border">
-                  {entry.avatarUrl ? (
-                    <img
-                      src={entry.avatarUrl}
-                      alt={entry.actor}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-3 h-3 text-muted-foreground" />
-                  )}
-                </div>
-                <span className="text-sm font-medium text-muted-foreground">
-                  {entry.actor}
-                </span>
-              </div>
-
-              {entry.note && (
-                <div className="mt-2 text-sm text-foreground bg-muted/40 border rounded-lg px-3 py-2.5 leading-relaxed">
-                  {entry.note}
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
 
 /* ══════════════ DETAIL SHEET COMPONENT ══════════════ */
 

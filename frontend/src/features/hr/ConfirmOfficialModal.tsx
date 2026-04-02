@@ -67,7 +67,6 @@ export default function ConfirmOfficialModal({
   }, [open, employee, reset]);
 
   const contractTerm = watch("contractTerm");
-
   if (!open || !employee) {
     return null;
   }

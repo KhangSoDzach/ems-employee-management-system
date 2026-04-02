@@ -22,33 +22,33 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmployeeRequest {
-    @NotBlank(message = "REQUIRED_FIELD|First name is required|e.g. John")
+    @NotBlank(message = "REQUIRED_FIELD|Tên là bắt buộc|VD: An")
     private String firstName;
 
-    @NotBlank(message = "REQUIRED_FIELD|Last name is required|e.g. Doe")
+    @NotBlank(message = "REQUIRED_FIELD|Họ và tên đệm là bắt buộc|VD: Nguyễn Văn")
     private String lastName;
 
-    @NotBlank(message = "REQUIRED_FIELD|Email is required|e.g. user@company.com")
-    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "INVALID_FORMAT|Email format is invalid|e.g. user@company.com")
+    @NotBlank(message = "REQUIRED_FIELD|Email là bắt buộc|VD: user@company.com")
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "INVALID_FORMAT|Định dạng email không hợp lệ|VD: user@company.com")
     private String email;
 
-    @Pattern(regexp = "^$|^(\\+84[0-9]{9,10}|0[0-9]{9,10})$", message = "INVALID_FORMAT|Phone format is invalid (Vietnam format required)|e.g. +84912345678 or 0912345678")
+    @Pattern(regexp = "^$|^(\\+84[0-9]{9,10}|0[0-9]{9,10})$", message = "INVALID_FORMAT|Số điện thoại không hợp lệ (định dạng Việt Nam)|VD: +84912345678 hoặc 0912345678")
     private String phone;
 
-    @NotNull(message = "REQUIRED_FIELD|Date of birth is required|YYYY-MM-DD")
+    @NotNull(message = "REQUIRED_FIELD|Ngày sinh là bắt buộc|YYYY-MM-DD")
     @ValidAge(min = 18, max = 70)
     private LocalDate dateOfBirth;
 
-    @NotNull(message = "Hire date is required")
+    @NotNull(message = "Ngày vào làm là bắt buộc")
     private LocalDate hireDate;
 
-    @NotNull(message = "Position is required")
+    @NotNull(message = "Vị trí công việc là bắt buộc")
     private Long positionId;
 
-    @NotNull(message = "Department is required")
+    @NotNull(message = "Phòng ban là bắt buộc")
     private Long departmentId;
 
-    @NotNull(message = "Salary is required")
+    @NotNull(message = "Mức lương là bắt buộc")
     private Double salary;
 
     private String address;
