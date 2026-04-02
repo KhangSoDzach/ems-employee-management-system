@@ -52,7 +52,42 @@ export default defineConfig([
       // ==========================================
 
       // Bắt lỗi gõ trực tiếp Text vào HTML/JSX
-      "react/jsx-no-literals": "off",
+      // - noStrings: true → bắt string literal là text người dùng nhìn thấy trong JSX children
+      // - ignoreProps: true → bỏ qua tất cả prop (className, path, variant...) để tránh false positive
+      //   Lý do: các prop kỹ thuật (className, path, type, variant, href...) không phải UI text
+      //   Chỉ bắt text nằm trực tiếp trong JSX children: <p>Hardcoded text</p>
+      // - allowedStrings: cho phép ký tự đặc biệt/câu ký tự đơn không phải nội dung thật
+      "react/jsx-no-literals": [
+        "error",
+        {
+          noStrings: true,
+          ignoreProps: true,
+          allowedStrings: [
+            " ",
+            ",",
+            ".",
+            ":",
+            ";",
+            "!",
+            "?",
+            "-",
+            "|",
+            "/",
+            "(",
+            ")",
+            "[",
+            "]",
+            "•",
+            "·",
+            "&",
+            "+",
+            "=",
+            ">",
+            "<",
+            "~",
+          ],
+        },
+      ],
 
       // Bắt lỗi "Magic Numbers" (VD: gõ thẳng radius === 50 thay vì RADIUS_DEFAULT)
       "no-magic-numbers": "off",
