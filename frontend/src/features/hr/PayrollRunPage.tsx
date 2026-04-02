@@ -7,7 +7,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,8 +22,9 @@ import {
   type RunPayrollResult,
 } from "@/features/hr/hooks/usePayrollRun";
 import { PAYROLL_HR_CONSTANTS } from "./payroll.constants";
-import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { ForbiddenPage } from "../security/ForbiddenPage";
+import { useEffectiveRole, EFFECTIVE_ROLES } from "@/hooks/useEffectiveRole";
+import { toast } from "sonner";
 
 function getCurrentPeriod(): string {
   const now = new Date();
@@ -111,18 +112,24 @@ function ResultSummary({ result }: ResultSummaryProps) {
   );
 }
 
+/**
+ * PayrollRunPage Component
+ * Administrative interface for HR and Admin roles to trigger and manage payroll calculation cycles.
+ */
 export default function PayrollRunPage() {
   const role = useEffectiveRole();
   const [period, setPeriod] = useState<string>(getCurrentPeriod);
   const [lastResult, setLastResult] = useState<RunPayrollResult | null>(null);
+
+  const queryClient = useQueryClient();
 
   const runMutation = useRunPayroll();
   const recalculateMutation = useRecalculatePayroll();
 
   const isLoading = runMutation.isPending || recalculateMutation.isPending;
 
-  // RBAC check: HR or ADMIN only. Derived roles "hr", "admin"
-  if (role !== "hr" && role !== "admin") {
+  // RBAC check: HR or ADMIN only.
+  if (role !== EFFECTIVE_ROLES.HR && role !== EFFECTIVE_ROLES.ADMIN) {
     return <ForbiddenPage />;
   }
 
@@ -133,6 +140,7 @@ export default function PayrollRunPage() {
     runMutation.mutate(period, {
       onSuccess: (result) => {
         setLastResult(result);
+        queryClient.invalidateQueries({ queryKey: ["payroll-results"] });
         toast.success(PAYROLL_HR_CONSTANTS.MESSAGES.RUN_SUCCESS(result.period));
       },
       onError: (error) => {
@@ -148,6 +156,7 @@ export default function PayrollRunPage() {
     recalculateMutation.mutate(period, {
       onSuccess: (result) => {
         setLastResult(result);
+        queryClient.invalidateQueries({ queryKey: ["payroll-results"] });
         toast.success(
           PAYROLL_HR_CONSTANTS.MESSAGES.RECALC_SUCCESS(result.period),
         );

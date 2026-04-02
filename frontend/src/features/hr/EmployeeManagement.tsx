@@ -22,7 +22,7 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 import EmployeeDetailModal from "./EmployeeDetailModal";
 import EmployeeFormModal from "./components/EmployeeFormModal";
 import ConfirmOfficialModal from "./ConfirmOfficialModal";
-import { EMPLOYEE_CONSTANTS } from "./employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 

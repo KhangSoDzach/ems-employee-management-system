@@ -1,5 +1,4 @@
-import { DollarSign, Gift, Percent, FileText, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { DollarSign, Gift, Percent, FileText } from "lucide-react";
 
 import {
   Sheet,
@@ -10,15 +9,17 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
-import { useAuth } from "@/contexts/AuthContext";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { AUTH_ROLES } from "@/constants/auth";
 
+/**
+ * Interface representing a detailed payroll record (Salary Slip).
+ * All monetary values are expected to be pre-formatted strings (e.g., "10.000.000đ")
+ * coming directly from the backend via SalaryHistoryPage.
+ */
 export type SalarySlip = {
   id: number;
-  period: string;
+  period: string; // e.g., "Tháng 03/2026"
   paymentDate: string;
   baseSalary: string;
   bonus: Array<{ label: string; amount: string }>;
@@ -29,7 +30,7 @@ export type SalarySlip = {
   netPay: string;
   status: "paid" | "pending";
 
-  // Employee + payment metadata (optional)
+  // Metadata provided by backend for HR/Admin views
   employeeName?: string;
   employeeId?: string;
   department?: string;
@@ -42,76 +43,37 @@ interface SalarySlipSheetProps {
   slip: SalarySlip | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave?: (slip: SalarySlip) => void;
 }
 
+/**
+ * SalarySlipSheet Component
+ * Provides a premium, read-only side-sheet view of an employee's payroll details.
+ * Data is sourced from the Backend (EMS DB) via the payroll management use cases.
+ */
 export const SalarySlipSheet = ({
   slip,
   open,
   onOpenChange,
-  onSave,
 }: SalarySlipSheetProps) => {
-  const { user } = useAuth();
-  const isHr = user?.roles?.includes(AUTH_ROLES.HR);
-
-  const normalizeSlip = (s: SalarySlip | null): SalarySlip | null =>
-    s
-      ? {
-          ...s,
-          bonus: s.bonus ?? [],
-          allowances: s.allowances ?? [],
-          deductions: s.deductions ?? [],
-        }
-      : null;
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState<SalarySlip | null>(normalizeSlip(slip));
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setForm(normalizeSlip(slip));
-      setIsEditing(false);
-    }, 0);
-    return () => clearTimeout(t);
-  }, [slip]);
-
-  if (!form) {
+  // If no slip is selected, don't render the content
+  if (!slip) {
     return null;
   }
 
-  const totalAllowances = form.allowances.reduce((acc, cur) => {
-    const parsed = Number(cur.amount.replace(/[^\d]/g, ""));
-    return acc + (Number.isNaN(parsed) ? 0 : parsed);
-  }, 0);
-
-  const totalDeductions = form.deductions
-    .filter(
-      (d) =>
-        !d.label.toLowerCase().includes("thuế") &&
-        !d.label.toLowerCase().includes("tncn"),
-    )
-    .reduce((acc, cur) => {
-      const parsed = Number(cur.amount.replace(/[^\d]/g, ""));
-      return acc + (Number.isNaN(parsed) ? 0 : parsed);
-    }, 0);
+  // Pre-process collections for safe mapping
+  const allowances = slip.allowances ?? [];
+  const deductions = slip.deductions ?? [];
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) {
-          onOpenChange(false);
-        }
-      }}
-    >
-      <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl">
-        {/* Header */}
-        <div className="px-6 py-5 border-b bg-muted/10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l shadow-2xl overflow-hidden bg-background">
+        {/* Visual Header Decoration */}
+        <div className="px-6 py-8 border-b bg-muted/10 relative overflow-hidden shrink-0">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
 
           <div className="relative">
             <SheetHeader className="text-left space-y-1">
-              <SheetTitle className="text-xl font-bold tracking-tight text-foreground">
+              <SheetTitle className="text-2xl font-bold tracking-tight text-foreground">
                 {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TITLE}
               </SheetTitle>
 
@@ -119,470 +81,277 @@ export const SalarySlipSheet = ({
                 {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_DESC}
               </SheetDescription>
 
-              {isHr ? (
-                <div className="flex gap-2">
-                  {isEditing ? (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setForm(normalizeSlip(slip));
-                          setIsEditing(false);
-                        }}
-                      >
-                        {SYSTEM_MESSAGES.BTN_CANCEL}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          if (onSave && form) {
-                            onSave(form);
-                          }
-                          setIsEditing(false);
-                        }}
-                      >
-                        {SYSTEM_MESSAGES.SALARY_HISTORY.BTN_SAVE}
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      {SYSTEM_MESSAGES.BTN_EDIT}
-                    </Button>
-                  )}
-                </div>
-              ) : null}
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                {isHr ? (
+              <div className="mt-6 flex flex-col gap-4">
+                {/* Employee Info Section (Visible if metadata exists - usually for HR view) */}
+                {slip.employeeName && (
                   <div className="space-y-1">
-                    {form.employeeName ? (
-                      <p className="text-sm font-semibold">
-                        {form.employeeName}
-                      </p>
-                    ) : null}
-                    <p className="text-xs text-muted-foreground">
-                      {form.employeeId ?? ""}
-                      {form.department ? ` • ${form.department}` : ""}
-                      {form.role ? ` • ${form.role}` : ""}
+                    <p className="text-sm font-bold text-foreground">
+                      {slip.employeeName}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {slip.employeeId ?? ""}
+                      {slip.department ? ` • ${slip.department}` : ""}
+                      {slip.role ? ` • ${slip.role}` : ""}
                     </p>
                   </div>
-                ) : null}
+                )}
 
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
+                {/* Status and Period Metadata */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
                     <Badge
-                      variant={form.status === "paid" ? "secondary" : "outline"}
-                      className="text-[11px] px-2 py-1"
+                      variant={slip.status === "paid" ? "secondary" : "outline"}
+                      className={`text-[11px] px-2 py-0.5 font-bold uppercase ${
+                        slip.status === "paid"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                          : "border-amber-200 text-amber-700 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 dark:text-amber-400"
+                      }`}
                     >
-                      {form.status === "paid"
+                      {slip.status === "paid"
                         ? SYSTEM_MESSAGES.SALARY_HISTORY.STATUS_PAID
                         : SYSTEM_MESSAGES.SALARY_HISTORY.STATUS_PENDING}
                     </Badge>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {slip.period}
+                    </span>
                   </div>
 
-                  <p className="text-xs text-muted-foreground">
-                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PERIOD}
-                    {": "}
-                    {form.period}
-                  </p>
-
-                  <p className="text-xs text-muted-foreground">
-                    {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PAYMENT_DATE}
-                    {": "}
-                    {form.paymentDate}
-                  </p>
-
-                  {isHr ? (
-                    isEditing ? (
-                      <div className="space-y-1">
-                        <Input
-                          value={form.paymentMethod ?? ""}
-                          placeholder={
-                            SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_PAYMENT_METHOD
-                          }
-                          onChange={(e) =>
-                            setForm({ ...form, paymentMethod: e.target.value })
-                          }
-                          className="text-xs"
-                        />
-                        <Input
-                          value={form.paymentReference ?? ""}
-                          placeholder={
-                            SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_REFERENCE_CODE
-                          }
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              paymentReference: e.target.value,
-                            })
-                          }
-                          className="text-xs"
-                        />
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        {form.paymentMethod ? (
-                          <p className="text-xs text-muted-foreground">
-                            {SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_METHOD_SHORT}{" "}
-                            {form.paymentMethod}
-                          </p>
-                        ) : null}
-                        {form.paymentReference ? (
-                          <p className="text-xs text-muted-foreground">
-                            {SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_REF_SHORT}{" "}
-                            {form.paymentReference}
-                          </p>
-                        ) : null}
-                      </div>
-                    )
-                  ) : null}
+                  <div className="grid grid-cols-1 gap-1">
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-semibold">
+                        {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_PAYMENT_DATE}:
+                      </span>{" "}
+                      {slip.paymentDate}
+                    </p>
+                    {slip.paymentMethod && (
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold">
+                          {SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_METHOD_SHORT}:
+                        </span>{" "}
+                        {slip.paymentMethod}
+                      </p>
+                    )}
+                    {slip.paymentReference && (
+                      <p className="text-xs text-muted-foreground font-mono">
+                        <span className="font-semibold">
+                          {SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_REF_SHORT}:
+                        </span>{" "}
+                        {slip.paymentReference}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </SheetHeader>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-8">
-            {/* Base salary */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="p-6 space-y-8 pb-12">
+            {/* 1. Base Salary Section */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-primary">
+                <DollarSign className="w-5 h-5" />
+                <h3 className="font-bold text-sm tracking-widest uppercase">
                   {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_BASE_SALARY}
                 </h3>
               </div>
-              <div className="bg-muted/20 rounded-xl p-4">
+              <div className="bg-muted/30 rounded-2xl p-5 border border-border/50">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm font-medium text-muted-foreground">
                     {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_BASE_SALARY}
                   </span>
-                  {isEditing ? (
-                    <Input
-                      value={form.baseSalary}
-                      onChange={(e) =>
-                        setForm({ ...form, baseSalary: e.target.value })
-                      }
-                      className="w-32"
-                    />
-                  ) : (
-                    <span className="font-semibold text-foreground">
-                      {form.baseSalary}
-                    </span>
-                  )}
+                  <span className="text-lg font-bold text-foreground">
+                    {slip.baseSalary}
+                  </span>
                 </div>
               </div>
             </section>
 
-            {/* Allowances */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Gift className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">
+            {/* 2. Allowances & Income Section */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                <Gift className="w-5 h-5" />
+                <h3 className="font-bold text-sm tracking-widest uppercase">
                   {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_ALLOWANCES}
                 </h3>
               </div>
-              <div className="bg-muted/20 rounded-xl p-4 space-y-3">
-                {form.allowances.map((a, idx) => (
-                  <div
-                    key={a.label}
-                    className="flex justify-between items-center"
-                  >
-                    {isEditing ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        <Input
-                          value={a.label}
-                          onChange={(e) => {
-                            const next = [...form.allowances];
-                            const current = next[idx];
-                            if (!current) {
-                              return;
-                            }
-                            next[idx] = { ...current, label: e.target.value };
-                            setForm({ ...form, allowances: next });
-                          }}
-                          className="flex-1 text-sm"
-                          placeholder="Loại phụ cấp"
-                        />
-                        <Input
-                          value={a.amount}
-                          onChange={(e) => {
-                            const next = [...form.allowances];
-                            const current = next[idx];
-                            if (!current) {
-                              return;
-                            }
-                            next[idx] = { ...current, amount: e.target.value };
-                            setForm({ ...form, allowances: next });
-                          }}
-                          className="w-28 text-right"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500"
-                          onClick={() => {
-                            const next = form.allowances.filter(
-                              (_, i) => i !== idx,
-                            );
-                            setForm({ ...form, allowances: next });
-                          }}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-between w-full">
-                        <span className="text-sm text-muted-foreground">
-                          {a.label}
-                        </span>
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                          {"+"} {a.amount}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {isEditing && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setForm({
-                        ...form,
-                        allowances: [
-                          ...form.allowances,
-                          { label: "", amount: "" },
-                        ],
-                      });
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {SYSTEM_MESSAGES.SALARY_HISTORY.BTN_ADD_ALLOWANCE}
-                  </Button>
+              <div className="bg-emerald-50/30 dark:bg-emerald-950/10 rounded-2xl p-5 border border-emerald-100 dark:border-emerald-900/30 space-y-4">
+                {allowances.length > 0 ? (
+                  allowances.map((a) => (
+                    <div
+                      key={a.label}
+                      className="flex justify-between items-center group"
+                    >
+                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                        {a.label}
+                      </span>
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                        + {a.amount}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-center text-muted-foreground italic italic">
+                    {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
+                  </p>
                 )}
-                <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
-                  <span>
+
+                <div className="pt-4 border-t border-emerald-100 dark:border-emerald-900/30 flex justify-between items-center">
+                  <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
                     {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_ALLOWANCES}
                   </span>
-                  <span className="text-emerald-600 dark:text-emerald-400">
-                    {"+"} {totalAllowances.toLocaleString("vi-VN")}
-                    {SYSTEM_MESSAGES.CURRENCY_SUFFIX}
+                  <span className="text-lg font-black text-emerald-700 dark:text-emerald-400">
+                    {slip.totalIncome}
                   </span>
                 </div>
               </div>
             </section>
 
-            {/* Deductions */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Percent className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">
+            {/* 3. Deductions Section (Insurance, Tax, etc.) */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-rose-500">
+                <Percent className="w-5 h-5" />
+                <h3 className="font-bold text-sm tracking-widest uppercase">
                   {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_DEDUCTIONS}
                 </h3>
               </div>
-              <div className="bg-muted/20 rounded-xl p-4 space-y-3">
-                {form.deductions
-                  .filter(
-                    (d) =>
-                      !d.label.toLowerCase().includes("thuế") &&
-                      !d.label.toLowerCase().includes("tncn"),
-                  )
-                  .map((d, idx) => (
+              <div className="bg-rose-50/30 dark:bg-rose-950/10 rounded-2xl p-5 border border-rose-100 dark:border-rose-950/30 space-y-4">
+                {deductions.length > 0 ? (
+                  deductions.map((d) => (
                     <div
                       key={d.label}
-                      className="flex justify-between items-center"
+                      className="flex justify-between items-center group"
                     >
-                      {isEditing ? (
-                        <div className="flex items-center gap-2 flex-1">
-                          <Input
-                            value={d.label}
-                            onChange={(e) => {
-                              const next = [...form.deductions];
-                              const current = next[idx];
-                              if (!current) {
-                                return;
-                              }
-                              next[idx] = { ...current, label: e.target.value };
-                              setForm({ ...form, deductions: next });
-                            }}
-                            className="flex-1 text-sm"
-                            placeholder="Loại khấu trừ"
-                          />
-                          <Input
-                            value={d.amount}
-                            onChange={(e) => {
-                              const next = [...form.deductions];
-                              const current = next[idx];
-                              if (!current) {
-                                return;
-                              }
-                              next[idx] = {
-                                ...current,
-                                amount: e.target.value,
-                              };
-                              setForm({ ...form, deductions: next });
-                            }}
-                            className="w-28 text-right"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-500"
-                            onClick={() => {
-                              const next = form.deductions.filter(
-                                (_, i) => i !== idx,
-                              );
-                              setForm({ ...form, deductions: next });
-                            }}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="text-sm text-muted-foreground">
-                            {d.label}
-                          </span>
-                          <span className="font-medium text-primary">
-                            {"-"} {d.amount}
-                          </span>
-                        </>
-                      )}
+                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                        {d.label}
+                      </span>
+                      <span className="text-sm font-bold text-rose-500">
+                        - {d.amount}
+                      </span>
                     </div>
-                  ))}
-                {isEditing && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setForm({
-                        ...form,
-                        deductions: [
-                          ...form.deductions,
-                          { label: "", amount: "" },
-                        ],
-                      });
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {SYSTEM_MESSAGES.SALARY_HISTORY.BTN_ADD_DEDUCTION}
-                  </Button>
+                  ))
+                ) : (
+                  <p className="text-xs text-center text-muted-foreground italic">
+                    {SYSTEM_MESSAGES.COMMON_EN.NO_DATA}
+                  </p>
                 )}
-                <div className="pt-2 border-t border-border flex justify-between items-center font-semibold">
-                  <span>
+
+                <div className="pt-4 border-t border-rose-100 dark:border-rose-950/30 flex justify-between items-center">
+                  <span className="text-sm font-bold text-rose-700 dark:text-rose-400">
                     {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_TOTAL_DEDUCTIONS}
                   </span>
-                  <span className="text-primary">
-                    {"-"} {totalDeductions.toLocaleString("vi-VN")}
-                    {SYSTEM_MESSAGES.CURRENCY_SUFFIX}
+                  <span className="text-lg font-black text-rose-700 dark:text-rose-400">
+                    {slip.totalDeductions}
                   </span>
                 </div>
               </div>
             </section>
 
-            {/* Net salary */}
-            <div className="bg-primary/5 dark:bg-primary/10 border-2 border-primary/20 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
+            {/* 4. Final Net Pay (Total Take-home) */}
+            <div className="bg-primary shadow-xl shadow-primary/20 rounded-3xl p-8 flex flex-col items-center justify-center text-center transform transition-transform hover:scale-[1.02]">
+              <span className="text-[10px] font-black text-primary-foreground/60 uppercase tracking-[0.3em] mb-2">
                 {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_NET_PAY}
               </span>
-              <span className="text-4xl font-bold text-primary">
-                {form.netPay}
+              <span className="text-4xl font-black text-primary-foreground tabular-nums">
+                {slip.netPay}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-5 border-t bg-muted/20 flex flex-col sm:flex-row gap-3">
+        {/* Footer Actions */}
+        <div className="px-6 py-6 border-t bg-muted/30 flex flex-col gap-3 shrink-0">
           <Button
-            variant="secondary"
-            className="flex-1 flex items-center justify-center gap-2"
+            variant="default"
+            className="w-full h-12 rounded-xl flex items-center justify-center gap-3 font-bold text-base shadow-lg transition-all active:scale-[0.98]"
             onClick={() => {
-              if (!form) {
-                return;
-              }
-              const allowanceRows = (form.allowances ?? [])
+              // PDF/Print Logic: Generate a secure, non-interactive printable document
+              const t = SYSTEM_MESSAGES.SALARY_HISTORY;
+
+              const allowanceRows = (slip.allowances ?? [])
                 .map(
                   (a) =>
-                    `<tr><td style="padding:5px 0 5px 8px;color:#444">${a.label}</td><td style="text-align:right;color:#16a34a">+ ${a.amount}</td></tr>`,
+                    `<tr><td style="padding:8px 0;color:#444;border-bottom:1px solid #f3f4f6">${a.label}</td><td style="text-align:right;color:#059669;font-weight:bold;border-bottom:1px solid #f3f4f6">+ ${a.amount}</td></tr>`,
                 )
                 .join("");
-              const deductionRows = (form.deductions ?? [])
-                .filter(
-                  (d: { label: string }) =>
-                    !d.label.toLowerCase().includes("thuế") &&
-                    !d.label.toLowerCase().includes("tncn"),
-                )
+              const deductionRows = (slip.deductions ?? [])
                 .map(
-                  (d: { label: string; amount: string }) =>
-                    `<tr><td style="padding:5px 0 5px 8px;color:#444">${d.label}</td><td style="text-align:right;color:#dc2626">- ${d.amount}</td></tr>`,
+                  (d) =>
+                    `<tr><td style="padding:8px 0;color:#444;border-bottom:1px solid #f3f4f6">${d.label}</td><td style="text-align:right;color:#dc2626;font-weight:bold;border-bottom:1px solid #f3f4f6">- ${d.amount}</td></tr>`,
                 )
                 .join("");
-              const totalAllowancesNum = (form.allowances ?? []).reduce(
-                (s, a) => s + Number(a.amount.replace(/[^\d]/g, "") || 0),
-                0,
-              );
-              const totalAllowancesStr =
-                totalAllowancesNum.toLocaleString("vi-VN") + "đ";
-              const html = `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"/><title>Phieu luong - ${form.period}</title>
-              <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#111}
-              .page{max-width:600px;margin:32px auto;padding:0 16px}
-              .header{border-bottom:3px solid #e41b21;padding-bottom:12px;margin-bottom:20px}
-              .header h1{font-size:22px;color:#e41b21}.meta{color:#666;font-size:12px;margin-top:4px}
-              .badge{display:inline-block;background:#dcfce7;color:#15803d;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:bold}
-              .section{margin-bottom:16px}.section-title{font-size:11px;font-weight:bold;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-              table{width:100%;border-collapse:collapse}.base-row{display:flex;justify-content:space-between;padding:6px 8px;background:#f9fafb;border-radius:4px}
-              hr{border:none;border-top:1px solid #e5e7eb;margin:12px 0}
-              .total-row{display:flex;justify-content:space-between;padding:6px 8px;font-weight:bold}
-              .net-box{background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:24px;text-align:center;margin-top:20px}
-              .net-label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
-              .net-amount{font-size:34px;font-weight:bold;color:#e41b21}
-              @media print{.page{margin:0;padding:16px}}</style></head><body>
-              <div class="page">
-                <div class="header"><h1>Phieu luong</h1>
-                  <div class="meta"><strong>${form.period}</strong> | Ngay thanh toan: ${form.paymentDate}
-                    <span class="badge">${form.status === "paid" ? "Da thanh toan" : "Cho thanh toan"}</span></div></div>
-                <div class="section"><div class="section-title">Luong co ban</div>
-                  <div class="base-row"><span>Luong co ban</span><strong>${form.baseSalary}</strong></div></div>
-                ${
-                  allowanceRows
-                    ? `<div class="section"><div class="section-title">Phu cap</div>
-                  <table><tbody>${allowanceRows}</tbody></table>
-                  <div class="total-row"><span>Tong phu cap</span><span style="color:#16a34a">+ ${totalAllowancesStr}</span></div></div>`
-                    : ""
-                }
-                <hr/>
-                <div class="section"><div class="section-title">Khau tru</div>
+
+              const html = `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"/><title>${t.PDF_TITLE} - ${slip.period}</title>
+              <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;color:#1e293b;background:#f8fafc}
+              .container{max-width:700px;margin:40px auto;background:#fff;padding:48px;border-radius:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1)}
+              .header{display:flex;justify-content:space-between;align-items:start;margin-bottom:40px;border-bottom:2px solid #e2e8f0;padding-bottom:24px}
+              .company-info h1{color:#e41b21;font-size:28px;font-weight:900;margin-bottom:4px;letter-spacing:-0.5px}
+              .period-badge{background:#f1f5f9;color:#475569;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;margin-top:8px;display:inline-block}
+              .emp-box{background:#f8fafc;padding:20px;border-radius:12px;margin-bottom:32px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+              .emp-item label{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;display:block;margin-bottom:4px}
+              .emp-item span{font-weight:600;color:#1e293b}
+              .section{margin-bottom:32px}.section-title{font-size:12px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+              table{width:100%;border-collapse:collapse}
+              .summary-row{display:flex;justify-content:space-between;padding:16px 0;margin-top:8px;font-weight:800;font-size:16px}
+              .net-box{background:#e41b21;color:#fff;border-radius:16px;padding:32px;text-align:center;margin-top:40px;box-shadow:0 20px 25px -5px rgba(228,27,33,0.25)}
+              .net-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;opacity:0.8;margin-bottom:8px}
+              .net-amount{font-size:48px;font-weight:900}
+              @media print{body{background:#fff}.container{box-shadow:none;margin:0;width:100%;max-width:100%;padding:20px}}</style></head><body>
+              <div class="container">
+                <div class="header">
+                  <div class="company-info"><h1>${t.PDF_TITLE}</h1><div class="period-badge">${slip.period}</div></div>
+                  <div style="text-align:right">
+                    <div style="font-weight:800;color:${slip.status === "paid" ? "#059669" : "#d97706"}">
+                      ${slip.status === "paid" ? t.STATUS_PAID_CAP : t.STATUS_PENDING_CAP}
+                    </div>
+                    <div style="font-size:12px;color:#64748b;margin-top:4px">${t.PDF_LABEL_EXPORT_DATE}: ${new Date().toLocaleDateString("vi-VN")}</div>
+                  </div>
+                </div>
+                <div class="emp-box">
+                  <div class="emp-item"><label>${t.PDF_LABEL_EMPLOYEE}</label><span>${slip.employeeName || "N/A"}</span></div>
+                  <div class="emp-item"><label>${t.PDF_LABEL_CODE}</label><span>${slip.employeeId || "N/A"}</span></div>
+                  <div class="emp-item"><label>${t.PDF_LABEL_DEPT}</label><span>${slip.department || "N/A"}</span></div>
+                  <div class="emp-item"><label>${t.PDF_LABEL_DATE}</label><span>${slip.paymentDate}</span></div>
+                </div>
+                <div class="section">
+                  <div class="section-title">${t.PDF_LABEL_INCOME_DETAIL}</div>
+                  <table><tbody>
+                    <tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6">${t.SHEET_BASE_SALARY}</td><td style="text-align:right;font-weight:bold;border-bottom:1px solid #f3f4f6">${slip.baseSalary}</td></tr>
+                    ${allowanceRows}
+                  </tbody></table>
+                  <div class="summary-row" style="color:#059669"><span>${t.PDF_LABEL_TOTAL_INCOME}</span><span>${slip.totalIncome}</span></div>
+                </div>
+                <div class="section">
+                  <div class="section-title">${t.PDF_LABEL_DEDUCTION_DETAIL}</div>
                   <table><tbody>${deductionRows}</tbody></table>
-                  <div class="total-row"><span>Tong khau tru</span><span style="color:#dc2626">- ${form.totalDeductions}</span></div></div>
-                <div class="net-box"><div class="net-label">TONG THUC LINH</div>
-                  <div class="net-amount">${form.netPay}</div></div>
+                  <div class="summary-row" style="color:#dc2626"><span>${t.PDF_LABEL_TOTAL_DEDUCTION}</span><span>${slip.totalDeductions}</span></div>
+                </div>
+                <div class="net-box"><div class="net-label">${t.PDF_LABEL_NET_PAY}</div><div class="net-amount">${slip.netPay}</div></div>
+                <div style="margin-top:60px;display:flex;justify-content:space-between;font-size:12px;color:#94a3b8">
+                  <p>${t.PDF_FOOTER_THANKS}</p>
+                  <p>${t.PDF_FOOTER_AUTO}</p>
+                </div>
               </div></body></html>`;
+
               const printWindow = window.open("", "_blank");
               if (printWindow) {
                 printWindow.document.write(html);
                 printWindow.document.close();
-                // Chờ nội dung load xong rồi gọi lệnh in
                 printWindow.onload = () => {
                   printWindow.print();
                 };
               }
             }}
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-5 h-5" />
             {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_DOWNLOAD}
           </Button>
+
           <Button
-            variant="outline"
-            className="flex-1"
+            variant="ghost"
+            className="w-full h-11 rounded-xl text-muted-foreground font-bold hover:bg-muted"
             onClick={() => onOpenChange(false)}
           >
             {SYSTEM_MESSAGES.SALARY_HISTORY.SHEET_CLOSE}

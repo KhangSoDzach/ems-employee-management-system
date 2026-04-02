@@ -3,6 +3,13 @@ import { AUTH_ROLES } from "@/constants/auth";
 
 export type EffectiveRole = "admin" | "hr" | "manager" | "employee";
 
+export const EFFECTIVE_ROLES = {
+  ADMIN: "admin",
+  HR: "hr",
+  MANAGER: "manager",
+  EMPLOYEE: "employee",
+} as const;
+
 /**
  * Resolves the effective sidebar/permission role for the current user.
  * If `sidebarRole` is explicitly provided (from route), it takes priority.

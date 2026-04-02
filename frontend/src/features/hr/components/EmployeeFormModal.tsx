@@ -16,7 +16,7 @@ import {
   MANAGER_LEVEL,
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { EMPLOYEE_CONSTANTS } from "../employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../../constants/employee.constants";
 import EmployeeFormFields from "./EmployeeFormFields";
 import { employeeSchema, EmployeeFormValues } from "../schemas/employee.schema";
 

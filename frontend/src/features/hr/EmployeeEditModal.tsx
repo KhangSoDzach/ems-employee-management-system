@@ -15,7 +15,7 @@ import {
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
-import { EMPLOYEE_CONSTANTS } from "./employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 type ApiError = {
   response?: {

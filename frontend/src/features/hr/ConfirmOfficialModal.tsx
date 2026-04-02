@@ -8,7 +8,7 @@ import {
 } from "@/services/employeeService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useConvertToOfficial } from "./hooks/useEmployeeLifecycle";
-import { EMPLOYEE_CONSTANTS } from "./employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 type ContractTerm = OfficialContractRequest["contractTerm"];
 

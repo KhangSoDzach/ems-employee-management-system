@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
-import { EMPLOYEE_CONSTANTS } from "../employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../../constants/employee.constants";
 
 export const employeeSchema = z.object({
   firstName: z.string().min(1, FORM_VALIDATION_MESSAGES.FIRST_NAME_REQUIRED),

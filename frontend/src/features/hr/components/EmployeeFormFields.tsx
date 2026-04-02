@@ -7,7 +7,7 @@ import {
   ManagerOption,
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { EMPLOYEE_CONSTANTS } from "../employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../../constants/employee.constants";
 import { EmployeeFormValues } from "../schemas/employee.schema";
 
 interface EmployeeFormFieldsProps {
