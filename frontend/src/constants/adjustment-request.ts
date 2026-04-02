@@ -159,5 +159,3 @@ export const VALIDATION_MSGS = {
   reasonMinLength: "Lý do phải có ít nhất 10 ký tự.",
   reasonMaxLength: "Lý do không được vượt quá 2000 ký tự.",
 } as const;
-
-export const MOCK_DATA: AdjustmentRequest[] = [];

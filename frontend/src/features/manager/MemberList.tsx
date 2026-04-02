@@ -7,11 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table, TableHeader, TableRow, TableHead,
-  TableBody, TableCell,
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
 } from "@/components/ui/table";
 
-import { MemberEvaluationSheet, type Member } from "./components/MemberEvaluationSheet";
+import {
+  MemberEvaluationSheet,
+  type Member,
+} from "./components/MemberEvaluationSheet";
 import { useTeamMembers } from "./hooks/useTeamMembers";
 import { useLatestReview, useSaveReview } from "./hooks/usePerformanceReview";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,16 +27,33 @@ import { useAuth } from "@/contexts/AuthContext";
 
 function roleColor(positionTitle: string | null): string {
   const title = (positionTitle ?? "").toLowerCase();
-  if (title.includes("frontend") || title.includes("react") || title.includes("ui"))
+  if (
+    title.includes("frontend") ||
+    title.includes("react") ||
+    title.includes("ui")
+  ) {
     return "bg-blue-100 text-blue-700 hover:bg-blue-100";
-  if (title.includes("backend") || title.includes("java") || title.includes("server"))
+  }
+  if (
+    title.includes("backend") ||
+    title.includes("java") ||
+    title.includes("server")
+  ) {
     return "bg-purple-100 text-purple-700 hover:bg-purple-100";
-  if (title.includes("manager") || title.includes("lead"))
+  }
+  if (title.includes("manager") || title.includes("lead")) {
     return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
-  if (title.includes("design") || title.includes("ux"))
+  }
+  if (title.includes("design") || title.includes("ux")) {
     return "bg-amber-100 text-amber-700 hover:bg-amber-100";
-  if (title.includes("devops") || title.includes("cloud") || title.includes("infra"))
+  }
+  if (
+    title.includes("devops") ||
+    title.includes("cloud") ||
+    title.includes("infra")
+  ) {
     return "bg-orange-100 text-orange-700 hover:bg-orange-100";
+  }
   return "bg-gray-100 text-gray-700 hover:bg-gray-100";
 }
 
@@ -40,7 +64,7 @@ function currentReviewPeriod(): string {
   return `${now.getFullYear()}-${half}`;
 }
 
-const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
+const PAGE_SIZE = SYSTEM_MESSAGES.MEMBER_LIST.DEFAULT_PAGE_SIZE;
 
 // ─── Row component — loads its own latest review for pre-fill ────────────────
 
@@ -73,7 +97,7 @@ function MemberRow({
               <p className="font-semibold text-foreground">{member.name}</p>
               {member.isSelf && (
                 <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                  Bạn
+                  {t.TAG_SELF}
                 </span>
               )}
             </div>
@@ -82,7 +106,10 @@ function MemberRow({
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant="outline" className={`border-transparent ${member.roleColor}`}>
+        <Badge
+          variant="outline"
+          className={`border-transparent ${member.roleColor}`}
+        >
           {member.role}
         </Badge>
       </TableCell>
@@ -90,7 +117,7 @@ function MemberRow({
         {deptName ? (
           <Badge variant="secondary">{deptName}</Badge>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-xs text-muted-foreground">{t.DASH_EMPTY}</span>
         )}
       </TableCell>
       <TableCell className="text-right">
@@ -98,9 +125,10 @@ function MemberRow({
           {/* 👁 Xem 360°: bản thân luôn thấy, manager thấy tất cả, employee chỉ thấy của mình */}
           {canView && (
             <Button
-              size="icon" variant="ghost"
+              size="icon"
+              variant="ghost"
               className="text-primary hover:bg-primary/10"
-              title={member.isSelf ? "Xem đánh giá của tôi" : t.BTN_VIEW_EVALUATION}
+              title={member.isSelf ? t.BTN_SELF_VIEW : t.BTN_VIEW_EVALUATION}
               aria-label={t.BTN_VIEW_EVALUATION}
               onClick={onView}
             >
@@ -109,10 +137,11 @@ function MemberRow({
           )}
           {/* ⭐ Đánh giá / Tự đánh giá */}
           <Button
-            size="icon" variant="ghost"
+            size="icon"
+            variant="ghost"
             className="text-primary hover:bg-primary/10"
-            title={member.isSelf ? "Tự đánh giá" : t.BTN_EVALUATE}
-            aria-label={member.isSelf ? "Tự đánh giá" : t.BTN_EVALUATE}
+            title={member.isSelf ? t.BTN_SELF_EVALUATE : t.BTN_EVALUATE}
+            aria-label={member.isSelf ? t.BTN_SELF_EVALUATE : t.BTN_EVALUATE}
             onClick={onEvaluate}
           >
             <Star className="w-4 h-4" />
@@ -136,7 +165,11 @@ function EditWrapper({
 }>) {
   const { data: latest } = useLatestReview(member.id);
   const initialScores = latest?.expertiseScore
-    ? { expertise: latest.expertiseScore, communication: latest.communicationScore, attitude: latest.attitudeScore }
+    ? {
+        expertise: latest.expertiseScore,
+        communication: latest.communicationScore,
+        attitude: latest.attitudeScore,
+      }
     : undefined;
 
   return (
@@ -146,8 +179,14 @@ function EditWrapper({
       mode="edit"
       initialScores={initialScores}
       initialComment={latest?.comment ?? undefined}
-      onOpenChange={(open) => { if (!open) onClose(); }}
-      onSubmit={async ({ scores, comment }) => { await onSubmit(scores, comment); }}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+      onSubmit={async ({ scores, comment }) => {
+        await onSubmit(scores, comment);
+      }}
     />
   );
 }
@@ -170,7 +209,9 @@ export default function MemberList() {
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(0);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (searchTimer.current) {
+      clearTimeout(searchTimer.current);
+    }
     searchTimer.current = setTimeout(() => setDebouncedSearch(value), 400);
   };
 
@@ -184,21 +225,20 @@ export default function MemberList() {
 
   const members: Member[] = useMemo(
     () =>
-      (data?.content ?? [])
-        .map((m) => ({
-          id: m.id,
-          name: m.fullName,
-          email: m.email,
-          role: m.positionTitle ?? "—",
-          roleColor: roleColor(m.positionTitle),
-          skills: [],
-          avatar: m.avatarUrl ?? "",
-          isSelf: m.userId === user?.id,
-        })),
-    [data, user?.id],
+      (data?.content ?? []).map((m) => ({
+        id: m.id,
+        name: m.fullName,
+        email: m.email,
+        role: m.positionTitle ?? t.DEFAULT_ROLE,
+        roleColor: roleColor(m.positionTitle),
+        skills: [],
+        avatar: m.avatarUrl ?? "",
+        isSelf: m.userId === user?.id,
+      })),
+    [data, user?.id, t.DEFAULT_ROLE],
   );
 
-  const totalPages   = data?.totalPages   ?? 1;
+  const totalPages = data?.totalPages ?? 1;
   const totalElements = data?.totalElements ?? 0;
 
   const handleSubmitReview = async (
@@ -208,15 +248,17 @@ export default function MemberList() {
   ) => {
     const reviewType = member.isSelf
       ? "SELF"
-      : effectiveRole === "employee" ? "PEER" : "MANAGER";
+      : effectiveRole === "employee"
+        ? "PEER"
+        : "MANAGER";
     await saveReviewMutation.mutateAsync({
       revieweeId: member.id,
       reviewType,
       reviewPeriod: currentReviewPeriod(),
       scores: {
-        expertise:     Number(scores["expertise"]     ?? 0),
+        expertise: Number(scores["expertise"] ?? 0),
         communication: Number(scores["communication"] ?? 0),
-        attitude:      Number(scores["attitude"]      ?? 0),
+        attitude: Number(scores["attitude"] ?? 0),
       },
       comment,
     });
@@ -233,7 +275,7 @@ export default function MemberList() {
               <h1 className="page-heading">{t.TITLE}</h1>
               <p className="text-muted-foreground mt-1">{t.DESC}</p>
               <p className="text-xs text-primary mt-1 font-medium">
-                Kỳ đánh giá hiện tại: {currentReviewPeriod()}
+                {t.REVIEW_PERIOD_PREFIX} {currentReviewPeriod()}
               </p>
             </div>
             <div className="relative w-96">
@@ -250,9 +292,13 @@ export default function MemberList() {
           {/* Table */}
           <div className="card-soft">
             {isLoading ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">{t.LOADING_LIST}</div>
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                {t.LOADING_LIST}
+              </div>
             ) : isError ? (
-              <div className="py-16 text-center text-sm text-destructive">{t.ERROR_FETCH}</div>
+              <div className="py-16 text-center text-sm text-destructive">
+                {t.ERROR_FETCH}
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -260,13 +306,18 @@ export default function MemberList() {
                     <TableHead>{t.TABLE_NAME}</TableHead>
                     <TableHead>{t.TABLE_ROLE}</TableHead>
                     <TableHead>{t.TABLE_SKILLS}</TableHead>
-                    <TableHead className="text-right">{t.TABLE_ACTIONS}</TableHead>
+                    <TableHead className="text-right">
+                      {t.TABLE_ACTIONS}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {members.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-12 text-center text-sm text-muted-foreground">
+                      <TableCell
+                        colSpan={4}
+                        className="py-12 text-center text-sm text-muted-foreground"
+                      >
                         {t.EMPTY_LIST}
                       </TableCell>
                     </TableRow>
@@ -275,10 +326,19 @@ export default function MemberList() {
                       <MemberRow
                         key={member.id}
                         member={member}
-                        deptName={(data?.content ?? []).find((m) => m.id === member.id)?.departmentName ?? undefined}
+                        deptName={
+                          (data?.content ?? []).find((m) => m.id === member.id)
+                            ?.departmentName ?? undefined
+                        }
                         effectiveRole={effectiveRole}
-                        onView={() => { setSelectedMember(member); setSheetMode("view"); }}
-                        onEvaluate={() => { setSelectedMember(member); setSheetMode("edit"); }}
+                        onView={() => {
+                          setSelectedMember(member);
+                          setSheetMode("view");
+                        }}
+                        onEvaluate={() => {
+                          setSelectedMember(member);
+                          setSheetMode("edit");
+                        }}
                       />
                     ))
                   )}
@@ -291,18 +351,29 @@ export default function MemberList() {
               <p className="text-sm text-muted-foreground">
                 {t.PAGINATION_SHOW}{" "}
                 <span className="font-medium text-foreground">
-                  {totalElements === 0 ? 0 : page * PAGE_SIZE + 1}{"–"}{Math.min((page + 1) * PAGE_SIZE, totalElements)}
+                  {totalElements === 0 ? 0 : page * PAGE_SIZE + 1}
+                  {t.DASH_EMPTY}
+                  {Math.min((page + 1) * PAGE_SIZE, totalElements)}
                 </span>{" "}
                 {t.PAGINATION_IN}{" "}
-                <span className="font-medium text-foreground">{totalElements}</span>{" "}
+                <span className="font-medium text-foreground">
+                  {totalElements}
+                </span>{" "}
                 {t.PAGINATION_MEMBERS}
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 {Array.from({ length: totalPages }, (_, i) => (
-                  <Button key={i} size="icon"
+                  <Button
+                    key={i}
+                    size="icon"
                     variant={i === page ? "default" : "ghost"}
                     className={`w-8 h-8 ${i === page ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : ""}`}
                     onClick={() => setPage(i)}
@@ -310,7 +381,14 @@ export default function MemberList() {
                     {i + 1}
                   </Button>
                 ))}
-                <Button variant="outline" size="icon" disabled={page >= totalPages - 1} onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={page >= totalPages - 1}
+                  onClick={() =>
+                    setPage((p) => Math.min(totalPages - 1, p + 1))
+                  }
+                >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -325,7 +403,12 @@ export default function MemberList() {
           member={selectedMember}
           open
           mode="view"
-          onOpenChange={(open) => { if (!open) { setSelectedMember(null); setSheetMode("view"); } }}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedMember(null);
+              setSheetMode("view");
+            }
+          }}
         />
       )}
 
@@ -333,8 +416,13 @@ export default function MemberList() {
       {selectedMember && sheetMode === "edit" && (
         <EditWrapper
           member={selectedMember}
-          onSubmit={(scores, comment) => handleSubmitReview(selectedMember, scores, comment)}
-          onClose={() => { setSelectedMember(null); setSheetMode("view"); }}
+          onSubmit={(scores, comment) =>
+            handleSubmitReview(selectedMember, scores, comment)
+          }
+          onClose={() => {
+            setSelectedMember(null);
+            setSheetMode("view");
+          }}
         />
       )}
     </>

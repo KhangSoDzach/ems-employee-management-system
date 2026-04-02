@@ -1,5 +1,5 @@
-import ProfilePage from "@/components/ProfilePage"
+import ProfilePage from "@/features/profile/ProfilePage";
 
 export default function EmployeeDashboard() {
-    return <ProfilePage />
+  return <ProfilePage />;
 }

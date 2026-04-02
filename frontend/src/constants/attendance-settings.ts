@@ -22,6 +22,7 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
     SHIFT_02: "02",
 
     SHIFT_1: {
+      ID: "1",
       LABEL: "Ca 1",
       CHECK_IN: {
         LABEL: "Giờ vào ca 1",
@@ -36,6 +37,7 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
     },
 
     SHIFT_2: {
+      ID: "2",
       LABEL: "Ca 2",
       CHECK_IN: {
         LABEL: "Giờ vào ca 2",

@@ -131,7 +131,7 @@ export const SalarySlipSheet = ({
                           setIsEditing(false);
                         }}
                       >
-                        {"Hủy"}
+                        {SYSTEM_MESSAGES.BTN_CANCEL}
                       </Button>
                       <Button
                         variant="secondary"
@@ -229,12 +229,14 @@ export const SalarySlipSheet = ({
                       <div className="space-y-1">
                         {form.paymentMethod ? (
                           <p className="text-xs text-muted-foreground">
-                            Phương thức: {form.paymentMethod}
+                            {SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_METHOD_SHORT}{" "}
+                            {form.paymentMethod}
                           </p>
                         ) : null}
                         {form.paymentReference ? (
                           <p className="text-xs text-muted-foreground">
-                            Ref: {form.paymentReference}
+                            {SYSTEM_MESSAGES.SALARY_HISTORY.LABEL_REF_SHORT}{" "}
+                            {form.paymentReference}
                           </p>
                         ) : null}
                       </div>
@@ -564,18 +566,15 @@ export const SalarySlipSheet = ({
                 <div class="net-box"><div class="net-label">TONG THUC LINH</div>
                   <div class="net-amount">${form.netPay}</div></div>
               </div></body></html>`;
-              const blob = new Blob([html], {
-                type: "text/html;charset=utf-8",
-              });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.target = "_blank";
-              a.rel = "noopener noreferrer";
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              setTimeout(() => URL.revokeObjectURL(url), 15000);
+              const printWindow = window.open("", "_blank");
+              if (printWindow) {
+                printWindow.document.write(html);
+                printWindow.document.close();
+                // Chờ nội dung load xong rồi gọi lệnh in
+                printWindow.onload = () => {
+                  printWindow.print();
+                };
+              }
             }}
           >
             <FileText className="w-4 h-4" />

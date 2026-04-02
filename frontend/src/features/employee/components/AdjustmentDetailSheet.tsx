@@ -1,5 +1,4 @@
-import { format, formatDistanceToNow } from "date-fns";
-import { vi } from "date-fns/locale";
+import { format } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sheet,
@@ -8,16 +7,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 import {
   ADJUSTMENT_TYPE_CONFIG,
-  AUDIT_ACTION_CONFIG,
   CURRENT_USER,
   DATE_FORMAT,
   DATETIME_FORMAT,
-  DATETIME_LOG_FORMAT,
   type AdjustmentRequest,
-  type AuditEntry,
 } from "@/constants/adjustment-request";
 import { StatusBadge } from "./AdjustmentBadges";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
@@ -26,62 +21,12 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 export const SHEET_LABELS = {
   timeSection: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_TIME_SECTION,
-  oldCheckin: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_OLD_CHECKIN,
-  oldCheckout: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_OLD_CHECKOUT,
   proposed: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_PROPOSED,
   reason: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_REASON,
-  history: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_HISTORY,
   createdAt: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_CREATED_AT,
-  empty: SYSTEM_MESSAGES.ADJUSTMENT.SHEET_EMPTY,
+  checkIn: SYSTEM_MESSAGES.CHECKIN.TABLE_CHECKIN,
+  checkOut: SYSTEM_MESSAGES.CHECKIN.TABLE_CHECKOUT,
 } as const;
-
-/* ══════════════ AUDIT TIMELINE ══════════════ */
-
-const AuditTimeline = ({ entries }: { entries: AuditEntry[] }) => (
-  <div className="relative pl-6">
-    <div className="absolute left-3 top-0 bottom-0 w-px bg-muted" />
-    <div className="space-y-5">
-      {entries.map((entry, i) => {
-        const cfg = AUDIT_ACTION_CONFIG[entry.action];
-        const IconComp = cfg.icon;
-        return (
-          <div key={entry.id} className="relative flex gap-3">
-            <div
-              className={cn(
-                "absolute -left-3 flex items-center justify-center w-6 h-6 rounded-full border-2 border-background shadow-sm",
-                cfg.iconClass,
-              )}
-            >
-              <IconComp className="w-3 h-3" />
-            </div>
-
-            <div className="ml-4 flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2 mb-0.5">
-                <p className="text-sm font-semibold text-foreground">
-                  {cfg.label}
-                </p>
-                <time className="text-xs text-muted-foreground shrink-0">
-                  {i === 0
-                    ? formatDistanceToNow(entry.timestamp, {
-                        addSuffix: true,
-                        locale: vi,
-                      })
-                    : format(entry.timestamp, DATETIME_LOG_FORMAT)}
-                </time>
-              </div>
-              <p className="text-xs text-muted-foreground">{entry.actor}</p>
-              {entry.note && (
-                <blockquote className="mt-2 pl-3 border-l-2 border-muted-foreground/20 text-xs text-muted-foreground italic bg-muted/40 py-2 pr-2 rounded-r-md">
-                  "{entry.note}"
-                </blockquote>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-);
 
 /* ══════════════ DETAIL SHEET ══════════════ */
 
@@ -129,7 +74,8 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
           <div className="mt-3 flex items-center gap-2">
             <StatusBadge status={request.status} />
             <span className="text-xs text-muted-foreground">
-              {SHEET_LABELS.createdAt}{" "}
+              {SHEET_LABELS.createdAt}
+              {SYSTEM_MESSAGES.SYMBOLS.SPACE}
               {format(request.dateCreated, DATETIME_FORMAT)}
             </span>
           </div>
@@ -147,53 +93,40 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
             <div className="space-y-3">
               {hasIn && (
                 <div className="flex items-center justify-between p-3 rounded-xl border bg-muted/30">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">
-                      {SHEET_LABELS.oldCheckin}
+                  <div className="flex items-center justify-between w-full">
+                    <p className="text-xs text-muted-foreground">
+                      {SHEET_LABELS.checkIn}
                     </p>
-                    <p className="text-sm font-semibold text-muted-foreground">
-                      {request.originalTimeIn ?? SHEET_LABELS.empty}
-                    </p>
-                  </div>
-                  <div className="text-muted-foreground/40 text-lg font-light">
-                    {SYSTEM_MESSAGES.SYMBOLS.ARROW_RIGHT}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground mb-0.5">
-                      {SHEET_LABELS.proposed}
-                    </p>
-                    <p className="text-sm font-bold text-green-700">
-                      {request.proposedTimeIn}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        {SHEET_LABELS.proposed}
+                      </p>
+                      <p className="text-sm font-bold text-green-700">
+                        {request.proposedTimeIn}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
               {hasOut && (
                 <div className="flex items-center justify-between p-3 rounded-xl border bg-muted/30">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">
-                      {SHEET_LABELS.oldCheckout}
+                  <div className="flex items-center justify-between w-full">
+                    <p className="text-xs text-muted-foreground">
+                      {SHEET_LABELS.checkOut}
                     </p>
-                    <p className="text-sm font-semibold text-muted-foreground">
-                      {request.originalTimeOut ?? SHEET_LABELS.empty}
-                    </p>
-                  </div>
-                  <div className="text-muted-foreground/40 text-lg font-light">
-                    {SYSTEM_MESSAGES.SYMBOLS.ARROW_RIGHT}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground mb-0.5">
-                      {SHEET_LABELS.proposed}
-                    </p>
-                    <p className="text-sm font-bold text-green-700">
-                      {request.proposedTimeOut}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        {SHEET_LABELS.proposed}
+                      </p>
+                      <p className="text-sm font-bold text-green-700">
+                        {request.proposedTimeOut}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </section>
-
           {/* Lý do */}
           <section>
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
@@ -204,12 +137,6 @@ export const DetailSheet = ({ request, open, onClose }: DetailSheetProps) => {
               {request.reason}
               {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
             </blockquote>
-          </section>
-
-          {/* Lịch sử thao tác */}
-          <section>
-            <h4 className="section-title-muted mb-4">{SHEET_LABELS.history}</h4>
-            <AuditTimeline entries={request.auditTrail} />
           </section>
         </div>
       </SheetContent>

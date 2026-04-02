@@ -485,8 +485,8 @@ export default function LeaveRequestPage() {
                           req.currentApprovalLevel &&
                           req.maxApprovalLevel && (
                             <span className="text-xs text-muted-foreground mt-1">
-                              Lv {req.currentApprovalLevel}/
-                              {req.maxApprovalLevel}
+                              {SYSTEM_MESSAGES.SYMBOLS.LEVEL}{" "}
+                              {req.currentApprovalLevel}/{req.maxApprovalLevel}
                             </span>
                           )}
                       </div>

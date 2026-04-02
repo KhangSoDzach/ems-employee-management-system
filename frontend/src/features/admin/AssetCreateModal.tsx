@@ -3,8 +3,8 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { assetService, AssetCreatePayload } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import { AssetForm, AssetFormData } from "./components/AssetForm";
+import { assetSchema } from "./schemas/asset.schema";
 
 interface Props {
   open: boolean;
@@ -32,31 +32,20 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
   }
 
   const handleFormSubmit = async (formData: AssetFormData) => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) {
-      newErrors.name = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
-    }
-    if (!formData.type.trim()) {
-      newErrors.type = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
-    }
-    if (!formData.locationOrUser.trim()) {
-      newErrors.locationOrUser =
-        SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
-    }
-    if (formData.value !== undefined && formData.value < 0) {
-      newErrors.value = SYSTEM_MESSAGES.ASSET_CREATE.MSG_ERROR_VALUE;
-    }
-
-    // Date validations
-    const todayStr = new Date().toISOString().split("T")[0] || "";
-    if (formData.purchaseDate && formData.purchaseDate > todayStr) {
-      newErrors.purchaseDate =
-        SYSTEM_MESSAGES.ASSET_CREATE.MSG_ERROR_PURCHASE_DATE;
-    }
-
-    if (Object.keys(newErrors).length > 0) {
+    const parseResult = assetSchema.safeParse(formData);
+    if (!parseResult.success) {
+      const newErrors: Record<string, string> = {};
+      parseResult.error.issues.forEach((err) => {
+        const path = err.path[0] as string;
+        if (!newErrors[path]) {
+          newErrors[path] = err.message;
+        }
+      });
       setErrors(newErrors);
-      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+      const firstError = parseResult.error.issues[0]?.message;
+      if (firstError) {
+        toast.error(firstError);
+      }
       return;
     }
 
@@ -69,14 +58,14 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
         purchaseDate: formData.purchaseDate || undefined,
         initialStatus: formData.initialStatus,
         condition: formData.condition,
-        location: formData.locationOrUser,
-        notes: formData.note,
-        description: formData.description,
+        location: formData.locationOrUser || undefined,
+        notes: formData.note || undefined,
+        description: formData.description || undefined,
         warrantyUntil: formData.warrantyDate || undefined,
-        supplierName: formData.supplier,
+        supplierName: formData.supplier || undefined,
         contractUntil: formData.contractDate || undefined,
-        contractNumber: formData.contractNumber,
-        imageUrl: formData.image,
+        contractNumber: formData.contractNumber || undefined,
+        imageUrl: formData.image || undefined,
       };
       await assetService.createAsset(payload);
       toast.success(SYSTEM_MESSAGES.ASSET_CREATE.MSG_CREATE_SUCCESS);
@@ -98,7 +87,7 @@ export default function AssetCreateModal({ open, onClose, onCreated }: Props) {
               {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_ADD}
             </h2>
             <p className="text-[10px] font-black text-primary mt-1 tracking-[0.2em] uppercase font-mono">
-              {"#"}
+              {SYSTEM_MESSAGES.SYMBOLS.HASH}
               {nextCode}
             </p>
           </div>

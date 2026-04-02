@@ -356,8 +356,9 @@ export default function AssetManagementPage() {
                       <span
                         className={`text-[10px] font-black tracking-widest px-3 py-1 rounded-full uppercase border ${asset.statusColor}`}
                       >
-                        {ASSET_STATUS_LABELS[asset.status as AssetStatus] ??
-                          asset.status}
+                        {ASSET_STATUS_LABELS[
+                          asset.status?.toUpperCase() as AssetStatus
+                        ] ?? asset.status}
                       </span>
                     </td>
 
@@ -516,9 +517,11 @@ export default function AssetManagementPage() {
                   // ASSIGNED: show guidance to return first
                   <div className="space-y-4">
                     <p>
-                      Tài sản{" "}
+                      {SYSTEM_MESSAGES.ASSET.PREFIX_ASSET}{" "}
                       <span className="font-bold text-foreground">
-                        "{deleteTarget?.name}"
+                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                        {deleteTarget?.name}
+                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                       </span>{" "}
                       {SYSTEM_MESSAGES.ASSET.MSG_DELETE_WARNING}
                       <span className="font-bold text-amber-500 underline underline-offset-4">
@@ -545,7 +548,9 @@ export default function AssetManagementPage() {
                     <p>
                       {SYSTEM_MESSAGES.ASSET.MSG_DELETE_CONFIRM}
                       <span className="font-bold text-foreground mx-1">
-                        "{deleteTarget?.name}"
+                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                        {deleteTarget?.name}
+                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                       </span>
                       ?
                     </p>

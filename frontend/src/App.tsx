@@ -64,7 +64,7 @@ const AssetGroupManagement = lazy(
 const EmployeeManagement = lazy(
   () => import("./features/hr/EmployeeManagement"),
 );
-const ProfilePage = lazy(() => import("./components/ProfilePage"));
+const ProfilePage = lazy(() => import("./features/profile/ProfilePage"));
 const AnnouncementsPage = lazy(
   () => import("./features/employee/AnnouncementsPage"),
 );

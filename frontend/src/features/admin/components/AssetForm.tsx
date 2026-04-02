@@ -109,9 +109,11 @@ const SectionHeader = ({ icon, title }: { icon: string; title: string }) => (
 const AdditionalInfoSection = ({
   form,
   setField,
+  errors,
 }: {
   form: AssetFormData;
   setField: <K extends keyof AssetFormData>(f: K, v: AssetFormData[K]) => void;
+  errors: Record<string, string>;
 }) => (
   <div className="bg-muted/10 rounded-2xl border border-border p-6 space-y-6">
     <SectionHeader
@@ -126,9 +128,15 @@ const AdditionalInfoSection = ({
         type="date"
         value={form.warrantyDate || ""}
         onChange={(e) => setField("warrantyDate", e.target.value)}
-        className="form-input"
+        className={`form-input ${errors.warrantyDate ? "border-destructive ring-destructive/20" : ""}`}
       />
+      {errors.warrantyDate && (
+        <p className="text-destructive text-[10px] mt-1 uppercase font-bold">
+          {errors.warrantyDate}
+        </p>
+      )}
     </div>
+
     <div className="form-group">
       <label className="form-label-secondary">
         {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_SUPPLIER}
@@ -137,9 +145,15 @@ const AdditionalInfoSection = ({
         placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_SUPPLIER}
         value={form.supplier || ""}
         onChange={(e) => setField("supplier", e.target.value)}
-        className="form-input"
+        className={`form-input ${errors.supplier ? "border-destructive ring-destructive/20" : ""}`}
       />
+      {errors.supplier && (
+        <p className="text-destructive text-[10px] mt-1 uppercase font-bold">
+          {errors.supplier}
+        </p>
+      )}
     </div>
+
     <div className="form-group">
       <label className="form-label-secondary">
         {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_NUM}
@@ -148,9 +162,15 @@ const AdditionalInfoSection = ({
         placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_CONTRACT_NUM}
         value={form.contractNumber || ""}
         onChange={(e) => setField("contractNumber", e.target.value)}
-        className="form-input"
+        className={`form-input ${errors.contractNumber ? "border-destructive ring-destructive/20" : ""}`}
       />
+      {errors.contractNumber && (
+        <p className="text-destructive text-[10px] mt-1 uppercase font-bold">
+          {errors.contractNumber}
+        </p>
+      )}
     </div>
+
     <div className="form-group">
       <label className="form-label-secondary">
         {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_CONTRACT_UNTIL}
@@ -159,8 +179,13 @@ const AdditionalInfoSection = ({
         type="date"
         value={form.contractDate || ""}
         onChange={(e) => setField("contractDate", e.target.value)}
-        className="form-input"
+        className={`form-input ${errors.contractDate ? "border-destructive ring-destructive/20" : ""}`}
       />
+      {errors.contractDate && (
+        <p className="text-destructive text-[10px] mt-1 uppercase font-bold">
+          {errors.contractDate}
+        </p>
+      )}
     </div>
   </div>
 );
@@ -238,7 +263,14 @@ export const AssetForm: React.FC<Props> = ({
 
   useEffect(() => {
     if (initialData) {
-      setForm((f) => ({ ...f, ...initialData }));
+      setForm((f) => ({
+        ...f,
+        ...initialData,
+        condition:
+          (initialData.condition?.toUpperCase() as AssetCondition) ||
+          f.condition,
+        initialStatus: initialData.initialStatus?.toUpperCase() as AssetStatus,
+      }));
       setImagePreview(initialData.image || null);
       setEmployeeKeyword(initialData.locationOrUser || "");
     }
@@ -263,7 +295,14 @@ export const AssetForm: React.FC<Props> = ({
     field: K,
     value: AssetFormData[K],
   ) => {
-    setForm((f) => ({ ...f, [field]: value }));
+    let finalValue = value;
+    if (
+      (field === "condition" || field === "initialStatus") &&
+      typeof value === "string"
+    ) {
+      finalValue = value.toUpperCase() as AssetFormData[K];
+    }
+    setForm((f) => ({ ...f, [field]: finalValue }));
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -298,7 +337,11 @@ export const AssetForm: React.FC<Props> = ({
             onImageChange={handleImageUpload}
             onUrlChange={(v) => setField("image", v)}
           />
-          <AdditionalInfoSection form={form} setField={setField} />
+          <AdditionalInfoSection
+            form={form}
+            setField={setField}
+            errors={errors}
+          />
         </div>
 
         <div className="lg:col-span-2 space-y-8">
@@ -329,7 +372,7 @@ export const AssetForm: React.FC<Props> = ({
                   {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE}
                 </label>
                 <input
-                  placeholder={SYSTEM_MESSAGES.ASSET_CREATE.PLACEHOLDER_NAME}
+                  placeholder={SYSTEM_MESSAGES.ASSET_CREATE.LABEL_TYPE}
                   value={form.type}
                   onChange={(e) => setField("type", e.target.value)}
                   className={`form-input ${errors.type ? "border-destructive ring-destructive/20" : ""}`}
@@ -366,33 +409,36 @@ export const AssetForm: React.FC<Props> = ({
                   type="date"
                   value={form.purchaseDate || ""}
                   onChange={(e) => setField("purchaseDate", e.target.value)}
-                  className="form-input"
+                  className={`form-input ${errors.purchaseDate ? "border-destructive ring-destructive/20" : ""}`}
                 />
+                {errors.purchaseDate && (
+                  <p className="text-destructive text-xs mt-1">
+                    {errors.purchaseDate}
+                  </p>
+                )}
               </div>
 
-              {!isEdit && (
-                <div className="form-group">
-                  <label className="form-label-secondary">
-                    {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_STATUS}
-                  </label>
-                  <select
-                    value={form.initialStatus || "AVAILABLE"}
-                    onChange={(e) =>
-                      setField("initialStatus", e.target.value as AssetStatus)
-                    }
-                    className="form-select"
-                  >
-                    {STATUS_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div className="form-group">
+                <label className="form-label-secondary">
+                  {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_STATUS}
+                </label>
+                <select
+                  value={form.initialStatus?.toUpperCase() || "AVAILABLE"}
+                  onChange={(e) =>
+                    setField("initialStatus", e.target.value as AssetStatus)
+                  }
+                  className="form-select"
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div className={`form-group ${isEdit ? "md:col-span-2" : ""}`}>
-                <label className="form-label-required">
+                <label className="form-label-secondary">
                   {SYSTEM_MESSAGES.ASSET_CREATE.LABEL_USER_ONLY}
                 </label>
                 <div className="relative">
@@ -444,7 +490,10 @@ export const AssetForm: React.FC<Props> = ({
                         type="radio"
                         name="condition"
                         value={item.value}
-                        checked={form.condition === item.value}
+                        checked={
+                          form.condition?.toUpperCase() ===
+                          item.value.toUpperCase()
+                        }
                         onChange={() => setField("condition", item.value)}
                         className="peer hidden"
                       />

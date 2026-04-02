@@ -12,7 +12,6 @@ import {
   Calendar,
   Users,
   CreditCard,
-  ShieldCheck,
   ClipboardList,
   AlertCircle,
   FileQuestion,

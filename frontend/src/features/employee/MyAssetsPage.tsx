@@ -53,8 +53,8 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 const INCIDENT_TYPES = [
-  { value: "DAMAGED", label: "Hư hỏng / Lỗi thiết bị" },
-  { value: "LOST", label: "Mất mát / Thất lạc" },
+  { value: "DAMAGED", label: SYSTEM_MESSAGES.MY_ASSETS.STATUS_DAMAGED },
+  { value: "LOST", label: SYSTEM_MESSAGES.MY_ASSETS.STATUS_LOST },
 ];
 
 /* ─────────────── ASSET CARD ─────────────── */
@@ -82,7 +82,7 @@ function AssetCard({
         )}
         {isVirtual && (
           <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
-            Chờ bàn giao
+            {SYSTEM_MESSAGES.MY_ASSETS.WAITING_ASSIGN}
           </span>
         )}
       </div>
@@ -94,7 +94,10 @@ function AssetCard({
             {asset.name}
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {isVirtual ? "Mã YC: " : SYSTEM_MESSAGES.MY_ASSETS.LABEL_ASSET_TAG + SYSTEM_MESSAGES.SYMBOLS.COLON}
+            {isVirtual
+              ? SYSTEM_MESSAGES.MY_ASSETS.LABEL_REQUEST_ID
+              : SYSTEM_MESSAGES.MY_ASSETS.LABEL_ASSET_TAG +
+                SYSTEM_MESSAGES.SYMBOLS.COLON}
             {asset.tag}
           </p>
         </div>
@@ -110,7 +113,9 @@ function AssetCard({
           onClick={() => onReportIssue(asset)}
         >
           <AlertTriangle className="w-3.5 h-3.5" />
-          {isVirtual ? "Chờ bàn giao" : SYSTEM_MESSAGES.MY_ASSETS.BTN_REPORT}
+          {isVirtual
+            ? SYSTEM_MESSAGES.MY_ASSETS.WAITING_ASSIGN
+            : SYSTEM_MESSAGES.MY_ASSETS.BTN_REPORT}
         </Button>
       </div>
     </div>
@@ -161,15 +166,15 @@ export default function MyAssetsPage() {
       // can see what was approved even before the physical asset is assigned.
       const approvedRequests: MyAsset[] = requestList.content
         .filter((r: AssetRequestRow) => r.status === "APPROVED")
-        .filter((r: AssetRequestRow) =>
-          // skip if a real assigned asset already covers this request
-          !assetList.some(
-            (a: MyAsset) =>
+        .filter(
+          (r: AssetRequestRow) =>
+            // skip if a real assigned asset already covers this request
+            !assetList.some((a: MyAsset) =>
               a.name?.toLowerCase().includes(r.assetType?.toLowerCase() ?? ""),
-          ),
+            ),
         )
         .map((r: AssetRequestRow) => ({
-          id: -(r.id),          // negative id = virtual (not a real Asset record)
+          id: -r.id, // negative id = virtual (not a real Asset record)
           name: r.assetType,
           tag: r.requestId,
           assetType: r.assetType,
@@ -193,7 +198,7 @@ export default function MyAssetsPage() {
   const handleReportIssue = (asset: MyAsset) => {
     // Virtual assets (id < 0) are approved requests without a physical asset assigned yet
     if (asset.id < 0) {
-      toast.info("Tài sản chưa được bàn giao thực tế. Vui lòng liên hệ HR/Admin.");
+      toast.info(SYSTEM_MESSAGES.MY_ASSETS.WAITING_DESC);
       return;
     }
     setSelectedAsset(asset);
@@ -279,13 +284,13 @@ export default function MyAssetsPage() {
             value="equipment"
             className="rounded-lg px-6 py-2 text-sm font-medium"
           >
-            Thiết bị & Báo cáo
+            {SYSTEM_MESSAGES.MY_ASSETS.ALL_STATUS}
           </TabsTrigger>
           <TabsTrigger
             value="requests"
             className="rounded-lg px-6 py-2 text-sm font-medium"
           >
-            Yêu cầu cấp phát
+            {SYSTEM_MESSAGES.MY_ASSETS.REQUEST_STATUS}
           </TabsTrigger>
         </TabsList>
 
@@ -486,7 +491,9 @@ export default function MyAssetsPage() {
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">
                 {SYSTEM_MESSAGES.MY_ASSETS.LABEL_INCIDENT}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-red-500">
+                  {SYSTEM_MESSAGES.SYMBOLS.REQUIRED}
+                </span>
               </label>
               <Select
                 value={incidentType}
@@ -526,7 +533,9 @@ export default function MyAssetsPage() {
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-foreground">
                   {SYSTEM_MESSAGES.MY_ASSETS.LABEL_DESC}{" "}
-                  <span className="text-red-500">*</span>
+                  <span className="text-red-500">
+                    {SYSTEM_MESSAGES.SYMBOLS.REQUIRED}
+                  </span>
                 </label>
                 <span
                   className={

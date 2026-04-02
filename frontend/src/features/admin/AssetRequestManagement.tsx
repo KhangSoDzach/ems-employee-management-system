@@ -182,7 +182,7 @@ export function AssetRequestManagement() {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Tổng số
+                {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_STATS_TOTAL}
               </p>
               <p className="text-2xl font-bold mt-1 text-foreground">
                 {stats.total}
@@ -197,7 +197,7 @@ export function AssetRequestManagement() {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Chờ duyệt
+                {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_STATS_PENDING}
               </p>
               <p className="text-2xl font-bold mt-1 text-yellow-600">
                 {stats.pending}
@@ -212,7 +212,7 @@ export function AssetRequestManagement() {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Đã duyệt
+                {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_STATS_APPROVED}
               </p>
               <p className="text-2xl font-bold mt-1 text-emerald-600">
                 {stats.approved}
@@ -227,7 +227,7 @@ export function AssetRequestManagement() {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Từ chối
+                {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_STATS_REJECTED}
               </p>
               <p className="text-2xl font-bold mt-1 text-red-600">
                 {stats.rejected}
@@ -320,7 +320,8 @@ export function AssetRequestManagement() {
                     onClick={() => handleOpenDetail(r.id)}
                   >
                     <TableCell className="px-5 py-3 font-medium text-blue-600">
-                      #{r.requestId}
+                      {SYSTEM_MESSAGES.SYMBOLS.HASH}
+                      {r.requestId}
                     </TableCell>
                     <TableCell className="px-5 py-3 font-medium">
                       {r.employeeName}
@@ -396,7 +397,9 @@ export function AssetRequestManagement() {
               {SYSTEM_MESSAGES.ASSET_REQUEST.MODAL_DETAIL_TITLE}
             </SheetTitle>
             <SheetDescription>
-              {selectedRequest ? `#${selectedRequest.requestId}` : ""}
+              {selectedRequest
+                ? `${SYSTEM_MESSAGES.SYMBOLS.HASH}${selectedRequest.requestId}`
+                : ""}
             </SheetDescription>
           </SheetHeader>
 
@@ -409,7 +412,7 @@ export function AssetRequestManagement() {
               <div className="space-y-4 rounded-lg bg-muted/20 p-4 border border-border">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Trạng thái
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_STATUS}
                   </span>
                   <Badge className={selectedRequest.statusColor}>
                     {selectedRequest.statusLabel}
@@ -417,7 +420,7 @@ export function AssetRequestManagement() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Nhân viên
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_EMPLOYEE}
                   </span>
                   <span className="font-medium">
                     {selectedRequest.requestedBy}
@@ -425,21 +428,23 @@ export function AssetRequestManagement() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Loại tài sản
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_ASSET_TYPE}
                   </span>
                   <span className="font-medium">
                     {selectedRequest.assetType}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Ưu tiên</span>
+                  <span className="text-sm text-muted-foreground">
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_PRIORITY}
+                  </span>
                   <Badge className={selectedRequest.priorityColor}>
                     {selectedRequest.priorityLabel}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Ngày gửi
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.TABLE_DATE}
                   </span>
                   <span className="text-sm">{selectedRequest.requestedAt}</span>
                 </div>
@@ -458,7 +463,7 @@ export function AssetRequestManagement() {
                 user?.id === selectedRequest.requesterUserId ? (
                   <div className="space-y-4 pt-4 border-t border-border">
                     <div className="bg-amber-50 text-amber-600 border border-amber-200 p-3 rounded-md text-sm text-center">
-                      Bạn không thể tự duyệt yêu cầu cấp phát của bản thân.
+                      {SYSTEM_MESSAGES.ASSET_REQUEST.MSG_SELF_APPROVE_ERROR}
                     </div>
                   </div>
                 ) : (
@@ -499,7 +504,7 @@ export function AssetRequestManagement() {
               ) : (
                 <div className="space-y-4 pt-4 border-t border-border">
                   <h4 className="text-sm font-semibold bg-muted/40 p-2 rounded-t-lg border border-b-0 border-border">
-                    Lịch sử xử lý
+                    {SYSTEM_MESSAGES.ASSET_REQUEST.LABEL_PROCESS_HISTORY}
                   </h4>
                   <div className="border border-border rounded-b-lg p-3 space-y-2 text-sm bg-muted/10">
                     <div className="flex justify-between">
