@@ -3,7 +3,7 @@ import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { ProfileFormValues } from "@/features/profile/schemas/profile.schema";
+import { ProfileFormValues } from "@/features/profile/schemas/ProfileSchema";
 
 const CONTRACT_CLASSES: Record<string, string> = {
   FULL_TIME: "bg-green-100 text-green-700",
