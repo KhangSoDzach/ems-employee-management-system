@@ -17,6 +17,9 @@ public class MemberResponse {
     @Schema(description = "Employee primary key")
     private Long id;
 
+    @Schema(description = "User account ID")
+    private Long userId;
+
     @Schema(description = "Auto-generated employee code, e.g. IT202600001")
     private String employeeCode;
 

@@ -1,22 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  memberService,
-  type OpenReviewCycleRequest,
-  type SaveReviewRequest,
-} from "@/services/memberService";
+import { memberService, type SaveReviewRequest } from "@/services/memberService";
 import { TEAM_MEMBERS_QUERY_KEY } from "./useTeamMembers";
 
-/** React Query key prefix for performance review queries */
-export const REVIEW_QUERY_KEY = "performance-review" as const;
-export const REVIEW_CYCLE_QUERY_KEY = "performance-review-cycle" as const;
+export const REVIEW_QUERY_KEY    = "performance-review" as const;
+export const AGGREGATE_QUERY_KEY = "performance-review-aggregate" as const;
 
-/**
- * Fetches the latest performance review for a specific employee.
- * If no review exists the backend returns an empty object with totalScore=0.
- *
- * @param employeeId - ID of the employee to fetch review for (pass 0 / undefined to skip)
- */
+type AxiosLike = { response?: { data?: { message?: string } }; message?: string };
+function backendMessage(error: unknown, fallback: string): string {
+  const e = error as AxiosLike;
+  return e?.response?.data?.message ?? e?.message ?? fallback;
+}
+
 export function useLatestReview(employeeId: number | null | undefined) {
   return useQuery({
     queryKey: [REVIEW_QUERY_KEY, "latest", employeeId],
@@ -26,50 +21,30 @@ export function useLatestReview(employeeId: number | null | undefined) {
   });
 }
 
-/**
- * Mutation hook to save (or update) a performance evaluation.
- * On success: shows a toast and invalidates the latest-review cache.
- */
-export function useSaveReview() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: SaveReviewRequest) =>
-      memberService.saveReview(payload),
-    onSuccess: (_, variables) => {
-      toast.success("Đánh giá đã được lưu thành công");
-      // Invalidate so the view-mode sheet picks up the new scores immediately
-      queryClient.invalidateQueries({
-        queryKey: [REVIEW_QUERY_KEY, "latest", variables.revieweeId],
-      });
-      queryClient.invalidateQueries({ queryKey: [TEAM_MEMBERS_QUERY_KEY] });
-    },
-    onError: (error: Error) => {
-      toast.error(error?.message ?? "Có lỗi xảy ra khi lưu đánh giá");
-    },
-  });
-}
-
-export function useActiveReviewCycle() {
+export function useAggregateReview(
+  employeeId: number | null | undefined,
+  period?: string,
+) {
   return useQuery({
-    queryKey: [REVIEW_CYCLE_QUERY_KEY, "active"],
-    queryFn: memberService.getActiveReviewCycle,
+    queryKey: [AGGREGATE_QUERY_KEY, employeeId, period ?? "latest"],
+    queryFn: () => memberService.getAggregate(employeeId!, period),
+    enabled: !!employeeId,
     staleTime: 30_000,
   });
 }
 
-export function useOpenReviewCycle() {
+export function useSaveReview() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (payload: OpenReviewCycleRequest) =>
-      memberService.openReviewCycle(payload),
-    onSuccess: () => {
-      toast.success("Đã mở đợt đánh giá trong 3 ngày");
-      queryClient.invalidateQueries({ queryKey: [REVIEW_CYCLE_QUERY_KEY] });
+    mutationFn: (payload: SaveReviewRequest) => memberService.saveReview(payload),
+    onSuccess: (_, variables) => {
+      toast.success("Đánh giá đã được lưu thành công");
+      queryClient.invalidateQueries({ queryKey: [AGGREGATE_QUERY_KEY, variables.revieweeId] });
+      queryClient.invalidateQueries({ queryKey: [REVIEW_QUERY_KEY, "latest", variables.revieweeId] });
+      queryClient.invalidateQueries({ queryKey: [TEAM_MEMBERS_QUERY_KEY] });
     },
-    onError: (error: Error) => {
-      toast.error(error?.message ?? "Không thể mở đợt đánh giá");
+    onError: (error: unknown) => {
+      toast.error(backendMessage(error, "Có lỗi xảy ra khi lưu đánh giá"));
     },
   });
 }

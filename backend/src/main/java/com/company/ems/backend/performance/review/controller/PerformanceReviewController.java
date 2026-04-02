@@ -1,5 +1,6 @@
 package com.company.ems.backend.performance.review.controller;
 
+import com.company.ems.backend.employee.repository.EmployeeRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,9 +35,10 @@ public class PerformanceReviewController {
 
     private final PerformanceReviewService service;
     private final MessageService           messages;
+    private final EmployeeRepository employeeRepo;
 
     @PostMapping
-    @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
     @Operation(summary = "Save a new review", description = "Submits a performance evaluation for an employee. Managers can submit reviews for their team members.")
     public ResponseEntity<ApiResponse<PerformanceReviewDto.Response>> saveReview(
             @Valid @RequestBody PerformanceReviewDto.CreateRequest request) {
@@ -80,20 +82,47 @@ public class PerformanceReviewController {
                 ApiResponse.success(service.getLatestForEmployee(employeeId)));
     }
 
-        @PostMapping("/cycles/open")
-        @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
-        @Operation(summary = "Open review cycle", description = "Manager opens a review cycle that lasts exactly 3 days and notifies team members")
-        public ResponseEntity<ApiResponse<PerformanceReviewCycleDto.Response>> openCycle(
-                        @Valid @RequestBody PerformanceReviewCycleDto.OpenRequest request) {
-                return ResponseEntity.status(HttpStatus.CREATED)
-                                .body(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), service.openReviewCycle(request)));
+    @PostMapping("/cycles/open")
+    @PreAuthorize(RoleAuthorization.HAS_MANAGER_OR_ABOVE)
+    @Operation(summary = "Open review cycle", description = "Manager opens a review cycle that lasts exactly 3 days and notifies team members")
+    public ResponseEntity<ApiResponse<PerformanceReviewCycleDto.Response>> openCycle(
+            @Valid @RequestBody PerformanceReviewCycleDto.OpenRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), service.openReviewCycle(request)));
+    }
+
+    @GetMapping("/cycles/active")
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @Operation(summary = "Get active review cycle", description = "Returns currently active review cycle of current manager/team, if any")
+    public ResponseEntity<ApiResponse<PerformanceReviewCycleDto.Response>> getActiveCycle() {
+        return ResponseEntity.ok(
+                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), service.getMyActiveCycle()));
+    }
+
+    @GetMapping("/aggregate/{employeeId}")
+    @PreAuthorize(RoleAuthorization.HAS_ANY)
+    @Operation(summary = "Get 360° aggregate review", description = "Returns weighted aggregate. Employee can only view their own. Manager/HR/Admin can view anyone.")
+    public ResponseEntity<ApiResponse<PerformanceReviewDto.AggregateResponse>> getAggregate(
+            @PathVariable Long employeeId,
+            @RequestParam(required = false) String period,
+            org.springframework.security.core.Authentication authentication) {
+
+        // Check if requester is an employee trying to view someone else's review
+        boolean isEmployee = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"));
+        if (isEmployee) {
+            // Find the employee record of the current user
+            com.company.ems.backend.employee.entity.Employee self =
+                    employeeRepo.findByUserUsername(authentication.getName())
+                            .orElseThrow(() -> new com.company.ems.backend.common.exception.AppException(
+                                    com.company.ems.backend.common.enums.ErrorCode.RESOURCE_NOT_FOUND));
+            if (!self.getId().equals(employeeId)) {
+                throw new com.company.ems.backend.common.exception.AppException(
+                        com.company.ems.backend.common.enums.ErrorCode.ACCESS_DENIED);
+            }
         }
 
-        @GetMapping("/cycles/active")
-        @PreAuthorize(RoleAuthorization.HAS_ANY)
-        @Operation(summary = "Get active review cycle", description = "Returns currently active review cycle of current manager/team, if any")
-        public ResponseEntity<ApiResponse<PerformanceReviewCycleDto.Response>> getActiveCycle() {
-                return ResponseEntity.ok(
-                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), service.getMyActiveCycle()));
-        }
+        PerformanceReviewDto.AggregateResponse agg = service.getAggregate(employeeId, period);
+        return ResponseEntity.ok(ApiResponse.success("Aggregate review", agg));
+    }
 }

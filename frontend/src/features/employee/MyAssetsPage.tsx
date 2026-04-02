@@ -44,6 +44,7 @@ import {
   assetService,
   MyAsset,
   IncidentReportRow,
+  AssetRequestRow,
 } from "@/services/assetService";
 
 /* ─────────────── CONSTANTS ─────────────── */
@@ -52,8 +53,8 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 
 const INCIDENT_TYPES = [
-  { value: "DAMAGED", label: SYSTEM_MESSAGES.MY_ASSETS.STATUS_DAMAGED },
-  { value: "LOST", label: SYSTEM_MESSAGES.MY_ASSETS.STATUS_LOST },
+  { value: "DAMAGED", label: "Hư hỏng / Lỗi thiết bị" },
+  { value: "LOST", label: "Mất mát / Thất lạc" },
 ];
 
 /* ─────────────── ASSET CARD ─────────────── */
@@ -65,6 +66,7 @@ function AssetCard({
   const isLaptop = asset.assetType?.toLowerCase().includes("laptop");
   const isMonitor = asset.assetType?.toLowerCase().includes("monitor");
   const Icon = isLaptop ? Laptop : isMonitor ? Monitor : Mouse;
+  const isVirtual = asset.id < 0; // approved request, not yet physically assigned
 
   return (
     <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden flex flex-col">
@@ -78,6 +80,11 @@ function AssetCard({
             className="absolute inset-0 w-full h-full object-cover"
           />
         )}
+        {isVirtual && (
+          <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+            Chờ bàn giao
+          </span>
+        )}
       </div>
 
       {/* Info area */}
@@ -87,8 +94,7 @@ function AssetCard({
             {asset.name}
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {SYSTEM_MESSAGES.MY_ASSETS.LABEL_ASSET_TAG}
-            {SYSTEM_MESSAGES.SYMBOLS.COLON}
+            {isVirtual ? "Mã YC: " : SYSTEM_MESSAGES.MY_ASSETS.LABEL_ASSET_TAG + SYSTEM_MESSAGES.SYMBOLS.COLON}
             {asset.tag}
           </p>
         </div>
@@ -96,11 +102,15 @@ function AssetCard({
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-8 gap-1.5 text-xs font-semibold text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600 mt-auto"
+          className={`w-full h-8 gap-1.5 text-xs font-semibold mt-auto ${
+            isVirtual
+              ? "text-amber-600 border-amber-200 bg-amber-50 hover:bg-amber-100 cursor-default"
+              : "text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600"
+          }`}
           onClick={() => onReportIssue(asset)}
         >
           <AlertTriangle className="w-3.5 h-3.5" />
-          {SYSTEM_MESSAGES.MY_ASSETS.BTN_REPORT}
+          {isVirtual ? "Chờ bàn giao" : SYSTEM_MESSAGES.MY_ASSETS.BTN_REPORT}
         </Button>
       </div>
     </div>
@@ -141,11 +151,32 @@ export default function MyAssetsPage() {
 
   const fetchContent = useCallback(async () => {
     try {
-      const [assetList, reportList] = await Promise.all([
+      const [assetList, reportList, requestList] = await Promise.all([
         assetService.getMyAssets(),
         assetService.getMyReports(0, 1000),
+        assetService.getMyAssetRequests(0, 100),
       ]);
-      setAssets(assetList);
+
+      // FIX: also show approved requests as "virtual assets" so employees
+      // can see what was approved even before the physical asset is assigned.
+      const approvedRequests: MyAsset[] = requestList.content
+        .filter((r: AssetRequestRow) => r.status === "APPROVED")
+        .filter((r: AssetRequestRow) =>
+          // skip if a real assigned asset already covers this request
+          !assetList.some(
+            (a: MyAsset) =>
+              a.name?.toLowerCase().includes(r.assetType?.toLowerCase() ?? ""),
+          ),
+        )
+        .map((r: AssetRequestRow) => ({
+          id: -(r.id),          // negative id = virtual (not a real Asset record)
+          name: r.assetType,
+          tag: r.requestId,
+          assetType: r.assetType,
+          imageUrl: null,
+        }));
+
+      setAssets([...assetList, ...approvedRequests]);
       setReports(reportList.content);
     } catch (error) {
       toast.error(SYSTEM_MESSAGES.API_ERROR);
@@ -160,6 +191,11 @@ export default function MyAssetsPage() {
   }, [fetchContent]);
 
   const handleReportIssue = (asset: MyAsset) => {
+    // Virtual assets (id < 0) are approved requests without a physical asset assigned yet
+    if (asset.id < 0) {
+      toast.info("Tài sản chưa được bàn giao thực tế. Vui lòng liên hệ HR/Admin.");
+      return;
+    }
     setSelectedAsset(asset);
     setIncidentType("");
     setDescription("");

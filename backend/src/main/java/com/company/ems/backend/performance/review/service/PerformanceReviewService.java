@@ -12,4 +12,5 @@ public interface PerformanceReviewService {
     PerformanceReviewDto.Response getLatestForEmployee(Long employeeId);
     PerformanceReviewCycleDto.Response openReviewCycle(PerformanceReviewCycleDto.OpenRequest request);
     PerformanceReviewCycleDto.Response getMyActiveCycle();
+    PerformanceReviewDto.AggregateResponse getAggregate(Long employeeId, String period);
 }

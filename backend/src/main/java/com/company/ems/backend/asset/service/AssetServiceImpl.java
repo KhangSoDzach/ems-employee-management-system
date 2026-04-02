@@ -51,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AssetServiceImpl implements AssetService {
 
     private static final DateTimeFormatter EXPORT_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        private static final String SORT_CREATED_AT = "createdAt";
+    private static final String SORT_CREATED_AT = "createdAt";
     private static final Map<String, List<AssetActionType>> HISTORY_FILTER = Map.of(
             "assign", List.of(AssetActionType.ASSIGN_ASSET),
             "return", List.of(AssetActionType.RETURN_ASSET, AssetActionType.RETIRE_ASSET),

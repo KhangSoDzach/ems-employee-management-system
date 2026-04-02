@@ -74,7 +74,7 @@ public class AssetController {
                         assetService.createAsset(request)));
     }
 
-        @PutMapping("/{idOrCode}")
+    @PutMapping("/{idOrCode}")
     @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
     public ResponseEntity<ApiResponse<AssetDto.Detail>> updateAsset(
             @PathVariable String idOrCode,

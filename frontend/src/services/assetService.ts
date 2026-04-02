@@ -186,6 +186,10 @@ export interface AssetRequestDetail {
   reviewedBy?: string;
   reviewedAt?: string;
   reviewNote?: string;
+  // FIX: set when asset was assigned at approve time
+  assignedAssetId?: number | null;
+  assignedAssetCode?: string | null;
+  assignedAssetName?: string | null;
 }
 
 export interface AssetRequestAdminItem {
@@ -326,7 +330,7 @@ export const assetService = {
 
   approveAssetRequest: (
     id: number,
-    payload: { note?: string },
+    payload: { note?: string; assignedAssetId?: number },
   ): Promise<AssetRequestDetail> =>
     wrap<ApiResponse<AssetRequestDetail>>(
       api.post(`/admin/asset-requests/${id}/approve`, payload),

@@ -69,53 +69,46 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
         Long reviewerId = reviewer.getId();
         String reviewerDisplayName = reviewer.getFullName();
 
-        Long cycleManagerId;
         ReviewType resolvedReviewType;
-        if (isManagerReviewingDirectReport(reviewer, reviewee)) {
-            cycleManagerId = reviewerId;
+        if (req.getReviewType() == ReviewType.SELF && reviewer.getId().equals(reviewee.getId())) {
+            resolvedReviewType = ReviewType.SELF;
+        } else if (isManagerReviewingDirectReport(reviewer, reviewee)) {
             resolvedReviewType = ReviewType.MANAGER;
-        } else if (isEmployeePeerReview(reviewer, reviewee)) {
-            cycleManagerId = reviewer.getReportingManager().getId();
-            resolvedReviewType = ReviewType.PEER;
         } else if (isSubordinateReviewingManager(reviewer, reviewee)) {
-            cycleManagerId = reviewee.getId();
             resolvedReviewType = ReviewType.UPWARD;
+        } else if (isEmployeePeerReview(reviewer, reviewee)) {
+            resolvedReviewType = ReviewType.PEER;
         } else {
-            throw new AppException(ErrorCode.ACCESS_DENIED,
-                    "Bạn không có quyền đánh giá nhân sự này");
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        cycleRepo.findActiveCycleByManagerAndPeriod(
-                        cycleManagerId,
-                        req.getReviewPeriod(),
-                        ReviewCycleStatus.OPEN,
-                        now)
-                .orElseThrow(() -> new AppException(ErrorCode.ACCESS_DENIED,
-                        "Đợt đánh giá chưa mở hoặc đã hết hạn cho kỳ này"));
-
-
-        if (reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(
-                reviewerId,
-                req.getRevieweeId(),
-                req.getReviewPeriod())) {
-            throw new AppException(ErrorCode.RESOURCE_CONFLICT,
-                    messages.get(MessageCode.REVIEW_DUPLICATE, req.getReviewPeriod()));
+            resolvedReviewType = req.getReviewType() != null ? req.getReviewType() : ReviewType.PEER;
         }
 
         PerformanceReviewDto.ScoresRequest scores = req.getScores();
-        PerformanceReview review = PerformanceReview.builder()
-            .reviewerId(reviewerId)
-                .revieweeId(req.getRevieweeId())
-                .reviewerUsername(reviewerDisplayName)
-                .revieweeUsername(reviewee.getFullName())
-                .reviewType(resolvedReviewType)
-                .reviewPeriod(req.getReviewPeriod())
-                .expertiseScore(scores.getExpertise())
-                .communicationScore(scores.getCommunication())
-                .attitudeScore(scores.getAttitude())
-                .comment(req.getComment())
-                .build();
+
+        java.util.Optional<PerformanceReview> existing = reviewRepo
+                .findByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(
+                        reviewerId, req.getRevieweeId(), req.getReviewPeriod());
+
+        PerformanceReview review;
+        if (existing.isPresent()) {
+            review = existing.get();
+            review.setExpertiseScore(scores.getExpertise());
+            review.setCommunicationScore(scores.getCommunication());
+            review.setAttitudeScore(scores.getAttitude());
+            review.setComment(req.getComment());
+        } else {
+            review = PerformanceReview.builder()
+                    .reviewerId(reviewerId)
+                    .revieweeId(req.getRevieweeId())
+                    .reviewerUsername(reviewerDisplayName)
+                    .revieweeUsername(reviewee.getFullName())
+                    .reviewType(resolvedReviewType)
+                    .reviewPeriod(req.getReviewPeriod())
+                    .expertiseScore(scores.getExpertise())
+                    .communicationScore(scores.getCommunication())
+                    .attitudeScore(scores.getAttitude())
+                    .comment(req.getComment())
+                    .build();
+        }
 
         review.recalculate();
         PerformanceReview saved = reviewRepo.save(review);
@@ -282,6 +275,75 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
                 .endAt(cycle.getEndAt())
                 .status(cycle.getStatus())
                 .notifiedMemberCount(notifiedMemberCount)
+                .build();
+    }
+
+    @Override
+    public PerformanceReviewDto.AggregateResponse getAggregate(Long employeeId, String period) {
+        List<PerformanceReview> reviews = reviewRepo.findAllForAggregate(employeeId, period);
+
+        String reviewPeriod = period;
+        if (reviewPeriod == null && !reviews.isEmpty()) {
+            reviewPeriod = reviews.get(0).getReviewPeriod();
+        }
+        String revieweeName = reviews.isEmpty() ? "" : reviews.get(0).getRevieweeUsername();
+
+        PerformanceReviewDto.ReviewBreakdown managerBreakdown = null;
+        PerformanceReviewDto.ReviewBreakdown selfBreakdown    = null;
+        PerformanceReviewDto.ReviewBreakdown upwardBreakdown  = null;
+        List<PerformanceReviewDto.ReviewBreakdown> peerList   = new java.util.ArrayList<>();
+
+        for (PerformanceReview r : reviews) {
+            PerformanceReviewDto.ReviewBreakdown bd = PerformanceReviewDto.ReviewBreakdown.builder()
+                    .expertiseScore(r.getExpertiseScore())
+                    .communicationScore(r.getCommunicationScore())
+                    .attitudeScore(r.getAttitudeScore())
+                    .totalScore(r.getTotalScore())
+                    .rank(PerformanceReviewMapper.resolveRank(r.getTotalScore()))
+                    .comment(r.getComment())
+                    .reviewerName(r.getReviewerUsername())
+                    .build();
+            switch (r.getReviewType()) {
+                case MANAGER -> managerBreakdown = bd;
+                case SELF    -> selfBreakdown    = bd;
+                case UPWARD  -> upwardBreakdown  = bd;
+                case PEER    -> peerList.add(bd);
+            }
+        }
+
+        double totalWeight = 0;
+        double weightedScore = 0;
+        if (managerBreakdown != null) { weightedScore += managerBreakdown.getTotalScore() * 0.40; totalWeight += 0.40; }
+        if (selfBreakdown    != null) { weightedScore += selfBreakdown.getTotalScore()    * 0.20; totalWeight += 0.20; }
+        if (!peerList.isEmpty()) {
+            double peerAvg = peerList.stream().mapToInt(PerformanceReviewDto.ReviewBreakdown::getTotalScore).average().orElse(0);
+            weightedScore += peerAvg * 0.30;
+            totalWeight   += 0.30;
+        }
+        if (upwardBreakdown != null) { weightedScore += upwardBreakdown.getTotalScore() * 0.10; totalWeight += 0.10; }
+
+        Double overallScore = totalWeight > 0
+                ? Math.round(weightedScore / totalWeight * 10.0) / 10.0
+                : null;
+        String overallRank = overallScore != null
+                ? PerformanceReviewMapper.resolveRank(overallScore.intValue())
+                : "Chưa có đánh giá";
+
+        return PerformanceReviewDto.AggregateResponse.builder()
+                .revieweeId(employeeId)
+                .revieweeName(revieweeName)
+                .reviewPeriod(reviewPeriod)
+                .managerReview(managerBreakdown)
+                .selfReview(selfBreakdown)
+                .upwardReview(upwardBreakdown)
+                .peerReviews(peerList)
+                .overallScore(overallScore)
+                .overallRank(overallRank)
+                .hasManagerReview(managerBreakdown != null)
+                .hasSelfReview(selfBreakdown != null)
+                .hasUpwardReview(upwardBreakdown != null)
+                .peerReviewCount(peerList.size())
+                .totalReviewers(reviews.size())
                 .build();
     }
 }

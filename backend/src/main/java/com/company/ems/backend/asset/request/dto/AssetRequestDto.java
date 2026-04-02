@@ -12,9 +12,7 @@ import lombok.NoArgsConstructor;
 
 public class AssetRequestDto {
 
-    private AssetRequestDto() {
-        // hide implicit public constructor
-    }
+    private AssetRequestDto() {}
 
     @Data
     @NoArgsConstructor
@@ -69,7 +67,10 @@ public class AssetRequestDto {
         private String reviewedBy;
         private String reviewedAt;
         private String reviewNote;
-        private Long requesterUserId;
+        private Long   requesterUserId;
+        private Long   assignedAssetId;
+        private String assignedAssetCode;
+        private String assignedAssetName;
     }
 
     @Data
@@ -78,6 +79,7 @@ public class AssetRequestDto {
     public static class ProcessRequest {
         @Size(max = 500)
         private String note;
+        private Long assignedAssetId;
     }
 
     @Data

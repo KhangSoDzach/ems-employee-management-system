@@ -1,5 +1,9 @@
 package com.company.ems.backend.asset.request.service;
 
+import com.company.ems.backend.asset.entity.Asset;
+import com.company.ems.backend.asset.enums.AssetStatus;
+import com.company.ems.backend.asset.exception.AssetStateException;
+import com.company.ems.backend.asset.repository.AssetRepository;
 import com.company.ems.backend.asset.request.dto.AssetRequestDto;
 import com.company.ems.backend.asset.request.entity.AssetRequest;
 import com.company.ems.backend.asset.request.enums.AssetRequestStatus;
@@ -37,12 +41,15 @@ import java.util.Objects;
 public class AssetRequestServiceImpl implements AssetRequestService {
 
     private static final String ENTITY_TYPE_ASSET_REQUEST = "ASSET_REQUEST";
+    private static final String STATUS_PENDING = "PENDING";
+
     private final AssetRequestRepository requestRepo;
-    private final EmployeeRepository employeeRepo;
-    private final UserRepository userRepo;
-    private final AuditLogService auditLogService;
-    private final RequestCodeGenerator codeGenerator;
-    private final RequestMapper mapper;
+    private final EmployeeRepository     employeeRepo;
+    private final UserRepository         userRepo;
+    private final AuditLogService        auditLogService;
+    private final RequestCodeGenerator   codeGenerator;
+    private final RequestMapper          mapper;
+    private final AssetRepository        assetRepo;
 
     @Override
     @Transactional
@@ -75,7 +82,6 @@ public class AssetRequestServiceImpl implements AssetRequestService {
                 null);
 
         log.info("Asset request created: {} by employee: {}", savedRequest.getRequestCode(), emp.getId());
-
         return ApiResponse.success("Asset request submitted successfully", mapper.toDetail(savedRequest));
     }
 
@@ -87,7 +93,6 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         Employee emp = resolveEmployee(principal);
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<AssetRequest> result = requestRepo.findByRequestedBy_Id(emp.getId(), pageable);
-
         return PageResponse.of(result.map(mapper::toRow), "Asset requests retrieved successfully");
     }
 
@@ -96,29 +101,23 @@ public class AssetRequestServiceImpl implements AssetRequestService {
     public AssetRequestDto.RequestDetail getMyRequestDetail(Long id, CustomUserPrincipal principal) {
         Employee emp = resolveEmployee(principal);
         AssetRequest request = findRequestById(id);
-
-        if (!request.getRequestedBy().getId().equals(emp.getId())) {
+        if (!request.getRequestedBy().getId().equals(emp.getId()))
             throw new AccessDeniedException("You do not have permission to view this asset request");
-        }
         return mapper.toDetail(request);
     }
 
     @Override
     @Transactional
     public ApiResponse<AssetRequestDto.RequestDetail> cancelRequest(
-            Long id,
-            CustomUserPrincipal principal) {
+            Long id, CustomUserPrincipal principal) {
 
         Employee emp = resolveEmployee(principal);
         AssetRequest request = findRequestById(id);
 
-        if (!request.getRequestedBy().getId().equals(emp.getId())) {
+        if (!request.getRequestedBy().getId().equals(emp.getId()))
             throw new AccessDeniedException("You do not have permission to cancel this asset request");
-        }
-
-        if (request.getStatus() != AssetRequestStatus.PENDING) {
+        if (request.getStatus() != AssetRequestStatus.PENDING)
             throw new IllegalStateException("Only pending requests can be cancelled");
-        }
 
         request.setStatus(AssetRequestStatus.CANCELLED);
         AssetRequest savedRequest = requestRepo.save(request);
@@ -133,7 +132,6 @@ public class AssetRequestServiceImpl implements AssetRequestService {
                 null);
 
         log.info("Asset request {} cancelled by employee {}", request.getRequestCode(), emp.getId());
-
         return ApiResponse.success("Asset request cancelled successfully", mapper.toDetail(savedRequest));
     }
 
@@ -145,14 +143,11 @@ public class AssetRequestServiceImpl implements AssetRequestService {
             int page, int size) {
 
         LocalDateTime from = parseDate(fromDate, true);
-        LocalDateTime to = parseDate(toDate, false);
-
+        LocalDateTime to   = parseDate(toDate, false);
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<AssetRequest> result = requestRepo.findAllFiltered(
                 status, employeeId, from, to,
-                StringUtils.hasText(keyword) ? keyword : null,
-                pageable);
-
+                StringUtils.hasText(keyword) ? keyword : null, pageable);
         return PageResponse.of(result.map(mapper::toAdminItem), "Asset requests retrieved successfully");
     }
 
@@ -173,15 +168,35 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         validateNotAlreadyProcessed(request);
 
         User processor = resolveUser(principal);
-        if (request.getRequestedBy().getUser() != null && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
-            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt yêu cầu của bản thân.");
+        if (request.getRequestedBy().getUser() != null
+                && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
+            throw new AccessDeniedException("Bạn không thể tự duyệt yêu cầu của bản thân.");
         }
+
         request.setStatus(AssetRequestStatus.APPROVED);
         request.setReviewedBy(processor);
         request.setReviewedAt(LocalDateTime.now());
         request.setReviewNote(requestDto != null ? requestDto.getNote() : null);
-
         AssetRequest savedRequest = requestRepo.save(request);
+        if (requestDto != null && requestDto.getAssignedAssetId() != null) {
+            Asset asset = assetRepo.findActiveById(requestDto.getAssignedAssetId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Asset", "id", requestDto.getAssignedAssetId()));
+
+            if (asset.getStatus() != AssetStatus.AVAILABLE) {
+                throw new AssetStateException(
+                        "Tài sản '" + asset.getAssetCode() + "' không còn khả dụng để cấp phát.");
+            }
+
+            Employee employee = request.getRequestedBy();
+            asset.setAssignedTo(employee);
+            asset.setAssignedDate(LocalDateTime.now());
+            asset.setStatus(AssetStatus.ASSIGNED);
+            assetRepo.save(asset);
+
+            log.info("Asset [{}] assigned to employee [{}] via request [{}]",
+                    asset.getAssetCode(), employee.getId(), request.getRequestCode());
+        }
 
         auditLogService.logEvent(
                 ENTITY_TYPE_ASSET_REQUEST,
@@ -193,7 +208,6 @@ public class AssetRequestServiceImpl implements AssetRequestService {
                 null);
 
         log.info("Asset request {} approved by {}", request.getRequestCode(), processor.getUsername());
-
         return ApiResponse.success("Asset request approved successfully", mapper.toDetail(savedRequest));
     }
 
@@ -208,15 +222,15 @@ public class AssetRequestServiceImpl implements AssetRequestService {
         validateNotAlreadyProcessed(request);
 
         User processor = resolveUser(principal);
-        if (request.getRequestedBy().getUser() != null && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
-            throw new org.springframework.security.access.AccessDeniedException("Bạn không thể tự duyệt yêu cầu của bản thân.");
+        if (request.getRequestedBy().getUser() != null
+                && request.getRequestedBy().getUser().getId().equals(processor.getId())) {
+            throw new AccessDeniedException("Bạn không thể tự duyệt yêu cầu của bản thân.");
         }
 
         request.setStatus(AssetRequestStatus.REJECTED);
         request.setReviewedBy(processor);
         request.setReviewedAt(LocalDateTime.now());
         request.setReviewNote(requestDto != null ? requestDto.getNote() : null);
-
         AssetRequest savedRequest = requestRepo.save(request);
 
         auditLogService.logEvent(
@@ -225,25 +239,21 @@ public class AssetRequestServiceImpl implements AssetRequestService {
                 processor.getUsername(),
                 request.getRequestCode(),
                 null,
-                new AuditLogService.AuditValues(STATUS_PENDING, "REJECTED" + (request.getReviewNote() != null ? ": " + request.getReviewNote() : "")),
+                new AuditLogService.AuditValues(STATUS_PENDING,
+                        "REJECTED" + (request.getReviewNote() != null ? ": " + request.getReviewNote() : "")),
                 null);
 
         log.info("Asset request {} rejected by {}", request.getRequestCode(), processor.getUsername());
-
         return ApiResponse.success("Asset request rejected successfully", mapper.toDetail(savedRequest));
     }
 
-    private static final String STATUS_PENDING = "PENDING";
-
     private AssetRequest findRequestById(Long id) {
-        Long requestId = Objects.requireNonNull(id, "request id must not be null");
-        return requestRepo.findById(requestId)
+        return requestRepo.findById(Objects.requireNonNull(id, "request id must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("AssetRequest", "id", id));
     }
 
     private AssetRequest findRequestByIdWithDetails(Long id) {
-        Long requestId = Objects.requireNonNull(id, "request id must not be null");
-        return requestRepo.findByIdWithDetails(requestId)
+        return requestRepo.findByIdWithDetails(Objects.requireNonNull(id, "request id must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("AssetRequest", "id", id));
     }
 
@@ -253,8 +263,7 @@ public class AssetRequestServiceImpl implements AssetRequestService {
     }
 
     private User resolveUser(CustomUserPrincipal principal) {
-        Long userId = Objects.requireNonNull(principal.getUserId(), "principal userId must not be null");
-        return userRepo.findById(userId)
+        return userRepo.findById(Objects.requireNonNull(principal.getUserId(), "userId must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", principal.getUserId()));
     }
 
@@ -266,8 +275,7 @@ public class AssetRequestServiceImpl implements AssetRequestService {
     }
 
     private LocalDateTime parseDate(String dateStr, boolean startOfDay) {
-        if (!StringUtils.hasText(dateStr))
-            return null;
+        if (!StringUtils.hasText(dateStr)) return null;
         try {
             LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ISO_DATE);
             return startOfDay ? date.atStartOfDay() : date.atTime(LocalTime.MAX);

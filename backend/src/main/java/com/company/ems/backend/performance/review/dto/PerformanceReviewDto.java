@@ -81,4 +81,35 @@ public class PerformanceReviewDto {
         private double  avgTotal;
         private String  latestPeriod;
     }
+
+    @Data
+    @Builder
+    public static class ReviewBreakdown {
+        private Integer expertiseScore;
+        private Integer communicationScore;
+        private Integer attitudeScore;
+        private Integer totalScore;
+        private String  rank;
+        private String  comment;
+        private String  reviewerName;
+    }
+
+    @Data
+    @Builder
+    public static class AggregateResponse {
+        private Long   revieweeId;
+        private String revieweeName;
+        private String reviewPeriod;
+        private ReviewBreakdown managerReview;
+        private ReviewBreakdown selfReview;
+        private ReviewBreakdown upwardReview;
+        private java.util.List<ReviewBreakdown> peerReviews;
+        private Double  overallScore;
+        private String  overallRank;
+        private boolean hasManagerReview;
+        private boolean hasSelfReview;
+        private boolean hasUpwardReview;
+        private int     peerReviewCount;
+        private int     totalReviewers;
+    }
 }

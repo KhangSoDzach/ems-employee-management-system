@@ -15,18 +15,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Admin / HR APIs — Quản lý báo cáo sự cố tài sản
- *
- * GET  /api/v1/admin/asset-reports              → Tất cả báo cáo (có filter)
- * GET  /api/v1/admin/asset-reports/{id}         → Chi tiết
- * POST /api/v1/admin/asset-reports/{id}/approve → Phê duyệt
- * POST /api/v1/admin/asset-reports/{id}/reject  → Từ chối
- */
 @RestController
 @RequestMapping("/api/v1/admin/asset-reports")
 @RequiredArgsConstructor
-@PreAuthorize(RoleAuthorization.HAS_PERM_ASSET_MANAGE)
+@PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
 @Tag(name = "Asset Incident Reports (Admin/HR)", description = "Quản lý báo cáo sự cố tài sản")
 public class AdminIncidentController {
 

@@ -53,4 +53,18 @@ public interface PerformanceReviewRepository extends JpaRepository<PerformanceRe
         ORDER BY r.createdAt DESC
     """)
     List<PerformanceReview> findTopByRevieweeId(@Param("revieweeId") Long revieweeId, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT r FROM PerformanceReview r
+        WHERE r.revieweeId = :revieweeId
+          AND r.isDeleted = false
+          AND (:period IS NULL OR r.reviewPeriod = :period)
+        ORDER BY r.reviewType ASC
+    """)
+    List<PerformanceReview> findAllForAggregate(
+            @Param("revieweeId") Long revieweeId,
+            @Param("period") String period);
+
+    java.util.Optional<PerformanceReview> findByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(
+            Long reviewerId, Long revieweeId, String reviewPeriod);
 }
