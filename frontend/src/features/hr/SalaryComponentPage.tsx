@@ -29,7 +29,7 @@ import {
 } from "@/features/hr/hooks/useSalaryComponents";
 import { SalaryComponentForm } from "@/features/hr/components/SalaryComponentForm";
 import { PAYROLL_ADMIN_CONSTANTS } from "./payroll.constants";
-import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+import { useEffectiveRole, EFFECTIVE_ROLES } from "@/hooks/useEffectiveRole";
 import { ForbiddenPage } from "../security/ForbiddenPage";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
@@ -76,6 +76,16 @@ function getApiErrorMessage(error: unknown): string {
   );
 }
 
+/**
+ * SalaryComponentPage Component
+ * Provides a specialized interface for administrators to configure the company's salary structure.
+ *
+ * Capabilities:
+ * - Define Base Salary, Allowances, Bonuses, and Deductions.
+ * - Configure Taxable and Insurable flags for each component.
+ * - Set fixed Amounts or Percentage Rates.
+ * - Search and Paginate through the component library.
+ */
 export default function SalaryComponentPage() {
   const role = useEffectiveRole();
   const [modal, setModal] = useState<ModalState>(INITIAL_MODAL_STATE);
@@ -108,8 +118,8 @@ export default function SalaryComponentPage() {
     return filteredRows.slice(start, start + PAGE_SIZE);
   }, [filteredRows, page]);
 
-  // RBAC check: ADMIN only. Derived role "admin"
-  if (role !== "admin") {
+  // RBAC check: Requires Administrative privileges
+  if (role !== EFFECTIVE_ROLES.ADMIN) {
     return <ForbiddenPage />;
   }
 

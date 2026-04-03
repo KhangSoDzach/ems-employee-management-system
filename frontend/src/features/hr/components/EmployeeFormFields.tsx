@@ -7,7 +7,7 @@ import {
   ManagerOption,
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { EMPLOYEE_CONSTANTS } from "../employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../../constants/employee.constants";
 import { EmployeeFormValues } from "../schemas/employee.schema";
 
 interface EmployeeFormFieldsProps {
@@ -24,6 +24,20 @@ interface EmployeeFormFieldsProps {
 
 type Props = Readonly<EmployeeFormFieldsProps>;
 
+/**
+ * EmployeeFormFields Component
+ *
+ * A specialized layout component that encapsulates the modular input fields for
+ * employee creation and editing. It leverages a FormContext to manage state
+ * synchronously across multiple sections.
+ *
+ * Sections:
+ * - Basic Information (Personal details, IDs)
+ * - Contact & Address (Location, Emergency)
+ * - Attachments (Legal documents)
+ * - Job Details (Department, Position, Manager)
+ * - Finance (Salary, Banking)
+ */
 export default function EmployeeFormFields(props: Props) {
   const {
     departments,

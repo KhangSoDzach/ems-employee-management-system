@@ -55,6 +55,39 @@ export const FORM_DEFAULTS = {};
 
 /* ══════════════ CONSTANTS ══════════════ */
 
+export const LEAVE_TYPE = {
+  ANNUAL: "annual",
+  SICK: "sick",
+  UNPAID: "unpaid",
+  PERSONAL: "personal",
+} as const;
+
+export const LEAVE_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  RETURNED: "RETURNED",
+} as const;
+
+export const LEAVE_PROCESS_ACTION = {
+  APPROVE: "APPROVE",
+  REJECT: "REJECT",
+  SEND_BACK: "SEND_BACK",
+} as const;
+
+/**
+ * Backend Status Codes
+ * Maps to the exact strings returned by the Spring Boot backend
+ */
+export const BACKEND_LEAVE_STATUS = {
+  PENDING: "PENDING",
+  PENDING_L1: "PENDING_L1",
+  PENDING_L2: "PENDING_L2",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  RETURNED: "RETURNED_TO_EMPLOYEE",
+} as const;
+
 export const ALL_LABEL = "Tất cả";
 
 /* ── THUỘC TÍNH LOẠI NGHỈ PHÉP ── */
@@ -62,25 +95,25 @@ export const LEAVE_TYPE_CONFIG: Record<
   LeaveType,
   { label: string; badgeClass: string; filterClass: string; dotClass: string }
 > = {
-  annual: {
+  [LEAVE_TYPE.ANNUAL]: {
     label: "Nghỉ phép năm",
     badgeClass: "text-indigo-700 bg-indigo-50 border-indigo-200",
     filterClass: "bg-indigo-100 text-indigo-700 border-indigo-300",
     dotClass: "bg-indigo-500",
   },
-  sick: {
+  [LEAVE_TYPE.SICK]: {
     label: "Nghỉ ốm",
     badgeClass: "text-rose-700 bg-rose-50 border-rose-200",
     filterClass: "bg-rose-100 text-rose-700 border-rose-300",
     dotClass: "bg-rose-500",
   },
-  unpaid: {
+  [LEAVE_TYPE.UNPAID]: {
     label: "Nghỉ không lương",
     badgeClass: "text-slate-700 bg-slate-50 border-slate-200",
     filterClass: "bg-slate-200 text-slate-700 border-slate-300",
     dotClass: "bg-slate-500",
   },
-  personal: {
+  [LEAVE_TYPE.PERSONAL]: {
     label: "Việc riêng",
     badgeClass: "text-violet-700 bg-violet-50 border-violet-200",
     filterClass: "bg-violet-100 text-violet-700 border-violet-300",
@@ -96,31 +129,41 @@ export const LEAVE_TYPE_OPTIONS = Object.entries(LEAVE_TYPE_CONFIG) as [
 /* ── THUỘC TÍNH TRẠNG THÁI ── */
 export const LEAVE_STATUS_CONFIG: Record<
   LeaveStatus,
-  { label: string; badgeClass: string; icon: LucideIcon; filterClass: string }
+  {
+    label: string;
+    badgeClass: string;
+    icon: LucideIcon;
+    filterClass: string;
+    dotClass: string;
+  }
 > = {
-  PENDING: {
+  [LEAVE_STATUS.PENDING]: {
     label: "Chờ duyệt",
     badgeClass: "text-amber-700 bg-amber-50 border-amber-200",
     icon: RotateCcw,
     filterClass: "bg-amber-100 text-amber-800 border-amber-300",
+    dotClass: "bg-amber-500",
   },
-  APPROVED: {
+  [LEAVE_STATUS.APPROVED]: {
     label: "Đã duyệt",
     badgeClass: "text-emerald-700 bg-emerald-50 border-emerald-200",
     icon: CheckCircle2,
     filterClass: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    dotClass: "bg-emerald-500",
   },
-  REJECTED: {
+  [LEAVE_STATUS.REJECTED]: {
     label: "Từ chối",
     badgeClass: "text-rose-700 bg-rose-50 border-rose-200",
     icon: XCircle,
     filterClass: "bg-rose-100 text-rose-800 border-rose-300",
+    dotClass: "bg-rose-500",
   },
-  RETURNED: {
+  [LEAVE_STATUS.RETURNED]: {
     label: "Trả về",
     badgeClass: "text-orange-700 bg-orange-50 border-orange-200",
     icon: RotateCcw,
     filterClass: "bg-orange-100 text-orange-800 border-orange-300",
+    dotClass: "bg-orange-500",
   },
 };
 

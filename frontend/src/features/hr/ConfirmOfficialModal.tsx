@@ -8,7 +8,7 @@ import {
 } from "@/services/employeeService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useConvertToOfficial } from "./hooks/useEmployeeLifecycle";
-import { EMPLOYEE_CONSTANTS } from "./employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 type ContractTerm = OfficialContractRequest["contractTerm"];
 
@@ -41,7 +41,7 @@ export default function ConfirmOfficialModal({
   } = useForm<FormValues>({
     defaultValues: {
       contractStartDate: new Date().toISOString().slice(0, 10),
-      contractTerm: "ONE_YEAR",
+      contractTerm: EMPLOYEE_CONSTANTS.CONTRACT_TERMS.ONE_YEAR as ContractTerm,
       officialSalary: 0,
     },
   });
@@ -61,7 +61,7 @@ export default function ConfirmOfficialModal({
 
     reset({
       contractStartDate: new Date().toISOString().slice(0, 10),
-      contractTerm: "ONE_YEAR",
+      contractTerm: EMPLOYEE_CONSTANTS.CONTRACT_TERMS.ONE_YEAR as ContractTerm,
       officialSalary: suggestedSalary,
     });
   }, [open, employee, reset]);
@@ -148,20 +148,20 @@ export default function ConfirmOfficialModal({
               className="w-full px-3 py-2.5 rounded-xl border border-border bg-card"
               {...register("contractTerm", { required: true })}
             >
-              <option value="ONE_YEAR">
+              <option value={EMPLOYEE_CONSTANTS.CONTRACT_TERMS.ONE_YEAR}>
                 {SYSTEM_MESSAGES.EMPLOYEE.TERM_ONE_YEAR}
               </option>
-              <option value="TWO_YEARS">
+              <option value={EMPLOYEE_CONSTANTS.CONTRACT_TERMS.TWO_YEARS}>
                 {SYSTEM_MESSAGES.EMPLOYEE.TERM_TWO_YEARS}
               </option>
-              <option value="THREE_YEARS">
+              <option value={EMPLOYEE_CONSTANTS.CONTRACT_TERMS.THREE_YEARS}>
                 {SYSTEM_MESSAGES.EMPLOYEE.TERM_THREE_YEARS}
               </option>
-              <option value="INDEFINITE">
+              <option value={EMPLOYEE_CONSTANTS.CONTRACT_TERMS.INDEFINITE}>
                 {SYSTEM_MESSAGES.EMPLOYEE.TERM_INDEFINITE}
               </option>
             </select>
-            {contractTerm !== "INDEFINITE" && (
+            {contractTerm !== EMPLOYEE_CONSTANTS.CONTRACT_TERMS.INDEFINITE && (
               <p className="text-xs text-amber-600">
                 {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TERM_AUTO}
               </p>

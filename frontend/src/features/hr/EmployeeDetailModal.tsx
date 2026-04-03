@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { employeeService, EmployeeResponse } from "@/services/employeeService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { EMPLOYEE_CONSTANTS } from "./employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 interface Props {
   open: boolean;

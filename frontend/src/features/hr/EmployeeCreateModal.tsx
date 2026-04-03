@@ -11,7 +11,7 @@ import {
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
-import { EMPLOYEE_CONSTANTS } from "./employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 type ApiError = {
   response?: {
@@ -49,9 +49,9 @@ export default function EmployeeCreateModal({
     departmentId: 0,
     positionId: 0,
     salary: 0,
-    gender: "MALE",
-    workStatus: "PROBATION",
-    contractType: "FULL_TIME",
+    gender: EMPLOYEE_CONSTANTS.GENDER.MALE as any,
+    workStatus: EMPLOYEE_CONSTANTS.STATUS.PROBATION as any,
+    contractType: EMPLOYEE_CONSTANTS.CONTRACT_TYPES.FULL_TIME as any,
     nationality: EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONALITY,
     address: "",
     city: "",
@@ -446,13 +446,13 @@ export default function EmployeeCreateModal({
                       onChange={handleChange}
                       className={selectClass("gender")}
                     >
-                      <option value="MALE">
+                      <option value={EMPLOYEE_CONSTANTS.GENDER.MALE}>
                         {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.MALE}
                       </option>
-                      <option value="FEMALE">
+                      <option value={EMPLOYEE_CONSTANTS.GENDER.FEMALE}>
                         {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.FEMALE}
                       </option>
-                      <option value="OTHER">
+                      <option value={EMPLOYEE_CONSTANTS.GENDER.OTHER}>
                         {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.OTHER}
                       </option>
                     </select>
@@ -677,22 +677,32 @@ export default function EmployeeCreateModal({
                       onChange={handleChange}
                       className={selectClass("contractType")}
                     >
-                      <option value="FULL_TIME">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.FULL_TIME}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.FULL_TIME}
                       </option>
-                      <option value="PART_TIME">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.PART_TIME}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.PART_TIME}
                       </option>
-                      <option value="CONTRACT">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.CONTRACT}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.CONTRACT}
                       </option>
-                      <option value="INTERN">
+                      <option value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.INTERN}>
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.INTERN}
                       </option>
-                      <option value="CONSULTANT">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.CONSULTANT}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.CONSULTANT}
                       </option>
-                      <option value="TEMPORARY">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.TEMPORARY}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.TEMPORARY}
                       </option>
                     </select>
