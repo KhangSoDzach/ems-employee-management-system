@@ -11,7 +11,7 @@ import {
 } from "@/services/lookupService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
-import { EMPLOYEE_CONSTANTS } from "./employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 type ApiError = {
   response?: {
@@ -49,9 +49,9 @@ export default function EmployeeCreateModal({
     departmentId: 0,
     positionId: 0,
     salary: 0,
-    gender: "MALE",
-    workStatus: "PROBATION",
-    contractType: "FULL_TIME",
+    gender: EMPLOYEE_CONSTANTS.GENDER.MALE as any,
+    workStatus: EMPLOYEE_CONSTANTS.STATUS.PROBATION as any,
+    contractType: EMPLOYEE_CONSTANTS.CONTRACT_TYPES.FULL_TIME as any,
     nationality: EMPLOYEE_CONSTANTS.PLACEHOLDERS.NATIONALITY,
     address: "",
     city: "",
@@ -110,41 +110,62 @@ export default function EmployeeCreateModal({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = FORM_VALIDATION_MESSAGES.REQUIRED;
+    // 1. Basic Information
+    if (!formData.firstName?.trim()) {
+      newErrors.firstName = FORM_VALIDATION_MESSAGES.FIRST_NAME_REQUIRED;
     }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = FORM_VALIDATION_MESSAGES.REQUIRED;
+    if (!formData.lastName?.trim()) {
+      newErrors.lastName = FORM_VALIDATION_MESSAGES.LAST_NAME_REQUIRED;
     }
-    if (!formData.email.trim()) {
-      newErrors.email = FORM_VALIDATION_MESSAGES.REQUIRED;
+    if (!formData.email?.trim()) {
+      newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_REQUIRED;
     } else if (
       !EMPLOYEE_CONSTANTS.VALIDATION.EMAIL_REGEX.test(formData.email)
     ) {
       newErrors.email = FORM_VALIDATION_MESSAGES.EMAIL_INVALID;
     }
 
-    if (!formData.departmentId) {
-      newErrors.departmentId = FORM_VALIDATION_MESSAGES.DEPT_REQUIRED;
-    }
-    if (!formData.positionId) {
-      newErrors.positionId = FORM_VALIDATION_MESSAGES.ROLE_REQUIRED;
-    }
     if (!formData.dateOfBirth) {
       newErrors.dateOfBirth = FORM_VALIDATION_MESSAGES.DOB_REQUIRED;
+    }
+    if (!formData.nationalId?.trim()) {
+      newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_REQUIRED;
+    } else if (
+      !EMPLOYEE_CONSTANTS.VALIDATION.ID_REGEX.test(formData.nationalId)
+    ) {
+      newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_FORMAT;
+    }
+
+    // 2. Job Information
+    if (!formData.departmentId || formData.departmentId === 0) {
+      newErrors.departmentId = FORM_VALIDATION_MESSAGES.DEPT_REQUIRED;
+    }
+    if (!formData.positionId || formData.positionId === 0) {
+      newErrors.positionId = FORM_VALIDATION_MESSAGES.ROLE_REQUIRED;
     }
     if (!formData.hireDate) {
       newErrors.hireDate = FORM_VALIDATION_MESSAGES.START_DATE_REQUIRED;
     }
-    if (!formData.nationalId?.trim()) {
-      newErrors.nationalId = FORM_VALIDATION_MESSAGES.ID_FORMAT;
+
+    // 3. Finance & Address
+    if (!formData.salary || formData.salary <= 0) {
+      newErrors.salary = FORM_VALIDATION_MESSAGES.SALARY_REQUIRED;
     }
     if (!formData.address?.trim()) {
-      newErrors.address = FORM_VALIDATION_MESSAGES.REQUIRED;
+      newErrors.address = FORM_VALIDATION_MESSAGES.ADDRESS_REQUIRED;
     }
 
-    if (!formData.salary || formData.salary <= 0) {
-      newErrors.salary = FORM_VALIDATION_MESSAGES.REQUIRED;
+    // 4. Optional but format check
+    if (formData.phone?.trim() && !/^\d{10,13}$/.test(formData.phone.trim())) {
+      newErrors.phone = FORM_VALIDATION_MESSAGES.PHONE_FORMAT;
+    }
+    if (
+      formData.bankAccountNumber?.trim() &&
+      !EMPLOYEE_CONSTANTS.VALIDATION.BANK_ACC_REGEX.test(
+        formData.bankAccountNumber.trim(),
+      )
+    ) {
+      newErrors.bankAccountNumber = FORM_VALIDATION_MESSAGES.BANK_ACC_FORMAT;
     }
 
     setErrors(newErrors);
@@ -159,16 +180,16 @@ export default function EmployeeCreateModal({
 
   const hasError = (field: string) => !!errors[field];
   const inputClass = (field: string) =>
-    `w-full px-4 py-2.5 rounded-xl outline-none transition-all text-sm font-medium ${
+    `w-full px-4 py-2.5 rounded-xl border outline-none transition-all text-sm font-medium ${
       hasError(field)
-        ? "border-red-500 focus:ring-red-500"
-        : "border border-border focus:ring-2 focus:ring-primary bg-card"
+        ? "border-red-500 ring-2 ring-red-500/10 focus:ring-red-500 focus:border-red-500"
+        : "border-border focus:ring-2 focus:ring-primary/20 focus:border-primary bg-card"
     }`;
   const selectClass = (field: string) =>
-    `w-full px-3 py-2.5 rounded-xl outline-none transition-all text-sm font-bold bg-card ${
+    `w-full px-3 py-2.5 rounded-xl border outline-none transition-all text-sm font-bold bg-card ${
       hasError(field)
-        ? "border-red-500 focus:ring-red-500"
-        : "border border-border"
+        ? "border-red-500 ring-2 ring-red-500/10 focus:ring-red-500 focus:border-red-500"
+        : "border-border focus:ring-2 focus:ring-primary/20 focus:border-primary"
     }`;
 
   // ✅ AFTER formData is declared — safe to access formData.positionId
@@ -333,8 +354,11 @@ export default function EmployeeCreateModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
-                      {EMPLOYEE_CONSTANTS.LABELS.LAST_NAME}{" "}
-                      <span className="text-red-500">*</span>
+                      {EMPLOYEE_CONSTANTS.LABELS.LAST_NAME}
+                      {SYSTEM_MESSAGES.SYMBOLS.SPACE}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <input
                       required
@@ -352,8 +376,11 @@ export default function EmployeeCreateModal({
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
-                      {EMPLOYEE_CONSTANTS.LABELS.FIRST_NAME}{" "}
-                      <span className="text-red-500">*</span>
+                      {EMPLOYEE_CONSTANTS.LABELS.FIRST_NAME}
+                      {SYSTEM_MESSAGES.SYMBOLS.SPACE}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <input
                       required
@@ -371,8 +398,11 @@ export default function EmployeeCreateModal({
                   </div>
                   <div className="space-y-1 col-span-2">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
-                      {EMPLOYEE_CONSTANTS.LABELS.EMAIL}{" "}
-                      <span className="text-red-500">*</span>
+                      {EMPLOYEE_CONSTANTS.LABELS.EMAIL}
+                      {SYSTEM_MESSAGES.SYMBOLS.SPACE}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <input
                       required
@@ -397,9 +427,14 @@ export default function EmployeeCreateModal({
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      className={inputClass("phone")}
                       placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.PHONE}
                     />
+                    {errors.phone && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {errors.phone}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
@@ -409,22 +444,25 @@ export default function EmployeeCreateModal({
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border outline-none transition-all text-sm font-medium bg-card"
+                      className={selectClass("gender")}
                     >
-                      <option value="MALE">
+                      <option value={EMPLOYEE_CONSTANTS.GENDER.MALE}>
                         {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.MALE}
                       </option>
-                      <option value="FEMALE">
+                      <option value={EMPLOYEE_CONSTANTS.GENDER.FEMALE}>
                         {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.FEMALE}
                       </option>
-                      <option value="OTHER">
+                      <option value={EMPLOYEE_CONSTANTS.GENDER.OTHER}>
                         {EMPLOYEE_CONSTANTS.LABELS.GENDER_OPTIONS.OTHER}
                       </option>
                     </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">
-                      Ngày sinh <span className="text-red-500">*</span>
+                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DOB}{" "}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <input
                       required
@@ -442,8 +480,11 @@ export default function EmployeeCreateModal({
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
-                      {EMPLOYEE_CONSTANTS.LABELS.NATIONAL_ID}{" "}
-                      <span className="text-red-500">*</span>
+                      {EMPLOYEE_CONSTANTS.LABELS.NATIONAL_ID}
+                      {SYSTEM_MESSAGES.SYMBOLS.SPACE}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <input
                       required
@@ -469,8 +510,11 @@ export default function EmployeeCreateModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2 space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
-                      {EMPLOYEE_CONSTANTS.LABELS.ADDRESS}{" "}
-                      <span className="text-red-500">*</span>
+                      {EMPLOYEE_CONSTANTS.LABELS.ADDRESS}
+                      {SYSTEM_MESSAGES.SYMBOLS.SPACE}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <input
                       required
@@ -494,7 +538,7 @@ export default function EmployeeCreateModal({
                       name="city"
                       value={formData.city || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      className={inputClass("city")}
                       placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.CITY}
                     />
                   </div>
@@ -506,7 +550,7 @@ export default function EmployeeCreateModal({
                       name="nationality"
                       value={formData.nationality || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      className={inputClass("nationality")}
                     />
                   </div>
                   <div className="space-y-1">
@@ -517,7 +561,7 @@ export default function EmployeeCreateModal({
                       name="emergencyContactName"
                       value={formData.emergencyContactName || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      className={inputClass("emergencyContactName")}
                       placeholder={
                         EMPLOYEE_CONSTANTS.PLACEHOLDERS.EMERGENCY_NAME
                       }
@@ -531,7 +575,7 @@ export default function EmployeeCreateModal({
                       name="emergencyContactPhone"
                       value={formData.emergencyContactPhone || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-medium bg-card"
+                      className={inputClass("emergencyContactPhone")}
                       placeholder={
                         EMPLOYEE_CONSTANTS.PLACEHOLDERS.EMERGENCY_PHONE
                       }
@@ -550,8 +594,11 @@ export default function EmployeeCreateModal({
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
-                      {EMPLOYEE_CONSTANTS.LABELS.DEPARTMENT}{" "}
-                      <span className="text-red-500">*</span>
+                      {EMPLOYEE_CONSTANTS.LABELS.DEPARTMENT}
+                      {SYSTEM_MESSAGES.SYMBOLS.SPACE}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <select
                       required
@@ -577,8 +624,11 @@ export default function EmployeeCreateModal({
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
-                      {EMPLOYEE_CONSTANTS.LABELS.POSITION}{" "}
-                      <span className="text-red-500">*</span>
+                      {EMPLOYEE_CONSTANTS.LABELS.POSITION}
+                      {SYSTEM_MESSAGES.SYMBOLS.SPACE}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <select
                       required
@@ -593,9 +643,9 @@ export default function EmployeeCreateModal({
                     >
                       <option value={0}>
                         {!formData.departmentId
-                          ? `— ${EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_HINT} —`
+                          ? `${SYSTEM_MESSAGES.SYMBOLS.EM_DASH}${SYSTEM_MESSAGES.SYMBOLS.SPACE}${EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_HINT}${SYSTEM_MESSAGES.SYMBOLS.SPACE}${SYSTEM_MESSAGES.SYMBOLS.EM_DASH}`
                           : positionsLoading
-                            ? "..."
+                            ? SYSTEM_MESSAGES.LOADING_SHORT
                             : positions.length === 0
                               ? EMPLOYEE_CONSTANTS.MESSAGES.NO_POSITIONS
                               : EMPLOYEE_CONSTANTS.PLACEHOLDERS.POS_SELECT}
@@ -608,7 +658,7 @@ export default function EmployeeCreateModal({
                     </select>
                     {!formData.departmentId && (
                       <p className="text-[10px] text-gray-400 italic">
-                        Chọn phòng ban để xem danh sách vị trí
+                        {EMPLOYEE_CONSTANTS.MESSAGES.DEPT_HINT}
                       </p>
                     )}
                     {errors.positionId && (
@@ -625,31 +675,44 @@ export default function EmployeeCreateModal({
                       name="contractType"
                       value={formData.contractType}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 rounded-xl border border-border outline-none text-sm font-bold bg-card"
+                      className={selectClass("contractType")}
                     >
-                      <option value="FULL_TIME">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.FULL_TIME}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.FULL_TIME}
                       </option>
-                      <option value="PART_TIME">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.PART_TIME}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.PART_TIME}
                       </option>
-                      <option value="CONTRACT">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.CONTRACT}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.CONTRACT}
                       </option>
-                      <option value="INTERN">
+                      <option value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.INTERN}>
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.INTERN}
                       </option>
-                      <option value="CONSULTANT">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.CONSULTANT}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.CONSULTANT}
                       </option>
-                      <option value="TEMPORARY">
+                      <option
+                        value={EMPLOYEE_CONSTANTS.CONTRACT_TYPES.TEMPORARY}
+                      >
                         {EMPLOYEE_CONSTANTS.LABELS.CONTRACT_OPTIONS.TEMPORARY}
                       </option>
                     </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">
-                      Ngày vào làm <span className="text-red-500">*</span>
+                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_JOIN_DATE}{" "}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <input
                       required
@@ -682,7 +745,10 @@ export default function EmployeeCreateModal({
                         value={formData.reportingManagerId ?? ""}
                         onChange={handleChange}
                         disabled={!formData.positionId}
-                        className="w-full px-3 py-2.5 rounded-xl border border-border outline-none text-sm font-medium bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={
+                          selectClass("reportingManagerId") +
+                          " disabled:opacity-50 disabled:cursor-not-allowed"
+                        }
                       >
                         <option value="">
                           {EMPLOYEE_CONSTANTS.PLACEHOLDERS.MANAGER_NONE}
@@ -718,8 +784,11 @@ export default function EmployeeCreateModal({
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase">
-                      {EMPLOYEE_CONSTANTS.LABELS.SALARY}{" "}
-                      <span className="text-red-500">*</span>
+                      {EMPLOYEE_CONSTANTS.LABELS.SALARY}
+                      {SYSTEM_MESSAGES.SYMBOLS.SPACE}
+                      <span className="text-red-500">
+                        {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
+                      </span>
                     </label>
                     <div className="relative">
                       <input
@@ -744,26 +813,33 @@ export default function EmployeeCreateModal({
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">
-                      Ngân hàng
+                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_BANK_NAME}
                     </label>
                     <input
                       name="bankName"
                       value={formData.bankName || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-medium"
-                      placeholder="VD: Vietcombank"
+                      className={inputClass("bankName")}
+                      placeholder={EMPLOYEE_CONSTANTS.PLACEHOLDERS.BANK_NAME}
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">
-                      Số tài khoản
+                      {SYSTEM_MESSAGES.EMPLOYEE.LABEL_BANK_ACCOUNT}
                     </label>
                     <input
                       name="bankAccountNumber"
                       value={formData.bankAccountNumber || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 outline-none text-sm font-bold tracking-widest"
+                      className={
+                        inputClass("bankAccountNumber") + " tracking-widest"
+                      }
                     />
+                    {errors.bankAccountNumber && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {errors.bankAccountNumber}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

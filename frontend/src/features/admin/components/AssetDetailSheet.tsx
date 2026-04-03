@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   X,
   MapPin,
-  History,
   Loader2,
   UserCheck,
   UserX,
@@ -21,12 +20,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import AssetFullHistoryModal from "../AssetFullHistoryModal";
+
 import {
   assetService,
-  AssetDetail,
-  AssetCondition,
-  EmployeeOption,
+  type AssetDetail,
+  type AssetStatus,
+  type AssetCondition,
+  type EmployeeOption,
   ASSET_STATUS_LABELS,
   ASSET_CONDITION_LABELS,
 } from "@/services/assetService";
@@ -56,7 +56,6 @@ export default function AssetDetailSheet({
 }: AssetDetailSheetProps) {
   const [asset, setAsset] = useState<AssetDetail | null>(null);
   const [loading, setLoading] = useState(false);
-  const [openHistory, setOpenHistory] = useState(false);
 
   // Assign dialog state
   const [showAssign, setShowAssign] = useState(false);
@@ -168,7 +167,7 @@ export default function AssetDetailSheet({
           <div className="flex-1 flex flex-col items-center justify-center p-12 text-muted-foreground gap-4">
             <AlertCircle className="w-10 h-10 opacity-20" />
             <p className="text-sm font-medium">
-              Không tìm thấy thông tin tài sản
+              {SYSTEM_MESSAGES.ASSET_DETAIL.MSG_NOT_FOUND}
             </p>
           </div>
         ) : (
@@ -191,10 +190,12 @@ export default function AssetDetailSheet({
                           : "bg-slate-500 text-white",
                     )}
                   >
-                    {ASSET_STATUS_LABELS[asset.status] ?? asset.status}
+                    {ASSET_STATUS_LABELS[asset.status as AssetStatus] ??
+                      asset.status}
                   </Badge>
                   <span className="font-black text-muted-foreground text-sm tracking-tighter uppercase font-mono">
-                    #{asset.code}
+                    {SYSTEM_MESSAGES.SYMBOLS.HASH}
+                    {asset.code}
                   </span>
                 </div>
 
@@ -226,12 +227,12 @@ export default function AssetDetailSheet({
                   {asset.imageUrl ? (
                     <img
                       src={asset.imageUrl}
-                      alt="asset"
+                      alt={SYSTEM_MESSAGES.ASSET.PREFIX_ASSET}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/30 gap-4">
-                      <Package className="w-20 h-20 stroke-[1]" />
+                      <Package className="w-20 h-20 stroke-1" />
                       <span className="text-[10px] font-black uppercase tracking-widest italic">
                         {SYSTEM_MESSAGES.ASSET_DETAIL.TXT_PACKAGE_ICON}
                       </span>
@@ -282,8 +283,9 @@ export default function AssetDetailSheet({
                             CONDITION_COLORS[asset.condition],
                           )}
                         >
-                          {ASSET_CONDITION_LABELS[asset.condition] ??
-                            asset.condition}
+                          {ASSET_CONDITION_LABELS[
+                            asset.condition as AssetCondition
+                          ] ?? asset.condition}
                         </Badge>
                       </div>
                     </div>
@@ -377,68 +379,12 @@ export default function AssetDetailSheet({
                     {SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_DESC_DETAIL}
                   </h4>
                   <div className="bg-muted/10 p-6 rounded-3xl border-2 border-dashed border-border/50 italic text-sm text-muted-foreground leading-relaxed">
-                    "{asset.description}"
+                    {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                    {asset.description}
+                    {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                   </div>
                 </div>
               )}
-
-              {/* History Preview */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    {SYSTEM_MESSAGES.ASSET_DETAIL.SECTION_HISTORY}
-                  </h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setOpenHistory(true)}
-                    className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5"
-                  >
-                    {SYSTEM_MESSAGES.ASSET_DETAIL.BTN_VIEW_HISTORY}{" "}
-                    <History className="w-3.5 h-3.5 ml-1.5" />
-                  </Button>
-                </div>
-                <div className="space-y-1">
-                  {asset.recentHistory?.length ? (
-                    asset.recentHistory.map((h, idx) => (
-                      <div
-                        key={h.id}
-                        className="relative pl-8 pb-6 group last:pb-0"
-                      >
-                        {/* Timeline line */}
-                        {idx !== (asset.recentHistory?.length ?? 0) - 1 && (
-                          <div className="absolute left-[11px] top-[24px] bottom-0 w-0.5 bg-border group-hover:bg-primary/30 transition-colors" />
-                        )}
-                        {/* Dot */}
-                        <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full border-2 border-background bg-muted group-hover:bg-primary transition-colors flex items-center justify-center">
-                          <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground group-hover:bg-white" />
-                        </div>
-                        <div className="bg-muted/20 hover:bg-muted/40 p-4 rounded-2xl border border-border/50 transition-all cursor-default">
-                          <p className="font-black text-foreground text-xs uppercase tracking-tight mb-1">
-                            {h.action}
-                          </p>
-                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase">
-                              {h.date} · {h.user}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground italic truncate max-w-[150px]">
-                              {h.description}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-8 border-2 border-dashed border-border rounded-3xl flex flex-col items-center justify-center text-muted-foreground/30 gap-2">
-                      <History className="w-8 h-8" />
-                      <p className="text-[10px] font-black uppercase tracking-widest">
-                        {SYSTEM_MESSAGES.ASSET_DETAIL.TXT_NO_HISTORY}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
 
             {/* ASSIGN / RETURN POPUPS (Optional inside sheet or using Dialogs) */}
@@ -485,7 +431,7 @@ export default function AssetDetailSheet({
                       <div className="text-center py-10 text-muted-foreground">
                         <Loader2 className="animate-spin mx-auto w-8 h-8 mb-2" />{" "}
                         <span className="text-[10px] font-black uppercase tracking-widest">
-                          Searching...
+                          {SYSTEM_MESSAGES.ASSET_DETAIL.MSG_SEARCHING}
                         </span>
                       </div>
                     ) : employees.length > 0 ? (
@@ -529,14 +475,14 @@ export default function AssetDetailSheet({
                       ))
                     ) : (
                       <div className="text-center py-10 text-muted-foreground italic text-sm">
-                        Không tìm thấy tài khoản nhân viên.
+                        {SYSTEM_MESSAGES.ASSET_DETAIL.MSG_NO_EMPLOYEES}
                       </div>
                     )}
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                      Ghi chú cấp phát
+                      {SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_ASSIGN_NOTE}
                     </label>
                     <Textarea
                       placeholder={
@@ -555,7 +501,7 @@ export default function AssetDetailSheet({
                     onClick={() => setShowAssign(false)}
                     className="h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-[10px]"
                   >
-                    Hủy
+                    {SYSTEM_MESSAGES.BTN_CANCEL}
                   </Button>
                   <Button
                     onClick={handleAssign}
@@ -592,7 +538,7 @@ export default function AssetDetailSheet({
                     <UserX className="w-12 h-12 text-rose-500" />
                     <div>
                       <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">
-                        Thu hồi từ
+                        {SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_RETURN_FROM}
                       </p>
                       <p className="text-xl font-black text-foreground tracking-tighter">
                         {asset.recentHistory?.[0]?.user ?? "—"}
@@ -639,7 +585,7 @@ export default function AssetDetailSheet({
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                      Ghi chú thu hồi
+                      {SYSTEM_MESSAGES.ASSET_DETAIL.LABEL_RETURN_NOTE}
                     </label>
                     <Textarea
                       placeholder={
@@ -658,7 +604,7 @@ export default function AssetDetailSheet({
                     onClick={() => setShowReturn(false)}
                     className="h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-[10px]"
                   >
-                    Hủy
+                    {SYSTEM_MESSAGES.BTN_CANCEL}
                   </Button>
                   <Button
                     onClick={handleReturn}
@@ -676,12 +622,6 @@ export default function AssetDetailSheet({
           </>
         )}
       </SheetContent>
-
-      <AssetFullHistoryModal
-        open={openHistory}
-        assetId={assetId}
-        onClose={() => setOpenHistory(false)}
-      />
     </Sheet>
   );
 }

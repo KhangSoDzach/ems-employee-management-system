@@ -21,6 +21,7 @@
     "dev:backend": "backend\\mvnw.cmd -f backend/pom.xml spring-boot:run -DskipTests -Dspring-boot.run.profiles=dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:all": "docker compose up",
+    "lint": "eslint frontend --ext .js,.jsx,.ts,.tsx --fix",
     "prepare": "husky",
     "check:conflicts": "git diff --cached --check"
   },

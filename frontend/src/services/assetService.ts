@@ -81,18 +81,18 @@ export interface AssetCreatePayload {
   contractNumber?: string;
 }
 export interface AssetUpdatePayload {
-  name?: string;
-  type?: string;
+  assetName?: string;
+  assetType?: string;
   description?: string;
-  value?: number;
+  assetValue?: number;
   purchaseDate?: string;
-  warrantyDate?: string;
-  supplier?: string;
-  contractDate?: string;
+  warrantyUntil?: string;
+  supplierName?: string;
+  contractUntil?: string;
   condition?: AssetCondition;
-  note?: string;
-  image?: string;
-  locationOrUser?: string;
+  notes?: string;
+  imageUrl?: string;
+  location?: string;
   contractNumber?: string;
 }
 export interface AssignPayload {

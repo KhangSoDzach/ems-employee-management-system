@@ -108,7 +108,7 @@ function Label({
       {children}
       {required && (
         <span className="ml-0.5 text-red-500" aria-hidden="true">
-          *
+          {SYSTEM_MESSAGES.SYMBOLS.ASTERISK}
         </span>
       )}
     </label>
@@ -388,23 +388,23 @@ export function SalaryComponentForm({
               >
                 {form.type === "BASE" && (
                   <option value="BASE">
-                    {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.BASE} (BASE)
+                    {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.BASE}
                   </option>
                 )}
                 <option value="ALLOWANCE">
-                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.ALLOWANCE} (ALLOWANCE)
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.ALLOWANCE}
                 </option>
                 <option value="COMMISSION">
-                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.COMMISSION} (COMMISSION)
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.COMMISSION}
                 </option>
                 <option value="BONUS">
-                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.BONUS} (BONUS)
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.BONUS}
                 </option>
                 <option value="DEDUCTION">
-                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.DEDUCTION} (DEDUCTION)
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.DEDUCTION}
                 </option>
                 <option value="INSURANCE">
-                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.INSURANCE} (INSURANCE)
+                  {PAYROLL_ADMIN_CONSTANTS.TYPE_LABELS.INSURANCE}
                 </option>
               </select>
             </div>
@@ -418,10 +418,10 @@ export function SalaryComponentForm({
                 disabled
               >
                 <option value="INCOME">
-                  {PAYROLL_ADMIN_CONSTANTS.NATURE_LABELS.INCOME} (Income)
+                  {PAYROLL_ADMIN_CONSTANTS.NATURE_LABELS.INCOME}
                 </option>
                 <option value="DEDUCTION">
-                  {PAYROLL_ADMIN_CONSTANTS.NATURE_LABELS.DEDUCTION} (Deduction)
+                  {PAYROLL_ADMIN_CONSTANTS.NATURE_LABELS.DEDUCTION}
                 </option>
               </select>
             </div>
@@ -443,10 +443,10 @@ export function SalaryComponentForm({
                 disabled={submitting}
               >
                 <option value="ACTIVE">
-                  {PAYROLL_ADMIN_CONSTANTS.STATUS_LABELS.ACTIVE} (ACTIVE)
+                  {PAYROLL_ADMIN_CONSTANTS.STATUS_LABELS.ACTIVE}
                 </option>
                 <option value="INACTIVE">
-                  {PAYROLL_ADMIN_CONSTANTS.STATUS_LABELS.INACTIVE} (INACTIVE)
+                  {PAYROLL_ADMIN_CONSTANTS.STATUS_LABELS.INACTIVE}
                 </option>
               </select>
             </div>

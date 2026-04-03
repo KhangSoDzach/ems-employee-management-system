@@ -37,6 +37,7 @@ import { ActiveFilterBadge } from "../employee/components/AdjustmentBadges";
 import {
   LEAVE_TYPE_CONFIG,
   LEAVE_TYPE_OPTIONS,
+  BACKEND_LEAVE_STATUS,
   type LeaveType,
 } from "@/constants/leave-request";
 import { cn } from "@/lib/utils";
@@ -92,22 +93,22 @@ const renderLeaveType = (type: string) => {
 /* ================= STATUS BADGE ================= */
 
 const STATUS_MAP = {
-  PENDING: {
+  [BACKEND_LEAVE_STATUS.PENDING]: {
     label: SYSTEM_MESSAGES.STATUS.PENDING,
     cls: "badge-warning-hover border-amber-200",
     filterClass: "badge-warning border-amber-200",
   },
-  APPROVED: {
+  [BACKEND_LEAVE_STATUS.APPROVED]: {
     label: SYSTEM_MESSAGES.STATUS.APPROVED,
     cls: "badge-success-hover border-emerald-200",
     filterClass: "badge-success border-emerald-200",
   },
-  REJECTED: {
+  [BACKEND_LEAVE_STATUS.REJECTED]: {
     label: SYSTEM_MESSAGES.STATUS.REJECTED,
     cls: "badge-error-hover border-rose-200",
     filterClass: "badge-error border-rose-200",
   },
-  RETURNED_TO_EMPLOYEE: {
+  [BACKEND_LEAVE_STATUS.RETURNED]: {
     label: SYSTEM_MESSAGES.STATUS.RETURNED,
     cls: "badge-gray-hover border-slate-200",
     filterClass: "badge-gray border-slate-200",
@@ -117,9 +118,9 @@ const STATUS_MAP = {
 /* ================= STATUS RENDER ================= */
 
 const renderStatus = (status: string) => {
-  const isPendingStatus = status.startsWith("PENDING");
+  const isPendingStatus = status.startsWith(BACKEND_LEAVE_STATUS.PENDING);
   const cfg = isPendingStatus
-    ? STATUS_MAP.PENDING
+    ? STATUS_MAP[BACKEND_LEAVE_STATUS.PENDING]
     : ((STATUS_MAP as Record<string, { label: string; cls: string }>)[
         status
       ] ?? {
@@ -207,7 +208,7 @@ export default function ApproveLeaveRequest() {
   const clearAllFilters = () => {
     setSearch("");
     setFilterType("ALL");
-    setStatusFilter("ALL");
+    setStatusFilter(BACKEND_LEAVE_STATUS.PENDING);
   };
 
   let tableBodyContent = <EmptyState />;
@@ -259,11 +260,12 @@ export default function ApproveLeaveRequest() {
             <TableCell>
               <div className="flex flex-col">
                 {renderStatus(row.status)}
-                {row.status.startsWith("PENDING") &&
+                {row.status.startsWith(BACKEND_LEAVE_STATUS.PENDING) &&
                   row.currentApprovalLevel &&
                   row.maxApprovalLevel && (
                     <span className="text-xs text-muted-foreground mt-1">
-                      Lv {row.currentApprovalLevel}/{row.maxApprovalLevel}
+                      {SYSTEM_MESSAGES.SYMBOLS.LEVEL} {row.currentApprovalLevel}
+                      /{row.maxApprovalLevel}
                     </span>
                   )}
               </div>
@@ -357,14 +359,16 @@ export default function ApproveLeaveRequest() {
                 {statusFilter !== "ALL" && (
                   <ActiveFilterBadge
                     value={
-                      statusFilter === "PENDING"
+                      statusFilter === BACKEND_LEAVE_STATUS.PENDING
                         ? SYSTEM_MESSAGES.STATUS.PENDING
                         : (STATUS_MAP as any)[statusFilter]?.label ||
                           statusFilter
                     }
                     colorClass={
                       (STATUS_MAP as any)[
-                        statusFilter === "PENDING" ? "PENDING" : statusFilter
+                        statusFilter === BACKEND_LEAVE_STATUS.PENDING
+                          ? BACKEND_LEAVE_STATUS.PENDING
+                          : statusFilter
                       ]?.filterClass || ""
                     }
                     onClear={() => setStatusFilter("ALL")}
@@ -397,10 +401,12 @@ export default function ApproveLeaveRequest() {
                     <span
                       className={cn(
                         "w-2 h-2 rounded-full inline-block shrink-0",
-                        key === "PENDING" && "bg-amber-500",
-                        key === "APPROVED" && "bg-emerald-500",
-                        key === "REJECTED" && "bg-rose-500",
-                        key === "RETURNED_TO_EMPLOYEE" && "bg-orange-500",
+                        key === BACKEND_LEAVE_STATUS.PENDING && "bg-amber-500",
+                        key === BACKEND_LEAVE_STATUS.APPROVED &&
+                          "bg-emerald-500",
+                        key === BACKEND_LEAVE_STATUS.REJECTED && "bg-rose-500",
+                        key === BACKEND_LEAVE_STATUS.RETURNED &&
+                          "bg-orange-500",
                       )}
                     />
                     {cfg.label}
@@ -510,7 +516,7 @@ export default function ApproveLeaveRequest() {
               {SYSTEM_MESSAGES.APPROVE.DISPLAY_PREFIX}{" "}
               <span className="font-medium text-foreground">
                 {totalElementsFiltered === 0 ? 0 : page * PAGE_SIZE + 1}
-                {" – "}
+                {SYSTEM_MESSAGES.SYMBOLS.DASH}
                 {Math.min((page + 1) * PAGE_SIZE, totalElementsFiltered)}
               </span>{" "}
               {SYSTEM_MESSAGES.MEMBER_LIST.PAGINATION_IN}{" "}

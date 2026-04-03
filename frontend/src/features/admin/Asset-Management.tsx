@@ -21,6 +21,7 @@ import {
   AssetDetail,
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { ASSET_CONSTANTS } from "@/constants/asset.constants";
 import {
   Dialog,
   DialogContent,
@@ -32,9 +33,18 @@ import {
 
 const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
   { label: SYSTEM_MESSAGES.ASSET.FILTER_ALL, value: "" },
-  { label: SYSTEM_MESSAGES.ASSET.FILTER_AVAILABLE, value: "AVAILABLE" },
-  { label: SYSTEM_MESSAGES.ASSET.FILTER_ASSIGNED, value: "ASSIGNED" },
-  { label: SYSTEM_MESSAGES.ASSET.FILTER_RETURNED, value: "RETIRED" },
+  {
+    label: SYSTEM_MESSAGES.ASSET.FILTER_AVAILABLE,
+    value: ASSET_CONSTANTS.STATUS.AVAILABLE as AssetStatus,
+  },
+  {
+    label: SYSTEM_MESSAGES.ASSET.FILTER_ASSIGNED,
+    value: ASSET_CONSTANTS.STATUS.ASSIGNED as AssetStatus,
+  },
+  {
+    label: SYSTEM_MESSAGES.ASSET.FILTER_RETURNED,
+    value: ASSET_CONSTANTS.STATUS.RETIRED as AssetStatus,
+  },
 ];
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
@@ -356,8 +366,9 @@ export default function AssetManagementPage() {
                       <span
                         className={`text-[10px] font-black tracking-widest px-3 py-1 rounded-full uppercase border ${asset.statusColor}`}
                       >
-                        {ASSET_STATUS_LABELS[asset.status as AssetStatus] ??
-                          asset.status}
+                        {ASSET_STATUS_LABELS[
+                          asset.status?.toUpperCase() as AssetStatus
+                        ] ?? asset.status}
                       </span>
                     </td>
 
@@ -503,7 +514,8 @@ export default function AssetManagementPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive uppercase font-black tracking-tight">
               <AlertTriangle className="w-5 h-5" />
-              {deleteTarget?.status?.toUpperCase() === "ASSIGNED"
+              {deleteTarget?.status?.toUpperCase() ===
+              ASSET_CONSTANTS.STATUS.ASSIGNED
                 ? SYSTEM_MESSAGES.ASSET.MSG_CANNOT_DELETE
                 : SYSTEM_MESSAGES.ASSET.MSG_CONFIRM_DELETE}
             </DialogTitle>
@@ -512,13 +524,16 @@ export default function AssetManagementPage() {
               asChild
             >
               <div>
-                {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
+                {deleteTarget?.status?.toUpperCase() ===
+                ASSET_CONSTANTS.STATUS.ASSIGNED ? (
                   // ASSIGNED: show guidance to return first
                   <div className="space-y-4">
                     <p>
-                      Tài sản{" "}
+                      {SYSTEM_MESSAGES.ASSET.PREFIX_ASSET}{" "}
                       <span className="font-bold text-foreground">
-                        "{deleteTarget?.name}"
+                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                        {deleteTarget?.name}
+                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                       </span>{" "}
                       {SYSTEM_MESSAGES.ASSET.MSG_DELETE_WARNING}
                       <span className="font-bold text-amber-500 underline underline-offset-4">
@@ -545,7 +560,9 @@ export default function AssetManagementPage() {
                     <p>
                       {SYSTEM_MESSAGES.ASSET.MSG_DELETE_CONFIRM}
                       <span className="font-bold text-foreground mx-1">
-                        "{deleteTarget?.name}"
+                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                        {deleteTarget?.name}
+                        {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
                       </span>
                       ?
                     </p>
@@ -565,7 +582,8 @@ export default function AssetManagementPage() {
             >
               {SYSTEM_MESSAGES.ASSET.BTN_CLOSE}
             </button>
-            {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
+            {deleteTarget?.status?.toUpperCase() ===
+            ASSET_CONSTANTS.STATUS.ASSIGNED ? (
               // Guide to open detail modal for return
               <button
                 onClick={() => {

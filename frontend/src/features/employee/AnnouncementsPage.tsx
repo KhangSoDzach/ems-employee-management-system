@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { AnnouncementList } from "./components/AnnouncementList";
 import { useSearchParams } from "react-router-dom";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 export default function AnnouncementsPage() {
   const { user } = useAuth();
@@ -11,7 +12,9 @@ export default function AnnouncementsPage() {
 
   return (
     <main className="page-layout-wrapper">
-      <h1 className="page-heading mb-4">Thông báo Nội bộ</h1>
+      <h1 className="page-heading mb-4">
+        {SYSTEM_MESSAGES.ANNOUNCEMENT.TITLE}
+      </h1>
       <AnnouncementList
         userId={user?.id ?? null}
         focusedAnnouncementId={

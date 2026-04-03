@@ -16,6 +16,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import {
   Card,
@@ -72,12 +73,19 @@ const TimeField: React.FC<TimeFieldProps> = ({
   <FormField
     control={control}
     name={name}
-    render={({ field }) => (
+    render={({ field, fieldState }) => (
       <FormItem>
         <FormLabel className="font-medium text-primary">{label}</FormLabel>
         <FormControl>
-          <Input type="time" {...field} />
+          <Input
+            type="time"
+            {...field}
+            className={cn(
+              fieldState.invalid && "border-destructive ring-destructive/20",
+            )}
+          />
         </FormControl>
+
         <FormDescription className="text-sm text-muted-foreground">
           {description}
         </FormDescription>
@@ -111,7 +119,7 @@ const NumberField: React.FC<NumberFieldProps> = ({
   <FormField
     control={control}
     name={name}
-    render={({ field }) => (
+    render={({ field, fieldState }) => (
       <FormItem>
         <FormLabel className="font-medium text-foreground">{label}</FormLabel>
         <FormControl>
@@ -129,7 +137,11 @@ const NumberField: React.FC<NumberFieldProps> = ({
               placeholder={placeholder}
               min={min}
               disabled={disabled}
+              className={cn(
+                fieldState.invalid && "border-destructive ring-destructive/20",
+              )}
             />
+
             <span className="text-sm text-muted-foreground whitespace-nowrap">
               {suffix}
             </span>
@@ -146,6 +158,7 @@ const NumberField: React.FC<NumberFieldProps> = ({
 
 import {
   attendanceSettingsSchema,
+  branchLocationSchema,
   type AttendanceSettingsFormInput,
   type AttendanceSettingsFormValues,
 } from "./schemas/attendance-settings.schema";
@@ -189,6 +202,9 @@ export default function AttendanceSettings() {
       ),
       isActive: true,
     });
+  const [branchErrors, setBranchErrors] = React.useState<
+    Record<string, string>
+  >({});
 
   const form = useForm<
     AttendanceSettingsFormInput,
@@ -499,52 +515,33 @@ export default function AttendanceSettings() {
   };
 
   const onCreateBranchLocation = async () => {
-    const name = branchLocationDraft.name.trim();
-    const address = branchLocationDraft.address.trim();
-    const latitude = Number(branchLocationDraft.latitude);
-    const longitude = Number(branchLocationDraft.longitude);
-    const radiusMeters = Number(branchLocationDraft.radiusMeters);
+    const validationResult =
+      branchLocationSchema.safeParse(branchLocationDraft);
 
-    if (!name) {
+    if (!validationResult.success) {
+      const newErrors: Record<string, string> = {};
+      validationResult.error.issues.forEach((err) => {
+        const path = err.path[0] as string;
+        if (!newErrors[path]) {
+          newErrors[path] = err.message;
+        }
+      });
+      setBranchErrors(newErrors);
       toast.error(
-        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.BRANCH_LOCATIONS
-          .TOAST_PLEASE_ENTER_NAME,
+        validationResult.error.issues[0]?.message || SYSTEM_MESSAGES.ERROR,
       );
       return;
     }
 
-    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-      toast.error(ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.INVALID_COORDINATE);
-      return;
-    }
-
-    if (
-      latitude < ATTENDANCE_SETTINGS_SCHEMA.latitude.min ||
-      latitude > ATTENDANCE_SETTINGS_SCHEMA.latitude.max ||
-      longitude < ATTENDANCE_SETTINGS_SCHEMA.longitude.min ||
-      longitude > ATTENDANCE_SETTINGS_SCHEMA.longitude.max
-    ) {
-      toast.error(ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.INVALID_COORDINATE);
-      return;
-    }
-
-    if (
-      Number.isNaN(radiusMeters) ||
-      radiusMeters < ATTENDANCE_SETTINGS_SCHEMA.radius.min ||
-      radiusMeters > ATTENDANCE_SETTINGS_SCHEMA.radius.max
-    ) {
-      toast.error(ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION.RADIUS_RANGE);
-      return;
-    }
-
+    setBranchErrors({});
     try {
       await createOfficeLocationMutation.mutateAsync({
-        name,
-        address,
-        latitude,
-        longitude,
-        radiusMeters,
-        isActive: branchLocationDraft.isActive,
+        name: validationResult.data.name,
+        address: validationResult.data.address || "",
+        latitude: validationResult.data.latitude,
+        longitude: validationResult.data.longitude,
+        radiusMeters: validationResult.data.radiusMeters,
+        isActive: validationResult.data.isActive,
       });
 
       resetBranchLocationDraft();
@@ -668,7 +665,7 @@ export default function AttendanceSettings() {
                     <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                          1
+                          {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_1.ID}
                         </span>
                         <span className="font-medium text-foreground">
                           {
@@ -709,7 +706,7 @@ export default function AttendanceSettings() {
                     <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border p-4 bg-slate-50/50 dark:bg-slate-900/50">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                          2
+                          {ATTENDANCE_SETTINGS_CONSTANTS.TIME_RULES.SHIFT_2.ID}
                         </span>
                         <span className="font-medium text-foreground">
                           {
@@ -1215,17 +1212,33 @@ export default function AttendanceSettings() {
                       </label>
                       <Input
                         value={branchLocationDraft.name}
-                        onChange={(event) =>
+                        onChange={(event) => {
                           setBranchLocationDraft((prev) => ({
                             ...prev,
                             name: event.target.value,
-                          }))
-                        }
+                          }));
+                          if (branchErrors.name) {
+                            setBranchErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.name;
+                              return next;
+                            });
+                          }
+                        }}
                         placeholder={
                           ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                             .BRANCH_LOCATIONS.BRANCH_NAME_PLACEHOLDER
                         }
+                        className={cn(
+                          branchErrors.name &&
+                            "border-destructive ring-destructive/20",
+                        )}
                       />
+                      {branchErrors.name && (
+                        <p className="text-destructive text-xs mt-1">
+                          {branchErrors.name}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -1304,13 +1317,29 @@ export default function AttendanceSettings() {
                         min={ATTENDANCE_SETTINGS_SCHEMA.radius.min}
                         max={ATTENDANCE_SETTINGS_SCHEMA.radius.max}
                         value={branchLocationDraft.radiusMeters}
-                        onChange={(event) =>
+                        onChange={(event) => {
                           setBranchLocationDraft((prev) => ({
                             ...prev,
                             radiusMeters: event.target.value,
-                          }))
-                        }
+                          }));
+                          if (branchErrors.radiusMeters) {
+                            setBranchErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.radiusMeters;
+                              return next;
+                            });
+                          }
+                        }}
+                        className={cn(
+                          branchErrors.radiusMeters &&
+                            "border-destructive ring-destructive/20",
+                        )}
                       />
+                      {branchErrors.radiusMeters && (
+                        <p className="text-destructive text-xs mt-1">
+                          {branchErrors.radiusMeters}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-end justify-between rounded-lg border px-4 py-3">
@@ -1412,7 +1441,7 @@ export default function AttendanceSettings() {
                               ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES
                                 .BRANCH_LOCATIONS.RADIUS_PREFIX
                             }
-                            : {office.radiusMeters}m
+                            : {office.radiusMeters}
                           </p>
                         </div>
                       ))}

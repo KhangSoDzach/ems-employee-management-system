@@ -457,8 +457,8 @@ const ApproveAdjustmentRequest: React.FC = () => {
                           row.currentApprovalLevel &&
                           row.maxApprovalLevel && (
                             <span className="text-xs text-muted-foreground mt-1">
-                              Lv {row.currentApprovalLevel}/
-                              {row.maxApprovalLevel}
+                              {SYSTEM_MESSAGES.SYMBOLS.LEVEL}{" "}
+                              {row.currentApprovalLevel}/{row.maxApprovalLevel}
                             </span>
                           )}
                       </div>

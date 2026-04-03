@@ -346,7 +346,9 @@ export default function AttendanceHistoryPage() {
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <div className="min-w-[130px] text-center font-semibold text-base">
-                  {`Tháng ${format(viewMonth, "M, yyyy")}`}
+                  {SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(
+                    format(viewMonth, "M, yyyy"),
+                  )}
                 </div>
                 <Button
                   size="icon"
@@ -447,14 +449,18 @@ export default function AttendanceHistoryPage() {
             {selectedDay?.hasRecord ? (
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Ngày</p>
+                  <p className="text-sm text-muted-foreground">
+                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_DATE}
+                  </p>
                   <p className="font-semibold">
                     {format(parseISO(selectedDay.date), "dd/MM/yyyy")}
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Trạng thái</p>
+                  <p className="text-sm text-muted-foreground">
+                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_STATUS}
+                  </p>
                   <Badge
                     variant="outline"
                     className={`status-badge px-2.5 py-0.5 ${statusInfo(selectedDay.status).cls}`}
@@ -467,7 +473,7 @@ export default function AttendanceHistoryPage() {
                   <div className="rounded-lg border border-border p-3">
                     <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                       <LogIn className="w-3.5 h-3.5" />
-                      Check-in
+                      {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_CHECKIN}
                     </div>
                     <div className="font-medium">
                       {fmtTime(selectedDay.checkInTime)}
@@ -477,7 +483,7 @@ export default function AttendanceHistoryPage() {
                   <div className="rounded-lg border border-border p-3">
                     <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                       <LogOut className="w-3.5 h-3.5" />
-                      Check-out
+                      {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_CHECKOUT}
                     </div>
                     <div className="font-medium">
                       {fmtTime(selectedDay.checkOutTime)}
@@ -487,7 +493,7 @@ export default function AttendanceHistoryPage() {
                   <div className="rounded-lg border border-border p-3">
                     <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
-                      Tổng giờ làm
+                      {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_TOTAL_WORK_HOURS}
                     </div>
                     <div className="font-medium">
                       {formatWorkHours(selectedDay.workHours)}
@@ -497,13 +503,15 @@ export default function AttendanceHistoryPage() {
 
                 {selectedDay.missingClockOut && (
                   <p className="text-xs text-violet-600">
-                    Bản ghi này chưa có Clock Out.
+                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_MISSING_CLOCKOUT}
                   </p>
                 )}
 
                 {selectedDay.notes && (
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Ghi chú</p>
+                    <p className="text-sm text-muted-foreground">
+                      {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_NOTES}
+                    </p>
                     <p className="text-sm whitespace-pre-wrap">
                       {selectedDay.notes}
                     </p>

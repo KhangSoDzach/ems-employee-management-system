@@ -3,8 +3,8 @@ import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { assetService, AssetUpdatePayload } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
 import { AssetForm, AssetFormData } from "./components/AssetForm";
+import { assetSchema } from "./schemas/asset.schema";
 
 interface Props {
   open: boolean;
@@ -45,6 +45,7 @@ export default function AssetEditModal({
             contractDate: res.contract || "",
             description: res.description || "",
             image: res.imageUrl || "",
+            initialStatus: res.status,
           });
         })
         .catch(() => toast.error(SYSTEM_MESSAGES.ERROR))
@@ -61,49 +62,40 @@ export default function AssetEditModal({
       return;
     }
 
-    const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) {
-      newErrors.name = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_NAME;
-    }
-    if (!formData.type.trim()) {
-      newErrors.type = SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_TYPE;
-    }
-    if (!formData.locationOrUser.trim()) {
-      newErrors.locationOrUser =
-        SYSTEM_MESSAGES.ASSET_CREATE.MSG_REQUIRE_LOCATION;
-    }
-    if (formData.value !== undefined && formData.value < 0) {
-      newErrors.value = SYSTEM_MESSAGES.ASSET_CREATE.MSG_ERROR_VALUE;
-    }
+    const parseResult = assetSchema.safeParse(formData);
 
-    // Date validations
-    const todayStr = new Date().toISOString().split("T")[0] || "";
-    if (formData.purchaseDate && formData.purchaseDate > todayStr) {
-      newErrors.purchaseDate =
-        SYSTEM_MESSAGES.ASSET_CREATE.MSG_ERROR_PURCHASE_DATE;
-    }
-
-    if (Object.keys(newErrors).length > 0) {
+    if (!parseResult.success) {
+      const newErrors: Record<string, string> = {};
+      parseResult.error.issues.forEach((err) => {
+        const path = err.path[0] as string;
+        if (!newErrors[path]) {
+          newErrors[path] = err.message;
+        }
+      });
       setErrors(newErrors);
-      toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
+      // Highlight first error
+      const firstError = parseResult.error.issues[0]?.message;
+      if (firstError) {
+        toast.error(firstError);
+      }
       return;
     }
 
     setSaving(true);
     try {
       const payload: AssetUpdatePayload = {
-        name: formData.name,
-        type: formData.type,
-        value: formData.value,
+        assetName: formData.name,
+        assetType: formData.type,
+        assetValue: formData.value,
         purchaseDate: formData.purchaseDate || undefined,
         condition: formData.condition,
-        locationOrUser: formData.locationOrUser,
-        description: formData.description,
-        warrantyDate: formData.warrantyDate || undefined,
-        supplier: formData.supplier,
-        contractDate: formData.contractDate || undefined,
-        contractNumber: formData.contractNumber,
-        image: formData.image,
+        location: formData.locationOrUser || undefined,
+        description: formData.description || undefined,
+        warrantyUntil: formData.warrantyDate || undefined,
+        supplierName: formData.supplier || undefined,
+        contractUntil: formData.contractDate || undefined,
+        contractNumber: formData.contractNumber || undefined,
+        imageUrl: formData.image || undefined,
       };
       await assetService.updateAsset(assetId, payload);
       toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
@@ -125,7 +117,7 @@ export default function AssetEditModal({
               {SYSTEM_MESSAGES.ASSET_CREATE.TITLE_EDIT}
             </h2>
             <p className="text-[10px] font-black text-primary mt-1 tracking-[0.2em] uppercase font-mono">
-              {"#"}
+              {SYSTEM_MESSAGES.SYMBOLS.HASH}
               {assetCode}
             </p>
           </div>

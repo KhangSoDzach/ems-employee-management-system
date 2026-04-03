@@ -36,10 +36,13 @@ import { cn } from "@/lib/utils";
 import {
   ALL_LABEL,
   DATE_FORMAT,
+  LEAVE_STATUS,
   LEAVE_STATUS_CONFIG,
   LEAVE_STATUS_OPTIONS,
+  LEAVE_TYPE,
   LEAVE_TYPE_CONFIG,
   LEAVE_TYPE_OPTIONS,
+  BACKEND_LEAVE_STATUS,
   type LeaveRequest,
   type LeaveStatus,
   type LeaveType,
@@ -103,27 +106,35 @@ export default function LeaveRequestPage() {
 
   const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
-  /* ── Backend status → frontend union ── */
+  /**
+   * Status Mapper: Converts backend status strings to frontend types
+   * Backend might return PENDING_L1, PENDING_L2 etc., but frontend displays PENDING.
+   */
   const mapBackendStatus = (status: string): LeaveStatus => {
-    if (status.startsWith("PENDING")) {
-      return "PENDING";
+    if (status.startsWith(BACKEND_LEAVE_STATUS.PENDING)) {
+      return LEAVE_STATUS.PENDING;
     }
-    if (status === "RETURNED_TO_EMPLOYEE") {
-      return "RETURNED";
+    if (status === BACKEND_LEAVE_STATUS.RETURNED) {
+      return LEAVE_STATUS.RETURNED;
     }
-    if (status === "APPROVED" || status === "REJECTED") {
+    if (
+      status === BACKEND_LEAVE_STATUS.APPROVED ||
+      status === BACKEND_LEAVE_STATUS.REJECTED
+    ) {
       return status as LeaveStatus;
     }
-    return "PENDING";
+    return LEAVE_STATUS.PENDING;
   };
 
-  /* ── Load data on mount ── */
+  /**
+   * Data Fetching: Loads employee profile and leave requests in parallel
+   */
   useEffect(() => {
     const load = async () => {
       try {
         const [leavePage, profileData] = await Promise.all([
-          leaveService.getMyLeaves(),
-          employeeService.getMyProfile(),
+          leaveService.getMyLeaves(), // Fetch requests for current user
+          employeeService.getMyProfile(), // Fetch profile to get ID and balances
         ]);
         setEmployeeId(profileData.id);
         setProfile(profileData);
@@ -133,13 +144,13 @@ export default function LeaveRequestPage() {
             employeeName:
               dto.employeeName ||
               (profileData.firstName && profileData.lastName
-                ? profileData.firstName + " " + profileData.lastName
+                ? `${profileData.firstName} ${profileData.lastName}`
                 : "—"),
             employeeCode: profileData.employeeCode || "—",
             department: profileData.department || "—",
             dateCreated: new Date(dto.createdAt),
-            startDate: new Date(dto.startDate + "T00:00:00"),
-            endDate: new Date(dto.endDate + "T00:00:00"),
+            startDate: new Date(`${dto.startDate}T00:00:00`),
+            endDate: new Date(`${dto.endDate}T00:00:00`),
             type: dto.leaveType.toLowerCase() as LeaveType,
             status: mapBackendStatus(dto.status),
             reason: dto.reason,
@@ -180,11 +191,17 @@ export default function LeaveRequestPage() {
     setPage(0);
   }, [searchQuery, statusFilter, typeFilter]);
 
-  /* ── Handlers ── */
+  /**
+   * handleCreate: Validates and submits a new leave request
+   * 1. Checks if the requested days exceed available annual leave balance.
+   * 2. Calls API to create the record.
+   * 3. Updates local state and invalidates caches.
+   */
   const handleCreate = async (data: LeaveFormValues) => {
-    // ─── Validate leave balance ───
     const requestedType = data.leaveType.toUpperCase();
-    if (requestedType !== "UNPAID") {
+
+    // ─── Business Validation: Leave Balance ───
+    if (requestedType !== LEAVE_TYPE.UNPAID.toUpperCase()) {
       const requestedDays = differenceInDays(data.endDate, data.startDate) + 1;
       const leaveBalance = profile?.annualLeaveBalance ?? 0;
 
@@ -195,22 +212,24 @@ export default function LeaveRequestPage() {
 
     const dto = await leaveService.createLeave({
       employeeId: employeeId ?? 1,
-      leaveType: data.leaveType.toUpperCase(),
+      leaveType: requestedType,
       startDate: format(data.startDate, "yyyy-MM-dd"),
       endDate: format(data.endDate, "yyyy-MM-dd"),
       reason: data.reason,
     });
+
     const employeeFullName = profile
-      ? profile.firstName + " " + profile.lastName
+      ? `${profile.firstName} ${profile.lastName}`
       : "—";
+
     const newReq: LeaveRequest = {
       id: String(dto.id),
       employeeName: employeeFullName,
       employeeCode: profile?.employeeCode || "—",
       department: profile?.department || "—",
       dateCreated: new Date(dto.createdAt),
-      startDate: new Date(dto.startDate + "T00:00:00"),
-      endDate: new Date(dto.endDate + "T00:00:00"),
+      startDate: new Date(`${dto.startDate}T00:00:00`),
+      endDate: new Date(`${dto.endDate}T00:00:00`),
       type: dto.leaveType.toLowerCase() as LeaveType,
       status: mapBackendStatus(dto.status),
       reason: dto.reason,
@@ -218,15 +237,14 @@ export default function LeaveRequestPage() {
       maxApprovalLevel: dto.maxApprovalLevel ?? undefined,
       auditTrail: [
         {
-          id: "a1",
+          id: String(Date.now()), // Local unique ID for UI
           action: "CREATED",
-          actor: profile
-            ? profile.firstName + " " + profile.lastName
-            : "Hệ thống",
+          actor: employeeFullName,
           timestamp: new Date(),
         },
       ],
     };
+
     setRequests((prev) => [newReq, ...prev]);
     setIsModalOpen(false);
     queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
@@ -333,10 +351,7 @@ export default function LeaveRequestPage() {
                   <span
                     className={cn(
                       "w-2 h-2 rounded-full inline-block shrink-0",
-                      value === "PENDING" && "bg-amber-500",
-                      value === "APPROVED" && "bg-emerald-500",
-                      value === "REJECTED" && "bg-rose-500",
-                      value === "RETURNED" && "bg-orange-500",
+                      config.dotClass,
                     )}
                   />
                   {config.label}
@@ -485,8 +500,8 @@ export default function LeaveRequestPage() {
                           req.currentApprovalLevel &&
                           req.maxApprovalLevel && (
                             <span className="text-xs text-muted-foreground mt-1">
-                              Lv {req.currentApprovalLevel}/
-                              {req.maxApprovalLevel}
+                              {SYSTEM_MESSAGES.SYMBOLS.LEVEL}{" "}
+                              {req.currentApprovalLevel}/{req.maxApprovalLevel}
                             </span>
                           )}
                       </div>

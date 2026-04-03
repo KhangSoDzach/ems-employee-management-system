@@ -5,6 +5,34 @@ export const EMPLOYEE_CONSTANTS = {
   TITLE_MGMT: "Quản lý nhân viên",
   DESC_MGMT: "Xem và quản lý thông tin hồ sơ nhân sự trong hệ thống",
 
+  STATUS: {
+    ACTIVE: "ACTIVE",
+    PROBATION: "PROBATION",
+    TERMINATED: "TERMINATED",
+  },
+
+  CONTRACT_TERMS: {
+    ONE_YEAR: "ONE_YEAR",
+    TWO_YEARS: "TWO_YEARS",
+    THREE_YEARS: "THREE_YEARS",
+    INDEFINITE: "INDEFINITE",
+  },
+
+  GENDER: {
+    MALE: "MALE",
+    FEMALE: "FEMALE",
+    OTHER: "OTHER",
+  },
+
+  CONTRACT_TYPES: {
+    FULL_TIME: "FULL_TIME",
+    PART_TIME: "PART_TIME",
+    CONTRACT: "CONTRACT",
+    INTERN: "INTERN",
+    CONSULTANT: "CONSULTANT",
+    TEMPORARY: "TEMPORARY",
+  },
+
   SECTIONS: {
     BASIC: "Thông tin cơ bản",
     CONTACT_ADDRESS: "Liên hệ & Địa chỉ",
@@ -40,6 +68,8 @@ export const EMPLOYEE_CONSTANTS = {
     NOTES: "Ghi chú thêm",
     NOTES_AVATAR: "Ảnh đại diện & Ghi chú",
     CURRENCY: "VNĐ",
+    ANNUAL_LEAVE: "Phép năm",
+    SICK_LEAVE: "Phép bệnh",
     GENDER_OPTIONS: {
       MALE: "Nam",
       FEMALE: "Nữ",
@@ -100,6 +130,7 @@ export const EMPLOYEE_CONSTANTS = {
   },
 
   MESSAGES: {
+    REQUIRED_MARK: "*",
     DEPT_REQUIRED: "Vui lòng chọn phòng ban",
     POS_REQUIRED: "Vui lòng chọn vị trí",
     MANAGER_HINT: "Chọn vị trí trước",
@@ -107,6 +138,7 @@ export const EMPLOYEE_CONSTANTS = {
     NO_MANAGERS: "Chưa có trưởng phòng nào trong hệ thống",
     MANAGER_LEVEL_INFO:
       "Vị trí này là Trưởng phòng — không cần chỉ định người quản lý trực tiếp.",
+    DEPT_HINT: "Chọn phòng ban để xem danh sách vị trí",
     AUTO_CODE_INFO: "Hệ thống sẽ tự động tạo Mã nhân viên dựa trên phòng ban.",
     CONFIRM_DELETE: "Bạn có chắc chắn muốn xóa nhân viên này?",
     ATTACH_FILE: "Đính kèm tệp tin",

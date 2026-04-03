@@ -542,7 +542,7 @@ export default function AssetReportManagement() {
                               className="text-[10px] font-black text-blue-600 border-blue-500/20 bg-blue-500/10 tracking-widest uppercase"
                             >
                               {ASSET_STATUS_LABELS[
-                                selectedReport?.assetStatus as AssetStatus
+                                selectedReport?.assetStatus?.toUpperCase() as AssetStatus
                               ] || selectedReport?.assetStatus}
                             </Badge>
                           </div>
@@ -579,7 +579,7 @@ export default function AssetReportManagement() {
                               </p>
                               <p className="text-sm font-bold text-foreground">
                                 {ASSET_CONDITION_LABELS[
-                                  selectedReport?.assetCondition as AssetCondition
+                                  selectedReport?.assetCondition?.toUpperCase() as AssetCondition
                                 ] || selectedReport?.assetCondition}
                               </p>
                             </div>
@@ -613,7 +613,7 @@ export default function AssetReportManagement() {
                             {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_ISSUE_TYPE}
                           </p>
                           <p className="text-lg font-black text-foreground tracking-tight">
-                            {selectedReport?.incidentTypeLabel}
+                            {getIssueTypeLabel(selectedReport?.incidentType)}
                           </p>
                         </div>
                         <div>

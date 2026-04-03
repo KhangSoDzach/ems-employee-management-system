@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { employeeService, EmployeeResponse } from "@/services/employeeService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
-import { EMPLOYEE_CONSTANTS } from "./employee.constants";
+import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 interface Props {
   open: boolean;
@@ -317,19 +317,21 @@ export default function EmployeeDetailModal({
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase font-bold">
-                        Phep nam
+                        {EMPLOYEE_CONSTANTS.LABELS.ANNUAL_LEAVE}
                       </p>
                       <p className="text-sm font-bold text-green-600">
-                        {employee.annualLeaveBalance ?? 0}{" "}
+                        {employee.annualLeaveBalance ?? 0}
+                        {SYSTEM_MESSAGES.SYMBOLS.SPACE}
                         {SYSTEM_MESSAGES.COMMON.DAYS_UNIT}
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase font-bold">
-                        Phep benh
+                        {EMPLOYEE_CONSTANTS.LABELS.SICK_LEAVE}
                       </p>
                       <p className="text-sm font-bold text-amber-600">
-                        {employee.sickLeaveBalance ?? 0}{" "}
+                        {employee.sickLeaveBalance ?? 0}
+                        {SYSTEM_MESSAGES.SYMBOLS.SPACE}
                         {SYSTEM_MESSAGES.COMMON.DAYS_UNIT}
                       </p>
                     </div>

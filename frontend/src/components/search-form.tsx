@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
+import { TEXTS } from "../../../../constants/texts";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -13,11 +14,11 @@ export function SearchForm({ ...props }: React.ComponentProps<"form">) {
       <SidebarGroup className="py-0">
         <SidebarGroupContent className="relative">
           <Label htmlFor="search" className="sr-only">
-            Search
+            {TEXTS.SEARCH}
           </Label>
           <SidebarInput
             id="search"
-            placeholder="Search the docs..."
+            placeholder={TEXTS.SEARCH_PLACEHOLDER}
             className="pl-8"
           />
           <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
