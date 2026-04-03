@@ -551,7 +551,7 @@ export default function AssetReportManagement() {
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/30">
                           <div>
                             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
-                              Mã thiết bị
+                              {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_ASSET_CODE}
                             </p>
                             <p className="font-bold text-foreground font-mono">
                               {selectedReport?.assetCode}
@@ -559,7 +559,7 @@ export default function AssetReportManagement() {
                           </div>
                           <div className="text-right">
                             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
-                              Tag tài sản
+                              {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_ASSET_TAG}
                             </p>
                             <Badge className="bg-slate-900 text-white font-mono text-[10px]">
                               {selectedReport?.assetTag}
@@ -622,7 +622,9 @@ export default function AssetReportManagement() {
                           </p>
                           <div className="bg-white/50 dark:bg-black/20 p-4 rounded-2xl border border-border shadow-inner-sm">
                             <p className="text-sm font-bold text-muted-foreground italic leading-relaxed">
-                              "{selectedReport?.description}"
+                              {SYSTEM_MESSAGES.ASSET_REPORT.TXT_QUOTE}
+                              {selectedReport?.description}
+                              {SYSTEM_MESSAGES.ASSET_REPORT.TXT_QUOTE}
                             </p>
                           </div>
                         </div>
@@ -696,10 +698,10 @@ export default function AssetReportManagement() {
                               {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_PROCESS_NOTE}
                             </p>
                             <p className="text-xs font-bold text-slate-400 leading-relaxed italic">
-                              "
+                              {SYSTEM_MESSAGES.ASSET_REPORT.TXT_QUOTE}
                               {selectedReport?.processNote ||
                                 SYSTEM_MESSAGES.ASSET_REPORT.TXT_NO_NOTE}
-                              "
+                              {SYSTEM_MESSAGES.ASSET_REPORT.TXT_QUOTE}
                             </p>
                           </div>
                         </div>
@@ -734,7 +736,7 @@ export default function AssetReportManagement() {
                 {selectedReport?.status === "PENDING" ? (
                   selectedReport?.requesterUserId === user?.id ? (
                     <div className="w-full bg-amber-50 text-amber-600 border border-amber-200 p-4 rounded-xl text-sm font-semibold text-center flex items-center justify-center">
-                      Bạn không được phép duyệt đơn bản thân
+                      {SYSTEM_MESSAGES.ASSET_REPORT.MSG_OWN_REPORT}
                     </div>
                   ) : (
                     <>

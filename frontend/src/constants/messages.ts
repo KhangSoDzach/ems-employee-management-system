@@ -898,6 +898,10 @@ export const SYSTEM_MESSAGES = {
     MSG_REJECT_SUCCESS: "Đã từ chối báo cáo thành công!",
     MSG_PROCESS_ERROR: "Lỗi xử lý báo cáo.",
     MSG_TRY_AGAIN: "Vui lòng thử lại sau.",
+    MSG_OWN_REPORT: "Bạn không được phép duyệt đơn bản thân",
+
+    LABEL_ASSET_CODE: "Mã thiết bị",
+    LABEL_ASSET_TAG: "Tag tài sản",
 
     SUBTITLE: "Báo cáo sự cố",
     TITLE: "Quản lý Báo cáo Tài sản",

@@ -288,7 +288,7 @@ export function AssetReportReviewSheet({
 
               {isOwnPendingReport && (
                 <div className="bg-amber-50 text-amber-600 border border-amber-200 p-3 rounded-md text-sm text-center">
-                  Bạn không được phép duyệt đơn bản thân
+                  {SYSTEM_MESSAGES.ASSET_REPORT.MSG_OWN_REPORT}
                 </div>
               )}
 
