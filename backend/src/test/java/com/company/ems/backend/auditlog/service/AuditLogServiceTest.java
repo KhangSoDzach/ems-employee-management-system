@@ -2,6 +2,7 @@ package com.company.ems.backend.auditlog.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -12,6 +13,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -26,8 +29,21 @@ class AuditLogServiceTest {
     @Mock
     private AuditLogRepository auditLogRepository;
 
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
     @InjectMocks
     private AuditLogService auditLogService;
+
+    @BeforeEach
+    @SuppressWarnings("unchecked")
+    void setUpTransactionTemplate() {
+        // Make the TransactionTemplate execute the callback directly (no real transaction)
+        when(transactionTemplate.execute(any(TransactionCallback.class))).thenAnswer(invocation -> {
+            TransactionCallback<?> callback = invocation.getArgument(0);
+            return callback.doInTransaction(null);
+        });
+    }
 
     @Test
     @SuppressWarnings("null")

@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -95,6 +96,9 @@ public class PayrollController {
     public ResponseEntity<ApiResponse<RunPayrollResult>> runPayroll(
             @Valid @RequestBody RunPayrollRequest request,
             Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         RunPayrollCommand cmd = new RunPayrollCommand(request.period(), auth.getName());
         return ResponseEntity.ok(
                 ApiResponse.success("Tính lương thành công", runPayrollUseCase.execute(cmd)));
@@ -108,6 +112,9 @@ public class PayrollController {
             @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM")
             String period,
             Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         RunPayrollCommand cmd = new RunPayrollCommand(period, auth.getName());
         return ResponseEntity.ok(
                 ApiResponse.success("Tính lại lương thành công",

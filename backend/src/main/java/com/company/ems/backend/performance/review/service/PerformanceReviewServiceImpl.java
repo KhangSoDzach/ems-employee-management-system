@@ -78,25 +78,25 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
             resolvedReviewType = ReviewType.UPWARD;
         } else if (isEmployeePeerReview(reviewer, reviewee)) {
             resolvedReviewType = ReviewType.PEER;
+        } else if (req.getReviewType() == ReviewType.PEER) {
+            // Peer review requested but reviewer and reviewee are not in the same team
+            throw new AppException(ErrorCode.ACCESS_DENIED,
+                    messages.get(MessageCode.REVIEW_NOT_FOUND, "Peer review is only allowed within the same team"));
         } else {
             resolvedReviewType = req.getReviewType() != null ? req.getReviewType() : ReviewType.PEER;
         }
 
         PerformanceReviewDto.ScoresRequest scores = req.getScores();
 
-        java.util.Optional<PerformanceReview> existing = reviewRepo
-                .findByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(
-                        reviewerId, req.getRevieweeId(), req.getReviewPeriod());
+        boolean alreadyReviewed = reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(
+                reviewerId, req.getRevieweeId(), req.getReviewPeriod());
 
-        PerformanceReview review;
-        if (existing.isPresent()) {
-            review = existing.get();
-            review.setExpertiseScore(scores.getExpertise());
-            review.setCommunicationScore(scores.getCommunication());
-            review.setAttitudeScore(scores.getAttitude());
-            review.setComment(req.getComment());
-        } else {
-            review = PerformanceReview.builder()
+        if (alreadyReviewed) {
+            throw new AppException(ErrorCode.RESOURCE_CONFLICT,
+                    messages.get(MessageCode.REVIEW_DUPLICATE, reviewee.getFullName(), req.getReviewPeriod()));
+        }
+
+        PerformanceReview review = PerformanceReview.builder()
                     .reviewerId(reviewerId)
                     .revieweeId(req.getRevieweeId())
                     .reviewerUsername(reviewerDisplayName)
@@ -108,7 +108,6 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
                     .attitudeScore(scores.getAttitude())
                     .comment(req.getComment())
                     .build();
-        }
 
         review.recalculate();
         PerformanceReview saved = reviewRepo.save(review);

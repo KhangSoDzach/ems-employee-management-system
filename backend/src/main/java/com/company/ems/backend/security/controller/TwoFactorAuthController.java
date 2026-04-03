@@ -1,5 +1,6 @@
 package com.company.ems.backend.security.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +44,9 @@ public class TwoFactorAuthController {
     public ResponseEntity<ApiResponse<TwoFactorAuthResponse>> setup2FA(
             Authentication authentication
     ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String username = authentication.getName();
         User user = null;
         log.info("2FA setup request received for user: {}", username);
@@ -114,6 +118,9 @@ public class TwoFactorAuthController {
     public ResponseEntity<ApiResponse<Boolean>> get2FAStatus(
             Authentication authentication
     ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String username = authentication.getName();
         boolean enabled = twoFactorAuthService.is2FAEnabled(username);
 
