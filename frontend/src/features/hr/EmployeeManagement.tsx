@@ -152,11 +152,14 @@ export default function EmployeeManagementPage() {
     setOpenConfirmOfficial(true);
   };
 
+  /**
+   * WorkStatus: Normalizes backend status to three main frontend types
+   */
   const getWorkStatus = (emp: EmployeeResponse) =>
-    emp.workStatus ?? (emp.status as "PROBATION" | "ACTIVE" | "TERMINATED");
+    emp.workStatus ?? (emp.status as keyof typeof EMPLOYEE_CONSTANTS.STATUS);
 
   const getWorkStatusMeta = (status: string | null) => {
-    if (status === "PROBATION") {
+    if (status === EMPLOYEE_CONSTANTS.STATUS.PROBATION) {
       return {
         label: SYSTEM_MESSAGES.EMPLOYEE.STATUS_PROBATION,
         className:
@@ -164,7 +167,7 @@ export default function EmployeeManagementPage() {
       };
     }
 
-    if (status === "ACTIVE") {
+    if (status === EMPLOYEE_CONSTANTS.STATUS.ACTIVE) {
       return {
         label: SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE,
         className:
@@ -230,9 +233,9 @@ export default function EmployeeManagementPage() {
               {SYSTEM_MESSAGES.LABEL_ALL}
             </button>
             <button
-              onClick={() => setStatusFilter("ACTIVE")}
+              onClick={() => setStatusFilter(EMPLOYEE_CONSTANTS.STATUS.ACTIVE)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-                statusFilter === "ACTIVE"
+                statusFilter === EMPLOYEE_CONSTANTS.STATUS.ACTIVE
                   ? "bg-green-50/50 text-green-600 border border-green-200"
                   : "bg-card text-muted-foreground border border-border hover:bg-muted"
               }`}
@@ -240,9 +243,11 @@ export default function EmployeeManagementPage() {
               {SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE}
             </button>
             <button
-              onClick={() => setStatusFilter("PROBATION")}
+              onClick={() =>
+                setStatusFilter(EMPLOYEE_CONSTANTS.STATUS.PROBATION)
+              }
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-                statusFilter === "PROBATION"
+                statusFilter === EMPLOYEE_CONSTANTS.STATUS.PROBATION
                   ? "bg-amber-50/50 text-amber-700 border border-amber-200"
                   : "bg-card text-muted-foreground border border-border hover:bg-muted"
               }`}
@@ -378,7 +383,8 @@ export default function EmployeeManagementPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {workStatus === "PROBATION" && (
+                            {workStatus ===
+                              EMPLOYEE_CONSTANTS.STATUS.PROBATION && (
                               <button
                                 onClick={() => handleOpenConfirmOfficial(emp)}
                                 className="px-2.5 py-1.5 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition"

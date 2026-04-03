@@ -21,6 +21,7 @@ import {
   AssetDetail,
 } from "@/services/assetService";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { ASSET_CONSTANTS } from "@/constants/asset.constants";
 import {
   Dialog,
   DialogContent,
@@ -32,9 +33,18 @@ import {
 
 const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
   { label: SYSTEM_MESSAGES.ASSET.FILTER_ALL, value: "" },
-  { label: SYSTEM_MESSAGES.ASSET.FILTER_AVAILABLE, value: "AVAILABLE" },
-  { label: SYSTEM_MESSAGES.ASSET.FILTER_ASSIGNED, value: "ASSIGNED" },
-  { label: SYSTEM_MESSAGES.ASSET.FILTER_RETURNED, value: "RETIRED" },
+  {
+    label: SYSTEM_MESSAGES.ASSET.FILTER_AVAILABLE,
+    value: ASSET_CONSTANTS.STATUS.AVAILABLE as AssetStatus,
+  },
+  {
+    label: SYSTEM_MESSAGES.ASSET.FILTER_ASSIGNED,
+    value: ASSET_CONSTANTS.STATUS.ASSIGNED as AssetStatus,
+  },
+  {
+    label: SYSTEM_MESSAGES.ASSET.FILTER_RETURNED,
+    value: ASSET_CONSTANTS.STATUS.RETIRED as AssetStatus,
+  },
 ];
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
@@ -504,7 +514,8 @@ export default function AssetManagementPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive uppercase font-black tracking-tight">
               <AlertTriangle className="w-5 h-5" />
-              {deleteTarget?.status?.toUpperCase() === "ASSIGNED"
+              {deleteTarget?.status?.toUpperCase() ===
+              ASSET_CONSTANTS.STATUS.ASSIGNED
                 ? SYSTEM_MESSAGES.ASSET.MSG_CANNOT_DELETE
                 : SYSTEM_MESSAGES.ASSET.MSG_CONFIRM_DELETE}
             </DialogTitle>
@@ -513,7 +524,8 @@ export default function AssetManagementPage() {
               asChild
             >
               <div>
-                {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
+                {deleteTarget?.status?.toUpperCase() ===
+                ASSET_CONSTANTS.STATUS.ASSIGNED ? (
                   // ASSIGNED: show guidance to return first
                   <div className="space-y-4">
                     <p>
@@ -570,7 +582,8 @@ export default function AssetManagementPage() {
             >
               {SYSTEM_MESSAGES.ASSET.BTN_CLOSE}
             </button>
-            {deleteTarget?.status?.toUpperCase() === "ASSIGNED" ? (
+            {deleteTarget?.status?.toUpperCase() ===
+            ASSET_CONSTANTS.STATUS.ASSIGNED ? (
               // Guide to open detail modal for return
               <button
                 onClick={() => {

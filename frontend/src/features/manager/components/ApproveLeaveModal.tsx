@@ -7,7 +7,12 @@ import { leaveService } from "@/services/leaveService";
 import type { LeaveRequest } from "../ApproveLeaveRequest";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { FORM_VALIDATION_MESSAGES } from "@/constants/validations";
-import { DATETIME_FORMAT, DATE_FORMAT } from "@/constants/leave-request";
+import {
+  DATETIME_FORMAT,
+  DATE_FORMAT,
+  BACKEND_LEAVE_STATUS,
+  LEAVE_PROCESS_ACTION,
+} from "@/constants/leave-request";
 import {
   ReviewSheetHeader,
   ReviewSheetProfile,
@@ -40,8 +45,12 @@ export default function ApproveLeaveDialog({
     return null;
   }
 
-  const doAction = async (action: "APPROVE" | "REJECT" | "SEND_BACK") => {
-    if (action === "REJECT" || action === "SEND_BACK") {
+  const doAction = async (action: keyof typeof LEAVE_PROCESS_ACTION) => {
+    const isDestructive =
+      action === LEAVE_PROCESS_ACTION.REJECT ||
+      action === LEAVE_PROCESS_ACTION.SEND_BACK;
+
+    if (isDestructive) {
       if (!comment.trim()) {
         setError(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
         toast.error(FORM_VALIDATION_MESSAGES.MISSING_CONTENT);
@@ -63,13 +72,11 @@ export default function ApproveLeaveDialog({
       onUpdateStatus?.(request.id, updated.status);
 
       let msg = "";
-      if (action === "APPROVE") {
+      if (action === LEAVE_PROCESS_ACTION.APPROVE) {
         msg = SYSTEM_MESSAGES.APPROVE.TOAST_APPROVED;
-      }
-      if (action === "REJECT") {
+      } else if (action === LEAVE_PROCESS_ACTION.REJECT) {
         msg = SYSTEM_MESSAGES.APPROVE.TOAST_REJECTED;
-      }
-      if (action === "SEND_BACK") {
+      } else if (action === LEAVE_PROCESS_ACTION.SEND_BACK) {
         msg = SYSTEM_MESSAGES.APPROVE.TOAST_RETURNED;
       }
 
@@ -83,34 +90,34 @@ export default function ApproveLeaveDialog({
     }
   };
 
-  const handleApprove = () => doAction("APPROVE");
-  const handleReject = () => doAction("REJECT");
-  const handleSendBack = () => doAction("SEND_BACK");
+  const handleApprove = () => doAction(LEAVE_PROCESS_ACTION.APPROVE);
+  const handleReject = () => doAction(LEAVE_PROCESS_ACTION.REJECT);
+  const handleSendBack = () => doAction(LEAVE_PROCESS_ACTION.SEND_BACK);
 
   const getStatusLabel = () => {
-    if (request.status === "APPROVED") {
+    if (request.status === BACKEND_LEAVE_STATUS.APPROVED) {
       return SYSTEM_MESSAGES.STATUS.APPROVED;
     }
-    if (request.status === "REJECTED") {
+    if (request.status === BACKEND_LEAVE_STATUS.REJECTED) {
       return SYSTEM_MESSAGES.STATUS.REJECTED;
     }
-    if (request.status === "RETURNED_TO_EMPLOYEE") {
+    if (request.status === BACKEND_LEAVE_STATUS.RETURNED) {
       return SYSTEM_MESSAGES.STATUS.RETURNED;
     }
-    if (request.status.startsWith("PENDING")) {
+    if (request.status.startsWith(BACKEND_LEAVE_STATUS.PENDING)) {
       return SYSTEM_MESSAGES.STATUS.PENDING;
     }
     return request.status;
   };
 
   const getStatusColor = () => {
-    if (request.status === "APPROVED") {
+    if (request.status === BACKEND_LEAVE_STATUS.APPROVED) {
       return "badge-success";
     }
-    if (request.status === "REJECTED") {
+    if (request.status === BACKEND_LEAVE_STATUS.REJECTED) {
       return "badge-error";
     }
-    if (request.status === "RETURNED_TO_EMPLOYEE") {
+    if (request.status === BACKEND_LEAVE_STATUS.RETURNED) {
       return "badge-warning";
     }
     return "badge-warning";
@@ -136,7 +143,7 @@ export default function ApproveLeaveDialog({
             name={request.name}
             dept={request.dept}
             id={request.id}
-            isUrgent={request.status.startsWith("PENDING")}
+            isUrgent={request.status.startsWith(BACKEND_LEAVE_STATUS.PENDING)}
           />
 
           {/* ===== CHI TIẾT NGHỈ PHÉP ===== */}
@@ -214,7 +221,7 @@ export default function ApproveLeaveDialog({
           onApprove={handleApprove}
           onReject={handleReject}
           onReturn={handleSendBack}
-          isPending={request.status.startsWith("PENDING")}
+          isPending={request.status.startsWith(BACKEND_LEAVE_STATUS.PENDING)}
           processing={loading}
           actionDisabled={user?.id === request.requesterUserId}
         />
