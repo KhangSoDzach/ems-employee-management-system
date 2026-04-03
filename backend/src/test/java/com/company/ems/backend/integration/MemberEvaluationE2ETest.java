@@ -31,6 +31,7 @@ import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.config.StorageProperties;
 import com.company.ems.backend.employee.controller.EmployeeController;
 import com.company.ems.backend.employee.dto.MemberResponse;
+import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.employee.service.EmployeeService;
 import com.company.ems.backend.performance.review.controller.PerformanceReviewController;
 import com.company.ems.backend.performance.review.service.PerformanceReviewService;
@@ -66,6 +67,9 @@ public class MemberEvaluationE2ETest {
 
         @MockitoBean
     private CustomPermissionEvaluator customPermissionEvaluator;
+
+        @MockitoBean
+    private EmployeeRepository employeeRepository;
 
     @Autowired
     private ObjectMapper objectMapper;

@@ -32,8 +32,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "leave_balances", indexes = {
         @Index(name = "idx_leave_balance_employee", columnList = "employee_id"),
-        @Index(name = "idx_leave_balance_year", columnList = "year"),
-        @Index(name = "idx_leave_balance_employee_year_type", columnList = "employee_id, year, leaveType", unique = true)
+        @Index(name = "idx_leave_balance_year", columnList = "\"year\""),
+        @Index(name = "idx_leave_balance_employee_year_type", columnList = "employee_id, \"year\", leave_type", unique = true)
 })
 @Getter
 @Setter
@@ -49,7 +49,7 @@ public class LeaveBalance extends BaseEntity {
 
     @NotNull(message = "Year is required")
     @Min(value = 2000, message = "Year must be 2000 or later")
-    @Column(nullable = false)
+    @Column(name = "\"year\"", nullable = false)
     private Integer year;
 
     @NotNull(message = "Leave type is required")

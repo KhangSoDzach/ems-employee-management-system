@@ -78,17 +78,18 @@ export const ActiveFilterBadge = ({
     )}
   >
     {value}
-    <button
-      type="button"
+    <span
+      role="button"
+      tabIndex={0}
       onPointerDown={(e) => e.stopPropagation()} // prevents Radix DropdownMenuTrigger
       onClick={(e) => {
         e.stopPropagation();
         onClear();
       }}
-      className="opacity-60 hover:opacity-100 transition-opacity rounded-full"
+      className="opacity-60 hover:opacity-100 transition-opacity rounded-full cursor-pointer"
       aria-label={SYSTEM_MESSAGES.ADJUSTMENT.BTN_CLEAR + value}
     >
       <X className="w-2.5 h-2.5" />
-    </button>
+    </span>
   </span>
 );

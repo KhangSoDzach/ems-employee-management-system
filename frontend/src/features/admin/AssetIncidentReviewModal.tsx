@@ -46,6 +46,7 @@ export default function AssetIncidentReviewModal({
   };
 
   const isPending = incident.status === "PENDING";
+  const isOwnReport = incident.requesterUserId === user?.id;
 
   const getStatusColor = () => {
     switch (incident.status) {
@@ -139,26 +140,29 @@ export default function AssetIncidentReviewModal({
             </div>
           </section>
 
-          {isPending && incident.requesterUserId === user?.id ? (
+          {isPending && isOwnReport && (
             <div className="bg-amber-50 text-amber-600 border border-amber-200 p-3 rounded-md text-sm text-center">
-              {SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.MSG_SELF_RESOLVE_ERROR}
+              {SYSTEM_MESSAGES.ASSET_REPORT.MSG_OWN_REPORT}
             </div>
-          ) : (
-            isPending && <ReviewSheetFeedback value={note} onChange={setNote} />
+          )}
+
+          {isPending && !isOwnReport && (
+            <ReviewSheetFeedback value={note} onChange={setNote} />
           )}
         </div>
 
-        <ReviewSheetFooter
-          onApprove={() => handleAction("approve")}
-          onReject={() => handleAction("reject")}
-          isPending={isPending}
-          processing={processing}
-          actionDisabled={incident.requesterUserId === user?.id}
-          labels={{
-            approve: SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.BTN_APPROVE,
-            reject: SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.BTN_REJECT,
-          }}
-        />
+        {!isOwnReport && (
+          <ReviewSheetFooter
+            onApprove={() => handleAction("approve")}
+            onReject={() => handleAction("reject")}
+            isPending={isPending}
+            processing={processing}
+            labels={{
+              approve: SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.BTN_APPROVE,
+              reject: SYSTEM_MESSAGES.ASSET_INCIDENT_MODAL.BTN_REJECT,
+            }}
+          />
+        )}
       </SheetContent>
     </Sheet>
   );

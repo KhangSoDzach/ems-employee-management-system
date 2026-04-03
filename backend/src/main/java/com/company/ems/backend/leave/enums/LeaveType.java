@@ -58,7 +58,12 @@ public enum LeaveType {
     /**
      * Compensatory time off
      */
-    COMPENSATORY;
+    COMPENSATORY,
+
+    /**
+     * Casual leave (short-term personal leave)
+     */
+    CASUAL;
 
     /**
      * Parses a leave type from the given string value case-insensitively.

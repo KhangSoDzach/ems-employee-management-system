@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
@@ -92,13 +93,6 @@ class PerformanceReviewServiceImplTest {
 
         when(employeeRepo.findById(10L)).thenReturn(Optional.of(reviewee));
         when(employeeRepo.findByUserUsername("manager1")).thenReturn(Optional.of(managerEmp));
-        PerformanceReviewCycle activeCycle = PerformanceReviewCycle.builder()
-                .managerId(1L)
-                .reviewPeriod("2026-Q1")
-                .build();
-        activeCycle.setId(100L);
-        when(cycleRepo.findActiveCycleByManagerAndPeriod(eq(1L), eq("2026-Q1"), eq(ReviewCycleStatus.OPEN), any()))
-            .thenReturn(Optional.of(activeCycle));
         when(reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(1L, 10L, "2026-Q1"))
                 .thenReturn(false);
 
@@ -144,16 +138,9 @@ class PerformanceReviewServiceImplTest {
 
         when(employeeRepo.findById(10L)).thenReturn(Optional.of(reviewee));
         when(employeeRepo.findByUserUsername("manager1")).thenReturn(Optional.of(managerEmp));
-        PerformanceReviewCycle activeCycle = PerformanceReviewCycle.builder()
-                .managerId(1L)
-                .reviewPeriod("2026-Q1")
-                .build();
-        activeCycle.setId(100L);
-        when(cycleRepo.findActiveCycleByManagerAndPeriod(eq(1L), eq("2026-Q1"), eq(ReviewCycleStatus.OPEN), any()))
-            .thenReturn(Optional.of(activeCycle));
         when(reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(1L, 10L, "2026-Q1"))
                 .thenReturn(true);
-        when(messages.get(eq(MessageCode.REVIEW_DUPLICATE), any())).thenReturn("Duplicate review");
+        lenient().when(messages.get(eq(MessageCode.REVIEW_DUPLICATE), (Object[]) any())).thenReturn("Duplicate review");
 
         PerformanceReviewDto.ScoresRequest scores = new PerformanceReviewDto.ScoresRequest();
         scores.setExpertise(80); scores.setCommunication(80); scores.setAttitude(80);
@@ -251,14 +238,6 @@ class PerformanceReviewServiceImplTest {
 
         when(employeeRepo.findByUserUsername("employee1")).thenReturn(Optional.of(reviewerEmp));
         when(employeeRepo.findById(7L)).thenReturn(Optional.of(manager));
-
-        PerformanceReviewCycle activeCycle = PerformanceReviewCycle.builder()
-            .managerId(7L)
-            .reviewPeriod("2026-Q1")
-            .build();
-        activeCycle.setId(200L);
-        when(cycleRepo.findActiveCycleByManagerAndPeriod(eq(7L), eq("2026-Q1"), eq(ReviewCycleStatus.OPEN), any()))
-            .thenReturn(Optional.of(activeCycle));
 
         when(reviewRepo.existsByReviewerIdAndRevieweeIdAndReviewPeriodAndIsDeletedFalse(1L, 7L, "2026-Q1"))
             .thenReturn(false);

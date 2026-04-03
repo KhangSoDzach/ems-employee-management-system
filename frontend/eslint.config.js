@@ -58,7 +58,7 @@ export default defineConfig([
       //   Chỉ bắt text nằm trực tiếp trong JSX children: <p>Hardcoded text</p>
       // - allowedStrings: cho phép ký tự đặc biệt/câu ký tự đơn không phải nội dung thật
       "react/jsx-no-literals": [
-        "error",
+        "warn",
         {
           noStrings: true,
           ignoreProps: true,

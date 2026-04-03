@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -77,26 +78,34 @@ public class PayrollController {
                 exportPayrollCsvUseCase.execute(period, response.getOutputStream());
         }
 
-        @PostMapping("/run")
-        @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
-        @Operation(summary = "Run payroll for a period")
-        public ResponseEntity<ApiResponse<RunPayrollResult>> runPayroll(
-                        @Valid @RequestBody RunPayrollRequest request,
-                        Authentication auth) {
-                RunPayrollCommand cmd = new RunPayrollCommand(request.period(), auth.getName());
-                return ResponseEntity.ok(
-                                ApiResponse.success("Tính lương thành công", runPayrollUseCase.execute(cmd)));
+    @PostMapping("/run")
+    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @Operation(summary = "Run payroll for a period")
+    public ResponseEntity<ApiResponse<RunPayrollResult>> runPayroll(
+            @Valid @RequestBody RunPayrollRequest request,
+            Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        RunPayrollCommand cmd = new RunPayrollCommand(request.period(), auth.getName());
+        return ResponseEntity.ok(
+                ApiResponse.success("Tính lương thành công", runPayrollUseCase.execute(cmd)));
+    }
 
-        @PostMapping("/recalculate/{period}")
-        @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
-        @Operation(summary = "Recalculate payroll for existing period (AC-03)")
-        public ResponseEntity<ApiResponse<RunPayrollResult>> recalculatePayroll(
-                        @PathVariable @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM") String period,
-                        Authentication auth) {
-                RunPayrollCommand cmd = new RunPayrollCommand(period, auth.getName());
-                return ResponseEntity.ok(
-                                ApiResponse.success("Tính lại lương thành công",
-                                                recalculatePayrollUseCase.execute(cmd)));
+    @PostMapping("/recalculate/{period}")
+    @PreAuthorize(RoleAuthorization.HAS_HR_OR_ADMIN)
+    @Operation(summary = "Recalculate payroll for existing period (AC-03)")
+    public ResponseEntity<ApiResponse<RunPayrollResult>> recalculatePayroll(
+            @PathVariable
+            @Pattern(regexp = "\\d{4}-\\d{2}", message = "Period must be yyyy-MM")
+            String period,
+            Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        RunPayrollCommand cmd = new RunPayrollCommand(period, auth.getName());
+        return ResponseEntity.ok(
+                ApiResponse.success("Tính lại lương thành công",
+                        recalculatePayrollUseCase.execute(cmd)));
+    }
 }

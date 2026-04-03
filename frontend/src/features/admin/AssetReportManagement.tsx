@@ -56,8 +56,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AssetReportManagement() {
+  const { user } = useAuth();
   const [reports, setReports] = useState<AdminIncidentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
@@ -549,7 +551,7 @@ export default function AssetReportManagement() {
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/30">
                           <div>
                             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
-                              {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_DEVICE_CODE}
+                              {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_ASSET_CODE}
                             </p>
                             <p className="font-bold text-foreground font-mono">
                               {selectedReport?.assetCode}
@@ -557,10 +559,7 @@ export default function AssetReportManagement() {
                           </div>
                           <div className="text-right">
                             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
-                              {
-                                SYSTEM_MESSAGES.ASSET_REPORT
-                                  .LABEL_ASSET_TAG_SHORT
-                              }
+                              {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_ASSET_TAG}
                             </p>
                             <Badge className="bg-slate-900 text-white font-mono text-[10px]">
                               {selectedReport?.assetTag}
@@ -623,9 +622,9 @@ export default function AssetReportManagement() {
                           </p>
                           <div className="bg-white/50 dark:bg-black/20 p-4 rounded-2xl border border-border shadow-inner-sm">
                             <p className="text-sm font-bold text-muted-foreground italic leading-relaxed">
-                              {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                              {SYSTEM_MESSAGES.ASSET_REPORT.TXT_QUOTE}
                               {selectedReport?.description}
-                              {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                              {SYSTEM_MESSAGES.ASSET_REPORT.TXT_QUOTE}
                             </p>
                           </div>
                         </div>
@@ -699,63 +698,71 @@ export default function AssetReportManagement() {
                               {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_PROCESS_NOTE}
                             </p>
                             <p className="text-xs font-bold text-slate-400 leading-relaxed italic">
-                              {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                              {SYSTEM_MESSAGES.ASSET_REPORT.TXT_QUOTE}
                               {selectedReport?.processNote ||
                                 SYSTEM_MESSAGES.ASSET_REPORT.TXT_NO_NOTE}
-                              {SYSTEM_MESSAGES.SYMBOLS.QUOTE}
+                              {SYSTEM_MESSAGES.ASSET_REPORT.TXT_QUOTE}
                             </p>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {selectedReport?.status === "PENDING" && (
-                      <div className="space-y-4 pt-10 border-t-2 border-border/50">
-                        <div className="space-y-3">
-                          <label className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                            {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_FEEDBACK_NOTE}
-                          </label>
-                          <Textarea
-                            placeholder={
-                              SYSTEM_MESSAGES.ASSET_REPORT.PLACEHOLDER_FEEDBACK
-                            }
-                            className="resize-none h-40 text-sm border-2 border-border focus-visible:ring-primary/20 rounded-2xl font-bold bg-muted/30"
-                            value={processNote}
-                            onChange={(e) => setProcessNote(e.target.value)}
-                          />
+                    {selectedReport?.status === "PENDING" &&
+                      selectedReport?.requesterUserId !== user?.id && (
+                        <div className="space-y-4 pt-10 border-t-2 border-border/50">
+                          <div className="space-y-3">
+                            <label className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                              {SYSTEM_MESSAGES.ASSET_REPORT.LABEL_FEEDBACK_NOTE}
+                            </label>
+                            <Textarea
+                              placeholder={
+                                SYSTEM_MESSAGES.ASSET_REPORT
+                                  .PLACEHOLDER_FEEDBACK
+                              }
+                              className="resize-none h-40 text-sm border-2 border-border focus-visible:ring-primary/20 rounded-2xl font-bold bg-muted/30"
+                              value={processNote}
+                              onChange={(e) => setProcessNote(e.target.value)}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 </div>
               </div>
 
               <div className="px-10 py-8 bg-muted/20 border-t border-border flex gap-4">
                 {selectedReport?.status === "PENDING" ? (
-                  <>
-                    <Button
-                      variant="ghost"
-                      className="flex-1 h-16 font-black uppercase tracking-[0.2em] text-[10px] text-rose-500 hover:bg-rose-500 hover:text-white rounded-2xl transition-all"
-                      onClick={() => handleProcess("REJECT")}
-                      disabled={processing}
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      {SYSTEM_MESSAGES.ASSET_REPORT.BTN_REJECT}
-                    </Button>
-                    <Button
-                      className="flex-2 h-16 font-black uppercase tracking-[0.2em] text-[10px] bg-emerald-600 hover:bg-black text-white shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all rounded-2xl gap-3"
-                      onClick={() => handleProcess("APPROVE")}
-                      disabled={processing}
-                    >
-                      {processing ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      ) : (
-                        <BadgeCheck className="w-4 h-4 text-white" />
-                      )}
-                      {SYSTEM_MESSAGES.ASSET_REPORT.BTN_APPROVE}
-                    </Button>
-                  </>
+                  selectedReport?.requesterUserId === user?.id ? (
+                    <div className="w-full bg-amber-50 text-amber-600 border border-amber-200 p-4 rounded-xl text-sm font-semibold text-center flex items-center justify-center">
+                      {SYSTEM_MESSAGES.ASSET_REPORT.MSG_OWN_REPORT}
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        className="flex-1 h-16 font-black uppercase tracking-[0.2em] text-[10px] text-rose-500 hover:bg-rose-500 hover:text-white rounded-2xl transition-all"
+                        onClick={() => handleProcess("REJECT")}
+                        disabled={processing}
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        {SYSTEM_MESSAGES.ASSET_REPORT.BTN_REJECT}
+                      </Button>
+                      <Button
+                        className="flex-2 h-16 font-black uppercase tracking-[0.2em] text-[10px] bg-emerald-600 hover:bg-black text-white shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all rounded-2xl gap-3"
+                        onClick={() => handleProcess("APPROVE")}
+                        disabled={processing}
+                      >
+                        {processing ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        ) : (
+                          <BadgeCheck className="w-4 h-4 text-white" />
+                        )}
+                        {SYSTEM_MESSAGES.ASSET_REPORT.BTN_APPROVE}
+                      </Button>
+                    </>
+                  )
                 ) : (
                   <Button
                     variant="ghost"

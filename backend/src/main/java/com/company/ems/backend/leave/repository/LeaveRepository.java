@@ -103,19 +103,20 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
        /**
         * Search leaves with pagination
         */
-       @Query("SELECT l FROM Leave l WHERE " +
-                     "(:employeeId IS NULL OR l.employee.id = :employeeId) " +
-                     "AND (:status IS NULL OR l.status = :status) " +
-                     "AND (:leaveType IS NULL OR l.leaveType = :leaveType) " +
-                     "AND (:startDate IS NULL OR l.startDate >= :startDate) " +
-                     "AND (:endDate IS NULL OR l.endDate <= :endDate)")
-       Page<Leave> searchLeaves(
-                     @Param("employeeId") Long employeeId,
-                     @Param("status") String status,
-                     @Param("leaveType") String leaveType,
-                     @Param("startDate") LocalDate startDate,
-                     @Param("endDate") LocalDate endDate,
-                     Pageable pageable);
+        @Query("SELECT l FROM Leave l WHERE " +
+                      "(:employeeId IS NULL OR l.employee.id = :employeeId) " +
+                      "AND (:status IS NULL OR l.status = :status) " +
+                      "AND (:leaveType IS NULL OR l.leaveType = :leaveType) " +
+                      "AND (:startDate IS NULL OR l.startDate >= :startDate) " +
+                      "AND (:endDate IS NULL OR l.endDate <= :endDate) " +
+                      "ORDER BY l.createdAt DESC")
+        Page<Leave> searchLeaves(
+                      @Param("employeeId") Long employeeId,
+                      @Param("status") String status,
+                      @Param("leaveType") String leaveType,
+                      @Param("startDate") LocalDate startDate,
+                      @Param("endDate") LocalDate endDate,
+                      Pageable pageable);
 
        /**
         * Count leaves by employee and status
@@ -138,8 +139,12 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
        @Query("SELECT l FROM Leave l WHERE l.employee.id = :employeeId ORDER BY l.createdAt DESC")
        Page<Leave> findByEmployeeId(@Param("employeeId") Long employeeId, Pageable pageable);
 
-       @Query("SELECT l FROM Leave l WHERE l.employee.reportingManager.user.id = :managerUserId ORDER BY l.createdAt DESC")
-       Page<Leave> findByReportingManagerUserId(@Param("managerUserId") Long managerUserId, Pageable pageable);
+    @Query("SELECT l FROM Leave l " +
+           "JOIN l.employee e " +
+           "JOIN e.reportingManager rm " +
+           "JOIN rm.user u " +
+           "WHERE u.id = :managerUserId ORDER BY l.createdAt DESC")
+    Page<Leave> findByReportingManagerUserId(@Param("managerUserId") Long managerUserId, Pageable pageable);
 
                       @Query("""
                                                                        SELECT l FROM Leave l
