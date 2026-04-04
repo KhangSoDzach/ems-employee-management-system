@@ -55,6 +55,7 @@ public final class AssetDto {
         private String description;
         private String notes;
         private String imageUrl;
+        private Long assignedToId;
         private List<HistoryItem> recentHistory;
     }
 

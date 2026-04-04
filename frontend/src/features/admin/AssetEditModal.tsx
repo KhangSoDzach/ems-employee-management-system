@@ -36,16 +36,19 @@ export default function AssetEditModal({
           setInitialData({
             name: res.name,
             type: res.type || "",
-            value: res.value ? parseInt(res.value) : undefined,
+            value: res.value
+              ? parseInt(res.value.replace(/[^0-9]/g, ""))
+              : undefined,
             purchaseDate: res.purchaseDate || "",
-            condition: res.condition,
+            condition: res.condition as any,
             locationOrUser: res.location || "",
+            assignedEmployeeId: res.assignedToId || undefined,
             warrantyDate: res.warranty || "",
             supplier: res.supplier || "",
             contractDate: res.contract || "",
             description: res.description || "",
             image: res.imageUrl || "",
-            initialStatus: res.status,
+            initialStatus: res.status as any,
           });
         })
         .catch(() => toast.error(SYSTEM_MESSAGES.ERROR))
@@ -84,18 +87,19 @@ export default function AssetEditModal({
     setSaving(true);
     try {
       const payload: AssetUpdatePayload = {
-        assetName: formData.name,
-        assetType: formData.type,
-        assetValue: formData.value,
+        name: formData.name,
+        type: formData.type,
+        value: formData.value,
         purchaseDate: formData.purchaseDate || undefined,
         condition: formData.condition,
-        location: formData.locationOrUser || undefined,
+        locationOrUser: formData.locationOrUser || undefined,
+        assignedEmployeeId: formData.assignedEmployeeId,
         description: formData.description || undefined,
-        warrantyUntil: formData.warrantyDate || undefined,
-        supplierName: formData.supplier || undefined,
-        contractUntil: formData.contractDate || undefined,
+        warrantyDate: formData.warrantyDate || undefined,
+        supplier: formData.supplier || undefined,
+        contractDate: formData.contractDate || undefined,
         contractNumber: formData.contractNumber || undefined,
-        imageUrl: formData.image || undefined,
+        image: formData.image || undefined,
       };
       await assetService.updateAsset(assetId, payload);
       toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
