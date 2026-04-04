@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   application:
     name: ems-backend
   messages:
@@ -127,7 +129,7 @@ app:
       # Hours before auto-escalating after reminder (future use)
       escalation-reminder-hours: ${APP_WORKFLOW_LEAVE_ESCALATION_HOURS:48}
       # Leaves with totalDays >= this threshold automatically get an extra HR-level
-      long-leave-threshold-days: ${APP_WORKFLOW_LEAVE_LONG_LEAVE_THRESHOLD:5}
+      long-leave-threshold-days: ${APP_WORKFLOW_LEAVE_LONG_LEAVE_THRESHOLD:2}
       # Role assigned to the auto-injected extra level
       long-leave-extra-level-role: ${APP_WORKFLOW_LEAVE_EXTRA_ROLE:ROLE_HR}
 

@@ -266,7 +266,7 @@ export const SYSTEM_MESSAGES = {
   MGMT_ADJ: {
     BREADCRUMB_PARENT: "Phê duyệt",
     BREADCRUMB_CURRENT: "Điều chỉnh chấm công",
-    TITLE: "Danh sách chờ duyệt",
+    TITLE: "Phê duyệt điều chấm công",
     DESC: "Quản lý các yêu cầu điều chỉnh chấm công từ nhân viên.",
     PENDING_STATS_LABEL: "Yêu cầu chờ duyệt",
     SEARCH_PLACEHOLDER: "Tìm nhân viên hoặc mã...",
@@ -344,6 +344,10 @@ export const SYSTEM_MESSAGES = {
     SUMMARY_UNIT: "đơn",
     SUMMARY_DIVIDER: "/",
     SHEET_TITLE: "Chi tiết đơn nghỉ",
+    SHEET_DESCRIPTION: "Xem thông tin chi tiết và phê duyệt đơn nghỉ phép",
+    APPROVAL_SECTION_TITLE: "Tiến trình duyệt",
+    APPROVAL_STEP_MANAGER: "Manager duyệt",
+    APPROVAL_STEP_HR: "HR duyệt",
     SHEET_END_DATE: "Ngày kết thúc",
     SHEET_TOTAL_TIME: "Tổng thời gian",
     CREATE_TITLE: "Tạo Đơn Nghỉ Phép",
@@ -554,6 +558,8 @@ export const SYSTEM_MESSAGES = {
     EMAIL_SENT_COUNT: (count: number) => `, đã gửi email ${count} người`,
     SUCCESS_RECIPIENTS: (count: number, emailText: string) =>
       `Tạo thông báo thành công (${count} người nhận${emailText})`,
+    DETAIL_TITLE: "Chi tiết thông báo",
+    DETAIL_DESC: "Xem nội dung chi tiết của thông báo",
   },
 
   // Employee Management (Admin Dashboard + HR)

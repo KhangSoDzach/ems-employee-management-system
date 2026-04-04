@@ -19,7 +19,12 @@ import {
 } from "@/hooks/useAnnouncements";
 import type { AnnouncementResponse } from "@/features/announcement/announcement.types";
 import { useState, useMemo, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { AnnouncementDetail } from "@/features/announcement/components/AnnouncementDetail";
 
 const formatTime = (value: string) => {
@@ -188,6 +193,12 @@ export function SiteHeader() {
         }}
       >
         <DialogContent className="max-w-md p-4">
+          <DialogTitle className="sr-only">
+            {SYSTEM_MESSAGES.ANNOUNCEMENT.DETAIL_TITLE}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {SYSTEM_MESSAGES.ANNOUNCEMENT.DETAIL_DESC}
+          </DialogDescription>
           {selectedAnnouncement && (
             <AnnouncementDetail announcement={selectedAnnouncement} />
           )}
