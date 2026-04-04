@@ -54,6 +54,7 @@ export interface AssetDetail {
   location: string | null;
   description: string | null;
   imageUrl: string | null;
+  assignedToId: number | null;
   recentHistory: AssetHistoryItem[];
 }
 export interface AssetHistoryItem {
@@ -81,18 +82,19 @@ export interface AssetCreatePayload {
   contractNumber?: string;
 }
 export interface AssetUpdatePayload {
-  assetName?: string;
-  assetType?: string;
+  name?: string;
+  type?: string;
   description?: string;
-  assetValue?: number;
+  value?: number;
   purchaseDate?: string;
-  warrantyUntil?: string;
-  supplierName?: string;
-  contractUntil?: string;
+  warrantyDate?: string;
+  supplier?: string;
+  contractDate?: string;
   condition?: AssetCondition;
-  notes?: string;
-  imageUrl?: string;
-  location?: string;
+  note?: string;
+  image?: string;
+  locationOrUser?: string;
+  assignedEmployeeId?: number;
   contractNumber?: string;
 }
 export interface AssignPayload {
