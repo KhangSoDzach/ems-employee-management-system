@@ -114,6 +114,7 @@ public class AssetMapper {
                 .description(a.getDescription())
                 .notes(a.getNotes())
                 .imageUrl(a.getImageUrl())
+                .assignedToId(a.getAssignedTo() != null ? a.getAssignedTo().getId() : null)
                 .recentHistory(recentHistory.stream()
                         .map(this::toHistoryItemDetail)
                         .collect(Collectors.toList()))

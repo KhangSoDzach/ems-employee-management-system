@@ -25,6 +25,7 @@ export interface AssetFormData {
   description?: string;
   image?: string;
   initialStatus?: AssetStatus;
+  assignedEmployeeId?: number;
 }
 
 interface Props {
@@ -466,6 +467,7 @@ export const AssetForm: React.FC<Props> = ({
                         const name =
                           `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim();
                         setField("locationOrUser", name);
+                        setField("assignedEmployeeId", emp.id);
                         setEmployeeKeyword(name);
                         setOpenEmployeeDropdown(false);
                       }}
