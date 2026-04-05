@@ -268,7 +268,7 @@ class EmployeeServiceImplTest {
         Page<Employee> page = new PageImpl<>(List.of(employee));
         when(employeeRepository.searchEmployees(any(), any(), any(), any(), any(PageRequest.class))).thenReturn(page);
 
-        PageResponse<EmployeeResponse> response = employeeService.getAllEmployees(0, 10, null, null, null, null);
+        PageResponse<EmployeeResponse> response = employeeService.getAllEmployees(0, 10, null, null, null, null, false);
 
         assertNotNull(response);
         assertEquals(1, response.getContent().size());
@@ -286,7 +286,7 @@ class EmployeeServiceImplTest {
         when(employeeRepository.searchEmployeesByManager(eq(2L), any(), any(), any(), any(), any(PageRequest.class)))
                 .thenReturn(page);
 
-        PageResponse<EmployeeResponse> response = employeeService.getAllEmployees(0, 10, null, null, null, null);
+        PageResponse<EmployeeResponse> response = employeeService.getAllEmployees(0, 10, null, null, null, null, false);
 
         assertNotNull(response);
         assertEquals(1, response.getContent().size());

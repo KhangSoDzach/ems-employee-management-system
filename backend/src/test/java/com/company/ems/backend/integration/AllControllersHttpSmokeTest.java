@@ -251,10 +251,10 @@ class AllControllersHttpSmokeTest {
         Mockito.when(auditLogService.getAuditLogs(Mockito.any()))
                 .thenReturn(PageResponse.of(List.of(), 0, 10, 0L, 0, "logs"));
 
-        // Employee — getAllEmployees(int page, int size, String dept, String pos, String status, String search)
+        // Employee — getAllEmployees(int page, int size, String dept, String pos, String status, String search, boolean includeDeleted)
         Mockito.when(employeeService.getAllEmployees(
                 Mockito.anyInt(), Mockito.anyInt(),
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
                 .thenReturn(PageResponse.of(List.of(), 0, 10, 0L, 0, "employees"));
 
         // Leave — getAllLeaves(int page, int size, Long empId, String status, String type, LocalDate, LocalDate)

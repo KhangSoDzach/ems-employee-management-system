@@ -153,7 +153,7 @@ class HrFeaturesE2ETest {
             EmployeeResponse emp = EmployeeResponse.builder()
                     .id(10L).firstName("Nguyen").lastName("Van A").employeeCode("EMP-001").build();
             PageResponse<EmployeeResponse> page = PageResponse.of(List.of(emp), 0, 10, 1L, 1, "employees");
-            Mockito.when(employeeService.getAllEmployees(0, 10, null, null, null, null)).thenReturn(page);
+            Mockito.when(employeeService.getAllEmployees(0, 10, null, null, null, null, false)).thenReturn(page);
 
             mockMvc.perform(get("/api/v1/employees").param("page", "0").param("size", "10"))
                     .andDo(print())

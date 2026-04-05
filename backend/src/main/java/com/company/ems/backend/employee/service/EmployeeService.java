@@ -24,7 +24,8 @@ public interface EmployeeService {
             String department,
             String position,
             String status,
-            String search);
+            String search,
+            boolean includeDeleted);
 
     EmployeeResponse getEmployeeById(Long id);
 
@@ -41,6 +42,8 @@ public interface EmployeeService {
     void deleteEmployeeAttachment(Long id, Long attachmentId);
 
     void deleteEmployee(Long id);
+
+    void restoreEmployee(Long id);
 
     /**
      * Trả danh sách nhân viên giữ vị trí manager (level >= 3) để chọn Người quản lý

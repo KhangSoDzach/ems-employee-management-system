@@ -10,6 +10,7 @@ import {
   Search,
   FilterX,
   AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -36,6 +37,7 @@ export default function EmployeeManagementPage() {
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [isArchivedTab, setIsArchivedTab] = useState(false);
 
   const [openDetail, setOpenDetail] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
@@ -54,7 +56,7 @@ export default function EmployeeManagementPage() {
   // Reset to first page when filter/search changes
   useEffect(() => {
     setPage(0);
-  }, [statusFilter, searchDebounced]);
+  }, [statusFilter, searchDebounced, isArchivedTab]);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
@@ -63,7 +65,8 @@ export default function EmployeeManagementPage() {
         page,
         size: PAGE_SIZE,
         search: searchDebounced || undefined,
-        status: statusFilter || undefined,
+        status: isArchivedTab ? undefined : statusFilter || undefined,
+        includeDeleted: isArchivedTab ? true : undefined,
       };
       const res = await employeeService.getAllEmployees(params);
       setEmployees(res.content);
@@ -75,7 +78,7 @@ export default function EmployeeManagementPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, searchDebounced]);
+  }, [page, statusFilter, searchDebounced, isArchivedTab]);
 
   useEffect(() => {
     fetchList();
@@ -124,6 +127,58 @@ export default function EmployeeManagementPage() {
                   }}
                 >
                   {SYSTEM_MESSAGES.BTN_DELETE}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+      { duration: 6000 },
+    );
+  };
+
+  const handleRestore = (id: number) => {
+    toast.custom(
+      (t) => (
+        <div className="bg-card border border-border rounded-2xl shadow-xl p-5 w-[360px] animate-in slide-in-from-right-full">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+              <RotateCcw className="text-green-600" size={20} />
+            </div>
+
+            <div className="flex-1">
+              <p className="font-bold text-foreground text-base">
+                Khôi phục nhân viên
+              </p>
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                Nhân viên sẽ được khôi phục về danh sách đang làm việc với trạng
+                thái ACTIVE.
+              </p>
+
+              <div className="flex justify-end gap-2 mt-5">
+                <button
+                  onClick={() => toast.dismiss(t)}
+                  className="px-4 py-2 rounded-xl bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
+                >
+                  {SYSTEM_MESSAGES.BTN_CANCEL}
+                </button>
+                <button
+                  className="px-4 py-2 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 shadow-md shadow-green-600/20 transition"
+                  onClick={async () => {
+                    toast.dismiss(t);
+                    try {
+                      await employeeService.restoreEmployee(id);
+                      toast.success("Nhân viên đã được khôi phục thành công");
+                      fetchList();
+                    } catch (error: any) {
+                      const errorMsg =
+                        error.response?.data?.message ||
+                        "Không thể khôi phục nhân viên";
+                      toast.error(errorMsg);
+                    }
+                  }}
+                >
+                  Khôi phục
                 </button>
               </div>
             </div>
@@ -223,9 +278,12 @@ export default function EmployeeManagementPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setStatusFilter("")}
+              onClick={() => {
+                setIsArchivedTab(false);
+                setStatusFilter("");
+              }}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-                statusFilter === ""
+                !isArchivedTab && statusFilter === ""
                   ? "bg-primary/10 text-primary border border-primary/20"
                   : "bg-card text-muted-foreground border border-border hover:bg-muted"
               }`}
@@ -233,8 +291,12 @@ export default function EmployeeManagementPage() {
               {SYSTEM_MESSAGES.LABEL_ALL}
             </button>
             <button
-              onClick={() => setStatusFilter(EMPLOYEE_CONSTANTS.STATUS.ACTIVE)}
+              onClick={() => {
+                setIsArchivedTab(false);
+                setStatusFilter(EMPLOYEE_CONSTANTS.STATUS.ACTIVE);
+              }}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
+                !isArchivedTab &&
                 statusFilter === EMPLOYEE_CONSTANTS.STATUS.ACTIVE
                   ? "bg-green-50/50 text-green-600 border border-green-200"
                   : "bg-card text-muted-foreground border border-border hover:bg-muted"
@@ -243,10 +305,12 @@ export default function EmployeeManagementPage() {
               {SYSTEM_MESSAGES.EMPLOYEE.STATUS_ACTIVE}
             </button>
             <button
-              onClick={() =>
-                setStatusFilter(EMPLOYEE_CONSTANTS.STATUS.PROBATION)
-              }
+              onClick={() => {
+                setIsArchivedTab(false);
+                setStatusFilter(EMPLOYEE_CONSTANTS.STATUS.PROBATION);
+              }}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
+                !isArchivedTab &&
                 statusFilter === EMPLOYEE_CONSTANTS.STATUS.PROBATION
                   ? "bg-amber-50/50 text-amber-700 border border-amber-200"
                   : "bg-card text-muted-foreground border border-border hover:bg-muted"
@@ -254,8 +318,19 @@ export default function EmployeeManagementPage() {
             >
               {SYSTEM_MESSAGES.EMPLOYEE.STATUS_PROBATION}
             </button>
+            <button
+              onClick={() => setIsArchivedTab(true)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
+                isArchivedTab
+                  ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-300 dark:border-gray-600"
+                  : "bg-card text-muted-foreground border border-border hover:bg-muted"
+              }`}
+            >
+              <RotateCcw size={14} />
+              Lưu trữ / Thôi việc
+            </button>
 
-            {(statusFilter || search) && (
+            {(statusFilter || search) && !isArchivedTab && (
               <button
                 onClick={() => {
                   setStatusFilter("");
@@ -331,13 +406,14 @@ export default function EmployeeManagementPage() {
                   </tr>
                 ) : (
                   employees.map((emp) => {
+                    const isArchived = emp.isDeleted === true;
                     const workStatus = getWorkStatus(emp);
                     const statusMeta = getWorkStatusMeta(workStatus);
 
                     return (
                       <tr
                         key={emp.id}
-                        className="group hover:bg-muted/30 transition-colors"
+                        className={`group hover:bg-muted/30 transition-colors ${isArchived ? "opacity-60 bg-gray-50/50 dark:bg-gray-900/20" : ""}`}
                       >
                         <td className="px-6 py-4 font-bold text-primary">
                           {emp.employeeCode}
@@ -375,47 +451,82 @@ export default function EmployeeManagementPage() {
                           {emp.position}
                         </td>
                         <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${statusMeta.className}`}
-                          >
-                            {statusMeta.label}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${statusMeta.className}`}
+                            >
+                              {statusMeta.label}
+                            </span>
+                            {isArchived && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                Đã thôi việc
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {workStatus ===
-                              EMPLOYEE_CONSTANTS.STATUS.PROBATION && (
-                              <button
-                                onClick={() => handleOpenConfirmOfficial(emp)}
-                                className="px-2.5 py-1.5 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition"
-                                title={
-                                  SYSTEM_MESSAGES.EMPLOYEE.BTN_CONFIRM_OFFICIAL
-                                }
-                              >
-                                {SYSTEM_MESSAGES.EMPLOYEE.BTN_CONFIRM_OFFICIAL}
-                              </button>
+                            {isArchived ? (
+                              <>
+                                <button
+                                  onClick={() => handleOpenDetail(emp)}
+                                  className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition"
+                                  title={SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
+                                >
+                                  <Eye size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleRestore(emp.id)}
+                                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-green-600 border border-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition"
+                                  title="Khôi phục nhân viên"
+                                >
+                                  <RotateCcw size={14} />
+                                  Khôi phục
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                {workStatus ===
+                                  EMPLOYEE_CONSTANTS.STATUS.PROBATION && (
+                                  <button
+                                    onClick={() =>
+                                      handleOpenConfirmOfficial(emp)
+                                    }
+                                    className="px-2.5 py-1.5 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition"
+                                    title={
+                                      SYSTEM_MESSAGES.EMPLOYEE
+                                        .BTN_CONFIRM_OFFICIAL
+                                    }
+                                  >
+                                    {
+                                      SYSTEM_MESSAGES.EMPLOYEE
+                                        .BTN_CONFIRM_OFFICIAL
+                                    }
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleOpenDetail(emp)}
+                                  className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition"
+                                  title={SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
+                                >
+                                  <Eye size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleOpenEdit(emp)}
+                                  className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                                  title={SYSTEM_MESSAGES.BTN_EDIT}
+                                >
+                                  <Pencil size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(emp.id)}
+                                  className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                                  title={SYSTEM_MESSAGES.BTN_DELETE}
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </>
                             )}
-                            <button
-                              onClick={() => handleOpenDetail(emp)}
-                              className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition"
-                              title={SYSTEM_MESSAGES.APPROVE.VIEW_DETAIL}
-                            >
-                              <Eye size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleOpenEdit(emp)}
-                              className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
-                              title={SYSTEM_MESSAGES.BTN_EDIT}
-                            >
-                              <Pencil size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(emp.id)}
-                              className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                              title={SYSTEM_MESSAGES.BTN_DELETE}
-                            >
-                              <Trash2 size={18} />
-                            </button>
                           </div>
                         </td>
                       </tr>
