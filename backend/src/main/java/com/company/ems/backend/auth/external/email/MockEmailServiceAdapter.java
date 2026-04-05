@@ -1,5 +1,6 @@
 package com.company.ems.backend.auth.external.email;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -10,10 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Mock implementation of {@link EmailPort} for development environments.
  * Logs the OTP to console instead of sending actual emails.
- * Active only when 'dev' profile is active.
+ * Active only when 'dev' profile is active AND mail is not enabled.
  */
 @Component
 @Profile("dev")
+@ConditionalOnProperty(name = "app.mail.enabled", havingValue = "false", matchIfMissing = true)
 @Slf4j
 public class MockEmailServiceAdapter implements EmailPort {
 

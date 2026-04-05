@@ -23,6 +23,9 @@ RUN addgroup -g 1001 -S spring && \
 
 WORKDIR /app
 
+# Create directories that the app needs at runtime
+RUN mkdir -p /app/uploads /app/logs && chown -R spring:spring /app/uploads /app/logs
+
 # Copy the built JAR from build stage
 COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 

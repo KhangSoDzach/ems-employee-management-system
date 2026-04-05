@@ -52,8 +52,14 @@ services:
       # DB credentials (must match the mysql service above)
       MYSQL_USER: ${MYSQL_USER:-emsuser}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-emspass123}
-      # Override the MySQL hostname to the Docker Compose service name
       MYSQL_HOST: mysql
+      # Mail configuration
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: "${MAIL_USERNAME}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD}"
+      MAIL_FROM: ${MAIL_FROM:-no-reply@ems.company.com}
       # Disable mail health indicator in Actuator to avoid failing overall health
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       JWT_SECRET: ${JWT_SECRET:-changeme-secret-key-for-development-only-minimum-256-bits-required-please-use-env-variable}
