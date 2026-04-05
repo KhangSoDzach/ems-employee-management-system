@@ -120,12 +120,12 @@ VALUES
     'PRESENT', 470, FALSE, FALSE, NOW(), NOW());
 
 -- 11. WORKFLOW TEMPLATES (Seeding only if needed, V12 already handled manual adjustment)
--- Let's add a LEAVE_APPROVAL template if it's missing (placeholder was V13)
+-- Let's add a LEAVE template if it's missing
 INSERT IGNORE INTO workflow_templates (name, workflow_type, description, is_active, is_deleted, created_at, updated_at, version)
 VALUES
-('Multi-level Leave Approval', 'LEAVE_REQUEST', 'Quy trình duyệt nghỉ phép 2 cấp: Manager và HR', TRUE, FALSE, NOW(), NOW(), 0);
+('Multi-level Leave Approval', 'LEAVE', 'Quy trình duyệt nghỉ phép 2 cấp: Manager và HR', TRUE, FALSE, NOW(), NOW(), 0);
 
-SET @template_id = (SELECT id FROM workflow_templates WHERE workflow_type = 'LEAVE_REQUEST' AND is_active = TRUE LIMIT 1);
+SET @template_id = (SELECT id FROM workflow_templates WHERE workflow_type = 'LEAVE' AND is_active = TRUE LIMIT 1);
 INSERT IGNORE INTO workflow_levels (template_id, level_number, assignee_type, assignee_role, created_at, updated_at, version)
 VALUES
 (@template_id, 1, 'ROLE', 'ROLE_MANAGER', NOW(), NOW(), 0),

@@ -182,7 +182,7 @@ class AuthenticationServiceTest {
 
         Authentication authentication = mock(Authentication.class);
 
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameOrEmail("testuser")).thenReturn(Optional.of(user));
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
         AuthResponse response = authenticationService.login(loginRequest, requestContext);
@@ -212,7 +212,7 @@ class AuthenticationServiceTest {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(userDetails);
 
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameOrEmail("testuser")).thenReturn(Optional.of(user));
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
         when(twoFactorAuthService.verifyCodeForLogin("testuser", "123456")).thenReturn(true);
         when(jwtTokenUtil.generateAccessToken(userDetails)).thenReturn("access-token");

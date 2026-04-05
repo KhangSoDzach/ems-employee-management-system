@@ -75,6 +75,9 @@ export interface EmployeeResponse {
   notes: string | null;
   status: string;
   workStatus: "PROBATION" | "ACTIVE" | "TERMINATED" | null;
+  isDeleted: boolean | null;
+  deletedAt: string | null;
+  deletedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -142,6 +145,7 @@ export interface PageParams {
   position?: string;
   status?: string;
   search?: string;
+  includeDeleted?: boolean;
 }
 
 export interface PageResponse<T> {
@@ -340,6 +344,13 @@ export const employeeService = {
     (
       api.delete<unknown, ApiResponse<void>>(
         `/employees/${id}/files/${fileId}`,
+      ) as Promise<ApiResponse<void>>
+    ).then(() => {}),
+
+  restoreEmployee: (id: number): Promise<void> =>
+    (
+      api.post<unknown, ApiResponse<void>>(
+        `/employees/${id}/restore`,
       ) as Promise<ApiResponse<void>>
     ).then(() => {}),
 };

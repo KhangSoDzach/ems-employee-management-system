@@ -55,16 +55,17 @@ public class EmployeeController {
 
     @GetMapping
     @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_VIEW)
-    @Operation(summary = "Get all employees", description = "Retrieves a paginated list of employees with optional filtering (subject to user's DataScope)")
+    @Operation(summary = "Get all employees", description = "Retrieves a paginated list of employees with optional filtering (subject to user's DataScope). Set includeDeleted=true to view archived employees.")
     public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAllEmployees(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "Department ID filter") @RequestParam(required = false) String department,
             @Parameter(description = "Position ID filter") @RequestParam(required = false) String position,
             @Parameter(description = "Status filter") @RequestParam(required = false) String status,
-            @Parameter(description = "Search keyword (name/email)") @RequestParam(required = false) String search) {
+            @Parameter(description = "Search keyword (name/email)") @RequestParam(required = false) String search,
+            @Parameter(description = "Include soft-deleted (archived) employees") @RequestParam(defaultValue = "false") boolean includeDeleted) {
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS),
-                employeeService.getAllEmployees(page, size, department, position, status, search)));
+                employeeService.getAllEmployees(page, size, department, position, status, search, includeDeleted)));
     }
 
     @GetMapping("/me")
@@ -133,6 +134,14 @@ public class EmployeeController {
     public ResponseEntity<ApiResponse<Void>> deleteEmployee(@PathVariable Long id) {
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.EMPLOYEE_DELETED), null));
+    }
+
+    @PostMapping("/{id}/restore")
+    @PreAuthorize(RoleAuthorization.HAS_PERM_EMPLOYEE_UPDATE)
+    @Operation(summary = "Restore employee", description = "Restores a soft-deleted employee: marks isDeleted=false, sets status to ACTIVE.")
+    public ResponseEntity<ApiResponse<Void>> restoreEmployee(@PathVariable Long id) {
+        employeeService.restoreEmployee(id);
+        return ResponseEntity.ok(ApiResponse.success("Nhân viên đã được khôi phục thành công", null));
     }
 
     @PostMapping(value = "/{id}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

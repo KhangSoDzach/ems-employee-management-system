@@ -129,12 +129,21 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
         @Query("SELECT e FROM Employee e WHERE e.user.username = :username")
         Optional<Employee> findByUserUsername(@Param("username") String username);
 
-                                @Query("""
-                                                                                                SELECT DISTINCT e.user.id
-                                                                                                FROM Employee e
-                                                                                                WHERE e.user IS NOT NULL
-                                                                                                        AND e.user.enabled = true
-                                                                                                        AND e.department.id IN :departmentIds
-                                                                                                """)
-                                List<Long> findDistinctUserIdsByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
+        @Query("""
+                        SELECT DISTINCT e.user.id
+                        FROM Employee e
+                        WHERE e.user IS NOT NULL
+                                AND e.user.enabled = true
+                                AND e.department.id IN :departmentIds
+                                """)
+        List<Long> findDistinctUserIdsByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
+
+        @Query("SELECT e FROM Employee e WHERE " +
+                "e.isDeleted = true AND " +
+                "(:search IS NULL OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                "OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+        Page<Employee> searchArchivedEmployees(
+                @Param("search") String search,
+                Pageable pageable);
 }

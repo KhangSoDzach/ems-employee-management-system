@@ -1,6 +1,8 @@
 package com.company.ems.backend.auth.external.email;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -17,8 +19,12 @@ import lombok.extern.slf4j.Slf4j;
  * JavaMailSender.
  * Lives in the Infrastructure layer; the Application layer depends only on the
  * EmailPort interface.
+ * Active only when 'dev' profile is NOT active AND 'test' profile is NOT active
+ * AND app.mail.enabled is true.
  */
 @Component
+@Profile("!dev & !test")
+@ConditionalOnProperty(name = "app.mail.enabled", havingValue = "true")
 @RequiredArgsConstructor
 @Slf4j
 public class EmailServiceAdapter implements EmailPort {

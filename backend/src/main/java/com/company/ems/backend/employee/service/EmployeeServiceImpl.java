@@ -218,7 +218,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         @Override
         @Transactional(readOnly = true)
         public PageResponse<EmployeeResponse> getAllEmployees(int page, int size, String department,
-                                                              String position, String status, String search) {
+                                                              String position, String status, String search, boolean includeDeleted) {
                 CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
                 PageRequest pageable = PageRequest.of(page, size);
 
@@ -250,7 +250,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                 Page<Employee> employees;
 
-                if (principal.hasDataScope(DataScope.ALL)) {
+                if (includeDeleted) {
+                        // Archived tab: only show deleted employees
+                        employees = employeeRepository.searchArchivedEmployees(search, pageable);
+                } else if (principal.hasDataScope(DataScope.ALL)) {
                         // HR Admin: xem tất cả với filter
                         employees = employeeRepository.searchEmployees(search, departmentIdFilter, positionIdFilter,
                                 statusFilter, pageable);
@@ -566,6 +569,28 @@ public class EmployeeServiceImpl implements EmployeeService {
                 }
                 employeeRepository.save(employee);
                 log.info("User [{}] soft-deleted employee [{}]", principal.getUsername(), id);
+        }
+
+        @Override
+        public void restoreEmployee(Long id) {
+                CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
+
+                if (!principal.hasDataScope(DataScope.ALL)) {
+                        throw new ForbiddenException();
+                }
+
+                Employee employee = employeeRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+
+                if (employee.getIsDeleted() == null || !employee.getIsDeleted()) {
+                        throw new BusinessException("EMPLOYEE_NOT_DELETED", "Nhân viên này chưa bị xóa");
+                }
+
+                employee.restore();
+                employee.setStatus(EmployeeStatus.ACTIVE);
+                employee.setWorkStatus(WorkStatus.ACTIVE);
+                employeeRepository.save(employee);
+                log.info("User [{}] restored employee [{}]", principal.getUsername(), id);
         }
 
         @Override

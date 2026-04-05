@@ -125,3 +125,5 @@ All frontend commands must be executed within the `frontend/` directory.
 2. **Minimal Intrusiveness**: Avoid refactoring large unrelated blocks of code. Do not update or modify configurations (`pom.xml`, `package.json`, `eslint.config.js`) unless specifically requested.
 3. **Paths**: Use absolute paths or correct relative paths when making file edits.
 4. **Git Operations**: Never run arbitrary git commits unless directly instructed by the user.
+5. **Frontend Verification**: Always use the `chrome-devtools` MCP to open and test the frontend directly after making any UI changes. Verify rendering, interactions, and behavior in the actual browser — do not rely on code review alone.
+6. **Skill Auto-Detection**: Analyze the user's prompt to determine which skill(s) to apply. Match intent to skill purpose (e.g., feature changes → `tdd-workflow`, auth/endpoints → `security-review`, new APIs → `search-first`). Load and follow the relevant skill automatically without asking.

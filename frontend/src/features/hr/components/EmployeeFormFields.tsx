@@ -60,6 +60,10 @@ export default function EmployeeFormFields(props: Props) {
 
   const formData = watch();
 
+  const selectedDept = departments.find((d) => d.id === formData.departmentId);
+  const isHRDepartment = selectedDept?.code === "HR";
+  const showManagerField = !isHRDepartment;
+
   const hasError = (field: keyof EmployeeFormValues) => !!errors[field];
 
   const inputClass = (field: keyof EmployeeFormValues) =>
@@ -583,58 +587,59 @@ export default function EmployeeFormFields(props: Props) {
               )}
             </div>
 
-            {isManagerPosition === false ? (
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                  {EMPLOYEE_CONSTANTS.LABELS.MANAGER}
-                  {!formData.positionId ? (
-                    <span className="text-[10px] font-normal text-muted-foreground italic normal-case">
-                      {EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_HINT}
-                    </span>
-                  ) : (
-                    <span className="text-red-500" aria-hidden="true">
-                      {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
-                    </span>
-                  )}
-                </label>
-                <select
-                  {...register("reportingManagerId", {
-                    setValueAs: (v) => (v === "" ? undefined : Number(v)),
-                  })}
-                  disabled={!formData.positionId}
-                  className={
-                    selectClass("reportingManagerId") +
-                    " disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:ring-2 focus:ring-primary/20"
-                  }
-                >
-                  <option value="">
-                    {EMPLOYEE_CONSTANTS.PLACEHOLDERS.MANAGER_NONE}
-                  </option>
-                  {managers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} {m.position ? `(${m.position})` : ""}
+            {showManagerField &&
+              (isManagerPosition === false ? (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                    {EMPLOYEE_CONSTANTS.LABELS.MANAGER}
+                    {!formData.positionId ? (
+                      <span className="text-[10px] font-normal text-muted-foreground italic normal-case">
+                        {EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_HINT}
+                      </span>
+                    ) : (
+                      <span className="text-red-500" aria-hidden="true">
+                        {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                      </span>
+                    )}
+                  </label>
+                  <select
+                    {...register("reportingManagerId", {
+                      setValueAs: (v) => (v === "" ? undefined : Number(v)),
+                    })}
+                    disabled={!formData.positionId}
+                    className={
+                      selectClass("reportingManagerId") +
+                      " disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:ring-2 focus:ring-primary/20"
+                    }
+                  >
+                    <option value="">
+                      {EMPLOYEE_CONSTANTS.PLACEHOLDERS.MANAGER_NONE}
                     </option>
-                  ))}
-                </select>
-                {errors.reportingManagerId && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.reportingManagerId.message}
+                    {managers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} {m.position ? `(${m.position})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.reportingManagerId && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.reportingManagerId.message}
+                    </p>
+                  )}
+                  {managers.length === 0 && formData.positionId > 0 && (
+                    <p className="text-[10px] text-amber-500 italic mt-1">
+                      {SYSTEM_MESSAGES.EMPLOYEE.MSG_NO_MANAGERS}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-3 flex items-start gap-3 border border-blue-100 dark:border-blue-900/30">
+                  <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-blue-600 dark:text-blue-400 font-medium leading-relaxed">
+                    {EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_LEVEL_INFO}
                   </p>
-                )}
-                {managers.length === 0 && formData.positionId > 0 && (
-                  <p className="text-[10px] text-amber-500 italic mt-1">
-                    {SYSTEM_MESSAGES.EMPLOYEE.MSG_NO_MANAGERS}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-3 flex items-start gap-3 border border-blue-100 dark:border-blue-900/30">
-                <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium leading-relaxed">
-                  {EMPLOYEE_CONSTANTS.MESSAGES.MANAGER_LEVEL_INFO}
-                </p>
-              </div>
-            )}
+                </div>
+              ))}
           </div>
         </div>
 

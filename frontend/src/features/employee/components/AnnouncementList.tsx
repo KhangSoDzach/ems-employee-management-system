@@ -6,7 +6,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   useAnnouncements,
@@ -173,6 +178,12 @@ export function AnnouncementList({
         }}
       >
         <DialogContent className="max-w-md p-4">
+          <DialogTitle className="sr-only">
+            {SYSTEM_MESSAGES.ANNOUNCEMENT.DETAIL_TITLE}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {SYSTEM_MESSAGES.ANNOUNCEMENT.DETAIL_DESC}
+          </DialogDescription>
           {selectedAnnouncement && (
             <AnnouncementDetail announcement={selectedAnnouncement} />
           )}

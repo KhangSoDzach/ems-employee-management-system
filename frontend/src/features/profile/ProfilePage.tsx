@@ -9,7 +9,12 @@ import { employeeService } from "@/services/employeeService";
 import { leaveService } from "@/services/leaveService";
 import { attendanceService } from "@/services/attendanceService";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import {
@@ -193,6 +198,12 @@ export default function ProfilePage() {
       </Form>
       <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
         <DialogContent className="sm:max-w-md p-0 gap-0 rounded-xl overflow-hidden border-none shadow-2xl max-h-[90vh] overflow-y-auto">
+          <DialogTitle className="sr-only">
+            {SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_TITLE}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {SYSTEM_MESSAGES.PROFILE_RESET.DIALOG_DESC}
+          </DialogDescription>
           <ForgotPasswordPage
             isProfileMode={true}
             userEmail={userEmail}

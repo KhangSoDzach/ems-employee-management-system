@@ -68,6 +68,9 @@ public class EmployeeResponse {
     private String notes;
     private String status;
     private String workStatus;
+    private Boolean isDeleted;
+    private LocalDateTime deletedAt;
+    private String deletedBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
