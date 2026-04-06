@@ -22,7 +22,7 @@ spring:
       hibernate:
         format_sql: true
 
-  # Mail configuration for dev (set MAIL_ENABLED=true and provide credentials to send real emails)
+  # Mail configuration for dev (real email is enabled by default; set MAIL_ENABLED=false to force mock)
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
@@ -56,5 +56,5 @@ logging:
 # App mail configuration for dev
 app:
   mail:
-    enabled: ${MAIL_ENABLED:false}
+    enabled: ${MAIL_ENABLED:true}
     from: ${MAIL_FROM:no-reply@ems.company.com}
