@@ -11,10 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Mock implementation of {@link EmailPort} for development environments.
  * Logs the OTP to console instead of sending actual emails.
- * Active only when 'dev' profile is active AND mail is not enabled.
+ * Active for all non-test profiles when mail is not enabled.
  */
 @Component
-@Profile("dev")
+@Profile("!test")
 @ConditionalOnProperty(name = "app.mail.enabled", havingValue = "false", matchIfMissing = true)
 @Slf4j
 public class MockEmailServiceAdapter implements EmailPort {
