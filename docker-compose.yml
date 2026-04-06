@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL Database
   mysql:
@@ -22,7 +20,17 @@ services:
     networks:
       - ems-network
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root123}" ]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD:-root123}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,9 +47,21 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-emsuser}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-emspass123}
+      # Activate the docker Spring profile — datasource URL is defined in application-docker.yaml
+      SPRING_PROFILES_ACTIVE: docker
+      # DB credentials (must match the mysql service above)
+      MYSQL_USER: ${MYSQL_USER:-emsuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-emspass123}
+      MYSQL_HOST: mysql
+      # Mail configuration
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: "${MAIL_USERNAME}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD}"
+      MAIL_FROM: ${MAIL_FROM:-no-reply@ems.company.com}
+      # Disable mail health indicator in Actuator to avoid failing overall health
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       JWT_SECRET: ${JWT_SECRET:-changeme-secret-key-for-development-only-minimum-256-bits-required-please-use-env-variable}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-changeme-refresh-secret-key-for-development-only-use-env-variable-in-production}
     ports:
@@ -49,7 +69,15 @@ services:
     networks:
       - ems-network
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health" ]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/actuator/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -82,7 +110,7 @@ services:
     networks:
       - ems-network
     healthcheck:
-      test: [ "CMD", "wget", "-O", "/dev/null", "-q", "http://127.0.0.1:5173/" ]
+      test: ["CMD", "wget", "-O", "/dev/null", "-q", "http://127.0.0.1:5173/"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -1,140 +1,428 @@
-import * as React from "react"
-import { useLocation, useNavigate } from "react-router-dom"
-import { LogOut, Loader2 } from "lucide-react"
+import * as React from "react";
+import { useLocation, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+import {
+  ChevronDown,
+  ChevronRight,
+  User,
+  Settings,
+  Package,
+  Bell,
+  Calendar,
+  Users,
+  CreditCard,
+  ClipboardList,
+  AlertCircle,
+  FileQuestion,
+  Clock,
+  LayoutDashboard,
+  PlusCircle,
+  CheckCircle2,
+  Play,
+} from "lucide-react";
 
-import { VersionSwitcher } from "@/components/version-switcher"
+import { VersionSwitcher } from "@/components/version-switcher";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { useAuth } from "@/contexts/AuthContext"
+} from "@/components/ui/sidebar";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { cn } from "@/lib/utils";
 
-// This is sample data.
-const data = {
-  versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"]
-}
+export function AppSidebar({
+  role: propRole,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  role?: "admin" | "employee" | "manager" | "hr";
+}) {
+  useAuth();
+  const role = useEffectiveRole(propRole);
+  const location = useLocation();
+  const [openCreate, setOpenCreate] = React.useState(() => {
+    const saved = localStorage.getItem("sidebar_open_create");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [openApprove, setOpenApprove] = React.useState(() => {
+    const saved = localStorage.getItem("sidebar_open_approve");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [openManage, setOpenManage] = React.useState(() => {
+    const saved = localStorage.getItem("sidebar_open_manage");
+    return saved !== null ? saved === "true" : true;
+  });
 
-export function AppSidebar({ role = "admin", ...props }: React.ComponentProps<typeof Sidebar> & { role?: "admin" | "employee" }) {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+  React.useEffect(() => {
+    localStorage.setItem("sidebar_open_create", String(openCreate));
+  }, [openCreate]);
 
-  const handleLogout = async () => {
-    if (isLoggingOut) return
-    setIsLoggingOut(true)
-    try {
-      await logout()
-      navigate("/login", { replace: true })
-    } finally {
-      setIsLoggingOut(false)
-    }
-  }
+  React.useEffect(() => {
+    localStorage.setItem("sidebar_open_approve", String(openApprove));
+  }, [openApprove]);
 
- const navMain =
-  role === "admin"
-    ? [
+  React.useEffect(() => {
+    localStorage.setItem("sidebar_open_manage", String(openManage));
+  }, [openManage]);
+
+  // Helper to determine if a route is active
+  const isActive = (url: string) =>
+    location.pathname + location.search === url || location.pathname === url;
+
+  // We define groups based on roles, keeping it similar to the old structure
+  const navMain: any[] = React.useMemo(() => {
+    // 1. Common sections for everyone
+    const commonSection = {
+      title: SYSTEM_MESSAGES.SIDEBAR.SECTION_PERSONAL,
+      color: "text-primary",
+      items: [
         {
-          title: "Quản lý tài khoản",
-          url: "#",
-          items: [
-            {
-              title: "Quản lý nhân viên",
-              url: "/admin",
-            },
-          ],
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
+          url: "/profile",
+          icon: User,
         },
-      ]
-    : role === "manager"
-    ? [
         {
-          title: "Quản lý đội nhóm",
-          url: "#",
-          items: [
-            
-            {
-              title: "Duyệt đơn nghỉ phép",
-              url: "/approve",
-            },
-          ],
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
+          url: "/announcements",
+          icon: Bell,
         },
-      ]
-    : [
+      ],
+    };
+
+    // 1.5 Attendance section (Chấm công)
+    const attendanceSection = {
+      title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
+      color: "text-primary",
+      items: [
         {
-          title: "Thông tin cá nhân",
-          url: "#",
-          items: [
-            {
-              title: "Hồ sơ của tôi",
-              url: "/employee",
-            },
-            {
-              title: "Chấm công",
-              url: "/checkin",
-            },
-            {
-              title: "Tạo đơn nghỉ phép",
-              url: "/request",
-            },
-          ],
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_CHECKIN,
+          url: "/checkin",
+          icon: Play,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE,
+          url: "/attendance",
+          icon: Clock,
+        },
+      ],
+    };
+
+    // 2. Create Request (Tạo đơn) - visible for Employee, Manager, HR
+    const createSection = {
+      title: SYSTEM_MESSAGES.SIDEBAR.SECTION_CREATE,
+      id: "create",
+      icon: PlusCircle,
+      color: "text-primary",
+      isOpen: openCreate,
+      setOpen: setOpenCreate,
+      items: [
+        {
+          title: SYSTEM_MESSAGES.REQUEST.CREATE_LEAVE,
+          url: "/leave-request",
+        },
+        {
+          title: SYSTEM_MESSAGES.REQUEST.CREATE_ADJUSTMENT,
+          url: "/adjustment-request",
+        },
+      ],
+    };
+
+    // 3. Approve Request (Duyệt đơn) - visible for Manager, HR, Admin
+    const approveSection = {
+      title: SYSTEM_MESSAGES.SIDEBAR.SECTION_APPROVE,
+      id: "approve",
+      icon: CheckCircle2,
+      color: "text-primary",
+      isOpen: openApprove,
+      setOpen: setOpenApprove,
+      items: [] as any[],
+    };
+
+    // 4. Management (Quản lý)
+    const manageSection = {
+      title: SYSTEM_MESSAGES.SIDEBAR.SECTION_MANAGEMENT,
+      id: "manage",
+      icon: LayoutDashboard,
+      color: "text-primary",
+      isOpen: openManage,
+      setOpen: setOpenManage,
+      items: [] as any[],
+    };
+
+    if (role === "admin") {
+      commonSection.items = [
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_PROFILE,
+          url: "/profile",
+          icon: User,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ANNOUNCEMENTS,
+          url: "/announcements",
+          icon: Bell,
         },
       ];
-  return (
-    <Sidebar {...props}>
-      <SidebarHeader>
-        <VersionSwitcher
-          versions={data.versions}
-          defaultVersion={data.versions[0] as string}
-        />
+      manageSection.items = [
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ATTENDANCE_SETTINGS,
+          url: "/attendance-settings",
+          icon: Settings,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_POLICY_SETTINGS,
+          url: "/payroll-config",
+          icon: Settings,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
+          url: "/assets",
+          icon: Package,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_MANAGE_ANNOUNCEMENTS,
+          url: "/announcements/manage",
+          icon: Bell,
+        },
+      ];
+      return [commonSection, manageSection];
+    }
 
+    if (role === "manager") {
+      commonSection.items.push({
+        title: SYSTEM_MESSAGES.SIDEBAR.MENU_SALARY_HISTORY,
+        url: "/salary-history",
+        icon: CreditCard,
+      });
+      commonSection.items.push({
+        title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
+        url: "/my-assets",
+        icon: Package,
+      });
+      approveSection.items = [
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_LEAVE,
+          url: "/approve",
+          icon: ClipboardList,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ADJ,
+          url: "/approve-adjustments",
+          icon: Calendar,
+        },
+      ];
+      manageSection.items = [
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS,
+          url: "/members",
+          icon: Users,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_GROUP_ASSET,
+          url: "/view-group-asset",
+          icon: Package,
+        },
+      ];
+      return [
+        commonSection,
+        attendanceSection,
+        createSection,
+        approveSection,
+        manageSection,
+      ];
+    }
+
+    if (role === "hr") {
+      commonSection.items.push({
+        title: SYSTEM_MESSAGES.SIDEBAR.MENU_SALARY_HISTORY,
+        url: "/salary-history",
+        icon: CreditCard,
+      });
+      commonSection.items.push({
+        title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
+        url: "/my-assets",
+        icon: Package,
+      });
+      approveSection.items = [
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_LEAVE,
+          url: "/approve",
+          icon: ClipboardList,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ADJ,
+          url: "/approve-adjustments",
+          icon: Calendar,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_REPORTS,
+          url: "/asset-reports",
+          icon: AlertCircle,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_APPROVE_ASSET_REQUESTS,
+          url: "/asset-requests",
+          icon: FileQuestion,
+        },
+      ];
+      manageSection.items = [
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_EMP_MGMT,
+          url: "/hr-employees",
+          icon: Users,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_ASSET_MGMT,
+          url: "/assets",
+          icon: Package,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_RUN_PAYROLL,
+          url: "/payroll",
+          icon: CreditCard,
+        },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_HR_PAYROLL_PERIOD,
+          url: "/hr-payroll-period",
+          icon: Calendar,
+        },
+      ];
+      return [
+        commonSection,
+        attendanceSection,
+        createSection,
+        approveSection,
+        manageSection,
+      ];
+    }
+
+    // Role: Employee
+    commonSection.items.push({
+      title: SYSTEM_MESSAGES.SIDEBAR.MENU_SALARY_HISTORY,
+      url: "/salary-history",
+      icon: CreditCard,
+    });
+    commonSection.items.push({
+      title: SYSTEM_MESSAGES.SIDEBAR.MENU_MY_ASSETS,
+      url: "/my-assets",
+      icon: Package,
+    });
+    manageSection.items = [
+      {
+        title: SYSTEM_MESSAGES.SIDEBAR.MENU_MEMBERS,
+        url: "/members",
+        icon: Users,
+      },
+    ];
+    return [commonSection, attendanceSection, createSection, manageSection];
+  }, [role, openCreate, openApprove, openManage]);
+
+  return (
+    <Sidebar {...props} className="w-52 border-r">
+      <SidebarHeader className="h-12 w-55 border-b px-2 justify-center">
+        <VersionSwitcher />
       </SidebarHeader>
-      <SidebarContent>
-        {/* We create a SidebarGroup for each parent. */}
-        {navMain.map((item) => (
-          <SidebarGroup key={item.title}>
-            <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
-            <SidebarGroupContent>
+      <SidebarContent className="hide-scrollbar">
+        {navMain.map((group) => {
+          if (!group.items || group.items.length === 0) {
+            return null;
+          }
+
+          // Simple flat menu for "Cá nhân"
+          if (!group.id) {
+            return (
+              <SidebarGroup key={group.title}>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item: any) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive(item.url)}
+                        >
+                          <Link
+                            to={item.url}
+                            className="flex items-center gap-2"
+                          >
+                            <item.icon className="w-4 h-4 opacity-70" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          }
+
+          // Collapsible menu for other sections
+          return (
+            <SidebarGroup key={group.id}>
               <SidebarMenu>
-                {item.items.map((subItem) => (
-                  <SidebarMenuItem key={subItem.title}>
-                    <SidebarMenuButton asChild isActive={location.pathname === subItem.url}>
-                      <a href={subItem.url}>{subItem.title}</a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => group.setOpen(!group.isOpen)}
+                    className="flex items-center justify-between w-full hover:bg-transparent"
+                  >
+                    <div className="flex items-center gap-2">
+                      <group.icon className={cn("w-4 h-4", group.color)} />
+                      <span className="font-bold uppercase text-[11px] tracking-wider text-muted-foreground/80">
+                        {group.title}
+                      </span>
+                    </div>
+                    {group.isOpen ? (
+                      <ChevronDown className="w-3 h-3 text-muted-foreground/50" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3 text-muted-foreground/50" />
+                    )}
+                  </SidebarMenuButton>
+                  {group.isOpen && (
+                    <SidebarMenuSub>
+                      {group.items.map((item: any) => (
+                        <SidebarMenuSubItem key={item.title}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={isActive(item.url)}
+                          >
+                            <Link
+                              to={item.url}
+                              className="flex items-center gap-2"
+                            >
+                              {item.icon ? (
+                                <item.icon className="w-3.5 h-3.5" />
+                              ) : // Default icons for items without specific icons (like in Create section)
+                              item.url.includes("leave") ? (
+                                <Calendar className="w-3.5 h-3.5" />
+                              ) : item.url.includes("adjustment") ? (
+                                <Clock className="w-3.5 h-3.5" />
+                              ) : item.url.includes("attendance") ? (
+                                <Clock className="w-3.5 h-3.5" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              )}
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  )}
+                </SidebarMenuItem>
               </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 font-medium disabled:opacity-60"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <LogOut />
-              )}
-              <span>{isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

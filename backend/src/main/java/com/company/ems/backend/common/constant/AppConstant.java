@@ -1,8 +1,5 @@
 package com.company.ems.backend.common.constant;
 
-/**
- * Application-wide constants
- */
 public final class AppConstant {
 
     private AppConstant() {
@@ -34,7 +31,6 @@ public final class AppConstant {
 
     // Leave status
     public static final String LEAVE_PENDING = "PENDING";
-    public static final String LEAVE_APPROVED = "APPROVED";
     public static final String LEAVE_REJECTED = "REJECTED";
     public static final String LEAVE_CANCELLED = "CANCELLED";
 
@@ -49,12 +45,14 @@ public final class AppConstant {
     public static final String ROLE_MANAGER = "MANAGER";
     public static final String ROLE_EMPLOYEE = "EMPLOYEE";
 
+    public static final String LEAVE_APPROVED = "APPROVED";
+
     // Security
     public static final String TOKEN_PREFIX = "Bearer ";
     public static final String HEADER_STRING = "Authorization";
     public static final String TOKEN_TYPE = "JWT";
 
-    // File upload
+    public static final String JWT_ERROR_CODE_ATTR = "jwtErrorCode";
     public static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     public static final String[] ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif"};
     public static final String[] ALLOWED_DOCUMENT_TYPES = {

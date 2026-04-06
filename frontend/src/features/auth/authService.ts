@@ -30,3 +30,17 @@ export const resetPassword = async (
     });
     return res.message;
 };
+
+/**
+ * Đổi mật khẩu trong Profile (cần mật khẩu hiện tại)
+ */
+export const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+): Promise<string> => {
+    const res = await api.post<never, ApiResponse<null>>("/auth/change-password", {
+        currentPassword,
+        newPassword,
+    });
+    return res.message;
+};

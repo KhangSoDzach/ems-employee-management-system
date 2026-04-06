@@ -1,286 +1,429 @@
-import React, { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { differenceInYears } from "date-fns"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-
-/* ====================== */
-/* ====== SCHEMA ======== */
-/* ====================== */
-
-const employeeSchema = z.object({
-  fullName: z
-    .string()
-    .min(2, "Họ tên phải có ít nhất 2 ký tự")
-    .max(255, "Họ tên không quá 255 ký tự"),
-
-  nationalId: z
-    .string()
-    .regex(/^(\d{9}|\d{12})$/, "CMND/CCCD phải là 9 hoặc 12 số"),
-
-  companyEmail: z
-    .string()
-    .email("Email không hợp lệ"),
-
-  phoneNumber: z
-    .string()
-    .regex(/^\d{10,13}$/, "Số điện thoại phải từ 10-13 số"),
-
-  dateOfBirth: z
-    .string()
-    .refine(
-      (date) =>
-        differenceInYears(new Date(), new Date(date)) >= 18,
-      "Nhân viên phải từ 18 tuổi trở lên"
-    ),
-})
-
-type EmployeeFormValues = z.infer<typeof employeeSchema>
-
-/* ====================== */
-/* ====== CARD ========== */
-/* ====================== */
-
-interface EmployeeCardProps {
-  name: string
-  code: string
-  status: string
-  statusColor: string
-  avatar?: string
-  id: string | number
-  email: string
-  phone: string
-}
-
-function EmployeeCard({
-  name,
-  code,
-  status,
-  statusColor,
-  avatar,
-  id,
-  email,
-  phone,
-}: EmployeeCardProps) {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-            {avatar ? (
-              <img src={avatar} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-gray-400 text-xl font-bold">
-                {name.charAt(0)}
-              </span>
-            )}
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 dark:text-white">{name}</h3>
-            <p className="text-xs text-primary font-medium">Mã: {code}</p>
-          </div>
-        </div>
-        <span
-          className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${statusColor}`}
-        >
-          {status}
-        </span>
-      </div>
-
-      <div className="grid gap-2 border-t border-gray-50 dark:border-gray-700 pt-3 text-sm text-gray-600 dark:text-gray-400">
-        <div>ID: {id}</div>
-        <div className="truncate">Email: {email}</div>
-        <div>Phone: {phone}</div>
-      </div>
-    </div>
-  )
-}
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import {
+  employeeSchema,
+  type EmployeeFormValues,
+} from "./schemas/employee.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 /* ====================== */
 /* ====== PAGE ========== */
 /* ====================== */
 
+interface Employee {
+  name: string;
+  code: string;
+  status: string;
+  statusColor: string;
+  avatar?: string;
+  id: string | number;
+  email: string;
+  phone: string;
+}
+
 export default function Page() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
+  );
 
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
     mode: "onChange",
-  })
+  });
 
-  function onSubmit(data: EmployeeFormValues) {
-    console.log("Employee created:", data)
-    alert("Tạo nhân viên thành công!")
-    setOpen(false)
-    form.reset()
+  useEffect(() => {
+    if (selectedEmployee) {
+      form.reset({
+        fullName: selectedEmployee.name,
+        nationalId: String(selectedEmployee.id),
+        companyEmail: selectedEmployee.email,
+        phoneNumber: selectedEmployee.phone,
+        dateOfBirth: "1995-05-15",
+      });
+    } else {
+      form.reset();
+    }
+  }, [selectedEmployee, form]);
+
+  function onSubmit() {
+    // Param is required for signature but unused for now
+    if (selectedEmployee) {
+      alert(SYSTEM_MESSAGES.EMPLOYEE.MSG_UPDATE_SUCCESS);
+    } else {
+      alert(SYSTEM_MESSAGES.EMPLOYEE.MSG_CREATE_SUCCESS);
+    }
+
+    setOpen(false);
+    setSelectedEmployee(null);
+    form.reset();
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
+    <main className="page-layout-main">
+      <div className="page-header">
+        <h1 className="page-heading">{SYSTEM_MESSAGES.EMPLOYEE.TITLE}</h1>
 
-        <main className="flex flex-1 flex-col p-6 gap-6 pb-28 bg-gray-50 dark:bg-gray-950">
+        <button
+          onClick={() => {
+            setSelectedEmployee(null);
+            setOpen(true);
+          }}
+          className="btn-primary"
+        >
+          {SYSTEM_MESSAGES.EMPLOYEE.BTN_ADD}
+        </button>
+      </div>
 
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-              Danh sách nhân viên
-            </h1>
+      <div className="data-table-container">
+        <table className="data-table">
+          <thead className="data-table-header">
+            <tr>
+              <th className="data-table-header-cell">
+                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NAME}
+              </th>
+              <th className="data-table-header-cell">
+                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}
+              </th>
+              <th className="data-table-header-cell">
+                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_STATUS}
+              </th>
+              <th className="data-table-header-cell">
+                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONAL_ID}
+              </th>
+              <th className="data-table-header-cell">
+                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMAIL}
+              </th>
+              <th className="data-table-header-cell">
+                {SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}
+              </th>
+              <th className="data-table-header-cell text-right">
+                {SYSTEM_MESSAGES.LABEL_ACTION}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {" "}
+            {/* Actual data would go here */}
+            {(window as unknown as { _employees: Employee[] })._employees?.map(
+              (emp) => (
+                <tr key={emp.id} className="data-table-row">
+                  {/* ... render row ... */}
+                </tr>
+              ),
+            )}
+          </tbody>
+        </table>
+      </div>
 
-            <button
-              onClick={() => setOpen(true)}
-              className="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition"
-            >
-              + Thêm nhân viên
-            </button>
-          </div>
+      {open && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            {/* ================= HEADER ================= */}
+            <div className="modal-header">
+              <h2 className="modal-title">
+                {selectedEmployee
+                  ? SYSTEM_MESSAGES.EMPLOYEE.MODAL_UPDATE_TITLE
+                  : SYSTEM_MESSAGES.EMPLOYEE.MODAL_CREATE_TITLE}
+              </h2>
 
-          {/* Employee list */}
-          <div className="space-y-4">
-            <EmployeeCard
-              name="Nguyễn Văn An"
-              code="NV001"
-              status="Hoạt động"
-              statusColor="bg-green-100 text-green-600"
-              id="123456789012"
-              email="an.nguyen@company.vn"
-              phone="0912345678"
-            />
-          </div>
-
-          {/* ================= MODAL ================= */}
-          {open && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl">
-
-                {/* Header */}
-                <div className="flex justify-between items-center px-8 py-6 border-b">
-                  <h2 className="text-2xl font-semibold">
-                    Thêm nhân viên mới
-                  </h2>
-
-                  <button onClick={() => setOpen(false)}>✕</button>
-                </div>
-
-                {/* Body */}
-                <div className="p-10">
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-8"
-                  >
-                    {/* Họ tên */}
-                    <div>
-                      <label className="font-medium">Họ và tên</label>
-                      <input
-                        {...form.register("fullName")}
-                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${form.formState.errors.fullName
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          }`}
-                        placeholder="Vui lòng nhập họ và tên của nhân viên"
-                      />
-                      <p className="text-sm text-red-500 mt-2">
-                        {form.formState.errors.fullName?.message}
-                      </p>
-                    </div>
-
-                    {/* CCCD */}
-                    <div>
-                      <label className="font-medium">CMND / CCCD</label>
-                      <input
-                        {...form.register("nationalId")}
-                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${form.formState.errors.nationalId
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          }`}
-                        placeholder="Vui lòng nhập CCCD của nhân viên"
-                      />
-                      <p className="text-sm text-red-500 mt-2">
-                        {form.formState.errors.nationalId?.message}
-                      </p>
-                    </div>
-
-                    {/* Email */}
-                    <div>
-                      <label className="font-medium">Email công ty</label>
-                      <input
-                        type="email"
-                        {...form.register("companyEmail")}
-                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${form.formState.errors.companyEmail
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          }`}
-                        placeholder="Vui lòng nhập email công ty của nhân viên"
-                      />
-                      <p className="text-sm text-red-500 mt-2">
-                        {form.formState.errors.companyEmail?.message}
-                      </p>
-                    </div>
-
-                    {/* Phone */}
-                    <div>
-                      <label className="font-medium">Số điện thoại</label>
-                      <input
-                        {...form.register("phoneNumber")}
-                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${form.formState.errors.phoneNumber
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          }`}
-                        placeholder="Vui lòng nhập số điện thoại của nhân viên"
-                      />
-                      <p className="text-sm text-red-500 mt-2">
-                        {form.formState.errors.phoneNumber?.message}
-                      </p>
-                    </div>
-
-                    {/* Ngày sinh */}
-                    <div>
-                      <label className="font-medium">Ngày sinh</label>
-                      <input
-                        type="date"
-                        {...form.register("dateOfBirth")}
-                        className={`w-full mt-2 px-5 py-3 rounded-xl border ${form.formState.errors.dateOfBirth
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          }`}
-                      />
-                      <p className="text-sm text-red-500 mt-2">
-                        {form.formState.errors.dateOfBirth?.message}
-                      </p>
-                    </div>
-
-                    {/* Footer Buttons */}
-                    <div className="md:col-span-2 flex justify-end gap-4 mt-4">
-                      <button
-                        type="button"
-                        onClick={() => setOpen(false)}
-                        className="px-6 py-3 rounded-xl border"
-                      >
-                        Hủy
-                      </button>
-
-                      <button
-                        type="submit"
-                        disabled={!form.formState.isValid}
-                        className="px-8 py-3 font-semibold rounded-xl bg-primary text-white disabled:opacity-50"
-                      >
-                        Lưu & Tạo tài khoản
-                      </button>
-                    </div>
-
-                  </form>
-                </div>
-              </div>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  setSelectedEmployee(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <span className="material-symbols-outlined">
+                  {SYSTEM_MESSAGES.SYMBOLS.CLOSE}
+                </span>
+              </button>
             </div>
-          )}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
-  )
+
+            {/* ================= BODY ================= */}
+            <div className="modal-body">
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* ================= CỘT 1 ================= */}
+                  <div className="space-y-6">
+                    <div className="section-header">
+                      <span className="material-symbols-outlined">
+                        {SYSTEM_MESSAGES.SYMBOLS.PERSON}
+                      </span>
+                      <h3 className="section-header-title">
+                        {SYSTEM_MESSAGES.EMPLOYEE.SECTION_PERSONAL}
+                      </h3>
+                    </div>
+
+                    {/* Avatar */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="relative group">
+                        <img
+                          src={
+                            selectedEmployee?.avatar ||
+                            "https://i.pravatar.cc/150"
+                          }
+                          className="size-20 rounded-full ring-2 ring-slate-100 object-cover"
+                        />
+                        <button
+                          type="button"
+                          className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full border-2 border-white shadow-sm"
+                        >
+                          <span className="material-symbols-outlined text-xs">
+                            {SYSTEM_MESSAGES.SYMBOLS.CAMERA}
+                          </span>
+                        </button>
+                      </div>
+
+                      <div>
+                        <div className="form-label-required">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMP_CODE}
+                        </div>
+                        <div className="font-mono font-bold">
+                          {selectedEmployee?.code || "NV--"}
+                        </div>
+
+                        <div className="mt-1 inline-flex items-center status-badge-pill bg-green-100 text-green-700">
+                          {selectedEmployee?.status ||
+                            SYSTEM_MESSAGES.EMPLOYEE.STATUS_PENDING}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="form-label-secondary">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NAME}
+                        </label>
+                        <input
+                          {...form.register("fullName")}
+                          className="form-input"
+                          placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_NAME}
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="form-label-secondary">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONAL_ID}
+                        </label>
+                        <input
+                          {...form.register("nationalId")}
+                          className="form-input"
+                          placeholder={
+                            SYSTEM_MESSAGES.EMPLOYEE.LABEL_NATIONAL_ID
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="form-label-secondary">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DOB}
+                        </label>
+                        <input
+                          type="date"
+                          {...form.register("dateOfBirth")}
+                          className="form-input"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="form-label-secondary">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_GENDER}
+                        </label>
+                        <select
+                          {...form.register("gender")}
+                          className="form-select"
+                        >
+                          <option>
+                            {SYSTEM_MESSAGES.EMPLOYEE.GENDER_MALE}
+                          </option>
+                          <option>
+                            {SYSTEM_MESSAGES.EMPLOYEE.GENDER_FEMALE}
+                          </option>
+                          <option>
+                            {SYSTEM_MESSAGES.EMPLOYEE.GENDER_OTHER}
+                          </option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="form-label-secondary">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}
+                        </label>
+                        <input
+                          {...form.register("phoneNumber")}
+                          className="form-input"
+                          placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_PHONE}
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="form-label-secondary">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMAIL}
+                        </label>
+                        <input
+                          {...form.register("companyEmail")}
+                          className="form-input"
+                          placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_EMAIL}
+                        />
+                      </div>
+
+                      <div className="space-y-1 col-span-2">
+                        <label className="form-label-secondary">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_ADDRESS}
+                        </label>
+                        <textarea
+                          rows={2}
+                          {...form.register("address")}
+                          className="form-textarea"
+                          placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_ADDRESS}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ================= CỘT 2 ================= */}
+                  <div className="space-y-6">
+                    <div className="section-header">
+                      <span className="material-symbols-outlined">
+                        {SYSTEM_MESSAGES.SYMBOLS.BADGE}
+                      </span>
+                      <h3 className="section-header-title">
+                        {SYSTEM_MESSAGES.EMPLOYEE.SECTION_JOB}
+                      </h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="form-label-required">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_DEPARTMENT}
+                        </label>
+                        <select
+                          {...form.register("department")}
+                          className="form-select"
+                        >
+                          <option>
+                            {SYSTEM_MESSAGES.EMPLOYEE.DEPT_SOFTWARE}
+                          </option>
+                          <option>{SYSTEM_MESSAGES.EMPLOYEE.DEPT_HR}</option>
+                          <option>{SYSTEM_MESSAGES.EMPLOYEE.DEPT_SALES}</option>
+                          <option>{SYSTEM_MESSAGES.EMPLOYEE.DEPT_BOD}</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="form-label-required">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_POSITION}
+                        </label>
+                        <input
+                          {...form.register("position")}
+                          className="form-input"
+                          placeholder={SYSTEM_MESSAGES.EMPLOYEE.LABEL_POSITION}
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="form-label-required">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_MANAGER}
+                        </label>
+                        <select
+                          {...form.register("manager")}
+                          className="form-select"
+                        >
+                          <option>{SYSTEM_MESSAGES.EMPLOYEE.MGR_A}</option>
+                          <option>{SYSTEM_MESSAGES.EMPLOYEE.MGR_B}</option>
+                          <option>{SYSTEM_MESSAGES.EMPLOYEE.MGR_C}</option>
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="form-label-required">
+                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_JOIN_DATE}
+                          </label>
+                          <input
+                            type="date"
+                            {...form.register("joinDate")}
+                            className="form-input"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="form-label-secondary">
+                            {SYSTEM_MESSAGES.EMPLOYEE.LABEL_END_DATE}
+                          </label>
+                          <input
+                            type="date"
+                            {...form.register("endDate")}
+                            className="form-input"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="form-label-required">
+                          {SYSTEM_MESSAGES.EMPLOYEE.LABEL_CONTRACT}
+                        </label>
+                        <select
+                          {...form.register("contractType")}
+                          className="form-select"
+                        >
+                          <option>
+                            {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_INDEFINITE}
+                          </option>
+                          <option>
+                            {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_ONE_YEAR}
+                          </option>
+                          <option>
+                            {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_PROBATION}
+                          </option>
+                        </select>
+                      </div>
+
+                      {/* Info box */}
+                      <div className="info-box">
+                        <div className="info-box-content">
+                          <span className="material-symbols-outlined info-box-icon">
+                            {SYSTEM_MESSAGES.SYMBOLS.INFO}
+                          </span>
+                          <p className="info-box-text">
+                            {SYSTEM_MESSAGES.EMPLOYEE.INFO_NOTE}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* ================= FOOTER ================= */}
+            <div className="modal-footer">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setSelectedEmployee(null);
+                }}
+                className="btn-secondary"
+              >
+                {SYSTEM_MESSAGES.EMPLOYEE.BTN_CANCEL}
+              </button>
+
+              <button
+                onClick={form.handleSubmit(onSubmit)}
+                className="btn-action"
+              >
+                {selectedEmployee
+                  ? SYSTEM_MESSAGES.EMPLOYEE.BTN_UPDATE
+                  : SYSTEM_MESSAGES.EMPLOYEE.BTN_CREATE}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  );
 }

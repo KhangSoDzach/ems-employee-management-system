@@ -21,11 +21,19 @@ public class LeaveResponse {
     private LocalDate endDate;
     private Integer duration;
     private String reason;
-    private String status; // PENDING, APPROVED, REJECTED
+    private String status;
     private String attachmentUrl;
     private Long approvedBy;
     private String approverName;
     private LocalDateTime approvedAt;
     private String approvalNotes;
     private LocalDateTime createdAt;
+
+    // Multi-level approval progress
+    private Integer currentApprovalLevel;
+    private Integer maxApprovalLevel;
+    private Boolean longLeaveHrRequired;
+
+    // Ownership for cross-approval logic
+    private Long requesterUserId;
 }

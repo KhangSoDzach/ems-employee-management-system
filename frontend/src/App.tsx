@@ -1,46 +1,278 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { LoginPage } from "@/features/auth/LoginPage";
-import Dashboard from "./features/admin/Dashboard";
-import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
-import EmployeeDashboard from "./features/employee/EmployeeDashboard";
-import LeaveRequestPage from "./features/employee/LeaveRequestPage";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ThemeProvider from "@/contexts/ThemeProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import CheckinPage from "./features/employee/CheckinPage";
+import { AuthLayout } from "@/components/AuthLayout";
 import { Toaster } from "@/components/ui/sonner";
-import CheckinPage from "./features/employee/CheckinPage";
-import ApproveLeaveRequest from "./features/manager/ApproveLeaveRequest";
-import AttendanceHistoryPage from "./features/employee/AttendanceHistoryPage";
-// import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { COMMON_TEXT } from "./constants/ui-texts";
+import { AUTH_ROLES } from "./constants/auth";
+import SalaryHistoryPage from "./features/employee/SalaryHistoryPage";
+import { AppLayout } from "./components/AppLayout";
+
+const LoginPage = lazy(() =>
+  import("@/features/auth/LoginPage").then((module) => ({
+    default: module.LoginPage,
+  })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import("./features/auth/ForgotPasswordPage").then((module) => ({
+    default: module.ForgotPasswordPage,
+  })),
+);
+const Dashboard = lazy(() => import("./features/admin/Dashboard"));
+const LeaveRequestPage = lazy(
+  () => import("./features/employee/LeaveRequestPage"),
+);
+const AdjustmentRequestPage = lazy(
+  () => import("./features/employee/AdjustmentRequestPage"),
+);
+const CheckinPage = lazy(() => import("./features/employee/CheckinPage"));
+const ApproveLeaveRequest = lazy(
+  () => import("./features/manager/ApproveLeaveRequest"),
+);
+const AttendanceHistoryPage = lazy(
+  () => import("./features/employee/AttendanceHistoryPage"),
+);
+const AssetManagementPage = lazy(
+  () => import("./features/admin/Asset-Management"),
+);
+const AttendanceSettings = lazy(
+  () => import("./features/admin/AttendanceSettings"),
+);
+const AssetIncidentManagementPage = lazy(
+  () => import("./features/admin/AssetIncidentManagementPage"),
+);
+const ApproveAdjustmentRequest = lazy(
+  () => import("./features/manager/ApproveAdjustmentRequest"),
+);
+const MyAssetsPage = lazy(() => import("./features/employee/MyAssetsPage"));
+const MemberList = lazy(() => import("./features/manager/MemberList"));
+const SalaryComponentPage = lazy(
+  () => import("@/features/hr/SalaryComponentPage"),
+);
+const PayrollRunPage = lazy(() => import("@/features/hr/PayrollRunPage"));
+const HrPayrollPeriodPage = lazy(
+  () => import("@/features/hr/HrPayrollPeriodPage"),
+);
+const AssetReportManagement = lazy(
+  () => import("./features/admin/AssetReportManagement"),
+);
+const AssetGroupManagement = lazy(
+  () => import("./features/manager/AssetGroupManagement"),
+);
+const EmployeeManagement = lazy(
+  () => import("./features/hr/EmployeeManagement"),
+);
+const ProfilePage = lazy(() => import("./features/profile/ProfilePage"));
+const AnnouncementsPage = lazy(
+  () => import("./features/employee/AnnouncementsPage"),
+);
+const AnnouncementManagementPage = lazy(
+  () => import("./features/hr/AnnouncementManagementPage"),
+);
+const AssetRequestManagement = lazy(
+  () => import("./features/admin/AssetRequestManagement"),
+);
+const AuditLogsPage = lazy(() => import("./features/admin/AuditLogsPage"));
+
+function RouteFallback() {
+  return (
+    <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">
+      {COMMON_TEXT.LOADING}
+    </div>
+  );
+}
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          {/* <Route element={<ProtectedRoute />}> */}
-          <Route path="/admin" element={<Dashboard />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              {/* Public routes – with shared background layout */}
+              <Route element={<AuthLayout />}>
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="/forgot-password"
+                  element={<ForgotPasswordPage />}
+                />
+              </Route>
 
-          {/* Protected: must be logged in */}
-          {/* <Route element={<ProtectedRoute />}> */}
+              {/* Authenticated routes with Sidebar Layout */}
+              <Route
+                element={
+                  <ProtectedRoute
+                    allowedRoles={[
+                      AUTH_ROLES.ADMIN,
+                      AUTH_ROLES.HR,
+                      AUTH_ROLES.MANAGER,
+                      AUTH_ROLES.EMPLOYEE,
+                    ]}
+                  />
+                }
+              >
+                <Route element={<AppLayout />}>
+                  {/* Shared */}
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/my-assets" element={<MyAssetsPage />} />
+                  <Route
+                    path="/announcements"
+                    element={<AnnouncementsPage />}
+                  />
 
-          {/* Admin only */}
-          <Route path="/admin" element={<Dashboard />} />
+                  {/* Admin + HR + Manager */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={[
+                          AUTH_ROLES.ADMIN,
+                          AUTH_ROLES.HR,
+                          AUTH_ROLES.MANAGER,
+                        ]}
+                      />
+                    }
+                  >
+                    <Route
+                      path="/asset-incidents"
+                      element={<AssetIncidentManagementPage />}
+                    />
+                  </Route>
 
-          {/* Employee only */}
-          <Route path="/employee" element={<EmployeeDashboard />} />
-          <Route path="/request" element={<LeaveRequestPage />} />
-          <Route path="/checkin" element={<CheckinPage />} />
-          <Route path="/approve" element={<ApproveLeaveRequest />} />
-          <Route path="/attendance" element={<AttendanceHistoryPage />} />
-          {/* </Route> */}
-        </Routes>
-      </BrowserRouter>
-      <Toaster richColors position="top-right" />
-    </AuthProvider>
+                  {/* Admin + HR */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={[AUTH_ROLES.ADMIN, AUTH_ROLES.HR]}
+                      />
+                    }
+                  >
+                    <Route path="/assets" element={<AssetManagementPage />} />
+                    <Route path="/audit-logs" element={<AuditLogsPage />} />
+                    <Route
+                      path="/announcements/manage"
+                      element={<AnnouncementManagementPage />}
+                    />
+                    <Route
+                      path="/asset-reports"
+                      element={<AssetReportManagement />}
+                    />
+                    <Route
+                      path="/asset-requests"
+                      element={<AssetRequestManagement />}
+                    />
+                    <Route
+                      path="/hr-employees"
+                      element={<EmployeeManagement />}
+                    />
+                    <Route
+                      path="/hr-payroll-period"
+                      element={<HrPayrollPeriodPage />}
+                    />
+                  </Route>
+
+                  {/* Admin only */}
+                  <Route
+                    element={
+                      <ProtectedRoute allowedRoles={[AUTH_ROLES.ADMIN]} />
+                    }
+                  >
+                    <Route
+                      path="/payroll-config"
+                      element={<SalaryComponentPage />}
+                    />
+                    <Route
+                      path="/attendance-settings"
+                      element={<AttendanceSettings />}
+                    />
+                  </Route>
+
+                  {/* Employee + HR + Manager */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={[
+                          AUTH_ROLES.EMPLOYEE,
+                          AUTH_ROLES.HR,
+                          AUTH_ROLES.MANAGER,
+                        ]}
+                      />
+                    }
+                  >
+                    <Route path="/checkin" element={<CheckinPage />} />
+                    <Route
+                      path="/attendance"
+                      element={<AttendanceHistoryPage />}
+                    />
+                    <Route
+                      path="/adjustment-request"
+                      element={<AdjustmentRequestPage />}
+                    />
+                    <Route
+                      path="/leave-request"
+                      element={<LeaveRequestPage />}
+                    />
+                    <Route
+                      path="/salary-history"
+                      element={<SalaryHistoryPage />}
+                    />
+                  </Route>
+
+                  {/* Manager + HR */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={[AUTH_ROLES.MANAGER, AUTH_ROLES.HR]}
+                      />
+                    }
+                  >
+                    <Route path="/approve" element={<ApproveLeaveRequest />} />
+                    <Route
+                      path="/approve-adjustments"
+                      element={<ApproveAdjustmentRequest />}
+                    />
+                    <Route path="/payroll" element={<PayrollRunPage />} />
+                  </Route>
+
+                  {/* Manager only */}
+                  <Route
+                    element={
+                      <ProtectedRoute allowedRoles={[AUTH_ROLES.MANAGER]} />
+                    }
+                  >
+                    <Route
+                      path="/view-group-asset"
+                      element={<AssetGroupManagement />}
+                    />
+                  </Route>
+
+                  {/* Manager + Employee */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={[AUTH_ROLES.MANAGER, AUTH_ROLES.EMPLOYEE]}
+                      />
+                    }
+                  >
+                    <Route path="/members" element={<MemberList />} />
+                  </Route>
+
+                  {/* HR only */}
+                  <Route
+                    element={<ProtectedRoute allowedRoles={[AUTH_ROLES.HR]} />}
+                  >
+                    <Route path="/hr/employees" element={<Dashboard />} />
+                  </Route>
+                </Route>
+              </Route>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+        <Toaster richColors position="top-center" visibleToasts={1} />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

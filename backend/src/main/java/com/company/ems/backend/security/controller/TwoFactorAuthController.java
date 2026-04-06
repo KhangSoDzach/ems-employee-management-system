@@ -1,20 +1,27 @@
 package com.company.ems.backend.security.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.company.ems.backend.common.dto.ApiResponse;
 import com.company.ems.backend.security.dto.Disable2FARequest;
 import com.company.ems.backend.security.dto.TwoFactorAuthResponse;
 import com.company.ems.backend.security.dto.Verify2FARequest;
 import com.company.ems.backend.security.service.TwoFactorAuthService;
 import com.company.ems.backend.user.entity.User;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
 
 /**
  * REST Controller for Two-Factor Authentication
@@ -32,11 +39,14 @@ public class TwoFactorAuthController {
     @Operation(
             summary = "Setup 2FA",
             description = "Initiate 2FA setup. Generates secret key and QR code. Scan QR code with Google Authenticator or Authy.",
-            security = @SecurityRequirement(name = "Bearer Authentication")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<TwoFactorAuthResponse>> setup2FA(
             Authentication authentication
     ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String username = authentication.getName();
         User user = null;
         log.info("2FA setup request received for user: {}", username);
@@ -56,7 +66,7 @@ public class TwoFactorAuthController {
     @Operation(
             summary = "Verify and enable 2FA",
             description = "Verify TOTP code from authenticator app and enable 2FA. Returns recovery codes - save them securely!",
-            security = @SecurityRequirement(name = "Bearer Authentication")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<TwoFactorAuthResponse>> verify2FA(
             Authentication authentication,
@@ -80,7 +90,7 @@ public class TwoFactorAuthController {
     @Operation(
             summary = "Disable 2FA",
             description = "Disable 2FA for current user. Requires password or TOTP code verification. Email notification will be sent.",
-            security = @SecurityRequirement(name = "Bearer Authentication")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<TwoFactorAuthResponse>> disable2FA(
             Authentication authentication,
@@ -103,11 +113,14 @@ public class TwoFactorAuthController {
     @Operation(
             summary = "Get 2FA status",
             description = "Check if 2FA is enabled for current user",
-            security = @SecurityRequirement(name = "Bearer Authentication")
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<Boolean>> get2FAStatus(
             Authentication authentication
     ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String username = authentication.getName();
         boolean enabled = twoFactorAuthService.is2FAEnabled(username);
 

@@ -1,0 +1,430 @@
+import { useMemo, useRef, useState } from "react";
+import { Search, ChevronLeft, ChevronRight, Eye, Star } from "lucide-react";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+
+import {
+  MemberEvaluationSheet,
+  type Member,
+} from "./components/MemberEvaluationSheet";
+import { useTeamMembers } from "./hooks/useTeamMembers";
+import { useLatestReview, useSaveReview } from "./hooks/usePerformanceReview";
+import { useAuth } from "@/contexts/AuthContext";
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+function roleColor(positionTitle: string | null): string {
+  const title = (positionTitle ?? "").toLowerCase();
+  if (
+    title.includes("frontend") ||
+    title.includes("react") ||
+    title.includes("ui")
+  ) {
+    return "bg-blue-100 text-blue-700 hover:bg-blue-100";
+  }
+  if (
+    title.includes("backend") ||
+    title.includes("java") ||
+    title.includes("server")
+  ) {
+    return "bg-purple-100 text-purple-700 hover:bg-purple-100";
+  }
+  if (title.includes("manager") || title.includes("lead")) {
+    return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
+  }
+  if (title.includes("design") || title.includes("ux")) {
+    return "bg-amber-100 text-amber-700 hover:bg-amber-100";
+  }
+  if (
+    title.includes("devops") ||
+    title.includes("cloud") ||
+    title.includes("infra")
+  ) {
+    return "bg-orange-100 text-orange-700 hover:bg-orange-100";
+  }
+  return "bg-gray-100 text-gray-700 hover:bg-gray-100";
+}
+
+/** Derives current review period: 2026-H1 or 2026-H2 */
+function currentReviewPeriod(): string {
+  const now = new Date();
+  const half = now.getMonth() < 6 ? "H1" : "H2";
+  return `${now.getFullYear()}-${half}`;
+}
+
+const PAGE_SIZE = SYSTEM_MESSAGES.MEMBER_LIST.DEFAULT_PAGE_SIZE;
+
+// ─── Row component — loads its own latest review for pre-fill ────────────────
+
+function MemberRow({
+  member,
+  deptName,
+  effectiveRole,
+  onView,
+  onEvaluate,
+}: Readonly<{
+  member: Member;
+  deptName?: string;
+  effectiveRole: string;
+  onView: () => void;
+  onEvaluate: () => void;
+}>) {
+  const t = SYSTEM_MESSAGES.MEMBER_LIST;
+  // Employee chỉ xem 360° của bản thân; Manager xem tất cả
+  const canView = member.isSelf || effectiveRole !== "employee";
+  return (
+    <TableRow className="hover:bg-muted/30">
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <Avatar className="w-10 h-10 border">
+            <AvatarImage src={member.avatar} alt={member.name} />
+            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-foreground">{member.name}</p>
+              {member.isSelf && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  {t.TAG_SELF}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{member.email}</p>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge
+          variant="outline"
+          className={`border-transparent ${member.roleColor}`}
+        >
+          {member.role}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        {deptName ? (
+          <Badge variant="secondary">{deptName}</Badge>
+        ) : (
+          <span className="text-xs text-muted-foreground">{t.DASH_EMPTY}</span>
+        )}
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="inline-flex items-center justify-end gap-2">
+          {/* 👁 Xem 360°: bản thân luôn thấy, manager thấy tất cả, employee chỉ thấy của mình */}
+          {canView && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-primary hover:bg-primary/10"
+              title={member.isSelf ? t.BTN_SELF_VIEW : t.BTN_VIEW_EVALUATION}
+              aria-label={t.BTN_VIEW_EVALUATION}
+              onClick={onView}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
+          {/* ⭐ Đánh giá / Tự đánh giá */}
+          <Button
+            size="icon"
+            variant="ghost"
+            className="text-primary hover:bg-primary/10"
+            title={member.isSelf ? t.BTN_SELF_EVALUATE : t.BTN_EVALUATE}
+            aria-label={member.isSelf ? t.BTN_SELF_EVALUATE : t.BTN_EVALUATE}
+            onClick={onEvaluate}
+          >
+            <Star className="w-4 h-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// ─── EditWrapper — pre-fills scores from latest review ───────────────────────
+
+function EditWrapper({
+  member,
+  onSubmit,
+  onClose,
+}: Readonly<{
+  member: Member;
+  onSubmit: (scores: Record<string, number>, comment: string) => Promise<void>;
+  onClose: () => void;
+}>) {
+  const { data: latest } = useLatestReview(member.id);
+  const initialScores = latest?.expertiseScore
+    ? {
+        expertise: latest.expertiseScore,
+        communication: latest.communicationScore,
+        attitude: latest.attitudeScore,
+      }
+    : undefined;
+
+  return (
+    <MemberEvaluationSheet
+      member={member}
+      open
+      mode="edit"
+      initialScores={initialScores}
+      initialComment={latest?.comment ?? undefined}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+      onSubmit={async ({ scores, comment }) => {
+        await onSubmit(scores, comment);
+      }}
+    />
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
+export default function MemberList() {
+  const t = SYSTEM_MESSAGES.MEMBER_LIST;
+  const effectiveRole = useEffectiveRole();
+  const { user } = useAuth();
+
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [sheetMode, setSheetMode] = useState<"view" | "edit">("view");
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(0);
+    if (searchTimer.current) {
+      clearTimeout(searchTimer.current);
+    }
+    searchTimer.current = setTimeout(() => setDebouncedSearch(value), 400);
+  };
+
+  const { data, isLoading, isError } = useTeamMembers({
+    page,
+    size: PAGE_SIZE,
+    search: debouncedSearch || undefined,
+  });
+
+  const saveReviewMutation = useSaveReview();
+
+  const members: Member[] = useMemo(
+    () =>
+      (data?.content ?? []).map((m) => ({
+        id: m.id,
+        name: m.fullName,
+        email: m.email,
+        role: m.positionTitle ?? t.DEFAULT_ROLE,
+        roleColor: roleColor(m.positionTitle),
+        skills: [],
+        avatar: m.avatarUrl ?? "",
+        isSelf: m.userId === user?.id,
+      })),
+    [data, user?.id, t.DEFAULT_ROLE],
+  );
+
+  const totalPages = data?.totalPages ?? 1;
+  const totalElements = data?.totalElements ?? 0;
+
+  const handleSubmitReview = async (
+    member: Member,
+    scores: Record<string, number>,
+    comment: string,
+  ) => {
+    const reviewType = member.isSelf
+      ? "SELF"
+      : effectiveRole === "employee"
+        ? "PEER"
+        : "MANAGER";
+    await saveReviewMutation.mutateAsync({
+      revieweeId: member.id,
+      reviewType,
+      reviewPeriod: currentReviewPeriod(),
+      scores: {
+        expertise: Number(scores["expertise"] ?? 0),
+        communication: Number(scores["communication"] ?? 0),
+        attitude: Number(scores["attitude"] ?? 0),
+      },
+      comment,
+    });
+    setSelectedMember(null);
+  };
+
+  return (
+    <>
+      <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="page-heading">{t.TITLE}</h1>
+              <p className="text-muted-foreground mt-1">{t.DESC}</p>
+              <p className="text-xs text-primary mt-1 font-medium">
+                {t.REVIEW_PERIOD_PREFIX} {currentReviewPeriod()}
+              </p>
+            </div>
+            <div className="relative w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder={t.SEARCH_PLACEHOLDER}
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="card-soft">
+            {isLoading ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                {t.LOADING_LIST}
+              </div>
+            ) : isError ? (
+              <div className="py-16 text-center text-sm text-destructive">
+                {t.ERROR_FETCH}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead>{t.TABLE_NAME}</TableHead>
+                    <TableHead>{t.TABLE_ROLE}</TableHead>
+                    <TableHead>{t.TABLE_SKILLS}</TableHead>
+                    <TableHead className="text-right">
+                      {t.TABLE_ACTIONS}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {members.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="py-12 text-center text-sm text-muted-foreground"
+                      >
+                        {t.EMPTY_LIST}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    members.map((member) => (
+                      <MemberRow
+                        key={member.id}
+                        member={member}
+                        deptName={
+                          (data?.content ?? []).find((m) => m.id === member.id)
+                            ?.departmentName ?? undefined
+                        }
+                        effectiveRole={effectiveRole}
+                        onView={() => {
+                          setSelectedMember(member);
+                          setSheetMode("view");
+                        }}
+                        onEvaluate={() => {
+                          setSelectedMember(member);
+                          setSheetMode("edit");
+                        }}
+                      />
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between border-t px-5 py-3 bg-muted/20">
+              <p className="text-sm text-muted-foreground">
+                {t.PAGINATION_SHOW}{" "}
+                <span className="font-medium text-foreground">
+                  {totalElements === 0 ? 0 : page * PAGE_SIZE + 1}
+                  {t.DASH_EMPTY}
+                  {Math.min((page + 1) * PAGE_SIZE, totalElements)}
+                </span>{" "}
+                {t.PAGINATION_IN}{" "}
+                <span className="font-medium text-foreground">
+                  {totalElements}
+                </span>{" "}
+                {t.PAGINATION_MEMBERS}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <Button
+                    key={i}
+                    size="icon"
+                    variant={i === page ? "default" : "ghost"}
+                    className={`w-8 h-8 ${i === page ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : ""}`}
+                    onClick={() => setPage(i)}
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={page >= totalPages - 1}
+                  onClick={() =>
+                    setPage((p) => Math.min(totalPages - 1, p + 1))
+                  }
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* VIEW mode — 360° aggregate + one-on-one tab */}
+      {selectedMember && sheetMode === "view" && (
+        <MemberEvaluationSheet
+          member={selectedMember}
+          open
+          mode="view"
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedMember(null);
+              setSheetMode("view");
+            }
+          }}
+        />
+      )}
+
+      {/* EDIT mode — score form with pre-filled latest review */}
+      {selectedMember && sheetMode === "edit" && (
+        <EditWrapper
+          member={selectedMember}
+          onSubmit={(scores, comment) =>
+            handleSubmitReview(selectedMember, scores, comment)
+          }
+          onClose={() => {
+            setSelectedMember(null);
+            setSheetMode("view");
+          }}
+        />
+      )}
+    </>
+  );
+}

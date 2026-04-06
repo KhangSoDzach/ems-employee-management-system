@@ -1,10 +1,16 @@
 package com.company.ems.backend.auth.controller;
 
+        import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.company.ems.backend.auditlog.dto.RequestContext;
 import com.company.ems.backend.auth.dto.AuthResponse;
 import com.company.ems.backend.auth.dto.ForgotPasswordRequest;
 import com.company.ems.backend.auth.dto.LoginRequest;
@@ -13,6 +19,8 @@ import com.company.ems.backend.auth.dto.ResetPasswordRequest;
 import com.company.ems.backend.auth.service.AuthenticationService;
 import com.company.ems.backend.auth.service.PasswordResetService;
 import com.company.ems.backend.common.dto.ApiResponse;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
 import com.company.ems.backend.user.entity.User;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +42,7 @@ public class AuthController {
 
         private final AuthenticationService authenticationService;
         private final PasswordResetService passwordResetService;
+        private final MessageService messages;
 
         /**
          * User login endpoint
@@ -49,11 +58,11 @@ public class AuthController {
                         @Valid @RequestBody LoginRequest request,
                         HttpServletRequest httpRequest) {
 
-                String deviceInfo = extractDeviceInfo(httpRequest);
-                AuthResponse authResponse = authenticationService.login(request, deviceInfo);
+                RequestContext ctx = buildRequestContext(httpRequest);
+                AuthResponse authResponse = authenticationService.login(request, ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Login successful", authResponse));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), authResponse));
         }
 
         /**
@@ -69,12 +78,12 @@ public class AuthController {
                         @Valid @RequestBody RefreshTokenRequest request,
                         HttpServletRequest httpRequest) {
 
-                String deviceInfo = extractDeviceInfo(httpRequest);
-                AuthResponse authResponse = authenticationService.refreshAccessToken(request.getRefreshToken(),
-                                deviceInfo);
+                RequestContext ctx = buildRequestContext(httpRequest);
+                AuthResponse authResponse = authenticationService.refreshAccessToken(
+                                request.getRefreshToken(), ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Token refreshed successfully", authResponse));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), authResponse));
         }
 
         /**
@@ -87,12 +96,16 @@ public class AuthController {
         @PostMapping("/logout")
         @Operation(summary = "Logout", description = "Revoke refresh token and logout user")
         public ResponseEntity<ApiResponse<Void>> logout(
-                        @Valid @RequestBody RefreshTokenRequest request) {
+                        @Valid @RequestBody RefreshTokenRequest request,
+                        @AuthenticationPrincipal UserDetails userDetails,
+                        HttpServletRequest httpRequest) {
 
-                authenticationService.logout(request.getRefreshToken());
+                String actor = userDetails != null ? userDetails.getUsername() : "ANONYMOUS";
+                RequestContext ctx = buildRequestContext(httpRequest);
+                authenticationService.logout(request.getRefreshToken(), actor, ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Logout successful", null));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
         }
 
         /**
@@ -103,17 +116,23 @@ public class AuthController {
          * @return Success message
          */
         @PostMapping("/logout-all")
-        @SecurityRequirement(name = "bearer-jwt")
+        @SecurityRequirement(name = "bearerAuth")
         @Operation(summary = "Logout from all devices", description = "Revoke all refresh tokens for the user")
         public ResponseEntity<ApiResponse<Void>> logoutAllDevices(
-                        @AuthenticationPrincipal UserDetails userDetails) {
+                        @AuthenticationPrincipal UserDetails userDetails,
+                        HttpServletRequest httpRequest) {
 
-                // Get user from repository to get the actual ID
+                if (userDetails == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(ApiResponse.error(messages.get(MessageCode.ERROR_UNAUTHENTICATED)));
+                }
+
                 User user = authenticationService.getUserByUsername(userDetails.getUsername());
-                authenticationService.logoutAllDevices(user.getId());
+                RequestContext ctx = buildRequestContext(httpRequest);
+                authenticationService.logoutAllDevices(user.getId(), userDetails.getUsername(), ctx);
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Logged out from all devices", null));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
         }
 
         /**
@@ -133,7 +152,7 @@ public class AuthController {
                 passwordResetService.initiatePasswordReset(request.getEmail());
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.", null));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
         }
 
         /**
@@ -153,7 +172,36 @@ public class AuthController {
                                 request.getNewPassword());
 
                 return ResponseEntity.ok(
-                                ApiResponse.success("Mật khẩu đã được đặt lại thành công.", null));
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
+        }
+
+        /**
+         * Change password for the current authenticated user
+         * POST /api/v1/auth/change-password
+         *
+         * @param request Update password request
+         * @return Success message
+         */
+        @PostMapping("/change-password")
+        @SecurityRequirement(name = "bearerAuth")
+        @Operation(summary = "Change password", description = "Change password for the current authenticated user")
+        public ResponseEntity<ApiResponse<Void>> changePassword(
+                        @Valid @RequestBody com.company.ems.backend.auth.dto.ChangePasswordRequest request,
+                        @AuthenticationPrincipal UserDetails userDetails,
+                        HttpServletRequest httpRequest) {
+
+                if (userDetails == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(ApiResponse.error(messages.get(MessageCode.ERROR_UNAUTHENTICATED)));
+                }
+
+                User user = authenticationService.getUserByUsername(userDetails.getUsername());
+                RequestContext ctx = buildRequestContext(httpRequest);
+
+                authenticationService.changePassword(user.getId(), request, ctx);
+
+                return ResponseEntity.ok(
+                                ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), null));
         }
 
         /**
@@ -162,10 +210,34 @@ public class AuthController {
          * @param request HTTP request
          * @return Device info string (User-Agent + IP)
          */
-        private String extractDeviceInfo(HttpServletRequest request) {
+        /**
+         * Builds a RequestContext from an incoming HTTP request.
+         * Respects X-Forwarded-For header for deployments behind a proxy/load-balancer.
+         */
+        private RequestContext buildRequestContext(HttpServletRequest request) {
                 String userAgent = request.getHeader("User-Agent");
-                String ip = request.getRemoteAddr();
-                return String.format("%s | IP: %s", userAgent != null ? userAgent : "Unknown", ip);
+                String ip = com.company.ems.backend.common.utils.IpUtils.getClientIpAddress(request);
+                String correlationId = request.getHeader("X-Correlation-ID");
+
+                // Determine client type from User-Agent (best-effort heuristic)
+                String clientType = "WEB";
+                if (userAgent != null) {
+                        String ua = userAgent.toLowerCase();
+                        if (ua.contains("okhttp") || ua.contains("android") || ua.contains("ios") ||
+                                        ua.contains("dart") || ua.contains("flutter")) {
+                                clientType = "MOBILE";
+                        } else if (ua.contains("python") || ua.contains("java/") || ua.contains("go-http") ||
+                                        ua.contains("curl") || ua.contains("postman") || ua.contains("axios")) {
+                                clientType = "API";
+                        }
+                }
+
+                return RequestContext.builder()
+                                .ipAddress(ip)
+                                .userAgent(userAgent)
+                                .clientType(clientType)
+                                .correlationId(correlationId)
+                                .build();
         }
 
         /**
@@ -176,10 +248,15 @@ public class AuthController {
          * @return User details
          */
         @GetMapping("/me")
-        @SecurityRequirement(name = "bearer-jwt")
+        @SecurityRequirement(name = "bearerAuth")
         @Operation(summary = "Get current user", description = "Returns the authenticated user's profile info")
         public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> getCurrentUser(
                         @AuthenticationPrincipal UserDetails userDetails) {
+
+                if (userDetails == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(ApiResponse.error(messages.get(MessageCode.ERROR_UNAUTHENTICATED)));
+                }
 
                 User user = authenticationService.getUserByUsername(userDetails.getUsername());
 
@@ -196,6 +273,6 @@ public class AuthController {
                                                 .toList())
                                 .build();
 
-                return ResponseEntity.ok(ApiResponse.success("Current user info", userInfo));
+                return ResponseEntity.ok(ApiResponse.success(messages.get(MessageCode.COMMON_SUCCESS), userInfo));
         }
 }

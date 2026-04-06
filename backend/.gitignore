@@ -36,3 +36,9 @@ build/
 /system-prompts-and-models-of-ai-tools/
 
 .env
+uploads/attendance-photos/
+
+# Temporary and log files
+*.log
+*.txt
+!READEME.md

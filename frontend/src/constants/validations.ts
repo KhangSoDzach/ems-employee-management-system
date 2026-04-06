@@ -1,0 +1,47 @@
+// src/constants/validations.ts
+
+export const FORM_VALIDATION_MESSAGES = {
+  MISSING_CONTENT: "Vui lòng điền đầy đủ nội dung",
+  REQUIRED: "Trường này là bắt buộc",
+  NAME_MIN: "Họ tên phải từ 2 ký tự",
+  NAME_MAX: "Họ tên không quá 255 ký tự",
+  ID_FORMAT: "CMND/CCCD phải là 9 hoặc 12 số",
+  EMAIL_INVALID: "Email không hợp lệ",
+  PHONE_FORMAT: "SĐT phải từ 10-13 số",
+  DOB_REQUIRED: "Vui lòng chọn ngày sinh",
+  AGE_MIN: "Nhân viên phải từ 18 tuổi trở lên",
+  START_DATE_REQUIRED: "Vui lòng chọn ngày bắt đầu",
+  DEPT_REQUIRED: "Vui lòng chọn phòng ban",
+  ROLE_REQUIRED: "Vui lòng chọn vị trí",
+  MANAGER_REQUIRED: "Vui lòng chọn quản lý",
+  REASON_REQUIRED: "Vui lòng nhập lý do",
+  FIRST_NAME_REQUIRED: "Vui lòng nhập tên",
+  LAST_NAME_REQUIRED: "Vui lòng nhập họ",
+  EMAIL_REQUIRED: "Vui lòng nhập email",
+  ID_REQUIRED: "Vui lòng nhập CMND/CCCD",
+  ADDRESS_REQUIRED: "Vui lòng nhập địa chỉ",
+  SALARY_REQUIRED: "Vui lòng nhập mức lương",
+  BANK_NAME_REQUIRED: "Vui lòng nhập tên ngân hàng",
+  BANK_ACC_REQUIRED: "Vui lòng nhập số tài khoản",
+  BANK_ACC_FORMAT:
+    "Số tài khoản chỉ được chứa số, từ 4-20 ký tự và không có dấu cách",
+  MIN_LENGTH: (min: number) => `Vui lòng nhập tối thiểu ${min} ký tự`,
+  MAX_LENGTH: (max: number) => `Độ dài không vượt quá ${max} ký tự`,
+  // Password & OTP
+  PASSWORD_REQUIRED: "Vui lòng nhập mật khẩu mới",
+  PASSWORD_MIN: "Mật khẩu phải có ít nhất 8 ký tự",
+  PASSWORD_COMPLEX:
+    "Mật khẩu phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+  CONFIRM_PASSWORD_REQUIRED: "Vui lòng xác nhận mật khẩu mới",
+  CURRENT_PASSWORD_REQUIRED: "Vui lòng nhập mật khẩu hiện tại",
+  CURRENT_PASSWORD_INVALID: "Mật khẩu hiện tại không chính xác",
+  PASSWORD_MISMATCH: "Mật khẩu xác nhận không khớp",
+  OTP_REQUIRED: "Vui lòng nhập mã OTP",
+  OTP_LENGTH: "Mã OTP phải có đúng 6 chữ số",
+  OTP_NUMERIC: "Mã OTP chỉ được chứa số",
+  // Social Warranty Number
+  SOCIAL_WARRANTY_NUMBER_REQUIRED: "Vui lòng nhập số BHXH",
+  SOCIAL_WARRANTY_NUMBER_FORMAT: "Số BHXH phải gồm 10 chữ số",
+  CONTRACT_START_DATE_REQUIRED: "Vui lòng chọn ngày bắt đầu hợp đồng",
+  CONTRACT_DURATION_INVALID: "Kỳ hạn hợp đồng chỉ được 12, 24 hoặc 36 tháng",
+};

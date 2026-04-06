@@ -53,17 +53,36 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ── Status badge semantic colors ── */
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-fg: var(--status-pending-fg);
+  --color-status-pending-border: var(--status-pending-border);
+
+  --color-status-approved: var(--status-approved);
+  --color-status-approved-fg: var(--status-approved-fg);
+  --color-status-approved-border: var(--status-approved-border);
+
+  --color-status-rejected: var(--status-rejected);
+  --color-status-rejected-fg: var(--status-rejected-fg);
+  --color-status-rejected-border: var(--status-rejected-border);
+
+  --color-status-returned: var(--status-returned);
+  --color-status-returned-fg: var(--status-returned-fg);
+  --color-status-returned-border: var(--status-returned-border);
+  /* Custom Z-Index */
+  --z-index-60: 60;
 }
 
 /* =========================================
    BASE STYLES + 🔥 FIX ROOT HEIGHT
    ========================================= */
 @layer base {
-  /* 🔥 FIX QUAN TRỌNG NHẤT – KHÔNG CÓ LÀ SIDEBAR ĐÈ */
   html,
   body,
   #root {
-    @apply h-full;
+    @apply h-full overflow-hidden;
+    overscroll-behavior: none;
   }
 
   * {
@@ -91,7 +110,7 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.141 0.005 285.823);
 
-    --primary: oklch(0.58 0.23 28.5);
+    --primary: oklch(0.6 0.18 190);
     --primary-foreground: oklch(0.985 0 0);
 
     --secondary: oklch(0.967 0.001 286.375);
@@ -103,22 +122,24 @@
     --accent: oklch(0.967 0.001 286.375);
     --accent-foreground: oklch(0.21 0.006 285.885);
 
-    --destructive: oklch(0.577 0.245 27.325);
+    --destructive: oklch(0.58 0.18 27);
     --destructive-foreground: oklch(0.985 0 0);
 
     --border: oklch(0.92 0.004 286.32);
     --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.58 0.23 28.5);
+    --ring: oklch(0.6 0.18 190);
 
     /* Sidebar */
     --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-primary: oklch(0.58 0.23 28.5);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.967 0.001 286.375);
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: oklch(0.58 0.23 28.5);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: oklch(
+      from var(--primary) l c h / 0.08
+    ); /* Minimal tint */
+    --sidebar-accent-foreground: var(--primary);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
   }
 }
 
@@ -127,42 +148,47 @@
    ========================================= */
 @layer base {
   .dark {
-    --background: oklch(0.141 0.005 285.823);
-    --foreground: oklch(0.985 0 0);
+    --background: oklch(0.14 0.006 264);
+    --foreground: oklch(0.94 0.004 264);
 
-    --card: oklch(0.21 0.006 285.885);
-    --card-foreground: oklch(0.985 0 0);
+    --card: oklch(0.19 0.008 264);
+    --card-foreground: oklch(0.94 0.004 264);
 
-    --popover: oklch(0.21 0.006 285.885);
-    --popover-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.19 0.008 264);
+    --popover-foreground: oklch(0.94 0.004 264);
 
-    --primary: oklch(0.58 0.23 28.5);
-    --primary-foreground: oklch(0.985 0 0);
+    /* Primary — Modern Teal vibrant for Dark Mode */
+    --primary: oklch(0.7 0.14 185);
+    --primary-foreground: oklch(0.99 0 0);
 
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.25 0.008 264);
+    --secondary-foreground: oklch(0.94 0.004 264);
 
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
+    --muted: oklch(0.25 0.008 264);
+    --muted-foreground: oklch(0.62 0.012 264);
 
-    --accent: oklch(0.274 0.006 286.033);
-    --accent-foreground: oklch(0.985 0 0);
+    --accent: oklch(0.27 0.01 264);
+    --accent-foreground: oklch(0.94 0.004 264);
 
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
+    /* Destructive — deeper rose for danger states */
+    --destructive: oklch(0.58 0.16 22);
+    --destructive-foreground: oklch(0.97 0.005 22);
 
-    --border: oklch(0.274 0.006 286.033);
-    --input: oklch(0.274 0.006 286.033);
-    --ring: oklch(0.446 0.178 28.5);
+    --border: oklch(0.27 0.007 264);
+    --input: oklch(0.23 0.007 264);
+    --ring: oklch(0.7 0.14 185);
 
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.58 0.23 28.5);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.274 0.006 286.033);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.274 0.006 286.033);
-    --sidebar-ring: oklch(0.446 0.178 28.5);
+    /* Sidebar — darkest surface for visual depth */
+    --sidebar: oklch(0.16 0.007 264);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: oklch(
+      from var(--primary) l c h / 0.15
+    ); /* More visible in dark */
+    --sidebar-accent-foreground: var(--primary);
+    --sidebar-border: oklch(0.22 0.006 264);
+    --sidebar-ring: var(--ring);
   }
 }
 
@@ -170,42 +196,840 @@
    UTILITIES
    ========================================= */
 @layer base {
-  .container-page {
-    @apply mx-auto max-w-screen-2xl p-6 space-y-6;
+  /* Scrollbar - Global Hidden visually but functional */
+  ::-webkit-scrollbar {
+    display: none;
   }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  * {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
+    @apply rounded-full;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+    overscroll-behavior: contain;
   }
 }
 
+@layer components {
+  /* =========================================
+     Shared UI utilities
+     ========================================= */
+  .page-layout-wrapper {
+    @apply flex flex-1 flex-col p-4 md:p-10 bg-gray-50/50 dark:bg-gray-950;
+  }
 
-@theme inline {
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  .content-card {
+    @apply bg-white dark:bg-gray-900 rounded-2xl p-6 border shadow-sm;
+  }
+
+  .content-card-header {
+    @apply border shadow-sm flex flex-col items-center justify-between gap-6 relative overflow-hidden rounded-2xl p-6 md:p-8 md:flex-row md:items-start bg-white dark:bg-gray-900;
+  }
+
+  .section-title {
+    @apply text-lg font-bold flex items-center gap-2 border-b pb-4 mb-6;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 text-gray-600;
+  }
+
+  /* Layout specific */
+  .page-header-container {
+    @apply flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6;
+  }
+
+  .data-table-container {
+    @apply border rounded-2xl bg-card shadow-sm overflow-hidden flex flex-col;
+  }
+
+  .search-input-wrapper {
+    @apply relative flex-1 min-w-[200px] max-w-sm;
+  }
+
+  .form-label-bold {
+    @apply font-bold text-gray-700;
+  }
+
+  .input-readonly {
+    @apply bg-gray-50/50 focus-visible:ring-0 disabled:opacity-100;
+  }
+
+  .form-data-item {
+    @apply flex flex-col pt-1;
+  }
+
+  /* =========================================
+     PAGE LAYOUTS
+     ========================================= */
+  .page-layout-main {
+    @apply flex flex-1 flex-col p-6 gap-6 bg-gray-50 dark:bg-gray-950;
+  }
+
+  .page-header {
+    @apply flex items-center justify-between;
+  }
+
+  .page-title {
+    @apply text-2xl font-semibold;
+  }
+
+  .page-header-actions {
+    @apply flex items-center gap-4;
+  }
+
+  /* =========================================
+     SEARCH & INPUTS
+     ========================================= */
+  .search-input {
+    @apply px-4 py-2 w-64 rounded-full bg-gray-100 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary;
+  }
+
+  .search-input-full {
+    @apply w-full px-3 py-2 bg-background border border-border rounded-md text-sm focus:ring-ring focus:border-primary text-foreground placeholder:text-muted-foreground;
+  }
+
+  /* =========================================
+     FILTER TABS
+     ========================================= */
+  .filter-tabs {
+    @apply flex gap-3;
+  }
+
+  .filter-tab {
+    @apply px-4 py-2 rounded-full text-sm font-semibold transition;
+  }
+
+  .filter-tab-active {
+    @apply bg-primary text-white;
+  }
+
+  .filter-tab-inactive {
+    @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+  }
+
+  /* =========================================
+     DATA TABLE
+     ========================================= */
+  .data-table-container {
+    @apply bg-card rounded-2xl border border-border shadow-sm overflow-hidden;
+  }
+
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table-header {
+    @apply bg-muted/50 text-muted-foreground uppercase text-xs;
+  }
+
+  .data-table-header-cell {
+    @apply px-6 py-4 text-left;
+  }
+
+  .data-table-cell {
+    @apply px-6 py-4;
+  }
+
+  .data-table-row {
+    @apply border-t border-border/50 hover:bg-muted/30 transition-colors;
+  }
+
+  .data-table-cell-primary {
+    @apply px-6 py-4 font-medium text-gray-700;
+  }
+
+  .data-table-cell-muted {
+    @apply px-6 py-4 text-gray-600;
+  }
+
+  /* =========================================
+     STATUS BADGE
+     ========================================= */
+  .status-badge-base {
+    @apply text-xs font-bold px-3 py-1 rounded-full;
+  }
+
+  .status-badge-pill {
+    @apply text-[10px] font-bold px-2 py-1 rounded-full uppercase;
+  }
+
+  /* =========================================
+     PAGINATION
+     ========================================= */
+  .pagination-container {
+    @apply flex items-center justify-between px-6 py-4 border-t border-border bg-muted/20 text-sm;
+  }
+
+  .pagination-info {
+    @apply text-gray-500;
+  }
+
+  .pagination-buttons {
+    @apply flex items-center gap-2;
+  }
+
+  .pagination-btn-active {
+    @apply w-8 h-8 rounded-full bg-primary text-white font-bold;
+  }
+
+  .pagination-btn-inactive {
+    @apply w-8 h-8 rounded-full hover:bg-gray-200;
+  }
+
+  /* =========================================
+     MODAL / DIALOG
+     ========================================= */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm;
+  }
+
+  .modal-content {
+    @apply bg-background w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl flex flex-col border border-border;
+  }
+
+  .modal-header {
+    @apply px-8 py-6 border-b border-border flex justify-between items-center bg-card/50;
+  }
+
+  .modal-title {
+    @apply text-2xl font-black text-foreground uppercase tracking-tight;
+  }
+
+  .modal-body {
+    @apply flex-1 overflow-y-auto p-6;
+  }
+
+  .modal-footer {
+    @apply px-8 py-6 border-t border-border flex justify-end gap-4 bg-muted/20;
+  }
+
+  /* =========================================
+     FORM ELEMENTS
+     ========================================= */
+  .form-label-required {
+    @apply text-[10px] font-black text-muted-foreground uppercase tracking-widest;
+  }
+
+  .form-label-required::after {
+    content: " *";
+    @apply text-destructive font-bold;
+  }
+
+  .form-label-required-inline {
+    @apply text-xs font-bold text-slate-500 uppercase;
+  }
+
+  .form-label-required-inline::after {
+    content: " *";
+    @apply text-destructive font-bold;
+  }
+
+  /* Label with conditional required indicator - only shows * when field has error */
+  .form-label-required-conditional {
+    @apply text-xs font-bold text-slate-500 uppercase;
+  }
+
+  .form-label-required-conditional.error::after {
+    content: " *";
+    @apply text-destructive font-bold;
+  }
+
+  .form-label-secondary {
+    @apply text-[10px] font-black text-muted-foreground uppercase tracking-widest;
+  }
+
+  .form-input {
+    @apply w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground placeholder:text-muted-foreground/50 font-medium;
+  }
+
+  .form-textarea {
+    @apply w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground placeholder:text-muted-foreground/50 font-medium resize-none;
+  }
+
+  .form-select {
+    @apply w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground font-medium cursor-pointer;
+  }
+
+  /* =========================================
+     SECTION HEADERS
+     ========================================= */
+  .section-header {
+    @apply flex items-center gap-3 text-primary border-b border-border/50 pb-4 mb-6;
+  }
+
+  .section-header-title {
+    @apply font-bold uppercase text-sm tracking-wider;
+  }
+
+  /* =========================================
+     INFO BOX
+     ========================================= */
+  .info-box {
+    @apply p-4 bg-primary/5 border border-primary/10 rounded-md mt-4;
+  }
+
+  .info-box-content {
+    @apply flex items-start gap-3;
+  }
+
+  .info-box-icon {
+    @apply text-primary text-lg;
+  }
+
+  .info-box-text {
+    @apply text-[11px] text-slate-600 leading-relaxed;
+  }
+
+  /* =========================================
+     BUTTONS
+     ========================================= */
+  .btn-primary {
+    @apply px-5 py-2 bg-primary text-white rounded-full font-semibold hover:bg-primary/90;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2.5 text-xs font-black uppercase tracking-widest border border-border bg-background rounded-xl hover:bg-muted transition-all text-muted-foreground hover:text-foreground;
+  }
+
+  .btn-action {
+    @apply px-8 py-2.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground bg-primary rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20 active:scale-95;
+  }
+
+  .btn-icon {
+    @apply w-8 h-8 rounded-full flex items-center justify-center;
+  }
+
+  /* =========================================
+     AVATAR
+     ========================================= */
+  .avatar-large {
+    @apply w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg relative flex items-center justify-center;
+  }
+
+  .avatar-medium {
+    @apply w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden;
+  }
+
+  .avatar-small {
+    @apply w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500;
+  }
+
+  .avatar-initials {
+    @apply text-3xl font-bold text-gray-400;
+  }
+
+  /* =========================================
+     CARD (Employee/Asset)
+     ========================================= */
+  .item-card {
+    @apply bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm;
+  }
+
+  .item-card-header {
+    @apply flex justify-between items-start mb-3;
+  }
+
+  .item-card-body {
+    @apply grid gap-2 border-t border-gray-50 dark:border-gray-700 pt-3 text-sm text-gray-600 dark:text-gray-400;
+  }
+
+  /* =========================================
+     DOCUMENT ITEM
+     ========================================= */
+  .document-item {
+    @apply flex items-center justify-between p-3 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100/70 dark:hover:bg-gray-800 transition-colors;
+  }
+
+  .document-icon-pdf {
+    @apply w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0;
+  }
+
+  .document-icon-image {
+    @apply w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0;
+  }
+
+  /* =========================================
+     STATS CARD
+     ========================================= */
+  .stats-card {
+    @apply border rounded-xl p-4 text-center;
+  }
+
+  .stats-card-value {
+    @apply text-3xl font-black mb-1;
+  }
+
+  .stats-card-label {
+    @apply text-xs font-bold text-gray-600 uppercase tracking-wider;
+  }
+
+  /* =========================================
+     PAGE HEADINGS
+     ========================================= */
+  .page-heading {
+    @apply text-3xl font-extrabold tracking-tight text-foreground;
+  }
+
+  .page-heading-sm {
+    @apply text-2xl font-semibold;
+  }
+
+  .form-data-item {
+    @apply flex flex-col pt-1;
+  }
+
+  /* =========================================
+     PAGE LAYOUTS
+     ========================================= */
+  .icon-box {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center;
+  }
+
+  .icon-box-sm {
+    @apply w-9 h-9 rounded-lg flex items-center justify-center;
+  }
+
+  .icon-box-lg {
+    @apply w-16 h-16 rounded-2xl flex items-center justify-center;
+  }
+
+  /* =========================================
+     BADGE COLORS
+     ========================================= */
+  .badge-success {
+    @apply bg-green-100 text-green-700;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-700;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-700;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-700;
+  }
+
+  .badge-purple {
+    @apply bg-purple-100 text-purple-700;
+  }
+
+  .badge-gray {
+    @apply bg-gray-100 text-gray-700;
+  }
+
+  /* Badge with hover */
+  .badge-success-hover {
+    @apply bg-green-100 text-green-700 hover:bg-green-100;
+  }
+
+  .badge-info-hover {
+    @apply bg-blue-100 text-blue-700 hover:bg-blue-100;
+  }
+
+  .badge-warning-hover {
+    @apply bg-yellow-100 text-yellow-700 hover:bg-yellow-100;
+  }
+
+  .badge-error-hover {
+    @apply bg-red-100 text-red-700 hover:bg-red-100;
+  }
+
+  /* =========================================
+     FORM GROUPS
+     ========================================= */
+  .form-group {
+    @apply space-y-1;
+  }
+
+  .form-input-full {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+  }
+
+  .form-textarea-full {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm resize-none focus:ring-primary focus:border-primary;
+  }
+
+  .form-select-full {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-primary focus:border-primary;
+  }
+
+  .form-input-mono {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono focus:ring-primary focus:border-primary;
+  }
+
+  /* =========================================
+     STAT CARDS
+     ========================================= */
+  .stat-card-default {
+    @apply bg-card rounded-xl border p-6 shadow-sm;
+  }
+
+  .stat-card-colored {
+    @apply rounded-xl border p-6 text-center;
+  }
+
+  .stat-value-lg {
+    @apply text-3xl font-bold mt-1;
+  }
+
+  .stat-value-md {
+    @apply text-2xl font-bold mt-1;
+  }
+
+  .stat-label-default {
+    @apply text-xs font-bold text-gray-600 uppercase tracking-wider;
+  }
+
+  /* =========================================
+     DETAIL ROW
+     ========================================= */
+  .detail-row {
+    @apply flex items-center justify-between p-3 rounded-xl border bg-muted/30;
+  }
+
+  .detail-grid {
+    @apply grid grid-cols-2 gap-y-4 gap-x-6 bg-muted/20 p-4 rounded-xl border border-border/50;
+  }
+
+  /* =========================================
+     ACTION BUTTONS
+     ========================================= */
+  .btn-checkin {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2;
+  }
+
+  .btn-checkout {
+    @apply bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2;
+  }
+
+  .btn-cancel {
+    @apply bg-background hover:bg-muted text-foreground rounded-xl px-8 h-12 font-medium flex items-center gap-2;
+  }
+
+  .btn-approve {
+    @apply flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2;
+  }
+
+  .btn-reject {
+    @apply flex-1 rounded-xl text-red-500 bg-muted hover:bg-muted/70 flex items-center justify-center gap-2;
+  }
+
+  .btn-request-more {
+    @apply flex-1 rounded-xl text-orange-500 border-orange-200 hover:bg-orange-50 flex items-center justify-center gap-2;
+  }
+
+  /* =========================================
+     APPROVAL BUTTONS
+     ========================================= */
+  .btn-primary-lg {
+    @apply flex-1 h-9 font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm;
+  }
+
+  .btn-danger-lg {
+    @apply flex-1 h-9 font-semibold bg-red-50 text-red-500 border-red-200 hover:bg-red-100 hover:text-red-600;
+  }
+
+  /* =========================================
+     LOADING STATES
+     ========================================= */
+  .loading-spinner {
+    @apply flex items-center justify-center gap-2 text-muted-foreground;
+  }
+
+  .loading-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm;
+  }
+
+  /* =========================================
+     EMPTY STATE
+     ========================================= */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-muted-foreground p-8;
+  }
+
+  .empty-state-icon {
+    @apply w-16 h-16 mb-4 rounded-full bg-muted/50 flex items-center justify-center;
+  }
+
+  /* =========================================
+     DIALOG/CONTENT
+     ========================================= */
+  .dialog-content-base {
+    @apply w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl flex flex-col bg-background border border-border;
+  }
+
+  .dialog-content-sm {
+    @apply sm:max-w-[480px] p-0 gap-0 rounded-xl overflow-hidden;
+  }
+
+  /* =========================================
+     PROGRESS BAR
+     ========================================= */
+  .progress-bar {
+    @apply h-full bg-green-500 rounded-full transition-all;
+  }
+
+  .asset-detail-section {
+    @apply border rounded-xl p-4 space-y-4;
+  }
+
+  /* =========================================
+     MISC
+     ========================================= */
+  .text-mono {
+    @apply font-mono;
+  }
+
+  .text-truncate {
+    @apply truncate;
+  }
+
+  .center-content {
+    @apply flex items-center justify-center;
+  }
+
+  .center-content-between {
+    @apply flex items-center justify-between;
+  }
+
+  .gap-2-center {
+    @apply flex items-center gap-2;
+  }
+
+  .card-border {
+    @apply border border-border shadow-sm;
+  }
+
+  .card-soft {
+    @apply bg-background rounded-2xl border border-border shadow-sm overflow-hidden;
+  }
+
+  /* =========================================
+     BADGE REUSABLE
+     ========================================= */
+  .badge-status-label {
+    @apply px-2.5 py-0.5 text-xs font-semibold rounded-full;
+  }
+
+  .badge-outline-label {
+    @apply px-3 py-1 text-xs font-semibold rounded-md;
+  }
+
+  /* =========================================
+     BUTTON REUSABLE
+     ========================================= */
+  .btn-date {
+    @apply bg-card px-5 py-2.5 rounded-xl border border-border shadow-sm;
+  }
+
+  /* =========================================
+     SECTION HEADERS
+     ========================================= */
+  .label-title {
+    @apply text-xs font-bold uppercase tracking-wider;
+  }
+
+  .section-title-muted {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
+  }
+
+  /* =========================================
+     RADAR CHART
+     ========================================= */
+  .radar-grid {
+    stroke: #e5e7eb;
+    stroke-width: 1;
+    fill: none;
+  }
+
+  .radar-area {
+    fill: rgba(228, 27, 33, 0.2);
+    stroke: #e41b21;
+    stroke-width: 2;
+  }
+
+  .form-input-mono {
+    @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono focus:ring-primary focus:border-primary;
+  }
+
+  /* =========================================
+     ATTENDANCE SETTINGS
+     ========================================= */
+  .settings-card {
+    @apply bg-card rounded-xl border shadow-sm overflow-hidden;
+  }
+
+  .settings-card-header {
+    @apply px-6 py-5 border-b bg-muted/30;
+  }
+
+  .settings-card-title {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  .settings-card-desc {
+    @apply text-sm text-muted-foreground mt-1;
+  }
+
+  .settings-card-content {
+    @apply p-6;
+  }
+
+  .rule-card-wrapper {
+    @apply bg-card rounded-xl border shadow-sm overflow-hidden;
+  }
+
+  .setting-input-group {
+    @apply space-y-2;
+  }
+
+  .setting-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .setting-description {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .setting-input-row {
+    @apply flex items-center gap-2;
+  }
+
+  .setting-suffix {
+    @apply text-sm text-muted-foreground whitespace-nowrap;
+  }
+
+  .setting-toggle-row {
+    @apply flex items-center justify-between py-2;
+  }
+
+  .setting-toggle-info {
+    @apply flex flex-col;
+  }
+
+  .setting-toggle-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .setting-toggle-desc {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .settings-divider {
+    @apply border-t my-6;
+  }
+
+  .settings-actions {
+    @apply flex items-center justify-end gap-3 pt-4 border-t mt-6;
+  }
+
+  .settings-grid-coords {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  /* =========================================
+     PREMIUM UI UTILITIES
+     ========================================= */
+  .glass-morphed {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-gray-800/50 shadow-xl;
+  }
+
+  .glass-card {
+    @apply bg-white/40 dark:bg-gray-900/40 backdrop-blur-lg border border-white/20 dark:border-gray-800/30 rounded-3xl shadow-2xl transition-all hover:shadow-primary/5 hover:border-primary/20;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary via-primary/90 to-primary/70;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60;
+  }
+
+  .premium-input {
+    @apply transition-all duration-300 focus:ring-4 focus:ring-primary/10 focus:border-primary/50 bg-white/50 dark:bg-gray-950/50 backdrop-blur-sm border-slate-200/60 rounded-xl;
+  }
+
+  .icon-container {
+    @apply flex items-center justify-center rounded-2xl shadow-inner transition-transform duration-300 group-hover:scale-110;
+  }
 }
 
-@layer base {
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print\:block,
+  .print\:block *,
+  .print\:fixed,
+  .print\:fixed * {
+    visibility: visible !important;
+  }
+
+  .print\:fixed {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    z-index: 9999 !important;
+  }
+
+  /* Hide UI elements that shouldn't be in PDF */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Reset some shadcn/ui defaults for print */
+  [role="dialog"] {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Force color printing */
   * {
-    @apply border-border outline-ring/50;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none !important;
+}
+
+/* Edge (legacy + Chromium) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
+/* Một số trường hợp Chrome mới */
+input[type="password"]::-webkit-password-toggle-button {
+  display: none !important;
 }

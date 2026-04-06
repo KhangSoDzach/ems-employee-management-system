@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.company.ems.backend.attendance.entity.OfficeLocation;
 import com.company.ems.backend.common.entity.BaseEntity;
 import com.company.ems.backend.department.entity.Department;
 import com.company.ems.backend.employee.entity.Employee;
@@ -84,6 +85,10 @@ public class Position extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reports_to_position_id")
     private Position reportsTo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "office_location_id")
+    private OfficeLocation officeLocation;
 
     @Column(nullable = false)
     @Builder.Default

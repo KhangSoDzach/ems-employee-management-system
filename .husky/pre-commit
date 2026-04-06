@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+npm run -s check:conflicts
+
+# Merge commits can stage very large file sets; skip lint-staged to avoid
+# resource/time failures while still enforcing conflict checks and compile checks.
+if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
+  echo "Merge commit detected: skipping lint-staged"
+else
+  npx --no-install lint-staged
+fi
+
+if git diff --cached --name-only | grep -q '^backend/'; then
+  echo "Running lightweight backend check..."
+  (cd backend && ./mvnw -q -DskipTests compile) || exit 1
+fi

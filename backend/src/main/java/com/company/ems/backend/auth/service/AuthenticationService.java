@@ -10,162 +10,221 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.company.ems.backend.auditlog.dto.RequestContext;
+import com.company.ems.backend.auditlog.enums.AuthActionType;
+import com.company.ems.backend.auditlog.service.AuditLogService;
 import com.company.ems.backend.auth.config.JwtProperties;
 import com.company.ems.backend.auth.dto.AuthResponse;
+import com.company.ems.backend.auth.dto.ChangePasswordRequest;
 import com.company.ems.backend.auth.dto.LoginRequest;
 import com.company.ems.backend.auth.entity.RefreshToken;
 import com.company.ems.backend.auth.security.JwtTokenUtil;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.security.service.TwoFactorAuthService;
 import com.company.ems.backend.user.entity.User;
 import com.company.ems.backend.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Service for authentication operations
- * Handles login, logout, and token refresh
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationService {
 
     private final AuthenticationManager authenticationManager;
+    private final MessageService messages;
     private final UserRepository userRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final RefreshTokenService refreshTokenService;
     private final CustomUserDetailsService userDetailsService;
     private final JwtProperties jwtProperties;
+    private final AuditLogService auditLogService;
+    private final PasswordEncoder passwordEncoder;
+    private final TwoFactorAuthService twoFactorAuthService;
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCK_DURATION_MINUTES = 15;
 
-    /**
-     * Authenticate user and return JWT tokens
-     *
-     * @param request    Login request with username and password
-     * @param deviceInfo Device information (User-Agent, IP, etc.)
-     * @return Authentication response with access and refresh tokens
-     */
     @Transactional
-    public AuthResponse login(LoginRequest request, String deviceInfo) {
+    public AuthResponse login(LoginRequest request, RequestContext ctx) {
         log.debug("Login attempt for user: {}", request.getUsername());
 
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
+        User user = userRepository.findByUsernameOrEmail(request.getUsername())
+                .orElseThrow(() -> {
+                    auditLogService.logAuthEvent(
+                            AuthActionType.LOGIN_FAILED, "ANONYMOUS", null,
+                            request.getUsername(), "JWT", "FAILED", ctx);
+                    return new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
+                });
 
-        // Check if account is locked
         if (user.isAccountLocked()) {
             log.warn("Login attempt for locked account: {}", request.getUsername());
+            auditLogService.logAuthEvent(
+                    AuthActionType.LOGIN_FAILED,
+                user.getUsername(),
+                    String.valueOf(user.getId()),
+                    request.getUsername(), "JWT", "FAILED", ctx);
             throw new LockedException(
-                    "Account is locked due to multiple failed login attempts. Please try again later.");
+                    messages.get(MessageCode.ERROR_ACCOUNT_LOCKED_DETAIL));
         }
 
         try {
-            // Authenticate with Spring Security
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
                             request.getPassword()));
 
-            // Authentication successful - reset failed attempts
             if (user.getFailedLoginAttempts() > 0) {
                 user.resetFailedAttempts();
                 userRepository.save(user);
             }
 
-            // Update last login time
+            if (Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+                String twoFactorCode = request.getTwoFactorCode();
+                if (twoFactorCode == null || twoFactorCode.isBlank()) {
+                    log.info("2FA required for user: {}", request.getUsername());
+                    return AuthResponse.builder()
+                            .twoFactorRequired(true)
+                            .build();
+                }
+
+                if (!twoFactorAuthService.verifyCodeForLogin(user.getUsername(), twoFactorCode)) {
+                    log.warn("Invalid 2FA code for user: {}", request.getUsername());
+                    throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
+                }
+            }
+
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
 
-            // Generate tokens
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String accessToken = jwtTokenUtil.generateAccessToken(userDetails);
+            String deviceInfo = buildDeviceInfo(ctx);
             String refreshToken = refreshTokenService.createRefreshToken(user, deviceInfo);
+
+            auditLogService.logAuthEvent(
+                    AuthActionType.LOGIN_SUCCESS,
+                    user.getUsername(),
+                    String.valueOf(user.getId()),
+                    request.getUsername(), "JWT", "SUCCESS", ctx);
 
             log.info("Login successful for user: {}", request.getUsername());
 
             return buildAuthResponse(user, accessToken, refreshToken);
 
         } catch (BadCredentialsException e) {
-            // Handle failed login attempt
             handleFailedLoginAttempt(user);
-            throw new BadCredentialsException("Invalid username or password");
+            auditLogService.logAuthEvent(
+                    AuthActionType.LOGIN_FAILED,
+                    user.getUsername(),
+                    String.valueOf(user.getId()),
+                    request.getUsername(), "JWT", "FAILED", ctx);
+            throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
         } catch (DisabledException e) {
             log.warn("Login attempt for disabled account: {}", request.getUsername());
-            throw new DisabledException("Account is disabled");
+            auditLogService.logAuthEvent(
+                    AuthActionType.LOGIN_FAILED,
+                    user.getUsername(),
+                    String.valueOf(user.getId()),
+                    request.getUsername(), "JWT", "FAILED", ctx);
+            throw new DisabledException(messages.get(MessageCode.ERROR_ACCOUNT_DISABLED));
         }
     }
 
-    /**
-     * Refresh access token using refresh token
-     *
-     * @param refreshTokenString Refresh token
-     * @param deviceInfo         Device information (User-Agent, IP, etc.)
-     * @return New authentication response with new access token and new refresh
-     *         token
-     */
     @Transactional
-    public AuthResponse refreshAccessToken(String refreshTokenString, String deviceInfo) {
+    public AuthResponse refreshAccessToken(String refreshTokenString, RequestContext ctx) {
         log.debug("Refreshing access token");
 
-        // Validate refresh token
         RefreshToken refreshToken = refreshTokenService.validateRefreshToken(refreshTokenString)
-                .orElseThrow(() -> new BadCredentialsException("Invalid or expired refresh token"));
+                .orElseThrow(() -> {
+                    auditLogService.logAuthEvent(
+                            AuthActionType.TOKEN_REFRESH_FAILED, "ANONYMOUS", null,
+                            null, "JWT", "FAILED", ctx);
+                    return new BadCredentialsException(messages.get(MessageCode.ERROR_REFRESH_TOKEN_INVALID));
+                });
 
         User user = refreshToken.getUser();
 
-        // ROTATION: Revoke the old refresh token
         refreshTokenService.revokeRefreshToken(refreshTokenString);
         log.info("Old refresh token revoked for rotation: {}", user.getUsername());
-
-        // Load user details and generate new access token
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String newAccessToken = jwtTokenUtil.generateAccessToken(userDetails);
-
-        // Generate NEW refresh token
+        String deviceInfo = buildDeviceInfo(ctx);
         String newRefreshToken = refreshTokenService.createRefreshToken(user, deviceInfo);
+        auditLogService.logAuthEvent(
+                AuthActionType.TOKEN_REFRESH_SUCCESS,
+            user.getUsername(),
+                String.valueOf(user.getId()),
+                user.getUsername(), "JWT", "SUCCESS", ctx);
 
         log.info("Access token refreshed and rotated for user: {}", user.getUsername());
 
         return buildAuthResponse(user, newAccessToken, newRefreshToken);
     }
 
-    /**
-     * Logout user by revoking refresh token
-     *
-     * @param refreshToken Refresh token to revoke
-     */
     @Transactional
-    public void logout(String refreshToken) {
+    public void logout(String refreshToken, String actor, RequestContext ctx) {
         log.debug("Logout request");
         boolean revoked = refreshTokenService.revokeRefreshToken(refreshToken);
         if (revoked) {
+            auditLogService.logAuthEvent(
+                    AuthActionType.LOGOUT, actor, actor,
+                    actor, "JWT", "SUCCESS", ctx);
             log.info("User logged out successfully");
         } else {
             log.warn("Logout failed: token not found");
         }
     }
 
-    /**
-     * Logout user from all devices
-     *
-     * @param userId User ID
-     */
     @Transactional
-    public void logoutAllDevices(Long userId) {
+    public void logoutAllDevices(Long userId, String actor, RequestContext ctx) {
         log.debug("Logout all devices for user ID: {}", userId);
         refreshTokenService.revokeAllUserTokens(userId);
+        auditLogService.logAuthEvent(
+                AuthActionType.TOKEN_REVOKED, actor, String.valueOf(userId),
+                actor, "JWT", "SUCCESS", ctx);
         log.info("User logged out from all devices: {}", userId);
     }
 
-    /**
-     * Handle failed login attempt
-     * Increments failed attempts counter and locks account if threshold exceeded
-     */
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request, RequestContext ctx) {
+        log.debug("Change password request for user ID: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadCredentialsException("User not found: ID " + userId));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            log.warn("Change password failed: invalid current password for user: {}", user.getUsername());
+            auditLogService.logAuthEvent(
+                    AuthActionType.LOGIN_FAILED, user.getUsername(), String.valueOf(user.getId()),
+                    user.getUsername(), "JWT", "FAILED", ctx);
+            throw new BadCredentialsException(messages.get(MessageCode.ERROR_BAD_CREDENTIALS));
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("New password cannot be the same as the current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setLastPasswordChange(LocalDateTime.now());
+        user.setForcePasswordChange(false);
+        userRepository.save(user);
+
+        // Terminate all sessions across devices
+        refreshTokenService.revokeAllUserTokens(user.getId());
+
+        auditLogService.logAuthEvent(
+                AuthActionType.PASSWORD_CHANGED, user.getUsername(), String.valueOf(user.getId()),
+                user.getUsername(), "JWT", "SUCCESS", ctx);
+        log.info("Password changed successfully for user: {}", user.getUsername());
+    }
+
     private void handleFailedLoginAttempt(User user) {
         user.incrementFailedAttempts();
 
@@ -180,23 +239,23 @@ public class AuthenticationService {
         userRepository.save(user);
     }
 
-    /**
-     * Get user by username
-     *
-     * @param username Username to search for
-     * @return User object
-     */
+    private String buildDeviceInfo(RequestContext ctx) {
+        if (ctx == null)
+            return "Unknown";
+        String ua = ctx.getUserAgent() != null ? ctx.getUserAgent() : "Unknown";
+        String ip = ctx.getIpAddress() != null ? ctx.getIpAddress() : "Unknown";
+        return ua + " | IP: " + ip;
+    }
+
     @Transactional(readOnly = true)
     public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
+        return userRepository.findByUsernameOrEmail(username)
                 .orElseThrow(() -> new BadCredentialsException("User not found: " + username));
     }
 
-    /**
-     * Build authentication response with user info and tokens
-     */
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
         return AuthResponse.builder()
+                .twoFactorRequired(false)
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")

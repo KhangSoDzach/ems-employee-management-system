@@ -1,24 +1,54 @@
-name: CI
+name: EMS CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: "Manual deploy target"
+        required: true
+        type: choice
+        options:
+          - none
+          - staging
+          - production
+        default: none
+      rollback:
+        description: "Run rollback for selected deploy target"
+        required: true
+        type: boolean
+        default: false
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "20"
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ${{ github.repository_owner }}/ems
+  MYSQL_DATABASE: ems_db
+  MYSQL_USERNAME: ems
+  MYSQL_PASSWORD: ems
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write
+  packages: write
 
 jobs:
-  # 1. Backend — compile + test + package
-  backend-ci:
-    name: Backend Build & Test
+  backend-build-test:
+    name: Backend Build + Test
     runs-on: ubuntu-latest
-
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_DATABASE: ems_db
-          MYSQL_USER: ems
-          MYSQL_PASSWORD: ems
+          MYSQL_DATABASE: ${{ env.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ env.MYSQL_USERNAME }}
+          MYSQL_PASSWORD: ${{ env.MYSQL_PASSWORD }}
           MYSQL_ROOT_PASSWORD: root
         ports:
           - 3306:3306
@@ -27,58 +57,62 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
 
       - name: Grant MySQL permissions
         run: |
           mysql -h 127.0.0.1 -uroot -proot -e "
-            GRANT ALL PRIVILEGES ON ems_db.* TO 'ems'@'%';
+            GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USERNAME}'@'%';
             FLUSH PRIVILEGES;
           "
 
-      # compile + test + package in one pass (skip redundant compile/package steps)
-      - name: Build & test
+      - name: Build + test + integration
         working-directory: ./backend
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ems_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-          SPRING_DATASOURCE_USERNAME: ems
-          SPRING_DATASOURCE_PASSWORD: ems
-        run: mvn verify -B
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/${{ env.MYSQL_DATABASE }}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          SPRING_DATASOURCE_USERNAME: ${{ env.MYSQL_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ env.MYSQL_PASSWORD }}
+        run: ./mvnw -B verify org.jacoco:jacoco-maven-plugin:report
 
-      - name: Upload test results
+      - name: Publish unit/integration test report
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: backend/target/surefire-reports/*.xml
+          require_tests: true
+          detailed_summary: true
+
+      - name: Upload backend reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-test-results
-          path: backend/target/surefire-reports/
+          name: backend-reports
+          path: |
+            backend/target/surefire-reports/
+            backend/target/site/jacoco/
           retention-days: 7
 
-  # ─────────────────────────────────────────
-  # 2. Frontend — lint + type-check + build
-  # ─────────────────────────────────────────
-  frontend-ci:
-    name: Frontend Build & Lint
+  frontend-build-test:
+    name: Frontend Build + Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
@@ -93,33 +127,155 @@ jobs:
         working-directory: ./frontend
         run: npx tsc --noEmit
 
+      - name: Run tests (if configured)
+        working-directory: ./frontend
+        run: npm run test --if-present
+
       - name: Build
         working-directory: ./frontend
         run: npm run build
 
-  # 3. Docker build validation — only on merges to main
-  #    (avoids burning image-build minutes on every PR)
-
-  docker-build:
-    name: Docker Build Validation
+  code-quality:
+    name: Code Quality (SonarQube)
     runs-on: ubuntu-latest
-    needs: [ backend-ci, frontend-ci ]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend-build-test, frontend-build-test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      - name: Check SonarQube configuration
+        id: sonar_config
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        run: |
+          if [ -n "$SONAR_TOKEN" ] && [ -n "$SONAR_HOST_URL" ] && [ -n "$SONAR_PROJECT_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: SonarQube scan
+        if: steps.sonar_config.outputs.enabled == 'true'
+        run: |
+          mvn -f backend/pom.xml -B sonar:sonar \
+            -Dsonar.projectKey="${{ secrets.SONAR_PROJECT_KEY }}" \
+            -Dsonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
+            -Dsonar.token="${{ secrets.SONAR_TOKEN }}"
+
+      - name: SonarQube not configured
+        if: steps.sonar_config.outputs.enabled != 'true'
+        run: echo "SonarQube secrets are missing. Skipping quality scan."
+
+  security-scan:
+    name: Security Scan (OWASP + npm audit + Trivy)
+    runs-on: ubuntu-latest
+    needs: [backend-build-test, frontend-build-test]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: OWASP dependency-check (backend)
+        working-directory: ./backend
+        run: ./mvnw -B org.owasp:dependency-check-maven:check -Dformat=HTML,JSON
+        continue-on-error: true
+
+      - name: npm audit (frontend)
+        working-directory: ./frontend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+        continue-on-error: true
+
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            backend/target/dependency-check-report.*
+            trivy-results.sarif
+          retention-days: 7
+
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [backend-build-test, frontend-build-test, security-scan]
+    if: github.event_name != 'pull_request'
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image metadata
+        id: meta
+        run: echo "image_tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Build backend image
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           file: ./backend/Dockerfile
-          push: false
-          tags: ems-backend:ci
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend:${{ steps.meta.outputs.image_tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -128,7 +284,156 @@ jobs:
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
-          push: false
-          tags: ems-frontend:ci
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:${{ steps.meta.outputs.image_tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: |
+      always() &&
+      needs.docker-build.result == 'success' &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target == 'staging')
+      ) &&
+      github.event.inputs.rollback != 'true'
+    environment:
+      name: staging
+    steps:
+      - name: Deploy to staging host
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            export EMS_IMAGE_TAG="${{ needs.docker-build.outputs.image_tag }}"
+            export EMS_BACKEND_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend:${EMS_IMAGE_TAG}"
+            export EMS_FRONTEND_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:${EMS_IMAGE_TAG}"
+            export EMS_PREVIOUS_TAG_FILE="${{ secrets.STAGING_PREVIOUS_TAG_FILE }}"
+            mkdir -p "$(dirname "$EMS_PREVIOUS_TAG_FILE")"
+            if [ -f "$EMS_PREVIOUS_TAG_FILE" ]; then
+              cat "$EMS_PREVIOUS_TAG_FILE" || true
+            fi
+            printf '%s' "$EMS_IMAGE_TAG" > "$EMS_PREVIOUS_TAG_FILE"
+            cd "${{ secrets.STAGING_DEPLOY_PATH }}"
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+  deploy-production:
+    name: Deploy Production (Manual Approval)
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: |
+      always() &&
+      needs.docker-build.result == 'success' &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target == 'production')
+      ) &&
+      github.event.inputs.rollback != 'true'
+    environment:
+      name: production
+    steps:
+      - name: Deploy to production host
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            export EMS_IMAGE_TAG="${{ needs.docker-build.outputs.image_tag }}"
+            export EMS_BACKEND_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend:${EMS_IMAGE_TAG}"
+            export EMS_FRONTEND_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:${EMS_IMAGE_TAG}"
+            export EMS_PREVIOUS_TAG_FILE="${{ secrets.PROD_PREVIOUS_TAG_FILE }}"
+            mkdir -p "$(dirname "$EMS_PREVIOUS_TAG_FILE")"
+            if [ -f "$EMS_PREVIOUS_TAG_FILE" ]; then
+              cat "$EMS_PREVIOUS_TAG_FILE" || true
+            fi
+            printf '%s' "$EMS_IMAGE_TAG" > "$EMS_PREVIOUS_TAG_FILE"
+            cd "${{ secrets.PROD_DEPLOY_PATH }}"
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: |
+      always() && (
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.rollback == 'true') ||
+        needs.deploy-staging.result == 'failure' ||
+        needs.deploy-production.result == 'failure'
+      )
+    steps:
+      - name: Rollback staging
+        if: |
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target == 'staging' && github.event.inputs.rollback == 'true') ||
+          needs.deploy-staging.result == 'failure'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            export EMS_PREVIOUS_TAG_FILE="${{ secrets.STAGING_PREVIOUS_TAG_FILE }}"
+            export EMS_ROLLBACK_TAG="$(cat "$EMS_PREVIOUS_TAG_FILE")"
+            export EMS_BACKEND_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend:${EMS_ROLLBACK_TAG}"
+            export EMS_FRONTEND_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:${EMS_ROLLBACK_TAG}"
+            cd "${{ secrets.STAGING_DEPLOY_PATH }}"
+            docker compose up -d --remove-orphans
+
+      - name: Rollback production
+        if: |
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target == 'production' && github.event.inputs.rollback == 'true') ||
+          needs.deploy-production.result == 'failure'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            export EMS_PREVIOUS_TAG_FILE="${{ secrets.PROD_PREVIOUS_TAG_FILE }}"
+            export EMS_ROLLBACK_TAG="$(cat "$EMS_PREVIOUS_TAG_FILE")"
+            export EMS_BACKEND_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend:${EMS_ROLLBACK_TAG}"
+            export EMS_FRONTEND_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:${EMS_ROLLBACK_TAG}"
+            cd "${{ secrets.PROD_DEPLOY_PATH }}"
+            docker compose up -d --remove-orphans
+
+  notify:
+    name: Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production, rollback]
+    if: always()
+    steps:
+      - name: Send deployment status notification
+        env:
+          DEPLOY_STATUS: ${{ job.status }}
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_WEBHOOK_URL" ]; then
+            echo "DEPLOY_WEBHOOK_URL is not configured. Skipping notification."
+            exit 0
+          fi
+
+          curl -X POST "$DEPLOY_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "repository":"${{ github.repository }}",
+              "run_id":"${{ github.run_id }}",
+              "branch":"${{ github.ref_name }}",
+              "staging":"${{ needs.deploy-staging.result }}",
+              "production":"${{ needs.deploy-production.result }}",
+              "rollback":"${{ needs.rollback.result }}",
+              "status":"'"$DEPLOY_STATUS"'"
+            }'
