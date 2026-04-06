@@ -121,6 +121,7 @@ export interface EmployeeRequest {
   gender?: string;
   avatarUrl?: string;
   notes?: string;
+  roleId?: number;
 }
 
 export interface OfficialContractRequest {

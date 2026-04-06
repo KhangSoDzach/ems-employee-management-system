@@ -39,21 +39,30 @@ ems-employee-management-system/
 
 ## 3. Build, Lint, and Test Commands
 
-### 3.1 Backend Commands (Maven Wrapper)
+### 3.1 Root-Level Commands (Run from project root)
+
+- **Start Both Servers**: `npm run dev` (Concurrently runs backend + frontend).
+- **Start DB Only**: `npm run dev:db` (Docker Compose MySQL only).
+- **Start All Docker Services**: `npm run dev:all` (Full stack via Docker Compose).
+- **Pre-commit Hooks**: Husky + lint-staged auto-run ESLint + Prettier on staged files.
+
+### 3.2 Backend Commands (Maven Wrapper)
 
 All backend commands must be executed within the `backend/` directory.
 
 - **Start Dev Server**: `./mvnw spring-boot:run` (Or use `./dev-hot-reload.sh` for hot-reloading).
 - **Compile and Build**: `./mvnw clean install` (Builds the `.jar`, running all tests).
+- **Full Verify (CI)**: `./mvnw -B verify org.jacoco:jacoco-maven-plugin:report` (Includes coverage).
 - **Run All Tests**: `./mvnw test` (Uses H2 in-memory database configuration).
 - **Run a Single Test**: `./mvnw -Dtest="TestClassName" test` (e.g., `./mvnw -Dtest="LeaveServiceImplTest" test`).
 
-### 3.2 Frontend Commands (npm)
+### 3.3 Frontend Commands (npm)
 
 All frontend commands must be executed within the `frontend/` directory.
 
 - **Start Dev Server**: `npm run dev` (Starts Vite).
 - **Build for Production**: `npm run build` (Runs `tsc -b && vite build`).
+- **Type-Check Only**: `npx tsc --noEmit` (CI uses this; no separate `npm run typecheck` script).
 - **Lint Codebase**: `npm run lint` (Checks rules using `eslint.config.js`).
 - **Fix Lint Issues**: `npm run lint:fix`.
 - **Preview Production Build**: `npm run preview`.
@@ -127,3 +136,12 @@ All frontend commands must be executed within the `frontend/` directory.
 4. **Git Operations**: Never run arbitrary git commits unless directly instructed by the user.
 5. **Frontend Verification**: Always use the `chrome-devtools` MCP to open and test the frontend directly after making any UI changes. Verify rendering, interactions, and behavior in the actual browser — do not rely on code review alone.
 6. **Skill Auto-Detection**: Analyze the user's prompt to determine which skill(s) to apply. Match intent to skill purpose (e.g., feature changes → `tdd-workflow`, auth/endpoints → `security-review`, new APIs → `search-first`). Load and follow the relevant skill automatically without asking.
+7. **Quota & Rate Limit Management**: Avoid upstream rate-limit errors ("Request rate increased too quickly") by pacing requests smoothly:
+   - **Batch aggressively**: Combine independent tool calls into single messages (e.g., read 3–5 files in one call, run parallel bash commands together).
+   - **Throttle bursts**: After a burst of 5+ tool calls, pause before the next batch. Do not fire tool calls back-to-back without gaps.
+   - **No redundant operations**: Never re-read files already read in the session. Never run full test suites or linters unless explicitly asked or at task completion.
+   - **Prefer targeted lookups**: Use `grep`/`glob` for simple searches. Reserve `task` agent spawns for complex multi-step work only.
+   - **Phase large tasks**: Break work into phases and confirm with the user between phases. Do not consume quota on assumptions.
+   - **Minimal edits**: Prefer `edit` over `write` for existing files. Skip verbose code explanations — the code speaks for itself.
+   - **Read strategically**: Start with config files, entrypoints, and existing patterns. Only dive into leaf files when necessary.
+   - **If rate-limited**: Stop, wait, and resume with a slower cadence. Do not retry immediately.

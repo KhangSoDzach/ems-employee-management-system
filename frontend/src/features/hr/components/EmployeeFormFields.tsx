@@ -456,6 +456,14 @@ export default function EmployeeFormFields(props: Props) {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
+                {EMPLOYEE_CONSTANTS.LABELS.ROLE}
+              </label>
+              <div className="px-4 py-2.5 rounded-xl border border-border bg-muted/30 text-sm font-medium text-muted-foreground">
+                {EMPLOYEE_CONSTANTS.MESSAGES.ROLE_AUTO_ASSIGN}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase">
                 {EMPLOYEE_CONSTANTS.LABELS.POSITION}{" "}
                 <span className="text-red-500" aria-hidden="true">
                   {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
