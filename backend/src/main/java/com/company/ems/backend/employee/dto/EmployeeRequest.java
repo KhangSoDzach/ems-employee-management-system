@@ -87,4 +87,6 @@ public class EmployeeRequest {
     private Gender gender;
     private String avatarUrl;
     private String notes;
+
+    private Long roleId;
 }

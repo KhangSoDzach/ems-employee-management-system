@@ -62,6 +62,7 @@ export const employeeSchema = z
       ),
     avatarUrl: z.string().optional(),
     reportingManagerId: z.number().optional(),
+    roleId: z.number().optional(),
     notes: z.string().optional(),
   })
   .superRefine((data, ctx) => {

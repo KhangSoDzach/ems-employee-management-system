@@ -247,6 +247,7 @@ export default function EmployeeFormModal(props: Readonly<Props>) {
         socialSecurityNumber: data.socialSecurityNumber?.trim() || undefined,
         notes: data.notes?.trim() || undefined,
         nationality: data.nationality?.trim() || undefined,
+        roleId: data.roleId && data.roleId > 0 ? data.roleId : undefined,
       };
 
       let savedEmployee: EmployeeResponse;

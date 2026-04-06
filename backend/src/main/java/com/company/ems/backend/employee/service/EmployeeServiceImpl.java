@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +65,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         /** Date format for default password derivation: ddMMyy (e.g. 110299 for 11/02/1999). */
         private static final DateTimeFormatter DOB_PASSWORD_FORMATTER = DateTimeFormatter.ofPattern("ddMMyy");
+        private static final int MANAGER_LEVEL_THRESHOLD = 3;
         private static final List<Integer> ALLOWED_FIXED_TERM_MONTHS = List.of(12, 24, 36);
         private static final long MAX_EMPLOYEE_FILE_SIZE_BYTES = 10L * 1024 * 1024;
         private static final Set<String> ALLOWED_DOCUMENT_TYPES = Set.of(
@@ -144,14 +146,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                 String rawPassword = null;
                 if (request.getDateOfBirth() != null) {
                         rawPassword = buildDefaultPassword(employeeCode, request.getDateOfBirth());
-                        Role employeeRole = roleRepository.findByName("ROLE_EMPLOYEE")
-                                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_EMPLOYEE"));
+                        Role assignedRole = resolveRoleForDepartment(department, position, request.getRoleId());
                         linkedUser = User.builder()
                                 .username(employeeCode)
                                 .email(request.getEmail())
                                 .password(passwordEncoder.encode(rawPassword))
+                                .roles(new HashSet<>(Set.of(assignedRole)))
                                 .build();
-                        linkedUser.getRoles().add(employeeRole);
                 }
 
                 Employee employee = Employee.builder().user(linkedUser)
@@ -820,5 +821,40 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                 employee.setContractDurationMonths(null);
                 employee.setContractEndDate(contractEndDate);
+        }
+
+        /**
+         * Resolve role based on department code and position level.
+         * Mapping:
+         * - ADMIN dept → ROLE_ADMIN
+         * - HR dept → ROLE_HR
+         * - Other dept + position level >= 3 → ROLE_MANAGER
+         * - Other dept + position level < 3 → ROLE_EMPLOYEE
+         * If roleId is explicitly provided, use that instead.
+         */
+        private Role resolveRoleForDepartment(Department department, Position position, Long explicitRoleId) {
+                if (explicitRoleId != null) {
+                        return roleRepository.findById(explicitRoleId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Role", "id", explicitRoleId));
+                }
+
+                String deptCode = department.getCode();
+                if ("ADMIN".equals(deptCode)) {
+                        return roleRepository.findByName("ROLE_ADMIN")
+                                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_ADMIN"));
+                }
+                if ("HR".equals(deptCode)) {
+                        return roleRepository.findByName("ROLE_HR")
+                                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_HR"));
+                }
+
+                Integer level = position.getLevel();
+                if (level != null && level >= MANAGER_LEVEL_THRESHOLD) {
+                        return roleRepository.findByName("ROLE_MANAGER")
+                                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_MANAGER"));
+                }
+
+                return roleRepository.findByName("ROLE_EMPLOYEE")
+                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_EMPLOYEE"));
         }
 }
