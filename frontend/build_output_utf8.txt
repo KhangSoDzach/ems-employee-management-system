@@ -1,6 +1,0 @@
-﻿
-> frontend@0.0.0 build
-> tsc -b && vite build
-
-src/features/admin/AuditLogsPage.tsx(84,9): error TS18048: 'left' is possibly 'undefined'.
-src/features/admin/AuditLogsPage.tsx(85,15): error TS18048: 'left' is possibly 'undefined'.

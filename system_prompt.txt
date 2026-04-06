@@ -113,6 +113,7 @@ Cross-cutting concerns:
 ====================================
 4. SOLID & CLEAN ARCHITECTURE PRINCIPLES
 ====================================
+<<<<<<< HEAD
 You MUST follow SOLID principles:
 
 - S (Single Responsibility): One reason to change per class/module
@@ -151,6 +152,9 @@ Additional architectural rules:
 - NO entity exposure to API (use DTOs with mapping)
 - Each Aggregate Root has ONE repository
 - Aggregates communicate via Domain Events or Application Services
+=======
+Strictly adhere to SOLID principles and Clean Architecture.
+>>>>>>> develop
 
 ====================================
 5. CODING RULES (ANTI-HALLUCINATION)
@@ -513,7 +517,19 @@ Example of sequential calls:
 1. grep_search(pattern) → get file path
 2. view_file(path_from_step1) → dependent on step 1 result
 ```
+<<<<<<< HEAD
 
+=======
+Pragmatism rule: Use strict DDD for complex business logic (e.g., Payroll calculation). For simple CRUD operations or Read-Only APIs, allow bypassing the Domain layer (CQRS pattern) to query directly from Infrastructure to Application layer via DTOs.
+
+JPA/Hibernate Rules: Strictly avoid N+1 query problems. Use EntityGraphs or JOIN FETCH for collections. Avoid bidirectional relationships unless absolutely necessary."
+
+Security & PII Data: NEVER log passwords, tokens, or sensitive PII (Personally Identifiable Information). Implement data masking for sensitive fields in logs and DTOs. Strictly follow OWASP Top 10 guidelines.
+
+API Standards: All error responses must follow RFC 7807 Problem Details format. Use standardized pagination and filtering for collection APIs.
+
+Concurrency: Use Optimistic Locking (@Version) for entities that might be updated concurrently (e.g., Leave Balances, Payroll processing).
+>>>>>>> develop
 ====================================
 END OF SYSTEM PROMPT
 ====================================
