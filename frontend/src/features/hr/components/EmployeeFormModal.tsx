@@ -18,7 +18,10 @@ import {
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { EMPLOYEE_CONSTANTS } from "../../../constants/employee.constants";
 import EmployeeFormFields from "./EmployeeFormFields";
-import { employeeSchema, EmployeeFormValues } from "../schemas/employee.schema";
+import {
+  getEmployeeSchema,
+  EmployeeFormValues,
+} from "../schemas/employee.schema";
 
 interface Props {
   open: boolean;
@@ -70,7 +73,13 @@ export default function EmployeeFormModal(props: Readonly<Props>) {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const methods = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeSchema),
+    resolver: async (data, context, options) => {
+      const selectedPos = positions.find((p) => p.id === data.positionId);
+      const isManager = selectedPos
+        ? selectedPos.level >= MANAGER_LEVEL
+        : false;
+      return zodResolver(getEmployeeSchema(isManager))(data, context, options);
+    },
     defaultValues: INITIAL_FORM_STATE as EmployeeFormValues,
     mode: "onBlur",
   });

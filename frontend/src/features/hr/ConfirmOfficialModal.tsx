@@ -113,13 +113,20 @@ export default function ConfirmOfficialModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="p-6 space-y-5"
+          noValidate
+        >
           <div className="space-y-1.5">
             <label
               htmlFor="official-contract-start-date"
               className="text-xs font-semibold text-muted-foreground uppercase"
             >
-              {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SIGNING_DATE}
+              {SYSTEM_MESSAGES.EMPLOYEE.LABEL_SIGNING_DATE}{" "}
+              <span className="text-red-500" aria-hidden="true">
+                {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+              </span>
             </label>
             <input
               id="official-contract-start-date"
@@ -141,7 +148,10 @@ export default function ConfirmOfficialModal({
               htmlFor="official-contract-term"
               className="text-xs font-semibold text-muted-foreground uppercase"
             >
-              {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPE_OFFICIAL}
+              {SYSTEM_MESSAGES.EMPLOYEE.CONTRACT_TYPE_OFFICIAL}{" "}
+              <span className="text-red-500" aria-hidden="true">
+                {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+              </span>
             </label>
             <select
               id="official-contract-term"
@@ -173,7 +183,10 @@ export default function ConfirmOfficialModal({
               htmlFor="official-salary"
               className="text-xs font-semibold text-muted-foreground uppercase"
             >
-              {SYSTEM_MESSAGES.EMPLOYEE.LABEL_OFFICIAL_SALARY_VND}
+              {SYSTEM_MESSAGES.EMPLOYEE.LABEL_OFFICIAL_SALARY_VND}{" "}
+              <span className="text-red-500" aria-hidden="true">
+                {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+              </span>
             </label>
             <input
               id="official-salary"
