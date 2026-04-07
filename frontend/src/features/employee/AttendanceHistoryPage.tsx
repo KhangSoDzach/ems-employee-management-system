@@ -1,223 +1,531 @@
-import { useState } from "react"
-import { Search, Calendar, Clock, ChevronLeft } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useMemo, useState } from "react";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Loader2,
+  LogIn,
+  LogOut,
+} from "lucide-react";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameMonth,
+  isToday,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const allHistory = [
-    { date: "27/02/2024", checkIn: "08:02 AM", checkOut: "05:15 PM", totalHours: "9h 13m", status: "Đúng giờ", statusColor: "success" },
-    { date: "26/02/2024", checkIn: "08:45 AM", checkOut: "05:30 PM", totalHours: "8h 45m", status: "Đi muộn", statusColor: "warning" },
-    { date: "25/02/2024", checkIn: "07:55 AM", checkOut: "04:30 PM", totalHours: "8h 35m", status: "Đúng giờ", statusColor: "success" },
-    { date: "24/02/2024", checkIn: "08:00 AM", checkOut: "05:00 PM", totalHours: "9h 00m", status: "Đúng giờ", statusColor: "success" },
-    { date: "23/02/2024", checkIn: "—", checkOut: "—", totalHours: "—", status: "Vắng mặt", statusColor: "danger" },
-    { date: "22/02/2024", checkIn: "08:10 AM", checkOut: "05:20 PM", totalHours: "9h 10m", status: "Đúng giờ", statusColor: "success" },
-    { date: "21/02/2024", checkIn: "08:30 AM", checkOut: "04:45 PM", totalHours: "8h 15m", status: "Đi muộn", statusColor: "warning" },
-    { date: "20/02/2024", checkIn: "07:50 AM", checkOut: "05:05 PM", totalHours: "9h 15m", status: "Đúng giờ", statusColor: "success" },
-    { date: "19/02/2024", checkIn: "08:00 AM", checkOut: "06:00 PM", totalHours: "10h 00m", status: "Tăng ca", statusColor: "info" },
-    { date: "18/02/2024", checkIn: "—", checkOut: "—", totalHours: "—", status: "Vắng mặt", statusColor: "danger" },
-    { date: "17/02/2024", checkIn: "08:05 AM", checkOut: "05:10 PM", totalHours: "9h 05m", status: "Đúng giờ", statusColor: "success" },
-    { date: "16/02/2024", checkIn: "09:00 AM", checkOut: "05:30 PM", totalHours: "8h 30m", status: "Đi muộn", statusColor: "warning" },
-    { date: "15/02/2024", checkIn: "08:00 AM", checkOut: "07:00 PM", totalHours: "11h 00m", status: "Tăng ca", statusColor: "info" },
-    { date: "14/02/2024", checkIn: "08:15 AM", checkOut: "05:00 PM", totalHours: "8h 45m", status: "Đúng giờ", statusColor: "success" },
-    { date: "13/02/2024", checkIn: "08:00 AM", checkOut: "05:00 PM", totalHours: "9h 00m", status: "Đúng giờ", statusColor: "success" },
-]
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
-const statusBadgeMap: Record<string, string> = {
-    success: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-    warning: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-    danger: "bg-red-500/10 text-red-600 border-red-500/20",
-    info: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+import {
+  attendanceService,
+  AttendanceCalendarData,
+  AttendanceCalendarDay,
+} from "@/services/attendanceService";
+
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { ATTENDANCE_STATUS } from "@/constants/options";
+
+type StatusKey = NonNullable<AttendanceCalendarDay["status"]>;
+
+type CalendarMetric = AttendanceCalendarData["fullWorkDays"];
+
+type CalendarMetricSet = {
+  fullWorkDays: CalendarMetric;
+  lateDays: CalendarMetric;
+  noClockOutDays: CalendarMetric;
+  absentDays: CalendarMetric;
+};
+
+function zeroMetric(): CalendarMetric {
+  return { current: 0, changePercent: 0 };
 }
 
-// ─── Summary Stats ─────────────────────────────────────────────────────────────
-function SummaryCard({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
-    return (
-        <Card className="border-border shadow-sm">
-            <CardContent className="p-5">
-                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-1">{label}</p>
-                <p className={`text-3xl font-extrabold ${color}`}>{value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{sub}</p>
-            </CardContent>
-        </Card>
-    )
+function buildMetricsFromDays(
+  days: AttendanceCalendarDay[],
+): CalendarMetricSet {
+  const fullWorkDays = days.filter(
+    (day) =>
+      day.hasRecord &&
+      day.status !== "ABSENT" &&
+      day.status !== "ON_LEAVE" &&
+      Boolean(day.checkInTime),
+  ).length;
+
+  const lateDays = days.filter(
+    (day) => day.hasRecord && (day.status === "LATE" || day.isLate === true),
+  ).length;
+
+  const noClockOutDays = days.filter(
+    (day) =>
+      day.hasRecord &&
+      (day.missingClockOut === true ||
+        (Boolean(day.checkInTime) && !day.checkOutTime)),
+  ).length;
+
+  const absentDays = days.filter(
+    (day) => day.hasRecord && day.status === "ABSENT",
+  ).length;
+
+  return {
+    fullWorkDays: { current: fullWorkDays, changePercent: 0 },
+    lateDays: { current: lateDays, changePercent: 0 },
+    noClockOutDays: { current: noClockOutDays, changePercent: 0 },
+    absentDays: { current: absentDays, changePercent: 0 },
+  };
 }
+
+function resolveCalendarMetrics(
+  data: AttendanceCalendarData | undefined,
+): CalendarMetricSet {
+  if (!data) {
+    return {
+      fullWorkDays: zeroMetric(),
+      lateDays: zeroMetric(),
+      noClockOutDays: zeroMetric(),
+      absentDays: zeroMetric(),
+    };
+  }
+
+  const apiMetrics: CalendarMetricSet = {
+    fullWorkDays: data.fullWorkDays ?? zeroMetric(),
+    lateDays: data.lateDays ?? zeroMetric(),
+    noClockOutDays: data.noClockOutDays ?? zeroMetric(),
+    absentDays: data.absentDays ?? zeroMetric(),
+  };
+
+  const hasAnyRecord = data.days.some((day) => day.hasRecord);
+  const allApiMetricsZero =
+    apiMetrics.fullWorkDays.current === 0 &&
+    apiMetrics.lateDays.current === 0 &&
+    apiMetrics.noClockOutDays.current === 0 &&
+    apiMetrics.absentDays.current === 0;
+
+  if (hasAnyRecord && allApiMetricsZero) {
+    return buildMetricsFromDays(data.days);
+  }
+
+  return apiMetrics;
+}
+
+function statusInfo(status: AttendanceCalendarDay["status"]) {
+  const map: Record<StatusKey, { label: string; cls: string }> = {
+    PRESENT: {
+      label: ATTENDANCE_STATUS.PRESENT.label,
+      cls: ATTENDANCE_STATUS.PRESENT.cls,
+    },
+    LATE: {
+      label: ATTENDANCE_STATUS.LATE.label,
+      cls: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    },
+    ABSENT: {
+      label: ATTENDANCE_STATUS.ABSENT.label,
+      cls: ATTENDANCE_STATUS.ABSENT.cls,
+    },
+    HALF_DAY: {
+      label: ATTENDANCE_STATUS.HALF_DAY.label,
+      cls: ATTENDANCE_STATUS.HALF_DAY.cls,
+    },
+    ON_LEAVE: {
+      label: ATTENDANCE_STATUS.ON_LEAVE.label,
+      cls: ATTENDANCE_STATUS.ON_LEAVE.cls,
+    },
+  };
+
+  if (!status) {
+    return {
+      label: SYSTEM_MESSAGES.COMMON.EMPTY_VALUE,
+      cls: "bg-muted text-muted-foreground",
+    };
+  }
+
+  return (
+    map[status] ?? { label: status, cls: "bg-muted text-muted-foreground" }
+  );
+}
+
+function fmtTime(iso: string | null) {
+  if (!iso) {
+    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  }
+  return new Date(iso).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatWorkHours(minutes: number | null) {
+  if (minutes === null || minutes === undefined) {
+    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  }
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins === 0
+    ? `${hours}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`
+    : `${hours}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${mins}m`;
+}
+
+function formatTrend(value: number) {
+  const rounded = Math.round(value * 10) / 10;
+  return `${rounded > 0 ? "+" : ""}${rounded}%`;
+}
+
+function MetricCard({
+  title,
+  value,
+  trend,
+  color,
+  loading,
+}: Readonly<{
+  title: string;
+  value: number;
+  trend: number;
+  color: string;
+  loading?: boolean;
+}>) {
+  return (
+    <Card className="card-border">
+      <CardContent className="p-5">
+        <p className="section-title-muted mb-1">{title}</p>
+        {loading ? (
+          <Loader2 className="w-5 h-5 animate-spin my-1 text-muted-foreground" />
+        ) : (
+          <p className={`text-3xl font-extrabold ${color}`}>{value}</p>
+        )}
+        <p className="text-xs text-muted-foreground mt-1">
+          {loading ? "…" : formatTrend(trend)}{" "}
+          {SYSTEM_MESSAGES.ATTENDANCE_HIST.COMPARE_PREV_MONTH}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+const WEEKDAY_LABELS = ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"];
 
 export default function AttendanceHistoryPage() {
-    const navigate = useNavigate()
-    const [search, setSearch] = useState("")
-    const [filterStatus, setFilterStatus] = useState("all")
+  const [viewMonth, setViewMonth] = useState<Date>(startOfMonth(new Date()));
+  const [selectedDateOverride, setSelectedDateOverride] = useState<
+    string | null
+  >(null);
 
-    const filtered = allHistory.filter(row => {
-        const matchStatus = filterStatus === "all" || row.status === filterStatus
-        const matchSearch = row.date.includes(search) || row.status.includes(search)
-        return matchStatus && matchSearch
-    })
+  const monthParam = format(viewMonth, "yyyy-MM");
 
-    return (
-        <SidebarProvider>
-            <AppSidebar role="employee" variant="inset" />
-            <SidebarInset>
-                <SiteHeader />
+  const calendarQuery = useQuery<AttendanceCalendarData>({
+    queryKey: ["attendance", "calendar", monthParam],
+    queryFn: () => attendanceService.getCalendar({ month: monthParam }),
+    retry: 1,
+    retryDelay: 400,
+  });
 
-                <main className="flex-1 space-y-6 p-4 md:p-8 pt-6 bg-background min-h-screen">
-                    {/* Header */}
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <button
-                                    onClick={() => navigate("/checkin")}
-                                    className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm font-medium transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4" /> Chấm công
-                                </button>
-                                <span className="text-muted-foreground text-sm">/</span>
-                                <span className="text-sm font-semibold text-foreground">Lịch sử điểm danh</span>
-                            </div>
-                            <h2 className="text-3xl font-bold tracking-tight text-foreground">Lịch sử điểm danh</h2>
-                            <p className="text-muted-foreground mt-1">Xem toàn bộ lịch sử chấm công của bạn</p>
-                        </div>
-                    </div>
-
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <SummaryCard label="Ngày đúng giờ" value="10" sub="Tháng này" color="text-emerald-600" />
-                        <SummaryCard label="Ngày đi muộn" value="3" sub="Tháng này" color="text-amber-600" />
-                        <SummaryCard label="Ngày vắng mặt" value="2" sub="Tháng này" color="text-red-600" />
-                        <SummaryCard label="Tổng giờ làm" value="132h" sub="Tháng 2/2024" color="text-foreground" />
-                    </div>
-
-                    {/* Data Table */}
-                    <Card className="border-border shadow-sm">
-                        <CardHeader className="pb-4">
-                            <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-                                <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-                                    <Calendar className="w-5 h-5 text-primary" />
-                                    Chi tiết chấm công
-                                </CardTitle>
-
-                                {/* Filters */}
-                                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <Input
-                                            placeholder="Tìm kiếm ngày, trạng thái..."
-                                            value={search}
-                                            onChange={e => setSearch(e.target.value)}
-                                            className="pl-9 h-9 w-full sm:w-64 text-sm"
-                                        />
-                                    </div>
-                                    <Select value={filterStatus} onValueChange={setFilterStatus}>
-                                        <SelectTrigger className="h-9 w-full sm:w-44 text-sm">
-                                            <SelectValue placeholder="Lọc trạng thái" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Tất cả</SelectItem>
-                                            <SelectItem value="Đúng giờ">Đúng giờ</SelectItem>
-                                            <SelectItem value="Đi muộn">Đi muộn</SelectItem>
-                                            <SelectItem value="Vắng mặt">Vắng mặt</SelectItem>
-                                            <SelectItem value="Tăng ca">Tăng ca</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </CardHeader>
-
-                        <CardContent className="p-0">
-                            <Tabs defaultValue="month">
-                                <div className="px-6 border-b border-border">
-                                    <TabsList className="h-10 bg-transparent gap-4">
-                                        <TabsTrigger value="month" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 text-sm font-medium">
-                                            Tháng này
-                                        </TabsTrigger>
-                                        <TabsTrigger value="all" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 text-sm font-medium">
-                                            Tất cả
-                                        </TabsTrigger>
-                                    </TabsList>
-                                </div>
-
-                                <TabsContent value="month" className="m-0">
-                                    <AttendanceTable rows={filtered} />
-                                </TabsContent>
-                                <TabsContent value="all" className="m-0">
-                                    <AttendanceTable rows={filtered} />
-                                </TabsContent>
-                            </Tabs>
-
-                            {/* Footer */}
-                            <div className="px-6 py-4 border-t border-border text-xs text-muted-foreground flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                Hiển thị {filtered.length} / {allHistory.length} bản ghi
-                            </div>
-                        </CardContent>
-                    </Card>
-                </main>
-            </SidebarInset>
-        </SidebarProvider>
-    )
-}
-
-// ─── Table Component ──────────────────────────────────────────────────────────
-function AttendanceTable({ rows }: { rows: typeof allHistory }) {
-    if (rows.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <Calendar className="w-12 h-12 mb-3 opacity-30" />
-                <p className="text-sm font-medium">Không tìm thấy dữ liệu</p>
-            </div>
-        )
+  const dayMap = useMemo(() => {
+    const map = new Map<string, AttendanceCalendarDay>();
+    for (const day of calendarQuery.data?.days ?? []) {
+      map.set(day.date, day);
     }
-    return (
-        <Table>
-            <TableHeader>
-                <TableRow className="bg-muted/40 hover:bg-muted/40">
-                    <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Ngày</TableHead>
-                    <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Giờ vào</TableHead>
-                    <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Giờ ra</TableHead>
-                    <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Tổng giờ</TableHead>
-                    <TableHead className="font-semibold text-muted-foreground text-xs uppercase tracking-wider px-6 py-4">Trạng thái</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {rows.map((row, i) => (
-                    <TableRow key={i} className="hover:bg-muted/30 transition-colors border-border">
-                        <TableCell className="px-6 py-4 font-medium text-foreground">{row.date}</TableCell>
-                        <TableCell className="px-6 py-4 text-primary font-medium">{row.checkIn}</TableCell>
-                        <TableCell className="px-6 py-4 text-primary font-medium">{row.checkOut}</TableCell>
-                        <TableCell className="px-6 py-4 font-semibold text-foreground">{row.totalHours}</TableCell>
-                        <TableCell className="px-6 py-4">
+    return map;
+  }, [calendarQuery.data?.days]);
+
+  const monthStart = startOfMonth(viewMonth);
+  const monthEnd = endOfMonth(viewMonth);
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+  const calendarCells = useMemo(() => {
+    const dates: Date[] = [];
+    for (
+      let cursor = gridStart;
+      cursor <= gridEnd;
+      cursor = new Date(
+        cursor.getFullYear(),
+        cursor.getMonth(),
+        cursor.getDate() + 1,
+      )
+    ) {
+      dates.push(cursor);
+    }
+    return dates;
+  }, [gridStart, gridEnd]);
+
+  const selectedDate = useMemo(() => {
+    if (selectedDateOverride && dayMap.has(selectedDateOverride)) {
+      return selectedDateOverride;
+    }
+
+    if (!calendarQuery.data) {
+      return null;
+    }
+
+    const todayKey = format(new Date(), "yyyy-MM-dd");
+    const hasTodayInMonth = calendarQuery.data.days.some(
+      (d) => d.date === todayKey,
+    );
+    if (hasTodayInMonth && todayKey.startsWith(monthParam)) {
+      return todayKey;
+    }
+
+    return calendarQuery.data.days[0]?.date ?? null;
+  }, [calendarQuery.data, dayMap, monthParam, selectedDateOverride]);
+
+  const selectedDay = selectedDate ? dayMap.get(selectedDate) : null;
+  const metrics = useMemo(
+    () => resolveCalendarMetrics(calendarQuery.data),
+    [calendarQuery.data],
+  );
+
+  return (
+    <main className="page-layout-wrapper">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="page-heading">
+            {SYSTEM_MESSAGES.ATTENDANCE_HIST.TITLE}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {SYSTEM_MESSAGES.ATTENDANCE_HIST.DESC}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <MetricCard
+          title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_FULL_WORK_DAYS}
+          value={metrics.fullWorkDays.current}
+          trend={metrics.fullWorkDays.changePercent}
+          color="text-emerald-600"
+          loading={calendarQuery.isLoading}
+        />
+        <MetricCard
+          title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_LATE_DAYS}
+          value={metrics.lateDays.current}
+          trend={metrics.lateDays.changePercent}
+          color="text-amber-600"
+          loading={calendarQuery.isLoading}
+        />
+        <MetricCard
+          title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_NO_CLOCK_OUT_DAYS}
+          value={metrics.noClockOutDays.current}
+          trend={metrics.noClockOutDays.changePercent}
+          color="text-violet-600"
+          loading={calendarQuery.isLoading}
+        />
+        <MetricCard
+          title={SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_ABSENT_DAYS}
+          value={metrics.absentDays.current}
+          trend={metrics.absentDays.changePercent}
+          color="text-rose-600"
+          loading={calendarQuery.isLoading}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <Card className="card-border xl:col-span-3">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                {SYSTEM_MESSAGES.ATTENDANCE_HIST.CALENDAR_TITLE}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setSelectedDateOverride(null);
+                    setViewMonth((prev) => addMonths(prev, -1));
+                  }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <div className="min-w-[130px] text-center font-semibold text-base">
+                  {SYSTEM_MESSAGES.ATTENDANCE_HIST.CARD_MONTH_LABEL(
+                    format(viewMonth, "M, yyyy"),
+                  )}
+                </div>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setSelectedDateOverride(null);
+                    setViewMonth((prev) => addMonths(prev, 1));
+                  }}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {calendarQuery.isLoading ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="w-7 h-7 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="grid grid-cols-7 text-sm text-muted-foreground font-medium">
+                  {WEEKDAY_LABELS.map((label) => (
+                    <div key={label} className="px-2 py-2 text-center">
+                      {label}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden border border-border bg-border">
+                  {calendarCells.map((date) => {
+                    const dateKey = format(date, "yyyy-MM-dd");
+                    const dayData = dayMap.get(dateKey);
+                    const inCurrentMonth = isSameMonth(date, viewMonth);
+                    const active = selectedDate === dateKey;
+                    let dayNumberClass = "text-muted-foreground/60";
+                    if (inCurrentMonth) {
+                      dayNumberClass = isToday(date)
+                        ? "text-primary"
+                        : "text-foreground";
+                    }
+
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        onClick={() =>
+                          inCurrentMonth && setSelectedDateOverride(dateKey)
+                        }
+                        className={`h-[112px] bg-background p-2 text-left transition-colors ${
+                          inCurrentMonth ? "hover:bg-muted/30" : "bg-muted/20"
+                        } ${active ? "ring-2 ring-primary" : ""}`}
+                        disabled={!inCurrentMonth}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-sm font-semibold ${dayNumberClass}`}
+                          >
+                            {format(date, "d")}
+                          </span>
+                          {dayData?.hasRecord && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          )}
+                        </div>
+
+                        {inCurrentMonth && dayData?.hasRecord && (
+                          <div className="mt-2 space-y-1">
                             <Badge
-                                variant="outline"
-                                className={`text-xs font-semibold px-2.5 py-0.5 ${statusBadgeMap[row.statusColor]}`}
+                              variant="outline"
+                              className={`status-badge px-2 py-0 ${statusInfo(dayData.status).cls}`}
                             >
-                                {row.status}
+                              {statusInfo(dayData.status).label}
                             </Badge>
-                        </TableCell>
-                    </TableRow>
-                ))}
-            </TableBody>
-        </Table>
-    )
+                            <p className="text-[11px] text-muted-foreground leading-tight">
+                              {fmtTime(dayData.checkInTime)} -{" "}
+                              {fmtTime(dayData.checkOutTime)}
+                            </p>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="card-border">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">
+              {SYSTEM_MESSAGES.ATTENDANCE_HIST.DETAIL_TITLE}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {selectedDay?.hasRecord ? (
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_DATE}
+                  </p>
+                  <p className="font-semibold">
+                    {format(parseISO(selectedDay.date), "dd/MM/yyyy")}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_STATUS}
+                  </p>
+                  <Badge
+                    variant="outline"
+                    className={`status-badge px-2.5 py-0.5 ${statusInfo(selectedDay.status).cls}`}
+                  >
+                    {statusInfo(selectedDay.status).label}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <LogIn className="w-3.5 h-3.5" />
+                      {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_CHECKIN}
+                    </div>
+                    <div className="font-medium">
+                      {fmtTime(selectedDay.checkInTime)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <LogOut className="w-3.5 h-3.5" />
+                      {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_CHECKOUT}
+                    </div>
+                    <div className="font-medium">
+                      {fmtTime(selectedDay.checkOutTime)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_TOTAL_WORK_HOURS}
+                    </div>
+                    <div className="font-medium">
+                      {formatWorkHours(selectedDay.workHours)}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedDay.missingClockOut && (
+                  <p className="text-xs text-violet-600">
+                    {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_MISSING_CLOCKOUT}
+                  </p>
+                )}
+
+                {selectedDay.notes && (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">
+                      {SYSTEM_MESSAGES.ATTENDANCE_HIST.LABEL_NOTES}
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {selectedDay.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {SYSTEM_MESSAGES.ATTENDANCE_HIST.DETAIL_EMPTY}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  );
 }

@@ -1,25 +1,66 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { AUTH_ROLES } from "@/constants/auth";
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+
+interface ProtectedRouteProps {
+  allowedRoles?: string[];
+}
+
+function getRedirectByRole(roles: string[]): string {
+  if (roles.includes(AUTH_ROLES.ADMIN)) {
+    return "/assets";
+  }
+  if (roles.includes(AUTH_ROLES.HR)) {
+    return "/assets";
+  }
+  if (roles.includes(AUTH_ROLES.MANAGER)) {
+    return "/members";
+  }
+  return "/employee";
+}
 
 /**
  * Wraps protected routes.
  * - While session is being rehydrated (isLoading): show spinner
  * - If not authenticated: redirect to /login
+ * - If role-based access is required: check if user has the role
  * - Otherwise: render child routes via <Outlet />
  */
-export function ProtectedRoute() {
-    const { isAuthenticated, isLoading } = useAuth();
+export function ProtectedRoute({
+  allowedRoles,
+}: Readonly<ProtectedRouteProps>) {
+  const { user, isAuthenticated, isLoading } = useAuth();
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                    <p className="text-sm text-muted-foreground">Đang xác thực...</p>
-                </div>
-            </div>
-        );
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">
+            {SYSTEM_MESSAGES.AUTH_LOADING}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Role-based check
+  if (allowedRoles && user) {
+    const hasRole = allowedRoles.some(
+      (role) =>
+        user.roles.includes(role) || user.roles.includes(`ROLE_${role}`),
+    );
+
+    if (!hasRole) {
+      // Redirect về trang home phù hợp với role của user
+      return <Navigate to={getRedirectByRole(user.roles)} replace />;
     }
+  }
 
-    return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  return <Outlet />;
 }

@@ -1,7 +1,40 @@
 {
   "dependencies": {
     "data-fns": "^1.1.0",
+    "framer-motion": "^12.34.5",
     "i": "^0.3.7",
     "react-icons": "^5.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "eslint": "^10.0.3",
+    "husky": "^9.1.7",
+    "jest": "^30.3.0",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
+    "shx": "^0.4.0",
+    "stylelint": "^17.4.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n backend,frontend \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:db": "docker compose up mysql -d --wait",
+    "dev:backend": "backend\\mvnw.cmd -f backend/pom.xml spring-boot:run -DskipTests -Dspring-boot.run.profiles=dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:all": "docker compose up",
+    "lint": "eslint frontend --ext .js,.jsx,.ts,.tsx --fix",
+    "prepare": "husky",
+    "check:conflicts": "git grep --cached -nE \"^(<<<<<<< .+|=======|>>>>>>> .+)$\" -- . && (echo \"Resolve merge conflict markers before commit\"; exit 1) || exit 0"
+  },
+  "lint-staged": {
+    "frontend/**/*.{js,jsx,ts,tsx}": [
+      "npx --no-install --prefix frontend eslint --config frontend/eslint.config.js --fix",
+      "prettier --write"
+    ],
+    "frontend/**/*.{css,scss,html}": [
+      "prettier --write"
+    ],
+    "**/*.{md,json,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

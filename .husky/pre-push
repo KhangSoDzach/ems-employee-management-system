@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+if [ "$branch" = "main" ] || [ "$branch" = "master" ] || [ "$branch" = "develop" ]; then
+  echo "❌ Không cho phép push trực tiếp lên $branch. Hãy tạo feature branch và mở PR."
+  exit 1
+fi
+
+echo "✅ pre-push check passed ($branch)"

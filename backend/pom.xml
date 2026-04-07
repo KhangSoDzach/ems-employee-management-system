@@ -28,6 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<lombok.version>1.18.42</lombok.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<jjwt.version>0.12.5</jjwt.version>
 		<springdoc.version>2.8.6</springdoc.version>
@@ -58,11 +59,11 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		<!-- Loads .env file into Spring environment automatically -->
+		<!-- Loads .env file into Spring Boot 3 environment automatically -->
 		<dependency>
 			<groupId>me.paulschwarz</groupId>
-			<artifactId>spring-dotenv</artifactId>
-			<version>4.0.0</version>
+			<artifactId>springboot3-dotenv</artifactId>
+			<version>5.0.1</version>
 		</dependency>
 		<!--  Flyway for Database Migration  -->
 		<dependency>
@@ -73,6 +74,13 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-mysql</artifactId>
 		</dependency>
+		<!-- Spring Boot DevTools for hot reload during development -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -81,6 +89,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Embedded database for tests -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -148,6 +162,29 @@
 		</dependency>
 	</dependencies>
 	<build>
+		<resources>
+			<!-- Replicate Spring Boot parent defaults: filter YAML/properties, not SQL -->
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/application*.yml</include>
+					<include>**/application*.yaml</include>
+					<include>**/application*.properties</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+				<excludes>
+					<exclude>**/application*.yml</exclude>
+					<exclude>**/application*.yaml</exclude>
+					<exclude>**/application*.properties</exclude>
+					<!-- Placeholder only – real content lives in V14__leave_multi_level_approval.sql -->
+					<exclude>db/migration/V13__leave_multi_level_approval.sql</exclude>
+				</excludes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -157,6 +194,7 @@
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
 						</path>
 						<path>
 							<groupId>org.mapstruct</groupId>
@@ -176,6 +214,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<mainClass>com.company.ems.backend.EmsBackendApplication</mainClass>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

@@ -4,6 +4,7 @@ import {
   ShareIcon,
   type LucideIcon,
 } from "lucide-react"
+import { Link } from "react-router-dom"
 
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 
 export function NavDocuments({
   items,
@@ -34,15 +36,15 @@ export function NavDocuments({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Documents</SidebarGroupLabel>
+      <SidebarGroupLabel>{SYSTEM_MESSAGES.SIDEBAR.DOCUMENTS}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <a href={item.url}>
+              <Link to={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -51,7 +53,7 @@ export function NavDocuments({
                   className="rounded-sm data-[state=open]:bg-accent"
                 >
                   <MoreHorizontalIcon />
-                  <span className="sr-only">More</span>
+                  <span className="sr-only">{SYSTEM_MESSAGES.SIDEBAR.MORE}</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -61,11 +63,11 @@ export function NavDocuments({
               >
                 <DropdownMenuItem>
                   <FolderIcon />
-                  <span>Open</span>
+                  <span>{SYSTEM_MESSAGES.SIDEBAR.OPEN}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <ShareIcon />
-                  <span>Share</span>
+                  <span>{SYSTEM_MESSAGES.SIDEBAR.SHARE}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -74,7 +76,7 @@ export function NavDocuments({
         <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
             <MoreHorizontalIcon className="text-sidebar-foreground/70" />
-            <span>More</span>
+            <span>{SYSTEM_MESSAGES.SIDEBAR.MORE}</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

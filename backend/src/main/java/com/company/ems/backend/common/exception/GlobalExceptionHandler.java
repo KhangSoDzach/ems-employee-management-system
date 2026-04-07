@@ -1,8 +1,15 @@
 package com.company.ems.backend.common.exception;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.company.ems.backend.common.audit.SecurityAuditService;
+import com.company.ems.backend.common.enums.ErrorCode;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.common.response.ApiErrorResponse;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,210 +24,245 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
-
-import com.company.ems.backend.common.dto.ApiResponse;
-
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import javax.naming.AuthenticationException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-/**
- * Global exception handler for the application
- * Catches exceptions and returns appropriate HTTP responses
- */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
-        private static final String FORBIDDEN_MSG = "Bạn không có quyền truy cập chức năng này";
 
-        /**
-         * ForbiddenException - Ném bởi DataScopeService khi user vượt phạm vi dữ liệu.
-         * HTTP 403
-         */
-        @ExceptionHandler(ForbiddenException.class)
-        public ResponseEntity<ApiResponse<Void>> handleForbiddenException(
-                        ForbiddenException ex, WebRequest request) {
-                log.warn("403 Forbidden [DataScope]: {} - {}", ex.getMessage(), request.getDescription(false));
-                return ResponseEntity
-                                .status(HttpStatus.FORBIDDEN)
-                                .body(ApiResponse.error(FORBIDDEN_MSG));
+        private final MessageService       messageService;
+        private final SecurityAuditService auditService;
+
+        @ExceptionHandler(AppException.class)
+        public ResponseEntity<ApiErrorResponse> handleAppException(
+                AppException ex, HttpServletRequest req) {
+                ErrorCode code = ex.getErrorCode();
+                log.warn("[{}] AppException code={} path={}", traceId(), code.name(), req.getRequestURI());
+                return responseFromCode(code, req);
         }
 
-        /**
-         * AccessDeniedException - Ném bởi Spring Security khi @PreAuthorize fail.
-         * HTTP 403
-         */
-        @ExceptionHandler(AccessDeniedException.class)
-        public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(
-                        AccessDeniedException ex, WebRequest request) {
-                log.warn("403 Access Denied [RBAC @PreAuthorize]: {} - {}",
-                                ex.getMessage(), request.getDescription(false));
-                return ResponseEntity
-                                .status(HttpStatus.FORBIDDEN)
-                                .body(ApiResponse.error(FORBIDDEN_MSG));
-        }
-
-        /**
-         * UnauthorizedException - Token không hợp lệ, hết hạn, hoặc thiếu.
-         * HTTP 401
-         */
-        @ExceptionHandler(UnauthorizedException.class)
-        public ResponseEntity<ApiResponse<Void>> handleUnauthorizedException(
-                        UnauthorizedException ex, WebRequest request) {
-                log.warn("401 Unauthorized: {}", ex.getMessage());
-                return ResponseEntity
-                                .status(HttpStatus.UNAUTHORIZED)
-                                .body(ApiResponse.error(ex.getMessage()));
-        }
-
-        /**
-         * LockedException - Tài khoản bị khóa (quá nhiều lần đăng nhập sai).
-         * HTTP 401
-         */
-        @ExceptionHandler(LockedException.class)
-        public ResponseEntity<ApiResponse<Void>> handleLockedException(
-                        LockedException ex, WebRequest request) {
-                log.warn("401 Account Locked: {}", ex.getMessage());
-                return ResponseEntity
-                                .status(HttpStatus.UNAUTHORIZED)
-                                .body(ApiResponse.error(
-                                                "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên."));
-        }
-
-        /**
-         * DisabledException - Tài khoản bị vô hiệu hóa.
-         * HTTP 401
-         *
-         * FIX: Tách riêng thay vì gộp với AuthenticationException
-         * → tránh lỗi "Inconvertible types: cannot cast AuthenticationException to
-         * DisabledException"
-         */
-        @ExceptionHandler(DisabledException.class)
-        public ResponseEntity<ApiResponse<Void>> handleDisabledException(
-                        DisabledException ex, WebRequest request) {
-                log.warn("401 Account Disabled: {}", ex.getMessage());
-                return ResponseEntity
-                                .status(HttpStatus.UNAUTHORIZED)
-                                .body(ApiResponse.error(
-                                                "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."));
-        }
-
-        /**
-         * BadCredentialsException - Sai username hoặc password khi đăng nhập.
-         * HTTP 401
-         */
         @ExceptionHandler(BadCredentialsException.class)
-        public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(
-                        BadCredentialsException ex, WebRequest request) {
-                log.warn("401 Bad Credentials: {}", ex.getMessage());
-                return ResponseEntity
-                                .status(HttpStatus.UNAUTHORIZED)
-                                .body(ApiResponse.error("Tên đăng nhập hoặc mật khẩu không đúng."));
+        public ResponseEntity<ApiErrorResponse> handleBadCredentials(
+                BadCredentialsException ex, HttpServletRequest req) {
+                auditService.logAuthFailure(req);
+                log.warn("[{}] Bad credentials path={}", traceId(), req.getRequestURI());
+                return responseFromCode(ErrorCode.AUTH_INVALID_CREDENTIAL, req);
         }
 
-        @ExceptionHandler(ResourceNotFoundException.class)
-        public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(
-                        ResourceNotFoundException ex, WebRequest request) {
-                log.error("404 Resource Not Found: {}", ex.getMessage());
-                return ResponseEntity
-                                .status(HttpStatus.NOT_FOUND)
-                                .body(ApiResponse.error(ex.getMessage()));
+        @ExceptionHandler(LockedException.class)
+        public ResponseEntity<ApiErrorResponse> handleLocked(
+                LockedException ex, HttpServletRequest req) {
+                auditService.logAuthFailure(req);
+                log.warn("[{}] Account locked path={}", traceId(), req.getRequestURI());
+                return responseFromCode(ErrorCode.AUTH_ACCOUNT_LOCKED, req);
+        }
+
+        @ExceptionHandler(DisabledException.class)
+        public ResponseEntity<ApiErrorResponse> handleDisabled(
+                DisabledException ex, HttpServletRequest req) {
+                auditService.logAuthFailure(req);
+                log.warn("[{}] Account disabled path={}", traceId(), req.getRequestURI());
+                return responseFromCode(ErrorCode.AUTH_ACCOUNT_DISABLED, req);
+        }
+
+        @ExceptionHandler(AuthenticationException.class)
+        public ResponseEntity<ApiErrorResponse> handleAuthentication(
+                AuthenticationException ex, HttpServletRequest req) {
+                auditService.logAuthFailure(req);
+                log.warn("[{}] AuthException={} path={}", traceId(),
+                        ex.getClass().getSimpleName(), req.getRequestURI());
+                return responseFromCode(ErrorCode.AUTH_UNAUTHORIZED, req);
+        }
+
+        @ExceptionHandler(ExpiredJwtException.class)
+        public ResponseEntity<ApiErrorResponse> handleExpiredJwt(
+                ExpiredJwtException ex, HttpServletRequest req) {
+                auditService.logTokenExpired(req);
+                log.warn("[{}] JWT expired path={}", traceId(), req.getRequestURI());
+                return responseFromCode(ErrorCode.AUTH_TOKEN_EXPIRED, req);
+        }
+
+        @ExceptionHandler(JwtException.class)
+        public ResponseEntity<ApiErrorResponse> handleJwt(
+                JwtException ex, HttpServletRequest req) {
+                auditService.logTokenInvalid(req);
+                log.warn("[{}] JWT invalid={} path={}", traceId(), ex.getClass().getSimpleName(), req.getRequestURI());
+                return responseFromCode(ErrorCode.AUTH_TOKEN_INVALID, req);
+        }
+
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<ApiErrorResponse> handleAccessDenied(
+                AccessDeniedException ex, HttpServletRequest req) {
+                auditService.logAccessDenied(req);
+                log.warn("[{}] Access denied (Spring Security) path={}", traceId(), req.getRequestURI());
+                return responseFromCode(ErrorCode.ACCESS_DENIED, req);
         }
 
         @ExceptionHandler(BusinessException.class)
-        public ResponseEntity<ApiResponse<Void>> handleBusinessException(
-                        BusinessException ex, WebRequest request) {
-                log.error("400 Business Exception: {} - {}", ex.getErrorCode(), ex.getMessage());
-                return ResponseEntity
-                                .status(HttpStatus.BAD_REQUEST)
-                                .body(ApiResponse.error(ex.getMessage()));
+        public ResponseEntity<ApiErrorResponse> handleBusinessException(
+                BusinessException ex, HttpServletRequest req) {
+                String code = ex.getErrorCode() != null ? ex.getErrorCode() : "BUSINESS_ERROR";
+                String message = ex.getMessage() != null ? ex.getMessage() : messageService.get(ErrorCode.VALID_REQUEST_BODY);
+                log.warn("[{}] BusinessException code={} path={}: {}", traceId(), code, req.getRequestURI(), message);
+
+                ApiErrorResponse body = ApiErrorResponse.of(
+                        HttpStatus.BAD_REQUEST.value(),
+                        code,
+                        message,
+                        req.getRequestURI(),
+                        traceId());
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
         }
 
-        @ExceptionHandler(InvalidPasswordException.class)
-        public ResponseEntity<ApiResponse<Void>> handleInvalidPasswordException(
-                        InvalidPasswordException ex, WebRequest request) {
-                log.error("400 Invalid Password: {}", ex.getMessage());
-                return ResponseEntity
-                                .status(HttpStatus.BAD_REQUEST)
-                                .body(ApiResponse.error(ex.getMessage()));
+        @ExceptionHandler(ForbiddenException.class)
+        public ResponseEntity<ApiErrorResponse> handleForbidden(
+                ForbiddenException ex, HttpServletRequest req) {
+                log.warn("[{}] ForbiddenException path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                return responseFromCode(ErrorCode.ACCESS_DENIED, req);
+        }
+
+        @ExceptionHandler(ResourceNotFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleNotFound(
+                ResourceNotFoundException ex, HttpServletRequest req) {
+                log.warn("[{}] ResourceNotFound path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                if (ex.getResource() != null) {
+                        return responseFromCode(ErrorCode.RESOURCE_NOT_FOUND, req, ex.getResource());
+                }
+                return response(ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus(),
+                        ErrorCode.RESOURCE_NOT_FOUND, ex.getMessage(), req);
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
-        public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(
-                        MethodArgumentNotValidException ex) {
-                Map<String, String> errors = new HashMap<>();
-                ex.getBindingResult().getAllErrors().forEach(error -> {
-                        String fieldName = ((FieldError) error).getField();
-                        String errorMessage = error.getDefaultMessage();
-                        errors.put(fieldName, errorMessage);
-                });
-                log.warn("400 Validation Failed: {}", errors);
-                return ResponseEntity
-                                .status(HttpStatus.BAD_REQUEST)
-                                .body(ApiResponse.<Map<String, String>>builder()
-                                                .success(false)
-                                                .message("Validation failed")
-                                                .data(errors)
-                                                .build());
+        public ResponseEntity<ApiErrorResponse> handleValidation(
+                MethodArgumentNotValidException ex, HttpServletRequest req) {
+
+                Map<String, String> fieldErrors = new HashMap<>();
+                for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
+                        fieldErrors.putIfAbsent(fe.getField(), fe.getDefaultMessage());
+                }
+
+                log.warn("[{}] Validation failed fields={} path={}",
+                        traceId(), fieldErrors.keySet(), req.getRequestURI());
+
+                ErrorCode code = ErrorCode.VALID_REQUEST_BODY;
+                ApiErrorResponse body = ApiErrorResponse.ofValidation(
+                        code.getStatusCode(), code.name(),
+                        messageService.get(code),
+                        req.getRequestURI(), traceId(), fieldErrors);
+
+                return ResponseEntity.badRequest().body(body);
         }
 
         @ExceptionHandler(HttpMessageNotReadableException.class)
-        public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(
-                        HttpMessageNotReadableException ex, WebRequest request) {
-                log.warn("400 Message Not Readable: {}", ex.getMessage());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(ApiResponse.error(
-                                                "Request body không hợp lệ hoặc bị thiếu. Vui lòng kiểm tra lại định dạng JSON."));
+        public ResponseEntity<ApiErrorResponse> handleNotReadable(
+                HttpMessageNotReadableException ex, HttpServletRequest req) {
+                Throwable cause = ex.getCause();
+                String detail = cause != null ? cause.getMessage() : ex.getMessage();
+                log.warn("[{}] Not readable path={} cause={}", traceId(), req.getRequestURI(), detail);
+                return response(HttpStatus.BAD_REQUEST, ErrorCode.VALID_REQUEST_BODY,
+                        "Dữ liệu không hợp lệ: " + detail, req);
         }
 
         @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-        public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
-                        MethodArgumentTypeMismatchException ex, WebRequest request) {
-                String message = String.format("Tham số '%s' có giá trị '%s' không hợp lệ.",
-                                ex.getName(), ex.getValue());
-                log.warn("400 Type Mismatch: {}", message);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(ApiResponse.error(message));
+        public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
+                MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+                String paramName  = ex.getName();
+                Object rawValue = ex.getValue();
+                String paramValue = rawValue != null ? rawValue.toString() : "null";
+                log.warn("[{}] Type mismatch param={} value={} path={}",
+                        traceId(), paramName, paramValue, req.getRequestURI());
+                String message = messageService.get(ErrorCode.VALID_PARAM_INVALID, paramName, paramValue);
+                return response(HttpStatus.BAD_REQUEST, ErrorCode.VALID_PARAM_INVALID, message, req);
         }
 
         @ExceptionHandler(MissingServletRequestParameterException.class)
-        public ResponseEntity<ApiResponse<Void>> handleMissingParam(
-                        MissingServletRequestParameterException ex, WebRequest request) {
-                log.warn("400 Missing Param: {}", ex.getParameterName());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(ApiResponse.error("Thiếu tham số bắt buộc: " + ex.getParameterName()));
+        public ResponseEntity<ApiErrorResponse> handleMissingParam(
+                MissingServletRequestParameterException ex, HttpServletRequest req) {
+                log.warn("[{}] Missing param={} path={}", traceId(), ex.getParameterName(), req.getRequestURI());
+                return responseFromCode(ErrorCode.VALID_PARAM_MISSING, req);
         }
 
         @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-        public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
-                        HttpRequestMethodNotSupportedException ex, WebRequest request) {
-                log.warn("405 Method Not Supported: {}", ex.getMethod());
-                return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                                .body(ApiResponse.error("HTTP method '" + ex.getMethod()
-                                                + "' không được hỗ trợ tại endpoint này."));
+        public ResponseEntity<ApiErrorResponse> handleMethodNotSupported(
+                HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
+                log.warn("[{}] Method not allowed method={} path={}", traceId(), ex.getMethod(), req.getRequestURI());
+                return responseFromCode(ErrorCode.VALID_METHOD_NOT_ALLOWED, req);
+        }
+
+        @ExceptionHandler(NoResourceFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleNoResourceFound(
+                NoResourceFoundException ex, HttpServletRequest req) {
+                log.warn("[{}] Resource handler miss path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                return responseFromCode(ErrorCode.RESOURCE_NOT_FOUND, req);
         }
 
         @ExceptionHandler(DataIntegrityViolationException.class)
-        public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(
-                        DataIntegrityViolationException ex, WebRequest request) {
-                log.error("409 Data Integrity Violation: {}", ex.getMessage());
-                String message = "Lỗi ràng buộc dữ liệu. Có thể do giá trị trùng lặp hoặc vi phạm constraint.";
-                if (ex.getMessage() != null && ex.getMessage().contains("Duplicate entry")) {
-                        message = "Bản ghi với giá trị này đã tồn tại trong hệ thống.";
-                }
-                return ResponseEntity
-                                .status(HttpStatus.CONFLICT)
-                                .body(ApiResponse.error(message));
+        public ResponseEntity<ApiErrorResponse> handleDataIntegrity(
+                DataIntegrityViolationException ex, HttpServletRequest req) {
+                log.error("[{}] Data integrity violation path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                return responseFromCode(ErrorCode.RESOURCE_CONFLICT, req);
+        }
+
+        @ExceptionHandler(com.company.ems.backend.asset.exception.AssetStateException.class)
+        public ResponseEntity<ApiErrorResponse> handleAssetState(
+                com.company.ems.backend.asset.exception.AssetStateException ex,
+                HttpServletRequest req) {
+                log.warn("[{}] Asset state error path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                return response(HttpStatus.BAD_REQUEST, ErrorCode.VALID_REQUEST_BODY,
+                        ex.getMessage(), req);
+        }
+
+        @ExceptionHandler(IllegalStateException.class)
+        public ResponseEntity<ApiErrorResponse> handleIllegalState(
+                IllegalStateException ex, HttpServletRequest req) {
+                log.warn("[{}] IllegalState path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                // Incident already processed, payroll already finalized, etc.
+                return response(HttpStatus.CONFLICT, ErrorCode.RESOURCE_CONFLICT,
+                        ex.getMessage(), req);
+        }
+
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
+                IllegalArgumentException ex, HttpServletRequest req) {
+                log.warn("[{}] Illegal argument path={}: {}", traceId(), req.getRequestURI(), ex.getMessage());
+                return response(HttpStatus.BAD_REQUEST, ErrorCode.VALID_REQUEST_BODY,
+                        ex.getMessage(), req);
         }
 
         @ExceptionHandler(Exception.class)
-        public ResponseEntity<ApiResponse<Void>> handleGlobalException(
-                        Exception ex, WebRequest request) {
-                log.error("500 Unexpected Error", ex);
-                return ResponseEntity
-                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(ApiResponse.error("Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau."));
+        public ResponseEntity<ApiErrorResponse> handleAll(Exception ex, HttpServletRequest req) {
+                log.error("[{}] Unexpected error path={}: {}",
+                        traceId(), req.getRequestURI(), ex.getMessage(), ex);
+                return responseFromCode(ErrorCode.INTERNAL_ERROR, req);
+        }
+
+        private ResponseEntity<ApiErrorResponse> responseFromCode(ErrorCode code, HttpServletRequest req) {
+                return response(code.getHttpStatus(), code, messageService.get(code), req);
+        }
+
+        private ResponseEntity<ApiErrorResponse> responseFromCode(
+                ErrorCode code, HttpServletRequest req, Object... args) {
+                return response(code.getHttpStatus(), code,
+                        messageService.get(code, args), req);
+        }
+
+        private ResponseEntity<ApiErrorResponse> response(
+                HttpStatus status, ErrorCode code, String message, HttpServletRequest req) {
+                ApiErrorResponse body = ApiErrorResponse.of(
+                        status.value(), code.name(), message, req.getRequestURI(), traceId());
+                return ResponseEntity.status(status).body(body);
+        }
+
+        private String traceId() {
+                String id = MDC.get("traceId");
+                return id != null ? id : UUID.randomUUID().toString();
         }
 }

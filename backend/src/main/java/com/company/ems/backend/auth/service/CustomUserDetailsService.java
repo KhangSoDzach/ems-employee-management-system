@@ -1,9 +1,6 @@
 package com.company.ems.backend.auth.service;
 
-import java.util.stream.Collectors;
-
 import com.company.ems.backend.auth.security.CustomUserPrincipal;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,7 +29,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
                 log.debug("Loading user by username: {}", username);
 
-                User user = userRepository.findByUsername(username)
+                User user = userRepository.findByUsernameOrEmail(username)
                                 .orElseThrow(() -> new UsernameNotFoundException(
                                                 "User not found with username: " + username));
 
@@ -42,7 +39,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 }
 
                 // Convert User entity to Spring Security UserDetails
-//
+                //
                 return CustomUserPrincipal.of(user);
         }
 

@@ -1,0 +1,151 @@
+export const EMPLOYEE_CONSTANTS = {
+  TITLE_CREATE: "Thêm nhân viên mới",
+  TITLE_EDIT: "Cập nhật thông tin nhân viên",
+  TITLE_DETAIL: "Chi tiết nhân viên",
+  TITLE_MGMT: "Quản lý nhân viên",
+  DESC_MGMT: "Xem và quản lý thông tin hồ sơ nhân sự trong hệ thống",
+
+  STATUS: {
+    ACTIVE: "ACTIVE",
+    PROBATION: "PROBATION",
+    TERMINATED: "TERMINATED",
+  },
+
+  CONTRACT_TERMS: {
+    ONE_YEAR: "ONE_YEAR",
+    TWO_YEARS: "TWO_YEARS",
+    THREE_YEARS: "THREE_YEARS",
+    INDEFINITE: "INDEFINITE",
+  },
+
+  GENDER: {
+    MALE: "MALE",
+    FEMALE: "FEMALE",
+    OTHER: "OTHER",
+  },
+
+  CONTRACT_TYPES: {
+    FULL_TIME: "FULL_TIME",
+    PART_TIME: "PART_TIME",
+    CONTRACT: "CONTRACT",
+    INTERN: "INTERN",
+    CONSULTANT: "CONSULTANT",
+    TEMPORARY: "TEMPORARY",
+  },
+
+  SECTIONS: {
+    BASIC: "Thông tin cơ bản",
+    CONTACT_ADDRESS: "Liên hệ & Địa chỉ",
+    JOB: "Công việc hiện tại",
+    FINANCE: "Tài chính & Bảo hiểm",
+    NOTES_AVATAR: "Ghi chú & Ảnh",
+  },
+
+  LABELS: {
+    FIRST_NAME: "Tên",
+    LAST_NAME: "Họ & Tên đệm",
+    FULL_NAME: "Họ và tên",
+    EMAIL: "Email công ty",
+    PHONE: "Số điện thoại",
+    GENDER: "Giới tính",
+    DOB: "Ngày sinh",
+    NATIONAL_ID: "Số CMND/CCCD",
+    ADDRESS: "Địa chỉ",
+    CITY: "Thành phố/Tỉnh",
+    NATIONALITY: "Quốc tịch",
+    EMERGENCY_NAME: "Người liên hệ khẩn cấp",
+    EMERGENCY_PHONE: "SĐT khẩn cấp",
+    HIRE_DATE: "Ngày gia nhập",
+    EMP_CODE: "Mã nhân viên",
+    DEPARTMENT: "Phòng ban",
+    POSITION: "Chức vụ",
+    ROLE: "Vai trò hệ thống",
+    MANAGER: "Người quản lý",
+    CONTRACT_TYPE: "Loại hợp đồng",
+    SALARY: "Mức lương cơ bản",
+    SOCIAL_ID: "Số bảo hiểm xã hội",
+    BANK_ACCOUNT: "Tài khoản ngân hàng",
+    BANK_NAME: "Tên ngân hàng",
+    NOTES: "Ghi chú thêm",
+    NOTES_AVATAR: "Ảnh đại diện & Ghi chú",
+    CURRENCY: "VNĐ",
+    ANNUAL_LEAVE: "Phép năm",
+    SICK_LEAVE: "Phép bệnh",
+    GENDER_OPTIONS: {
+      MALE: "Nam",
+      FEMALE: "Nữ",
+      OTHER: "Khác",
+    },
+    CONTRACT_OPTIONS: {
+      FULL_TIME: "Toàn thời gian",
+      PART_TIME: "Bán thời gian",
+      CONTRACT: "Hợp đồng",
+      INTERN: "Thực tập sinh",
+      CONSULTANT: "Cố vấn",
+      TEMPORARY: "Tạm thời",
+    },
+  },
+
+  PLACEHOLDERS: {
+    FIRST_NAME: "Nhập tên...",
+    LAST_NAME: "Nhập họ và tên đệm...",
+    EMAIL: "example@company.com",
+    PHONE: "0123 456 789",
+    NATIONAL_ID: "012345678901",
+    ADDRESS: "Số nhà, tên đường...",
+    CITY: "VD: Hà Nội",
+    NATIONALITY: "Việt Nam",
+    EMERGENCY_NAME: "Tên người thân...",
+    DEPT_SELECT: "— Chọn phòng ban —",
+    POS_SELECT: "— Chọn chức vụ —",
+    ROLE_SELECT: "— Chọn vai trò —",
+    MANAGER_NONE: "— Không chỉ định —",
+    BANK_NAME: "VD: Vietcombank",
+    CURRENCY: "VNĐ",
+    NOTES: "Nhập ghi chú thêm...",
+    EMERGENCY_PHONE: "Nhập số điện thoại khẩn cấp...",
+  },
+
+  BTNS: {
+    CREATE: "Thêm nhân viên",
+    EDIT: "Cập nhật hồ sơ",
+    CONVERT_OFFICIAL: "Xác nhận chính thức",
+    ADD: "Thêm nhân viên",
+    CLEAR_FILTER: "Xóa lọc",
+  },
+
+  VIEW: {
+    TOTAL: "Tổng cộng:",
+    UNIT: "nhân viên",
+  },
+
+  VALIDATION: {
+    EMAIL_REGEX: /^\S+@\S+\.\S+$/,
+    ID_REGEX: /^\d{9}(\d{3})?$/,
+    BANK_ACC_REGEX: /^\d{4,20}$/,
+    NAME_MIN_LENGTH: 2,
+    NATIONAL_ID_LENGTH: 12,
+    SALARY_MIN: 0,
+    SUGGESTED_INCREASE_RATE: 1.1, // 10% increase for official contract
+    MIN_OFFICIAL_SALARY: 0,
+    SALARY_STEP: 1000,
+  },
+
+  MESSAGES: {
+    REQUIRED_MARK: "*",
+    DEPT_REQUIRED: "Vui lòng chọn phòng ban",
+    POS_REQUIRED: "Vui lòng chọn vị trí",
+    MANAGER_HINT: "Chọn vị trí trước",
+    NO_POSITIONS: "Không có vị trí trong phòng ban này",
+    NO_MANAGERS: "Chưa có trưởng phòng nào trong hệ thống",
+    MANAGER_LEVEL_INFO:
+      "Vị trí này là Trưởng phòng — không cần chỉ định người quản lý trực tiếp.",
+    DEPT_HINT: "Chọn phòng ban để xem danh sách vị trí",
+    AUTO_CODE_INFO: "Hệ thống sẽ tự động tạo Mã nhân viên dựa trên phòng ban.",
+    ROLE_AUTO_ASSIGN:
+      "Vai trò sẽ được tự động gán dựa trên phòng ban và chức vụ.",
+    CONFIRM_DELETE: "Bạn có chắc chắn muốn xóa nhân viên này?",
+    ATTACH_FILE: "Đính kèm tệp tin",
+    DRAG_DROP: "Nhấp hoặc kéo thả tệp vào đây",
+  },
+};

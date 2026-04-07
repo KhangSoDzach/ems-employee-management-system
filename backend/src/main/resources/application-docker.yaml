@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────
+# Profile: docker  (Docker Compose — integration, testing, prod review)
+# Activate: SPRING_PROFILES_ACTIVE=docker  (set via Docker Compose env)
+# ─────────────────────────────────────────────────────────────
+spring:
+  datasource:
+    # MYSQL_HOST defaults to "localhost" for hybrid dev (Spring on host, MySQL in Docker).
+    # Set MYSQL_HOST=mysql (via docker-compose env) when Spring also runs inside Docker.
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:emsuser}
+    password: ${MYSQL_PASSWORD:emspass123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  # Flyway — stricter in docker/prod-review
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: false
+    out-of-order: false
+    repair-at-start: true
+
+  # Mail configuration for docker/production
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 3000
+      mail.smtp.writetimeout: 5000
+
+# Logging: less verbose in docker/staging
+logging:
+  level:
+    root: INFO
+    com.company.ems.backend: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+
+# App mail configuration for docker/production
+app:
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    from: ${MAIL_FROM:no-reply@ems.company.com}

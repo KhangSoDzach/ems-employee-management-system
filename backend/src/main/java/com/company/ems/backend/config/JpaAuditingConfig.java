@@ -1,4 +1,4 @@
-package com.company.ems.backend.config;
+    package com.company.ems.backend.config;
 
 import java.util.Optional;
 
@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class JpaAuditingConfig {
 
     @Bean
+    @SuppressWarnings("null")
     public AuditorAware<String> auditorProvider() {
         return () -> {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

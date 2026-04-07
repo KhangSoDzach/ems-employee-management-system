@@ -1,0 +1,406 @@
+package com.company.ems.backend.attendance.service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.company.ems.backend.attendance.dto.AttendanceCalendarResponse;
+import com.company.ems.backend.attendance.dto.AttendanceResponse;
+import com.company.ems.backend.attendance.dto.AttendanceSummaryResponse;
+import com.company.ems.backend.attendance.dto.CheckInRequest;
+import com.company.ems.backend.attendance.dto.CheckOutRequest;
+import com.company.ems.backend.attendance.entity.Attendance;
+import com.company.ems.backend.attendance.enums.AttendanceStatus;
+import com.company.ems.backend.attendance.enums.CheckInMethod;
+import com.company.ems.backend.attendance.mapper.AttendanceMapper;
+import com.company.ems.backend.attendance.repository.AttendanceRepository;
+import com.company.ems.backend.auth.security.CustomUserPrincipal;
+import com.company.ems.backend.common.dto.PageResponse;
+import com.company.ems.backend.common.exception.BusinessException;
+import com.company.ems.backend.common.exception.ResourceNotFoundException;
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
+import com.company.ems.backend.common.service.GeolocationService;
+import com.company.ems.backend.common.service.PhotoStorageService;
+import com.company.ems.backend.config.OfficeLocationProperties;
+import com.company.ems.backend.employee.entity.Employee;
+import com.company.ems.backend.employee.repository.EmployeeRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class AttendanceServiceImpl implements AttendanceService {
+
+        private static final int FULL_WORK_DAY_MINUTES = 8 * 60;
+
+        private final AttendanceRepository attendanceRepository;
+        private final AttendanceMapper attendanceMapper;
+        private final EmployeeRepository employeeRepository;
+        private final MessageService messages;
+        private final GeolocationService geolocationService;
+        private final PhotoStorageService photoStorageService;
+        private final OfficeLocationProperties officeProps;
+
+        // ─── Check-in ─────────────────────────────────────────────────────────────
+
+        @Override
+        @SuppressWarnings("null")
+        public AttendanceResponse checkIn(CheckInRequest request, CustomUserPrincipal principal) {
+                Employee employee = resolveEmployee(principal);
+
+                // Guard: already checked in today?
+                LocalDate today = LocalDate.now();
+                if (attendanceRepository.existsByEmployeeIdAndDate(employee.getId(), today)) {
+                        throw new BusinessException("ALREADY_CHECKED_IN",
+                                        messages.get(MessageCode.ATTENDANCE_ALREADY_CHECKIN));
+                }
+
+                // Validate distance by employee's position-assigned office location
+                geolocationService.validateWithinOfficeRadiusForEmployee(
+                                employee,
+                                request.getLatitude(),
+                                request.getLongitude());
+
+                // Save photo to filesystem
+                String photoPath = photoStorageService.savePhoto(
+                                request.getPhotoBase64(),
+                                safeCode(employee));
+
+                // Determine if the employee is late
+                LocalDateTime checkInTime = LocalDateTime.now();
+                LocalTime checkInLocalTime = checkInTime.toLocalTime();
+                LocalTime shiftStart = LocalTime.parse(officeProps.getShift1CheckIn());
+
+                // If checking in after shift 1 end, maybe it's shift 2?
+                LocalTime shift1End = LocalTime.parse(officeProps.getShift1CheckOut());
+                if (checkInLocalTime.isAfter(shift1End)) {
+                        shiftStart = LocalTime.parse(officeProps.getShift2CheckIn());
+                }
+
+                boolean isLate = checkInLocalTime.isAfter(shiftStart.plusMinutes(officeProps.getGracePeriod()));
+
+                Attendance attendance = Attendance.builder()
+                                .employee(employee)
+                                .date(today)
+                                .checkInTime(checkInTime)
+                                .checkInLatitude(request.getLatitude())
+                                .checkInLongitude(request.getLongitude())
+                                .checkInLocation(request.getLocationLabel())
+                                .checkInPhotoUrl(photoPath)
+                                .checkInMethod(request.getCheckInMethod() != null
+                                                ? request.getCheckInMethod()
+                                                : CheckInMethod.CAMERA_GEO)
+                                .status(isLate ? AttendanceStatus.LATE : AttendanceStatus.PRESENT)
+                                .isLate(isLate)
+                                .isOvertime(false)
+                                .isRemote(false)
+                                .notes(request.getNotes())
+                                .ipAddress(request.getIpAddress())
+                                .deviceInfo(request.getDeviceInfo())
+                                .userAgent(request.getUserAgent())
+                                .build();
+
+                Attendance saved = Objects.requireNonNull(attendanceRepository.save(attendance));
+                log.info("Employee [{}] checked in at {} (lat={}, lon={})",
+                                employee.getEmployeeCode(), checkInTime,
+                                request.getLatitude(), request.getLongitude());
+                return attendanceMapper.toResponse(saved);
+        }
+
+        // ─── Check-out ────────────────────────────────────────────────────────────
+
+        @Override
+        public AttendanceResponse checkOut(CheckOutRequest request, CustomUserPrincipal principal) {
+                Employee employee = resolveEmployee(principal);
+
+                LocalDate today = LocalDate.now();
+                Attendance attendance = attendanceRepository
+                                .findByEmployeeIdAndDate(employee.getId(), today)
+                                .orElseThrow(() -> new BusinessException("NOT_CHECKED_IN",
+                                                messages.get(MessageCode.ATTENDANCE_NOT_CHECKED_IN)));
+
+                if (attendance.getCheckOutTime() != null) {
+                        throw new BusinessException("ALREADY_CHECKED_OUT",
+                                        messages.get(MessageCode.ATTENDANCE_ALREADY_CHECKOUT));
+                }
+
+                // Validate distance by employee's position-assigned office location
+                geolocationService.validateWithinOfficeRadiusForEmployee(
+                                employee,
+                                request.getLatitude(),
+                                request.getLongitude());
+
+                // Save photo
+                String photoPath = photoStorageService.savePhoto(
+                                request.getPhotoBase64(),
+                                safeCode(employee));
+
+                LocalDateTime checkOutTime = LocalDateTime.now();
+                attendance.setCheckOutTime(checkOutTime);
+                attendance.setCheckOutLatitude(request.getLatitude());
+                attendance.setCheckOutLongitude(request.getLongitude());
+                attendance.setCheckOutLocation(request.getLocationLabel());
+                attendance.setCheckOutPhotoUrl(photoPath);
+                if (request.getNotes() != null) {
+                        attendance.setNotes(request.getNotes());
+                }
+                // Update device metadata if provided
+                if (request.getIpAddress() != null)
+                        attendance.setIpAddress(request.getIpAddress());
+                if (request.getDeviceInfo() != null)
+                        attendance.setDeviceInfo(request.getDeviceInfo());
+                if (request.getUserAgent() != null)
+                        attendance.setUserAgent(request.getUserAgent());
+
+                // Auto-calculate work hours and overtime
+                attendance.calculateWorkHours();
+
+                Attendance saved = attendanceRepository.save(attendance);
+                log.info("Employee [{}] checked out at {} (workHours={}min)",
+                                employee.getEmployeeCode(), checkOutTime, saved.getWorkHours());
+                return attendanceMapper.toResponse(saved);
+        }
+
+        // ─── Queries ──────────────────────────────────────────────────────────────
+
+        @Override
+        @Transactional(readOnly = true)
+        public com.company.ems.backend.common.dto.PageResponse<AttendanceResponse> getAttendance(
+                        int page, int size,
+                        Long employeeId,
+                        LocalDate startDate,
+                        LocalDate endDate,
+                        String status,
+                        CustomUserPrincipal principal) {
+
+                // Employees can only see their own records
+                Long resolvedEmployeeId = resolveEmployeeIdForQuery(employeeId, principal);
+
+                AttendanceStatus statusEnum = (status != null && !status.isBlank())
+                                ? AttendanceStatus.valueOf(status.toUpperCase())
+                                : null;
+
+                Page<Attendance> pageResult = attendanceRepository.searchAttendances(
+                                resolvedEmployeeId, statusEnum, startDate, endDate,
+                                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date")));
+
+                return PageResponse.of(pageResult.map(attendanceMapper::toResponse));
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public AttendanceSummaryResponse getSummary(
+                        Long employeeId,
+                        LocalDate startDate,
+                        LocalDate endDate,
+                        CustomUserPrincipal principal) {
+
+                Long resolvedEmployeeId = resolveEmployeeIdForQuery(employeeId, principal);
+                Employee employee = employeeRepository.findById(Objects.requireNonNull(resolvedEmployeeId))
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", resolvedEmployeeId));
+
+                LocalDate from = startDate != null ? startDate : LocalDate.now().withDayOfMonth(1);
+                LocalDate to = endDate != null ? endDate : LocalDate.now();
+
+                long present = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
+                                employee, AttendanceStatus.PRESENT, from, to);
+                long late = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
+                                employee, AttendanceStatus.LATE, from, to);
+                long absent = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
+                                employee, AttendanceStatus.ABSENT, from, to);
+                long halfDay = attendanceRepository.countByEmployeeAndStatusAndDateBetween(
+                                employee, AttendanceStatus.HALF_DAY, from, to);
+
+                long totalDays = from.until(to).getDays() + 1L;
+                double percentage = totalDays > 0
+                                ? ((present + late + halfDay) / (double) totalDays) * 100.0
+                                : 0.0;
+
+                Long totalWorkMinutes = attendanceRepository.calculateTotalWorkHours(employee, from, to);
+
+                return AttendanceSummaryResponse.builder()
+                                .employeeId(resolvedEmployeeId)
+                                .employeeName(employee.getFirstName() + " " + employee.getLastName())
+                                .totalDays((int) totalDays)
+                                .presentDays((int) present)
+                                .absentDays((int) absent)
+                                .lateDays((int) late)
+                                .halfDays((int) halfDay)
+                                .attendancePercentage(Math.round(percentage * 10.0) / 10.0)
+                                .totalWorkHours(totalWorkMinutes != null ? (int) (totalWorkMinutes / 60) : 0)
+                                .build();
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public AttendanceCalendarResponse getMonthlyCalendar(
+                        Long employeeId,
+                        String month,
+                        CustomUserPrincipal principal) {
+
+                YearMonth targetMonth = parseMonth(month);
+                Long resolvedEmployeeId = resolveEmployeeIdForQuery(employeeId, principal);
+
+                Employee employee = employeeRepository.findById(Objects.requireNonNull(resolvedEmployeeId))
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", resolvedEmployeeId));
+
+                LocalDate startDate = targetMonth.atDay(1);
+                LocalDate endDate = targetMonth.atEndOfMonth();
+
+                List<Attendance> currentMonthAttendances = attendanceRepository
+                                .findByEmployeeIdAndDateBetweenOrderByDateAsc(resolvedEmployeeId, startDate, endDate);
+
+                YearMonth previousMonth = targetMonth.minusMonths(1);
+                LocalDate prevStartDate = previousMonth.atDay(1);
+                LocalDate prevEndDate = previousMonth.atEndOfMonth();
+                List<Attendance> previousMonthAttendances = attendanceRepository
+                                .findByEmployeeIdAndDateBetweenOrderByDateAsc(resolvedEmployeeId, prevStartDate,
+                                                prevEndDate);
+
+                Map<LocalDate, Attendance> attendanceByDate = new HashMap<>();
+                for (Attendance attendance : currentMonthAttendances) {
+                        attendanceByDate.put(attendance.getDate(), attendance);
+                }
+
+                List<AttendanceCalendarResponse.CalendarDay> days = startDate.datesUntil(endDate.plusDays(1))
+                                .map(date -> {
+                                        Attendance attendance = attendanceByDate.get(date);
+                                        if (attendance == null) {
+                                                return AttendanceCalendarResponse.CalendarDay.builder()
+                                                                .date(date)
+                                                                .hasRecord(false)
+                                                                .build();
+                                        }
+
+                                        return AttendanceCalendarResponse.CalendarDay.builder()
+                                                        .date(date)
+                                                        .hasRecord(true)
+                                                        .status(attendance.getStatus() != null
+                                                                        ? attendance.getStatus().name()
+                                                                        : null)
+                                                        .checkInTime(attendance.getCheckInTime())
+                                                        .checkOutTime(attendance.getCheckOutTime())
+                                                        .workHours(attendance.getWorkHours())
+                                                        .isLate(Boolean.TRUE.equals(attendance.getIsLate()))
+                                                        .missingClockOut(attendance.getCheckOutTime() == null)
+                                                        .checkInMethod(attendance.getCheckInMethod() != null
+                                                                        ? attendance.getCheckInMethod().name()
+                                                                        : null)
+                                                        .notes(attendance.getNotes())
+                                                        .build();
+                                })
+                                .toList();
+
+                int currentFullWorkDays = countFullWorkDays(currentMonthAttendances);
+                int previousFullWorkDays = countFullWorkDays(previousMonthAttendances);
+
+                int currentLateDays = countByStatus(currentMonthAttendances, AttendanceStatus.LATE);
+                int previousLateDays = countByStatus(previousMonthAttendances, AttendanceStatus.LATE);
+
+                int currentNoClockOutDays = (int) attendanceRepository
+                                .countByEmployeeIdAndDateBetweenAndCheckOutTimeIsNull(resolvedEmployeeId, startDate,
+                                                endDate);
+                int previousNoClockOutDays = (int) attendanceRepository
+                                .countByEmployeeIdAndDateBetweenAndCheckOutTimeIsNull(resolvedEmployeeId, prevStartDate,
+                                                prevEndDate);
+
+                int currentAbsentDays = countByStatus(currentMonthAttendances, AttendanceStatus.ABSENT);
+                int previousAbsentDays = countByStatus(previousMonthAttendances, AttendanceStatus.ABSENT);
+
+                return AttendanceCalendarResponse.builder()
+                                .employeeId(resolvedEmployeeId)
+                                .employeeName(employee.getFirstName() + " " + employee.getLastName())
+                                .month(targetMonth.toString())
+                                .fullWorkDays(toMetric(currentFullWorkDays, previousFullWorkDays))
+                                .lateDays(toMetric(currentLateDays, previousLateDays))
+                                .noClockOutDays(toMetric(currentNoClockOutDays, previousNoClockOutDays))
+                                .absentDays(toMetric(currentAbsentDays, previousAbsentDays))
+                                .days(days)
+                                .build();
+        }
+
+        // ─── Private helpers ──────────────────────────────────────────────────────
+
+        private Employee resolveEmployee(CustomUserPrincipal principal) {
+                return employeeRepository.findByUserId(principal.getUserId())
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                messages.get(MessageCode.EMPLOYEE_NOT_FOUND_FOR_USER,
+                                                                principal.getUserId())));
+        }
+
+        /**
+         * Default behavior is always self-scoped (current user).
+         *
+         * <p>
+         * Managers/HR/Admin may query another employee only when explicitly passing
+         * {@code employeeId}. This keeps personal pages (e.g. check-in/check-out)
+         * correct
+         * for elevated roles that also need their own attendance timeline.
+         */
+        private Long resolveEmployeeIdForQuery(Long requestedEmployeeId, CustomUserPrincipal principal) {
+                boolean canViewOtherEmployees = principal.getAuthorities().stream()
+                                .map(a -> a.getAuthority())
+                                .anyMatch(authority -> authority.equals("ROLE_ADMIN")
+                                                || authority.equals("ROLE_HR")
+                                                || authority.equals("ROLE_MANAGER"));
+
+                if (requestedEmployeeId != null && canViewOtherEmployees) {
+                        return requestedEmployeeId;
+                }
+
+                Employee employee = resolveEmployee(principal);
+                return employee.getId();
+        }
+
+        private String safeCode(Employee employee) {
+                return employee.getEmployeeCode() != null ? employee.getEmployeeCode()
+                                : String.valueOf(employee.getId());
+        }
+
+        private YearMonth parseMonth(String month) {
+                if (month == null || month.isBlank()) {
+                        return YearMonth.now();
+                }
+                try {
+                        return YearMonth.parse(month);
+                } catch (DateTimeParseException ex) {
+                        throw new BusinessException("INVALID_MONTH_FORMAT", "month must follow yyyy-MM format");
+                }
+        }
+
+        private int countFullWorkDays(List<Attendance> attendances) {
+                return (int) attendances.stream()
+                                .filter(a -> a.getWorkHours() != null && a.getWorkHours() >= FULL_WORK_DAY_MINUTES)
+                                .count();
+        }
+
+        private int countByStatus(List<Attendance> attendances, AttendanceStatus status) {
+                return (int) attendances.stream()
+                                .filter(a -> a.getStatus() == status)
+                                .count();
+        }
+
+        private AttendanceCalendarResponse.AttendanceMetric toMetric(int current, int previous) {
+                double changePercent = previous > 0 ? ((current - previous) * 100.0) / previous : 0.0;
+                return AttendanceCalendarResponse.AttendanceMetric.builder()
+                                .current(current)
+                                .changePercent(Math.round(changePercent * 10.0) / 10.0)
+                                .build();
+        }
+}

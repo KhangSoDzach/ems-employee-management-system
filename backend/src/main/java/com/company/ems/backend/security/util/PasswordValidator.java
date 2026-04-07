@@ -1,66 +1,72 @@
 package com.company.ems.backend.security.util;
 
+import com.company.ems.backend.common.message.MessageCode;
+import com.company.ems.backend.common.message.MessageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import com.company.ems.backend.common.exception.InvalidPasswordException;
 
+@Component
+@RequiredArgsConstructor
 public class PasswordValidator {
 
-    // Password must be at least 8 characters
-    private static final int MIN_LENGTH = 8;
+    private final MessageService messages;
 
-    // Regex patterns for password validation
+    private static final int MIN_LENGTH = 8;
     private static final String UPPERCASE_PATTERN = ".*[A-Z].*";
     private static final String LOWERCASE_PATTERN = ".*[a-z].*";
     private static final String DIGIT_PATTERN = ".*[0-9].*";
     private static final String SPECIAL_CHAR_PATTERN = ".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*";
 
-    public static void validatePassword(String password) {
+    public void validatePassword(String password) {
         if (password == null || password.trim().isEmpty()) {
-            throw new InvalidPasswordException("Password cannot be empty");
+            throw new InvalidPasswordException(messages.get(MessageCode.PASSWORD_EMPTY));
         }
 
         if (password.length() < MIN_LENGTH) {
             throw new InvalidPasswordException(
-                    "Password must be at least " + MIN_LENGTH + " characters long"
+                    messages.get(MessageCode.PASSWORD_TOO_SHORT, MIN_LENGTH)
             );
         }
 
         if (!password.matches(UPPERCASE_PATTERN)) {
             throw new InvalidPasswordException(
-                    "Password must contain at least one uppercase letter"
+                    messages.get(MessageCode.PASSWORD_NO_UPPERCASE)
             );
         }
 
         if (!password.matches(LOWERCASE_PATTERN)) {
             throw new InvalidPasswordException(
-                    "Password must contain at least one lowercase letter"
+                    messages.get(MessageCode.PASSWORD_NO_LOWERCASE)
             );
         }
 
         if (!password.matches(DIGIT_PATTERN)) {
             throw new InvalidPasswordException(
-                    "Password must contain at least one digit"
+                    messages.get(MessageCode.PASSWORD_NO_DIGIT)
             );
         }
 
         if (!password.matches(SPECIAL_CHAR_PATTERN)) {
             throw new InvalidPasswordException(
-                    "Password must contain at least one special character"
+                    messages.get(MessageCode.PASSWORD_NO_SPECIAL)
             );
         }
     }
 
-    public static void validatePasswordDifferent(String oldPassword, String newPassword) {
+    public void validatePasswordDifferent(String oldPassword, String newPassword) {
         if (oldPassword.equals(newPassword)) {
             throw new InvalidPasswordException(
-                    "New password must be different from current password"
+                    messages.get(MessageCode.PASSWORD_SAME_AS_OLD)
             );
         }
     }
 
-    public static void validatePasswordMatch(String password, String confirmPassword) {
+    public void validatePasswordMatch(String password, String confirmPassword) {
         if (!password.equals(confirmPassword)) {
             throw new InvalidPasswordException(
-                    "Password and confirm password do not match"
+                    messages.get(MessageCode.PASSWORD_MISMATCH)
             );
         }
     }

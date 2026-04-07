@@ -33,6 +33,9 @@ docker compose build backend
 
 # Xem logs của service (ví dụ: backend)
 docker compose logs -f backend
+
+# Validate nhanh Docker stack (Windows PowerShell)
+powershell -ExecutionPolicy Bypass -File ./scripts/validate-docker.ps1
 ```
 
 **Lưu ý (Đặc tính & Rủi ro):**
@@ -41,10 +44,25 @@ docker compose logs -f backend
 - Hãy dùng `.env` dev với biến môi trường hợp lệ (`VITE_API_URL`, database mock...).
 
 ### Access Application
+
 Mở trình duyệt:
-- **Frontend** (React/Vite)  : http://localhost:5173
-- **Backend** (Spring Boot)  : http://localhost:8080
-- **Swagger Documentation**  : http://localhost:8080/swagger-ui.html
+
+- **Frontend** (React/Vite) : http://localhost:5173
+- **Backend** (Spring Boot) : http://localhost:8080
+- **Swagger Documentation** : http://localhost:8080/swagger-ui.html
+
+### Local 2FA End-to-End Test
+
+Để test xác thực 2 lớp trên local (FE + BE API thật):
+
+1. Đăng nhập vào hệ thống.
+2. Mở **Settings → Security (2FA)** và bật 2FA.
+3. Quét QR code bằng ứng dụng Authenticator (Google Authenticator/Authy) hoặc nhập secret key thủ công.
+4. Nhập mã 6 số để xác nhận bật 2FA và lưu recovery codes.
+5. Đăng xuất, sau đó đăng nhập lại bằng tài khoản vừa bật 2FA.
+6. Hệ thống sẽ yêu cầu mã OTP 2FA trước khi hoàn tất đăng nhập.
+
+> Lưu ý: frontend gọi backend qua `VITE_API_URL` (mặc định `http://localhost:8080/api/v1`).
 
 ### Without Docker
 ```bash

@@ -3,6 +3,7 @@
 import { MailIcon, PlusCircleIcon, type LucideIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { SYSTEM_MESSAGES } from "@/constants/messages"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -26,11 +27,11 @@ export function NavMain({
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
-              tooltip="Quick Create"
+              tooltip={SYSTEM_MESSAGES.SIDEBAR.QUICK_CREATE}
               className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
             >
               <PlusCircleIcon />
-              <span>Quick Create</span>
+              <span>{SYSTEM_MESSAGES.SIDEBAR.QUICK_CREATE}</span>
             </SidebarMenuButton>
             <Button
               size="icon"
@@ -38,7 +39,7 @@ export function NavMain({
               variant="outline"
             >
               <MailIcon />
-              <span className="sr-only">Inbox</span>
+              <span className="sr-only">{SYSTEM_MESSAGES.SIDEBAR.INBOX}</span>
             </Button>
           </SidebarMenuItem>
         </SidebarMenu>

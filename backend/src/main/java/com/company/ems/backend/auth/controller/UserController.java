@@ -19,6 +19,6 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateRoleRequest request) {
         // TODO: Implement role update service
-        return ResponseEntity.ok(ApiResponse.success("User role updated successfully", null));
+        return ResponseEntity.ok(ApiResponse.success( null));
     }
 }

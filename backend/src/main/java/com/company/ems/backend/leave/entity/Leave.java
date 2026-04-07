@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import com.company.ems.backend.common.entity.BaseEntity;
+import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.leave.enums.LeaveStatus;
 import com.company.ems.backend.leave.enums.LeaveType;
@@ -74,9 +75,33 @@ public class Leave extends BaseEntity {
     private String reason;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
+    @Column(length = 40, nullable = false)
     @Builder.Default
-    private LeaveStatus status = LeaveStatus.PENDING;
+    private LeaveStatus status = LeaveStatus.PENDING_LEVEL_1;
+
+    // ─── Multi-level approval fields ─────────────────────────────────────────
+
+    /** Current level the request is waiting at (1-based). */
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer currentApprovalLevel = 1;
+
+    /** Total levels required for this request (determined at submission time). */
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer maxApprovalLevel = 1;
+
+    /** FK to the workflow_templates row used when this request was created. */
+    @Column(name = "workflow_template_id")
+    private Long workflowTemplateId;
+
+    /**
+     * True when the long-leave rule fired and an extra ROLE_HR level was
+     * auto-added beyond the template's configured levels.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean longLeaveHrRequired = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by_user_id")
@@ -161,10 +186,11 @@ public class Leave extends BaseEntity {
     }
 
     /**
-     * Cancel the leave request
+     * Cancel the leave request.
+     * Allowed from any pending state or from APPROVED.
      */
     public void cancel() {
-        if (LeaveStatus.PENDING.equals(this.status) || LeaveStatus.APPROVED.equals(this.status)) {
+        if (status != null && (status.isPending() || LeaveStatus.APPROVED.equals(status))) {
             this.status = LeaveStatus.CANCELLED;
         } else {
             throw new IllegalStateException("Cannot cancel a " + this.status + " leave request");
@@ -172,10 +198,39 @@ public class Leave extends BaseEntity {
     }
 
     /**
-     * Withdraw the leave request (by employee)
+     * Advance the request to the next approval level.
+     * Should only be called when currentApprovalLevel &lt; maxApprovalLevel.
      */
+    public void advanceToNextLevel() {
+        if (currentApprovalLevel == null || maxApprovalLevel == null) {
+            throw new IllegalStateException("Approval level fields are not initialised");
+        }
+        if (currentApprovalLevel >= maxApprovalLevel) {
+            throw new IllegalStateException(
+                    "Cannot advance: already at max level " + maxApprovalLevel);
+        }
+        this.currentApprovalLevel++;
+        this.status = LeaveStatus.pendingForLevel(this.currentApprovalLevel);
+    }
+
+    /**
+     * Returns {@code true} if the request is waiting at the given 1-based level.
+     */
+    public boolean isPendingAtLevel(int level) {
+        return currentApprovalLevel != null
+                && currentApprovalLevel == level
+                && status != null
+                && status.isPending();
+    }
+
+    /**
+     * Withdraw the leave request (by employee). Only allowed on PENDING_LEVEL_1 /
+     * legacy PENDING.
+     */
+    @SuppressWarnings("deprecation")
     public void withdraw() {
-        if (LeaveStatus.PENDING.equals(this.status)) {
+        if (LeaveStatus.PENDING_LEVEL_1.equals(this.status)
+                || LeaveStatus.PENDING.equals(this.status)) {
             this.status = LeaveStatus.WITHDRAWN;
         } else {
             throw new IllegalStateException("Can only withdraw pending leave requests");
@@ -190,10 +245,10 @@ public class Leave extends BaseEntity {
     }
 
     /**
-     * Check if leave is pending
+     * Check if leave has any pending status (any level).
      */
     public boolean isPending() {
-        return LeaveStatus.PENDING.equals(status);
+        return status != null && status.isPending();
     }
 
     /**
@@ -222,9 +277,9 @@ public class Leave extends BaseEntity {
     private void beforeSave() {
         calculateTotalDays();
 
-        // Validate date range
+        // Validate date range - throw BusinessException so controller returns a clear business error
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End date cannot be before start date");
+            throw new BusinessException("INVALID_DATE_RANGE", "End date cannot be before start date");
         }
     }
 }

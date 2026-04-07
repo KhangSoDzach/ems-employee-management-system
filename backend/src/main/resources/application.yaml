@@ -1,8 +1,19 @@
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   application:
     name: ems-backend
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+    use-code-as-default-message: false
 
-  # Mail / SMTP Configuration (for Forgot Password OTP)
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
   mail:
     host: ${MAIL_HOST:smtp.mailtrap.io}
     port: ${MAIL_PORT:587}
@@ -22,7 +33,7 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root123}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
@@ -30,24 +41,22 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-  
+
   # JPA/Hibernate Configuration
   jpa:
     hibernate:
-      ddl-auto: none  # Flyway manages schema; Hibernate must not auto-create/alter tables
+      ddl-auto: none # Flyway manages schema; Hibernate must not auto-create/alter tables
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
-        enable_lazy_load_no_trans: false
         use_sql_comments: true
         jdbc:
           batch_size: 20
         order_inserts: true
         order_updates: true
     open-in-view: false
-  
+
   # Flyway Configuration for Database Migration
   flyway:
     enabled: true
@@ -56,7 +65,7 @@ spring:
     locations: classpath:db/migration
     repair-on-migrate: true
     validate-on-migrate: false
-    clean-disabled: true  # Safety: prevent accidental data loss
+    clean-disabled: true # Safety: prevent accidental data loss
     out-of-order: false
     validate-migration-naming: true
   servlet:
@@ -65,6 +74,65 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
       file-size-threshold: 2KB
+
+# ─────────────────────────────────────────────────────────────
+# Application-specific configuration
+# ─────────────────────────────────────────────────────────────
+app:
+  name: Employee Management System
+  version: 1.0.0
+  description: Enterprise-grade EMS backend API
+
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:5173,http://localhost:5174
+
+  security:
+    jwt:
+      header: Authorization
+      prefix: Bearer
+
+  file:
+    upload-dir: uploads/
+    max-size: 10485760 # 10MB in bytes
+
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    from: ${MAIL_FROM:no-reply@ems.company.com}
+
+  # Async thread pool for @Async tasks (e.g. email notifications)
+  async:
+    core-pool-size: ${APP_ASYNC_CORE_POOL_SIZE:2}
+    max-pool-size: ${APP_ASYNC_MAX_POOL_SIZE:5}
+    queue-capacity: ${APP_ASYNC_QUEUE_CAPACITY:100}
+    thread-name-prefix: ${APP_ASYNC_THREAD_PREFIX:ems-async-}
+
+  password-reset:
+    otp-expiry-minutes: 5
+    resend-cooldown-seconds: 60
+
+  # Office location used for geolocation validation on check-in/check-out.
+  # Override via env vars (APP_OFFICE_LATITUDE, etc.) in production.
+  office:
+    latitude: ${APP_OFFICE_LATITUDE:10.80374375} # Office location
+    longitude: ${APP_OFFICE_LONGITUDE:106.6896745} # Office location
+    radius-meters: ${APP_OFFICE_RADIUS_METERS:200} # Allowed radius in metres (200m — accounts for GPS drift)
+
+  # Filesystem storage root for check-in/check-out photos
+  storage:
+    photo-dir: ${APP_STORAGE_PHOTO_DIR:./uploads/attendance-photos}
+
+  # Leave workflow configuration
+  # Externalized to support per-environment overrides without code changes.
+  workflow:
+    leave:
+      # Hours before an escalation reminder is sent to pending approver
+      default-timeout-hours: ${APP_WORKFLOW_LEAVE_TIMEOUT_HOURS:24}
+      # Hours before auto-escalating after reminder (future use)
+      escalation-reminder-hours: ${APP_WORKFLOW_LEAVE_ESCALATION_HOURS:48}
+      # Leaves with totalDays >= this threshold automatically get an extra HR-level
+      long-leave-threshold-days: ${APP_WORKFLOW_LEAVE_LONG_LEAVE_THRESHOLD:2}
+      # Role assigned to the auto-injected extra level
+      long-leave-extra-level-role: ${APP_WORKFLOW_LEAVE_EXTRA_ROLE:ROLE_HR}
 
 # Server Configuration
 server:
@@ -88,8 +156,8 @@ server:
 jwt:
   secret: ${JWT_SECRET:changeme-secret-key-for-development-only-minimum-256-bits-required-please-use-env-variable}
   refresh-secret: ${JWT_REFRESH_SECRET:changeme-refresh-secret-key-for-development-only-use-env-variable-in-production}
-  expiration-ms: 1800000  # 30 minutes (in milliseconds)
-  refresh-expiration-ms: 604800000  # 7 days (in milliseconds)
+  expiration-ms: 1800000 # 30 minutes (in milliseconds)
+  refresh-expiration-ms: 604800000 # 7 days (in milliseconds)
   issuer: ems-backend
   audience: ems-app
 
@@ -147,23 +215,3 @@ management:
   health:
     defaults:
       enabled: true
-
-# Application Custom Properties
-app:
-  name: Employee Management System
-  version: 1.0.0
-  description: Enterprise-grade EMS backend API
-  cors:
-    allowed-origins: http://localhost:3000,http://localhost:5173,http://localhost:5174
-  security:
-    jwt:
-      header: Authorization
-      prefix: Bearer
-  file:
-    upload-dir: uploads/
-    max-size: 10485760  # 10MB in bytes
-  mail:
-    from: ${MAIL_FROM:no-reply@ems.company.com}
-  password-reset:
-    otp-expiry-minutes: 5      # Must match frontend countdown timer (5 minutes)
-    resend-cooldown-seconds: 60

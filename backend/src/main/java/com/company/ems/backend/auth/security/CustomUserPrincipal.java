@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import com.company.ems.backend.user.entity.User;
 import com.company.ems.backend.user.enums.DataScope;
+
 @Getter
 public class CustomUserPrincipal implements UserDetails {
     private final Long userId;
@@ -29,7 +30,11 @@ public class CustomUserPrincipal implements UserDetails {
     public static CustomUserPrincipal of(User user) {
         // Tạo authorities = ROLE_{name} + all permission names từ tất cả roles
         Set<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .map(role -> {
+                    String roleName = role.getName();
+                    String finalAuthority = roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName;
+                    return (GrantedAuthority) new SimpleGrantedAuthority(finalAuthority);
+                })
                 .collect(Collectors.toSet());
 
         // Thêm permission authorities (dạng plain string, ví dụ: EMPLOYEE_VIEW)
@@ -52,8 +57,7 @@ public class CustomUserPrincipal implements UserDetails {
                 !user.isAccountLocked(),
                 user.getCredentialsNonExpired(),
                 authorities,
-                dataScopes
-        );
+                dataScopes);
     }
 
     public CustomUserPrincipal(
@@ -116,10 +120,14 @@ public class CustomUserPrincipal implements UserDetails {
         return authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals(permissionName));
     }
+
     public boolean hasDataScope(DataScope scope) {
-        if (dataScopes.contains(DataScope.ALL)) return true;
-        if (scope == DataScope.DEPARTMENT && dataScopes.contains(DataScope.DEPARTMENT)) return true;
-        if (scope == DataScope.TEAM && dataScopes.contains(DataScope.TEAM)) return true;
+        if (dataScopes.contains(DataScope.ALL))
+            return true;
+        if (scope == DataScope.DEPARTMENT && dataScopes.contains(DataScope.DEPARTMENT))
+            return true;
+        if (scope == DataScope.TEAM && dataScopes.contains(DataScope.TEAM))
+            return true;
         return dataScopes.contains(scope);
     }
 

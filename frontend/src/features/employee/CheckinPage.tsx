@@ -1,327 +1,709 @@
-import { Play, Square, Coffee, CalendarClock, Plane } from "lucide-react"
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { Play, Square, Plane, CalendarClock, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { format, subDays } from "date-fns";
+import { toast } from "sonner";
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import {
+  attendanceService,
+  AttendanceRecord,
+  AttendanceSummary,
+} from "@/services/attendanceService";
+import { CameraModal } from "./components/CameraModal";
 
-const TEXT = {
-    breadcrumb: "Cổng thông tin > Chấm công",
-    title: "Điểm danh nhân viên",
-    subtitle: "Quản lý thời gian làm việc và lịch sử chấm công của bạn.",
-    currentDate: "Thứ Ba, 24 Tháng 10, 2023",
-    statusUnchecked: "Chưa điểm danh",
-    currentTime: "08:30:45 AM",
-    greeting: "Chào buổi sáng! Hãy bắt đầu ngày làm việc đầy năng lượng.",
-    greetingCheckedIn: "Bạn đang trong ca làm việc. Chúc một ngày làm việc hiệu quả!",
-    greetingCheckedOut: "Bạn đã kết thúc ca làm việc hôm nay. Nghỉ ngơi tốt nhé!",
-    btnCheckIn: "Check In Ngay",
-    btnCheckOut: "Check Out",
-    btnReport: "Báo cáo sự cố",
-    weeklyExtraHours: "+2.5h",
-    weeklyHoursLabel: "Tổng giờ làm tuần này",
-    weeklyHoursValue: "32.5h",
-    lateAlertIcon: "!",
-    lateAlertLabel: "Tháng này",
-    lateDaysLabel: "Số ngày đi muộn",
-    lateDaysValue: "1 ngày",
-    leaveRemainingLabel: "Phép năm còn lại",
-    leaveRemainingValue: "10 ngày",
-    historyTitle: "Lịch sử điểm danh (7 ngày gần nhất)",
-    viewAllPrompt: "Xem tất cả",
-    colDate: "Ngày",
-    colCheckIn: "Check-in",
-    colCheckOut: "Check-out",
-    colTotalHours: "Tổng giờ",
-    colStatus: "Trạng thái",
-    statusOnTime: "Đúng giờ",
-    statusLate: "Đi muộn",
-    statusEarly: "Về sớm",
+import { SYSTEM_MESSAGES } from "@/constants/messages";
+import { CHECKIN_STATUS } from "@/constants/options";
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function fmtTime(iso: string | null) {
+  if (!iso) {
+    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  }
+  return new Date(iso).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-const historyData = [
-    {
-        date: "23/10/2023",
-        checkIn: "08:25 AM",
-        checkOut: "05:30 PM",
-        totalHours: "9h 05m",
-        status: TEXT.statusOnTime,
-        statusColor: "bg-primary/10 text-primary",
+function fmtDate(iso: string | null) {
+  if (!iso) {
+    return SYSTEM_MESSAGES.COMMON.EMPTY_VALUE;
+  }
+  return format(new Date(iso), "dd/MM/yyyy");
+}
+
+function statusLabel(s: AttendanceRecord["status"]) {
+  const map: Record<string, { label: string; cls: string }> = {
+    PRESENT: {
+      label: SYSTEM_MESSAGES.CHECKIN.STATUS_PRESENT,
+      cls: "bg-primary/10 text-primary",
     },
-    {
-        date: "22/10/2023",
-        checkIn: "08:45 AM",
-        checkOut: "05:45 PM",
-        totalHours: "9h 00m",
-        status: TEXT.statusLate,
-        statusColor: "bg-destructive/10 text-destructive",
+    LATE: {
+      label: SYSTEM_MESSAGES.CHECKIN.STATUS_LATE,
+      cls: "bg-destructive/10 text-destructive",
     },
-    {
-        date: "21/10/2023",
-        checkIn: "08:30 AM",
-        checkOut: "05:30 PM",
-        totalHours: "9h 00m",
-        status: TEXT.statusOnTime,
-        statusColor: "bg-primary/10 text-primary",
+    ABSENT: {
+      label: SYSTEM_MESSAGES.CHECKIN.STATUS_ABSENT,
+      cls: "bg-muted text-muted-foreground",
     },
-    {
-        date: "20/10/2023",
-        checkIn: "08:15 AM",
-        checkOut: "04:30 PM",
-        totalHours: "8h 15m",
-        status: TEXT.statusEarly,
-        statusColor: "bg-accent text-accent-foreground",
+    HALF_DAY: {
+      label: SYSTEM_MESSAGES.CHECKIN.STATUS_HALF,
+      cls: "bg-accent text-accent-foreground",
     },
-]
+    ON_LEAVE: {
+      label: SYSTEM_MESSAGES.CHECKIN.STATUS_ON_LEAVE,
+      cls: CHECKIN_STATUS.ON_LEAVE.cls,
+    },
+  };
+  return map[s] ?? { label: s, cls: "bg-muted text-muted-foreground" };
+}
+
+type CheckStatus = "unchecked" | "checked_in" | "checked_out";
+
+function dateKeyFromRecord(record: AttendanceRecord | null): string | null {
+  if (!record) {
+    return null;
+  }
+
+  if (typeof record.date === "string" && record.date.length >= 10) {
+    return record.date.slice(0, 10);
+  }
+
+  if (record.checkInTime) {
+    const d = new Date(record.checkInTime);
+    if (!Number.isNaN(d.getTime())) {
+      return format(d, "yyyy-MM-dd");
+    }
+  }
+
+  return null;
+}
+
+function upsertHistoryRecord(
+  history: AttendanceRecord[],
+  record: AttendanceRecord,
+): AttendanceRecord[] {
+  const key = dateKeyFromRecord(record);
+  if (!key) {
+    return history;
+  }
+
+  const existingIdx = history.findIndex(
+    (item) => dateKeyFromRecord(item) === key,
+  );
+  if (existingIdx >= 0) {
+    const next = [...history];
+    next[existingIdx] = record;
+    return next;
+  }
+
+  return [record, ...history].sort((a, b) => {
+    const aDate = dateKeyFromRecord(a) ?? "";
+    const bDate = dateKeyFromRecord(b) ?? "";
+    return bDate.localeCompare(aDate);
+  });
+}
+function parseTimeToMinutes(iso: string | null) {
+  if (!iso) {
+    return null;
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return null;
+  }
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function checkinClass(iso: string | null) {
+  const t = parseTimeToMinutes(iso);
+  if (t === null) {
+    return "text-muted-foreground";
+  }
+  return t > 8 * 60 ? "text-rose-600" : "text-emerald-600";
+}
+
+function checkoutClass(iso: string | null) {
+  const t = parseTimeToMinutes(iso);
+  if (t === null) {
+    return "text-muted-foreground";
+  }
+  return t < 17 * 60 ? "text-rose-600" : "text-emerald-600";
+}
+
+function workHoursStatus(minutes: number | null) {
+  if (minutes === null) {
+    return {
+      className: "text-muted-foreground",
+      lines: [SYSTEM_MESSAGES.COMMON.EMPTY_VALUE],
+    };
+  }
+
+  if (minutes < 8 * 60) {
+    return {
+      className: "text-rose-600",
+      lines: [
+        `${Math.floor(minutes / 60)}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${(
+          minutes % 60
+        )
+          .toString()
+          .padStart(2, "0")}m`,
+      ],
+    };
+  }
+
+  const base = 8 * 60;
+  const overtime = minutes - base;
+
+  if (overtime === 0) {
+    return {
+      className: "text-emerald-600",
+      lines: [`8${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`],
+    };
+  }
+
+  const h = Math.floor(overtime / 60);
+  const m = overtime % 60;
+
+  return {
+    className: "text-emerald-600",
+    lines: [
+      `8${SYSTEM_MESSAGES.COMMON.HOURS_UNIT}`,
+      `+${h}${SYSTEM_MESSAGES.COMMON.HOURS_UNIT} ${m.toString().padStart(2, "0")}m over time`,
+    ],
+  };
+}
 
 export default function CheckinPage() {
-    const navigate = useNavigate();
-    const [status, setStatus] = useState<"unchecked" | "checked_in" | "checked_out">(() => {
-        return (localStorage.getItem("emp_status") as "unchecked" | "checked_in" | "checked_out") || "unchecked";
-    });
+  const navigate = useNavigate();
 
-    const [checkInTime, setCheckInTime] = useState<string | null>(() => {
-        return localStorage.getItem("emp_checkin_time");
-    });
+  // ── Live clock ────────────────────────────────────────────────────────────
+  const [currentTime, setCurrentTime] = useState(() =>
+    new Date().toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }),
+  );
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("vi-VN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+      );
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    const [checkOutTime, setCheckOutTime] = useState<string | null>(() => {
-        return localStorage.getItem("emp_checkout_time");
-    });
+  const todayDisplay = format(new Date(), "EEEE, dd 'Tháng' MM, yyyy");
 
-    const [currentTime, setCurrentTime] = useState<string>("");
+  // ── Attendance state derived from today's record ──────────────────────────
+  const [todayRecord, setTodayRecord] = useState<AttendanceRecord | null>(null);
+  const [summary, setSummary] = useState<AttendanceSummary | null>(null);
+  const [history, setHistory] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
-    // Cập nhật đồng hồ mỗi giây
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const now = new Date();
-            setCurrentTime(now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-        }, 1000);
+  // ── Camera modal ──────────────────────────────────────────────────────────
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "checkIn" | "checkOut" | null
+  >(null);
 
-        // Gán thời gian ban đầu để không bị chớp màn hình
-        setCurrentTime(new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+  // ── Derive status ─────────────────────────────────────────────────────────
+  const status: CheckStatus =
+    todayRecord === null
+      ? "unchecked"
+      : todayRecord.checkOutTime
+        ? "checked_out"
+        : "checked_in";
 
-        return () => clearInterval(timer);
-    }, []);
+  // ── Fetch today's record + summary + recent history ───────────────────────
+  const fetchAll = useCallback(async () => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    const sevenDaysAgo = format(subDays(new Date(), 6), "yyyy-MM-dd");
 
-    const handleCheckIn = () => {
-        const nowStr = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' });
-        setStatus("checked_in");
-        setCheckInTime(nowStr);
+    const [historyResult, summaryResult] = await Promise.allSettled([
+      attendanceService.getAttendance({
+        page: 0,
+        size: 7,
+        startDate: sevenDaysAgo,
+        endDate: today,
+      }),
+      attendanceService.getSummary(),
+    ]);
 
-        localStorage.setItem("emp_status", "checked_in");
-        localStorage.setItem("emp_checkin_time", nowStr);
-        localStorage.removeItem("emp_checkout_time");
-        setCheckOutTime(null);
-    };
+    if (historyResult.status === "fulfilled") {
+      const records = historyResult.value.content ?? [];
+      setHistory(records);
 
-    const handleCheckOut = () => {
-        const nowStr = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' });
-        setStatus("checked_out");
-        setCheckOutTime(nowStr);
+      const todayRec =
+        records.find((r) => dateKeyFromRecord(r) === today) ?? null;
+      setTodayRecord((prev) => {
+        if (todayRec) {
+          return todayRec;
+        }
+        return dateKeyFromRecord(prev) === today ? prev : null;
+      });
+    }
 
-        localStorage.setItem("emp_status", "checked_out");
-        localStorage.setItem("emp_checkout_time", nowStr);
-    };
+    if (summaryResult.status === "fulfilled") {
+      setSummary(summaryResult.value);
+    }
 
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  // ── Open camera handler ───────────────────────────────────────────────────
+  const openCameraFor = (action: "checkIn" | "checkOut") => {
+    setPendingAction(action);
+    setCameraOpen(true);
+  };
+
+  // ── Camera capture complete ───────────────────────────────────────────────
+  const handleCapture = async (result: {
+    photoBase64: string;
+    latitude: number;
+    longitude: number;
+    locationLabel: string;
+  }) => {
+    if (!pendingAction) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      if (pendingAction === "checkIn") {
+        const rec = await attendanceService.checkIn({
+          latitude: result.latitude,
+          longitude: result.longitude,
+          photoBase64: result.photoBase64,
+          locationLabel: result.locationLabel,
+          checkInMethod: "CAMERA_GEO",
+        });
+        setTodayRecord(rec);
+        setHistory((prev) => upsertHistoryRecord(prev, rec));
+        toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
+      } else {
+        const rec = await attendanceService.checkOut({
+          latitude: result.latitude,
+          longitude: result.longitude,
+          photoBase64: result.photoBase64,
+          locationLabel: result.locationLabel,
+        });
+        setTodayRecord(rec);
+        setHistory((prev) => upsertHistoryRecord(prev, rec));
+        toast.success(SYSTEM_MESSAGES.SUCCESS_UPDATE);
+      }
+      await fetchAll();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : SYSTEM_MESSAGES.ERROR;
+      toast.error(msg);
+    } finally {
+      setActionLoading(false);
+      setPendingAction(null);
+    }
+  };
+
+  // ── Summary stats ─────────────────────────────────────────────────────────
+  const workHoursPct = summary
+    ? Math.min(100, (summary.totalWorkHours / (summary.totalDays * 8)) * 100)
+    : 0;
+  const latePct =
+    summary && summary.totalDays > 0
+      ? (summary.lateDays / summary.totalDays) * 100
+      : 0;
+
+  const getStatusBadge = () => {
+    const checkInTime = fmtTime(todayRecord?.checkInTime ?? null);
+    const checkOutTime = fmtTime(todayRecord?.checkOutTime ?? null);
+
+    if (status === "unchecked") {
+      return (
+        <Badge
+          variant="outline"
+          className="text-destructive border-destructive/20 bg-destructive/10 font-medium px-3 py-1"
+        >
+          {SYSTEM_MESSAGES.CHECKIN.STATUS_NOT_CHECKED}
+        </Badge>
+      );
+    }
+    if (status === "checked_in") {
+      return (
+        <Badge
+          variant="outline"
+          className="text-primary border-primary/20 bg-primary/10 font-medium px-3 py-1"
+        >
+          {SYSTEM_MESSAGES.CHECKIN.STATUS_WORKING(checkInTime)}
+        </Badge>
+      );
+    }
     return (
-        <SidebarProvider>
-            <AppSidebar role="employee" variant="inset" />
-            <SidebarInset>
-                <SiteHeader />
+      <Badge
+        variant="outline"
+        className="text-muted-foreground border-border bg-muted font-medium px-3 py-1"
+      >
+        {SYSTEM_MESSAGES.CHECKIN.STATUS_CHECKED_OUT(checkInTime, checkOutTime)}
+      </Badge>
+    );
+  };
 
-                <main className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-background dark:bg-background min-h-screen">
-                    <div className="flex flex-col md:flex-row items-center justify-between space-y-2 mb-6">
-                        <div>
-                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">{TEXT.breadcrumb}</p>
-                            <h2 className="text-3xl font-bold tracking-tight text-foreground mt-1">{TEXT.title}</h2>
-                            <p className="text-muted-foreground font-medium mt-1">
-                                {TEXT.subtitle}
-                            </p>
-                        </div>
-                        <div className="text-sm font-semibold text-muted-foreground bg-card px-5 py-2.5 rounded-xl border-border border shadow-sm">
-                            {TEXT.currentDate}
-                        </div>
-                    </div>
+  const getGreetingMessage = () => {
+    if (status === "unchecked") {
+      return SYSTEM_MESSAGES.CHECKIN.MSG_MORNING;
+    }
+    if (status === "checked_in") {
+      return SYSTEM_MESSAGES.CHECKIN.MSG_WORKING;
+    }
+    return SYSTEM_MESSAGES.CHECKIN.MSG_DONE;
+  };
 
-                    {/* Check-in Banner */}
-                    <Card className="border-border shadow-sm bg-linear-to-br from-primary/5 to-background overflow-hidden relative">
-                        <CardContent className="p-8 flex items-center justify-between">
-                            <div className="z-10 flex flex-col items-start gap-4">
-                                {status === "unchecked" && (
-                                    <Badge variant="outline" className="text-destructive border-destructive/20 bg-destructive/10 font-medium px-3 py-1">
-                                        {TEXT.statusUnchecked}
-                                    </Badge>
-                                )}
-                                {status === "checked_in" && (
-                                    <Badge variant="outline" className="text-primary border-primary/20 bg-primary/10 font-medium px-3 py-1">
-                                        Đang làm việc (Vào lúc {checkInTime})
-                                    </Badge>
-                                )}
-                                {status === "checked_out" && (
-                                    <Badge variant="outline" className="text-muted-foreground border-border bg-muted font-medium px-3 py-1">
-                                        Đã Check-out (Vào: {checkInTime} - Ra: {checkOutTime})
-                                    </Badge>
-                                )}
+  return (
+    <main className="page-layout-wrapper">
+      {/* Page header */}
+      <div className="flex flex-col md:flex-row items-center justify-between space-y-2 mb-6">
+        <div>
+          <h1 className="page-heading">{SYSTEM_MESSAGES.CHECKIN.TITLE}</h1>
+          <p className="text-muted-foreground font-medium mt-1">
+            {SYSTEM_MESSAGES.CHECKIN.DESC}
+          </p>
+        </div>
+        <div className="btn-date capitalize">{todayDisplay}</div>
+      </div>
 
-                                <h1 className="text-5xl font-extrabold text-foreground">{currentTime}</h1>
+      {/* Check-in Banner */}
+      <Card className="border-border shadow-sm bg-linear-to-br from-primary/5 to-background overflow-hidden relative">
+        <CardContent className="p-8 flex items-center justify-between">
+          <div className="z-10 flex flex-col items-start gap-4">
+            {getStatusBadge()}
 
-                                <p className="text-muted-foreground text-lg">
-                                    {status === "unchecked" && TEXT.greeting}
-                                    {status === "checked_in" && TEXT.greetingCheckedIn}
-                                    {status === "checked_out" && TEXT.greetingCheckedOut}
-                                </p>
+            <h1 className="text-5xl font-extrabold text-foreground">
+              {currentTime}
+            </h1>
 
-                                <div className="flex gap-4 mt-2">
-                                    {(status === "unchecked" || status === "checked_out") && (
-                                        <Button
-                                            onClick={handleCheckIn}
-                                            size="lg"
-                                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2"
-                                        >
-                                            <Play className="fill-current w-5 h-5" />
-                                            {TEXT.btnCheckIn}
-                                        </Button>
-                                    )}
+            <p className="text-muted-foreground text-lg">
+              {getGreetingMessage()}
+            </p>
 
-                                    {status === "checked_in" && (
-                                        <Button
-                                            onClick={handleCheckOut}
-                                            size="lg"
-                                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl px-8 h-12 shadow-md flex items-center gap-2"
-                                        >
-                                            <Square className="fill-current w-5 h-5" />
-                                            {TEXT.btnCheckOut}
-                                        </Button>
-                                    )}
+            <div className="flex gap-4 mt-2">
+              {status === "unchecked" && (
+                <Button
+                  onClick={() => openCameraFor("checkIn")}
+                  disabled={loading || actionLoading}
+                  size="lg"
+                  className="btn-checkin"
+                >
+                  {actionLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Play className="fill-current w-5 h-5" />
+                  )}
+                  {SYSTEM_MESSAGES.CHECKIN.BTN_CHECKIN}
+                </Button>
+              )}
 
-                                    <Button size="lg" variant="outline" className="bg-background hover:bg-muted text-foreground rounded-xl px-8 h-12 font-medium flex items-center gap-2">
-                                        <Coffee className="w-5 h-5 text-muted-foreground" />
-                                        {TEXT.btnReport}
-                                    </Button>
-                                </div>
+              {status === "checked_in" && (
+                <Button
+                  onClick={() => openCameraFor("checkOut")}
+                  disabled={actionLoading}
+                  size="lg"
+                  className="btn-checkout"
+                >
+                  {actionLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Square className="fill-current w-5 h-5" />
+                  )}
+                  {SYSTEM_MESSAGES.CHECKIN.BTN_CHECKOUT}
+                </Button>
+              )}
+
+              {status === "checked_out" && (
+                <Button
+                  disabled
+                  size="lg"
+                  className="btn-checkin opacity-50 cursor-not-allowed"
+                >
+                  <Square className="fill-current w-5 h-5 text-muted-foreground mr-2" />
+                  {SYSTEM_MESSAGES.CHECKIN.DONE_CHECKOUT}
+                </Button>
+              )}
+
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate("/leave-request")}
+                className="btn-cancel"
+              >
+                <Plane className="w-5 h-5 text-muted-foreground" />
+                {SYSTEM_MESSAGES.REQUEST.CREATE_LEAVE}
+              </Button>
+            </div>
+          </div>
+
+          {/* Right side — camera placeholder / captured photo */}
+          {(() => {
+            const photoUrl =
+              status === "checked_out"
+                ? (todayRecord?.checkOutPhotoUrl ??
+                  todayRecord?.checkInPhotoUrl)
+                : todayRecord?.checkInPhotoUrl;
+            const photoAlt =
+              status === "checked_out" ? "Check-out photo" : "Check-in photo";
+            return (
+              <div className="hidden md:block shrink-0 w-48 h-48 rounded-2xl overflow-hidden shadow-lg border-4 border-background z-10 bg-muted relative">
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={photoAlt}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{
+                      backgroundImage:
+                        "url('https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?q=80&w=2662&auto=format&fit=crop')",
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Background decoration */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/3" />
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Total work hours this month */}
+        <Card className="card-border">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="icon-box bg-primary/10 text-primary">
+                <CalendarClock className="w-6 h-6" />
+              </div>
+              <Badge
+                variant="secondary"
+                className="bg-primary/10 text-primary font-medium"
+              >
+                {SYSTEM_MESSAGES.CHECKIN.THIS_MONTH}
+              </Badge>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground mb-1">
+              {SYSTEM_MESSAGES.CHECKIN.WORK_HOURS}
+            </p>
+            {loading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            ) : (
+              <div className="text-3xl font-bold text-foreground">
+                {summary
+                  ? `${summary.totalWorkHours.toFixed(1)}h`
+                  : SYSTEM_MESSAGES.CHECKIN.NO_DATA_SHORT}
+              </div>
+            )}
+            <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
+              <div
+                className="progress-bar"
+                style={{ width: `${workHoursPct}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Late days */}
+        <Card className="card-border">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="icon-box bg-destructive/10 text-destructive text-xl font-bold">
+                {SYSTEM_MESSAGES.SYMBOLS.EXCLAMATION}
+              </div>
+              <Badge
+                variant="secondary"
+                className="bg-muted text-muted-foreground font-normal"
+              >
+                {SYSTEM_MESSAGES.CHECKIN.THIS_MONTH}
+              </Badge>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground mb-1">
+              {SYSTEM_MESSAGES.CHECKIN.LATE_DAYS}
+            </p>
+            {loading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            ) : (
+              <div className="text-3xl font-bold text-foreground">
+                {summary
+                  ? `${summary.lateDays} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}`
+                  : SYSTEM_MESSAGES.CHECKIN.NO_DATA_SHORT}
+              </div>
+            )}
+            <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-destructive rounded-full transition-all"
+                style={{ width: `${latePct}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Attendance rate */}
+        <Card className="card-border">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="icon-box bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm font-bold">
+                {SYSTEM_MESSAGES.SYMBOLS.PERCENT}
+              </div>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground mb-1">
+              {SYSTEM_MESSAGES.CHECKIN.ATTENDANCE_RATE}
+            </p>
+            {loading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            ) : (
+              <div className="text-3xl font-bold text-foreground">
+                {summary
+                  ? `${summary.attendancePercentage.toFixed(0)}%`
+                  : SYSTEM_MESSAGES.CHECKIN.NO_DATA_SHORT}
+              </div>
+            )}
+            <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden">
+              <div
+                className="progress-bar"
+                style={{ width: `${summary?.attendancePercentage ?? 0}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* History Table */}
+      <Card className="card-border">
+        <CardContent className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-lg text-foreground">
+              {SYSTEM_MESSAGES.CHECKIN.HISTORY_TITLE}
+            </h3>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/attendance")}
+              className="text-muted-foreground text-sm hover:text-foreground group"
+            >
+              {SYSTEM_MESSAGES.CHECKIN.VIEW_ALL}{" "}
+              <span className="ml-1 transition-transform group-hover:translate-x-1">
+                {SYSTEM_MESSAGES.SYMBOLS.ARROW_RIGHT}
+              </span>
+            </Button>
+          </div>
+
+          <div className="w-full overflow-auto">
+            {loading ? (
+              <div className="loading-spinner justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin" />
+              </div>
+            ) : history.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                {SYSTEM_MESSAGES.CHECKIN.NO_DATA}
+              </p>
+            ) : (
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-muted-foreground uppercase border-b border-border bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-4 font-semibold tracking-wider">
+                      {SYSTEM_MESSAGES.CHECKIN.TABLE_DATE}
+                    </th>
+                    <th className="px-4 py-4 font-semibold tracking-wider">
+                      {SYSTEM_MESSAGES.CHECKIN.TABLE_CHECKIN}
+                    </th>
+                    <th className="px-4 py-4 font-semibold tracking-wider">
+                      {SYSTEM_MESSAGES.CHECKIN.TABLE_CHECKOUT}
+                    </th>
+                    <th className="px-4 py-4 font-semibold tracking-wider">
+                      {SYSTEM_MESSAGES.CHECKIN.TABLE_TOTAL_HOURS}
+                    </th>
+                    <th className="px-4 py-4 font-semibold tracking-wider">
+                      {SYSTEM_MESSAGES.CHECKIN.TABLE_STATUS}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {history.map((row) => {
+                    const checkInCls = checkinClass(row.checkInTime);
+                    const checkOutCls = checkoutClass(row.checkOutTime);
+                    const workStatus = workHoursStatus(row.workHours);
+                    const { label, cls } = statusLabel(row.status);
+                    return (
+                      <tr
+                        key={row.id}
+                        className="hover:bg-muted/30 transition-colors"
+                      >
+                        <td className="px-4 py-5 font-medium text-foreground">
+                          {fmtDate(row.date)}
+                        </td>
+                        <td className={`px-4 py-5 font-medium ${checkInCls}`}>
+                          {fmtTime(row.checkInTime)}
+                        </td>
+
+                        <td className={`px-4 py-5 font-medium ${checkOutCls}`}>
+                          {fmtTime(row.checkOutTime)}
+                        </td>
+
+                        <td
+                          className={`px-4 py-5 font-semibold ${workStatus.className}`}
+                        >
+                          {workStatus.lines.map((line, i) => (
+                            <div
+                              key={i}
+                              className={
+                                i === 0 ? "" : "text-xs text-muted-foreground"
+                              }
+                            >
+                              {line}
                             </div>
+                          ))}
+                        </td>
+                        <td className="px-4 py-5">
+                          <span
+                            className={`px-3 py-1 text-xs font-semibold rounded-full ${cls}`}
+                          >
+                            {label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-                            {/* Right side illustration/image placeholder */}
-                            <div className="hidden md:block w-72 h-40 rounded-2xl overflow-hidden shadow-lg border-4 border-background z-10 bg-muted relative">
-                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?q=80&w=2662&auto=format&fit=crop')" }}></div>
-                                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-background/40 flex items-center justify-center backdrop-blur-sm">
-                                    <div className="w-6 h-6 rounded-full border-2 border-foreground/50 flex">
-                                        <div className="w-px h-2.5 bg-foreground/50 ml-[10px] mt-0.5 origin-bottom rotate-45"></div>
-                                        <div className="w-px h-3 bg-foreground/50 -ml-px mt-0.5"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Background decorations */}
-                            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/3"></div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Summary Cards */}
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <Card className="border-border shadow-sm">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
-                                        <CalendarClock className="w-6 h-6" />
-                                    </div>
-                                    <Badge variant="secondary" className="bg-primary/10 text-primary font-medium">
-                                        {TEXT.weeklyExtraHours}
-                                    </Badge>
-                                </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">{TEXT.weeklyHoursLabel}</p>
-                                <div className="text-3xl font-bold text-foreground">{TEXT.weeklyHoursValue}</div>
-                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden flex">
-                                    <div className="h-full bg-primary w-[65%] rounded-full"></div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-border shadow-sm">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="w-12 h-12 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mb-4 text-xl font-bold">
-                                        {TEXT.lateAlertIcon}
-                                    </div>
-                                    <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">
-                                        {TEXT.lateAlertLabel}
-                                    </Badge>
-                                </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">{TEXT.lateDaysLabel}</p>
-                                <div className="text-3xl font-bold text-foreground">
-                                    {TEXT.lateDaysValue}
-                                </div>
-                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden flex">
-                                    <div className="h-full bg-destructive w-[10%] rounded-full"></div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-border shadow-sm">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="w-12 h-12 bg-accent text-accent-foreground rounded-full flex items-center justify-center mb-4">
-                                        <Plane className="w-6 h-6" />
-                                    </div>
-                                </div>
-                                <p className="text-sm font-medium text-muted-foreground mb-1">{TEXT.leaveRemainingLabel}</p>
-                                <div className="text-3xl font-bold text-foreground">
-                                    {TEXT.leaveRemainingValue}
-                                </div>
-                                <div className="mt-4 h-2 w-full bg-muted rounded-full overflow-hidden flex">
-                                    <div className="h-full bg-accent-foreground/50 w-[50%] rounded-full"></div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* History Table */}
-                    <Card className="border-border shadow-sm">
-                        <CardContent className="p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-lg text-foreground">{TEXT.historyTitle}</h3>
-                                <Button variant="ghost" onClick={() => navigate("/attendance")} className="text-muted-foreground text-sm hover:text-foreground group">
-                                    {TEXT.viewAllPrompt} <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
-                                </Button>
-                            </div>
-
-                            <div className="w-full overflow-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="text-xs text-muted-foreground uppercase border-b border-border bg-muted/50">
-                                        <tr>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colDate}</th>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colCheckIn}</th>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colCheckOut}</th>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colTotalHours}</th>
-                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wider">{TEXT.colStatus}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {historyData.map((row, i) => (
-                                            <tr key={i} className="hover:bg-muted/30 transition-colors">
-                                                <td className="px-4 py-5 font-medium text-foreground">{row.date}</td>
-                                                <td className="px-4 py-5 text-primary font-medium">{row.checkIn}</td>
-                                                <td className="px-4 py-5 text-primary font-medium">{row.checkOut}</td>
-                                                <td className="px-4 py-5 font-semibold text-foreground">{row.totalHours}</td>
-                                                <td className="px-4 py-5">
-                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${row.statusColor}`}>
-                                                        {row.status}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </main>
-            </SidebarInset>
-        </SidebarProvider>
-    )
+      {/* Camera Modal */}
+      <CameraModal
+        open={cameraOpen}
+        title={
+          pendingAction === "checkIn"
+            ? SYSTEM_MESSAGES.CHECKIN.CONFIRM_IN
+            : SYSTEM_MESSAGES.CHECKIN.CONFIRM_OUT
+        }
+        description={SYSTEM_MESSAGES.CHECKIN.CAMERA_DESC}
+        onCapture={handleCapture}
+        onClose={() => {
+          setCameraOpen(false);
+          setPendingAction(null);
+        }}
+      />
+    </main>
+  );
 }

@@ -1,34 +1,123 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
-import reactPlugin from 'eslint-plugin-react'
+import js from "@eslint/js";
+import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import tseslint from "typescript-eslint";
+import { defineConfig, globalIgnores } from "eslint/config";
+import reactPlugin from "eslint-plugin-react";
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
       reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
+      // Lưu ý: Flat config của reactPlugin cần cài đặt plugin thủ công như bên dưới
     ],
     plugins: {
       react: reactPlugin,
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
     },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
     rules: {
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
+      // --- Cấu hình mặc định của bạn ---
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      "react-refresh/only-export-components": [
+        "warn",
+        {
+          allowConstantExport: true,
+          allowExportNames: [
+            "buttonVariants",
+            "useFormField",
+            "useSidebar",
+            "useAuth",
+          ],
+        },
       ],
-      'react/jsx-no-literals': ['warn', { noStrings: true, ignoreProps: true }],
+
+      // ==========================================
+      // 1. RULES TRỊ HARDCODE (TEXT & SỐ)
+      // ==========================================
+
+      // Bắt lỗi gõ trực tiếp Text vào HTML/JSX
+      // - noStrings: true → bắt string literal là text người dùng nhìn thấy trong JSX children
+      // - ignoreProps: true → bỏ qua tất cả prop (className, path, variant...) để tránh false positive
+      //   Lý do: các prop kỹ thuật (className, path, type, variant, href...) không phải UI text
+      //   Chỉ bắt text nằm trực tiếp trong JSX children: <p>Hardcoded text</p>
+      // - allowedStrings: cho phép ký tự đặc biệt/câu ký tự đơn không phải nội dung thật
+      "react/jsx-no-literals": [
+        "warn",
+        {
+          noStrings: true,
+          ignoreProps: true,
+          allowedStrings: [
+            " ",
+            ",",
+            ".",
+            ":",
+            ";",
+            "!",
+            "?",
+            "-",
+            "|",
+            "/",
+            "(",
+            ")",
+            "[",
+            "]",
+            "•",
+            "·",
+            "&",
+            "+",
+            "=",
+            ">",
+            "<",
+            "~",
+          ],
+        },
+      ],
+
+      // Bắt lỗi "Magic Numbers" (VD: gõ thẳng radius === 50 thay vì RADIUS_DEFAULT)
+      "no-magic-numbers": "off",
+
+      // ==========================================
+      // 2. RULES TRỊ CODE SMELLS (REACT & TYPESCRIPT)
+      // ==========================================
+
+      // -- Smells của Javascript cơ bản --
+      complexity: ["warn", { max: 60 }], // Tạm nới giới hạn để giảm nhiễu lint cho các màn hình lớn hiện hữu
+      "max-depth": ["warn", 4], // Không lồng if/for quá 4 cấp
+      "max-params": ["warn", 4], // Hàm truyền quá 4 tham số -> Bắt buộc phải gom thành 1 Object
+      "no-console": ["warn", { allow: ["warn", "error"] }], // Cấm console.log, chỉ cho phép warn và error
+      "no-debugger": "warn",
+      eqeqeq: "error", // Bắt buộc dùng === thay vì ==
+      curly: "error", // Cấm viết if không có ngoặc nhọn
+      "no-duplicate-imports": "error",
+
+      // -- Smells của TypeScript --
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+      ], // Khai báo biến/tham số mà không xài (có gạch dưới _ thì tha)
+
+      // -- Smells của React --
+      "react/jsx-no-useless-fragment": "warn", // Bắt lỗi dùng <></> thừa thãi bọc ngoài 1 thẻ duy nhất
+      "react/no-unstable-nested-components": "error", // Lỗi siêu nặng: Khai báo component con ngay bên trong component cha gây memory leak
+      "react/jsx-key": "error", // Quên truyền 'key' khi dùng vòng lặp map()
+      "react-hooks/set-state-in-effect": "off",
     },
   },
-])
+]);
