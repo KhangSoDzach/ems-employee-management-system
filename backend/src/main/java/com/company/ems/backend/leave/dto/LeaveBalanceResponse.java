@@ -16,8 +16,6 @@ public class LeaveBalanceResponse {
     private Integer year;
     private Integer totalDays;
     private Integer usedDays;
-    private Integer reservedDays;
     private Integer remainingDays;
-    private Integer availableDays;
     private Integer carriedForwardDays;
 }

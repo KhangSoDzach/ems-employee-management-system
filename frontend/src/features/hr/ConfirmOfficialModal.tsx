@@ -62,10 +62,7 @@ export default function ConfirmOfficialModal({
     reset({
       contractStartDate: new Date().toISOString().slice(0, 10),
       contractTerm: EMPLOYEE_CONSTANTS.CONTRACT_TERMS.ONE_YEAR as ContractTerm,
-      officialSalary: Math.max(
-        suggestedSalary,
-        EMPLOYEE_CONSTANTS.VALIDATION.MIN_OFFICIAL_SALARY,
-      ),
+      officialSalary: suggestedSalary,
     });
   }, [open, employee, reset]);
 
@@ -137,22 +134,6 @@ export default function ConfirmOfficialModal({
               className="w-full px-3 py-2.5 rounded-xl border border-border bg-card"
               {...register("contractStartDate", {
                 required: SYSTEM_MESSAGES.EMPLOYEE.PLACEHOLDER_SIGNING_DATE,
-                validate: (value) => {
-                  if (!employee.hireDate) {
-                    return true;
-                  }
-                  const selected = new Date(value);
-                  const hire = new Date(employee.hireDate);
-                  // Compare dates only (ignore time)
-                  if (
-                    selected.setHours(0, 0, 0, 0) < hire.setHours(0, 0, 0, 0)
-                  ) {
-                    return SYSTEM_MESSAGES.EMPLOYEE.MSG_SIGNING_DATE_MIN(
-                      employee.hireDate ?? "",
-                    );
-                  }
-                  return true;
-                },
               })}
             />
             {errors.contractStartDate && (
