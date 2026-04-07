@@ -15,11 +15,29 @@
 -- 1. EXTEND attendances TABLE
 --    Add photo URLs for check-in / check-out camera captures
 -- ─────────────────────────────────────────────────────────────
-ALTER TABLE attendances
-    ADD COLUMN IF NOT EXISTS check_in_photo_url VARCHAR(500) NULL;
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'attendances'
+      AND column_name = 'check_in_photo_url'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE attendances ADD COLUMN check_in_photo_url VARCHAR(500) NULL', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-ALTER TABLE attendances
-    ADD COLUMN IF NOT EXISTS check_out_photo_url VARCHAR(500) NULL;
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'attendances'
+      AND column_name = 'check_out_photo_url'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE attendances ADD COLUMN check_out_photo_url VARCHAR(500) NULL', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ─────────────────────────────────────────────────────────────
 -- 2. WORKFLOW_TEMPLATES

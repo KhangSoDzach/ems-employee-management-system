@@ -56,7 +56,8 @@ public class LeaveServiceImpl implements LeaveService {
     private final DataScopeService dataScopeService;
         private final LeaveApprovalService leaveApprovalService;
         private final WorkflowEngineService workflowEngineService;
-    private final MessageService messages;
+        private final LeaveBalanceService leaveBalanceService;
+        private final MessageService messages;
 
         @Value("${app.workflow.leave.long-leave-extra-level-role:ROLE_HR}")
         private String longLeaveExtraLevelRole;
@@ -72,11 +73,26 @@ public class LeaveServiceImpl implements LeaveService {
         // Validate dates
         if (request.getEndDate().isBefore(request.getStartDate())) {
             throw new BusinessException("INVALID_DATE_RANGE",
-                    messages.get(MessageCode.LEAVE_INVALID_DATE_RANGE ));
+                    messages.get(MessageCode.LEAVE_INVALID_DATE_RANGE));
         }
         if (request.getStartDate().isBefore(LocalDate.now())) {
             throw new BusinessException("INVALID_START_DATE",
-                    messages.get(MessageCode.LEAVE_INVALID_START_DATE ));
+                    messages.get(MessageCode.LEAVE_INVALID_START_DATE));
+        }
+
+        // Validate overlapping leaves
+        if (leaveRepository.hasOverlappingLeaves(employee, request.getStartDate(), request.getEndDate())) {
+            throw new BusinessException("OVERLAPPING_LEAVES",
+                    messages.get(MessageCode.LEAVE_OVERLAPPING_RANGE));
+        }
+
+        LeaveType leaveType = LeaveType.fromRequest(request.getLeaveType());
+
+        // Validate balance (accounting for pending requests in hasSufficientBalance)
+        int requestedDays = Leave.calculateDays(request.getStartDate(), request.getEndDate());
+        if (!leaveBalanceService.hasSufficientBalance(employee.getId(), leaveType, requestedDays)) {
+            throw new BusinessException("INSUFFICIENT_BALANCE",
+                    messages.get(MessageCode.LEAVE_INSUFFICIENT_BALANCE, leaveType.name()));
         }
 
         Leave leave = Leave.builder()

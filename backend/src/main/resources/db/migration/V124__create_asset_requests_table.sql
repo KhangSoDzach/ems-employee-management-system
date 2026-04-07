@@ -23,22 +23,38 @@ CREATE TABLE IF NOT EXISTS asset_requests (
         FOREIGN KEY (reviewed_by)  REFERENCES users(id)
 );
 
-DELIMITER $$
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_requests'
+      AND index_name = 'idx_ar_requested_by'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_ar_requested_by ON asset_requests (requested_by)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-DROP PROCEDURE IF EXISTS add_asset_request_indexes$$
-CREATE PROCEDURE add_asset_request_indexes()
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_requests' AND index_name = 'idx_ar_requested_by') THEN
-        CREATE INDEX idx_ar_requested_by ON asset_requests (requested_by);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_requests' AND index_name = 'idx_ar_status') THEN
-        CREATE INDEX idx_ar_status ON asset_requests (status);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_requests' AND index_name = 'idx_ar_created_at') THEN
-        CREATE INDEX idx_ar_created_at ON asset_requests (created_at);
-    END IF;
-END$$
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_requests'
+      AND index_name = 'idx_ar_status'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_ar_status ON asset_requests (status)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-DELIMITER ;
-CALL add_asset_request_indexes();
-DROP PROCEDURE IF EXISTS add_asset_request_indexes;
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_requests'
+      AND index_name = 'idx_ar_created_at'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_ar_created_at ON asset_requests (created_at)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

@@ -1,34 +1,86 @@
-DELIMITER $$
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND column_name = 'gross_salary'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE payrolls ADD COLUMN gross_salary DECIMAL(15, 2) DEFAULT 0 COMMENT ''Tổng thu nhập gộp trước khấu trừ''', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-DROP PROCEDURE IF EXISTS add_payroll_columns$$
-CREATE PROCEDURE add_payroll_columns()
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'payrolls' AND column_name = 'gross_salary') THEN
-        ALTER TABLE payrolls ADD COLUMN gross_salary DECIMAL(15, 2) DEFAULT 0 COMMENT 'Tổng thu nhập gộp trước khấu trừ';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'payrolls' AND column_name = 'bhxh_deduction') THEN
-        ALTER TABLE payrolls ADD COLUMN bhxh_deduction DECIMAL(15, 2) DEFAULT 0 COMMENT 'Khấu trừ BHXH (8%)';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'payrolls' AND column_name = 'bhyt_deduction') THEN
-        ALTER TABLE payrolls ADD COLUMN bhyt_deduction DECIMAL(15, 2) DEFAULT 0 COMMENT 'Khấu trừ BHYT (1.5%)';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'payrolls' AND column_name = 'bhtn_deduction') THEN
-        ALTER TABLE payrolls ADD COLUMN bhtn_deduction DECIMAL(15, 2) DEFAULT 0 COMMENT 'Khấu trừ BHTN (1%)';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'payrolls' AND column_name = 'taxable_income') THEN
-        ALTER TABLE payrolls ADD COLUMN taxable_income DECIMAL(15, 2) COMMENT 'Thu nhập tính thuế sau khấu trừ BH và gia cảnh';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'payrolls' AND column_name = 'pit_tax') THEN
-        ALTER TABLE payrolls ADD COLUMN pit_tax DECIMAL(15, 2) DEFAULT 0 COMMENT 'Thuế TNCN theo biểu lũy tiến';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'payrolls' AND column_name = 'period') THEN
-        ALTER TABLE payrolls ADD COLUMN period VARCHAR(7) COMMENT 'Kỳ lương dạng yyyy-MM, ví dụ 2026-03';
-    END IF;
-END$$
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND column_name = 'bhxh_deduction'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE payrolls ADD COLUMN bhxh_deduction DECIMAL(15, 2) DEFAULT 0 COMMENT ''Khấu trừ BHXH (8%)''', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-DELIMITER ;
-CALL add_payroll_columns();
-DROP PROCEDURE IF EXISTS add_payroll_columns;
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND column_name = 'bhyt_deduction'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE payrolls ADD COLUMN bhyt_deduction DECIMAL(15, 2) DEFAULT 0 COMMENT ''Khấu trừ BHYT (1.5%)''', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND column_name = 'bhtn_deduction'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE payrolls ADD COLUMN bhtn_deduction DECIMAL(15, 2) DEFAULT 0 COMMENT ''Khấu trừ BHTN (1%)''', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND column_name = 'taxable_income'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE payrolls ADD COLUMN taxable_income DECIMAL(15, 2) COMMENT ''Thu nhập tính thuế sau khấu trừ BH và gia cảnh''', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND column_name = 'pit_tax'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE payrolls ADD COLUMN pit_tax DECIMAL(15, 2) DEFAULT 0 COMMENT ''Thuế TNCN theo biểu lũy tiến''', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'payrolls'
+      AND column_name = 'period'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE payrolls ADD COLUMN period VARCHAR(7) COMMENT ''Kỳ lương dạng yyyy-MM, ví dụ 2026-03''', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Populate period for existing rows (best-effort backfill)
 UPDATE payrolls
@@ -60,17 +112,15 @@ CREATE TABLE IF NOT EXISTS payroll_items (
   COLLATE=utf8mb4_unicode_ci
   COMMENT='Immutable snapshot of salary line items per payroll record';
 
--- Verify the index exists on audit_log for fast lookup by period
-DELIMITER $$
-
-DROP PROCEDURE IF EXISTS add_audit_log_index$$
-CREATE PROCEDURE add_audit_log_index()
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'audit_log' AND index_name = 'idx_audit_log_entity_type_created') THEN
-        CREATE INDEX idx_audit_log_entity_type_created ON audit_log (entity_type, created_at);
-    END IF;
-END$$
-
-DELIMITER ;
-CALL add_audit_log_index();
-DROP PROCEDURE IF EXISTS add_audit_log_index;
+-- Verify the index exists on audit_log for fast lookup by period.
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'audit_log'
+      AND index_name = 'idx_audit_log_entity_type_created'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_audit_log_entity_type_created ON audit_log (entity_type, created_at)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

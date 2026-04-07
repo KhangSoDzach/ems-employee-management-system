@@ -1,16 +1,14 @@
-DELIMITER $$
-
-DROP PROCEDURE IF EXISTS add_contract_duration$$
-CREATE PROCEDURE add_contract_duration()
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'employees' AND column_name = 'contract_duration_months') THEN
-        ALTER TABLE employees ADD COLUMN contract_duration_months INT NULL;
-    END IF;
-END$$
-
-DELIMITER ;
-CALL add_contract_duration();
-DROP PROCEDURE IF EXISTS add_contract_duration;
+SET @col_exists = (
+        SELECT COUNT(1)
+        FROM information_schema.columns
+        WHERE table_schema = DATABASE()
+            AND table_name = 'employees'
+            AND column_name = 'contract_duration_months'
+);
+SET @col_sql = IF(@col_exists = 0, 'ALTER TABLE employees ADD COLUMN contract_duration_months INT NULL', 'SELECT 1');
+PREPARE stmt FROM @col_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 UPDATE employees
 SET contract_duration_months = CASE

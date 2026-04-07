@@ -24,25 +24,51 @@ CREATE TABLE IF NOT EXISTS asset_incident_reports (
     FOREIGN KEY (processed_by) REFERENCES users(id)
     );
 
-DELIMITER $$
+-- TiDB-compatible conditional index creation (no DELIMITER / stored procedure).
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_incident_reports'
+      AND index_name = 'idx_air_asset_id'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_air_asset_id ON asset_incident_reports (asset_id)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-DROP PROCEDURE IF EXISTS add_asset_incident_indexes$$
-CREATE PROCEDURE add_asset_incident_indexes()
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_incident_reports' AND index_name = 'idx_air_asset_id') THEN
-        CREATE INDEX idx_air_asset_id ON asset_incident_reports (asset_id);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_incident_reports' AND index_name = 'idx_air_reported_by') THEN
-        CREATE INDEX idx_air_reported_by ON asset_incident_reports (reported_by);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_incident_reports' AND index_name = 'idx_air_status') THEN
-        CREATE INDEX idx_air_status ON asset_incident_reports (status);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'asset_incident_reports' AND index_name = 'idx_air_reported_at') THEN
-        CREATE INDEX idx_air_reported_at ON asset_incident_reports (reported_at);
-    END IF;
-END$$
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_incident_reports'
+      AND index_name = 'idx_air_reported_by'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_air_reported_by ON asset_incident_reports (reported_by)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-DELIMITER ;
-CALL add_asset_incident_indexes();
-DROP PROCEDURE IF EXISTS add_asset_incident_indexes;
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_incident_reports'
+      AND index_name = 'idx_air_status'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_air_status ON asset_incident_reports (status)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'asset_incident_reports'
+      AND index_name = 'idx_air_reported_at'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_air_reported_at ON asset_incident_reports (reported_at)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

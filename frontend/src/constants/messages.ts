@@ -1505,7 +1505,7 @@ export const SYSTEM_MESSAGES = {
     SHEET_RANK_C: "Trung bình - C",
     SHEET_PERIOD_LABEL: "Kỳ",
     SHEET_SCORE_LABEL: "Điểm",
-    SHEET_COMMENT_TITLE: "Nhận xét từ quản lý",
+    SHEET_COMMENT_TITLE: "Nhận xét",
     SHEET_COMMENT_TEXT:
       "Nhân viên có tinh thần trách nhiệm cao, hoàn thành các task phân tích dữ liệu đúng hạn với độ chính xác tuyệt đối. Cần cải thiện thêm khả năng thuyết trình trước đám đông và chủ động hơn trong việc đề xuất giải pháp cải tiến quy trình phòng ban.",
     SHEET_COMMENT_AUTHOR_NAME: "Lê Hoàng",

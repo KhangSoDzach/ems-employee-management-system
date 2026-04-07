@@ -33,26 +33,63 @@ CREATE TABLE IF NOT EXISTS audit_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Append-only authentication audit log. Retention: 7 years.';
 
--- Create indexes safely (MySQL 8.0 doesn't support IF NOT EXISTS for indexes)
-DELIMITER $$
-CREATE PROCEDURE create_audit_log_indexes()
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'audit_log' AND index_name = 'idx_audit_log_entity_type') THEN
-        CREATE INDEX idx_audit_log_entity_type ON audit_log (entity_type);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'audit_log' AND index_name = 'idx_audit_log_action_type') THEN
-        CREATE INDEX idx_audit_log_action_type ON audit_log (action_type);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'audit_log' AND index_name = 'idx_audit_log_actor') THEN
-        CREATE INDEX idx_audit_log_actor ON audit_log (actor);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'audit_log' AND index_name = 'idx_audit_log_identifier') THEN
-        CREATE INDEX idx_audit_log_identifier ON audit_log (identifier_attempted);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'audit_log' AND index_name = 'idx_audit_log_created_at') THEN
-        CREATE INDEX idx_audit_log_created_at ON audit_log (created_at);
-    END IF;
-END$$
-DELIMITER ;
-CALL create_audit_log_indexes();
-DROP PROCEDURE IF EXISTS create_audit_log_indexes;
+-- TiDB-compatible conditional index creation (no DELIMITER / stored procedure).
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'audit_log'
+      AND index_name = 'idx_audit_log_entity_type'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_audit_log_entity_type ON audit_log (entity_type)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'audit_log'
+      AND index_name = 'idx_audit_log_action_type'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_audit_log_action_type ON audit_log (action_type)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'audit_log'
+      AND index_name = 'idx_audit_log_actor'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_audit_log_actor ON audit_log (actor)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'audit_log'
+      AND index_name = 'idx_audit_log_identifier'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_audit_log_identifier ON audit_log (identifier_attempted)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists = (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'audit_log'
+      AND index_name = 'idx_audit_log_created_at'
+);
+SET @idx_sql = IF(@idx_exists = 0, 'CREATE INDEX idx_audit_log_created_at ON audit_log (created_at)', 'SELECT 1');
+PREPARE stmt FROM @idx_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

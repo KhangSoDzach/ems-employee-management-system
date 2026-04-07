@@ -86,10 +86,19 @@ export const employeeSchema = z
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;
 
-export const getEmployeeSchema = (isManagerPosition: boolean) => {
+export const getEmployeeSchema = (
+  isManagerPosition: boolean,
+  isHRDepartment: boolean,
+) => {
   return employeeSchema.superRefine((data, ctx) => {
-    // If position is selected and it's NOT a manager level, then a manager MUST be assigned.
-    if (!isManagerPosition && data.positionId > 0 && !data.reportingManagerId) {
+    // If not a manager position AND NOT in the HR department, then a manager MUST be assigned.
+    // (HR usually doesn't need to specify a manager in this simplified UI).
+    if (
+      !isManagerPosition &&
+      !isHRDepartment &&
+      data.positionId > 0 &&
+      !data.reportingManagerId
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: FORM_VALIDATION_MESSAGES.MANAGER_REQUIRED,

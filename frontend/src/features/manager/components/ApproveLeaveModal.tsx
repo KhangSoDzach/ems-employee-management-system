@@ -27,6 +27,7 @@ import {
 } from "@/components/review-sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { calculateWorkingDays } from "@/lib/date-utils";
 
 /* ================= TYPES ================= */
 
@@ -316,9 +317,11 @@ export default function ApproveLeaveDialog({
                   {SYSTEM_MESSAGES.LEAVE.SHEET_TOTAL_TIME}
                 </p>
                 <p className="font-bold text-destructive">
-                  {request.duration !== null
-                    ? `${request.duration} ${SYSTEM_MESSAGES.COMMON.DAYS_UNIT}`
-                    : SYSTEM_MESSAGES.COMMON.EMPTY_VALUE}
+                  {calculateWorkingDays(
+                    new Date(request.startDate + "T00:00:00"),
+                    new Date(request.endDate + "T00:00:00"),
+                  )}{" "}
+                  {SYSTEM_MESSAGES.COMMON.DAYS_UNIT}
                 </p>
               </div>
             </div>

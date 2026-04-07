@@ -41,6 +41,7 @@ import {
   type LeaveType,
 } from "@/constants/leave-request";
 import { cn } from "@/lib/utils";
+import { calculateWorkingDays } from "@/lib/date-utils";
 
 /* ================= TYPES ================= */
 
@@ -248,14 +249,15 @@ export default function ApproveLeaveRequest() {
               {format(new Date(row.startDate + "T00:00:00"), "dd/MM")}
               {row.startDate !== row.endDate &&
                 `${SYSTEM_MESSAGES.SYMBOLS.DASH}${format(new Date(row.endDate + "T00:00:00"), "dd/MM")}`}
-              {row.duration !== null && (
-                <span className="ml-1 text-muted-foreground">
-                  {SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}
-                  {row.duration}
-                  {SYSTEM_MESSAGES.APPROVE.UNIT_DAYS}
-                  {SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}
-                </span>
-              )}
+              <span className="ml-1 text-muted-foreground">
+                {SYSTEM_MESSAGES.SYMBOLS.PAREN_OPEN}
+                {calculateWorkingDays(
+                  new Date(row.startDate + "T00:00:00"),
+                  new Date(row.endDate + "T00:00:00"),
+                )}
+                {SYSTEM_MESSAGES.APPROVE.UNIT_DAYS}
+                {SYSTEM_MESSAGES.SYMBOLS.PAREN_CLOSE}
+              </span>
             </TableCell>
             <TableCell>
               <div className="flex flex-col">
