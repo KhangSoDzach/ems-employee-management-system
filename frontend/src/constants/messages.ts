@@ -713,7 +713,9 @@ export const SYSTEM_MESSAGES = {
     CONTRACT_TYPE_OFFICIAL: "Loại hợp đồng chính thức",
     PLACEHOLDER_SIGNING_DATE: "Vui lòng chọn ngày ký hợp đồng",
     PLACEHOLDER_OFFICIAL_SALARY: "Vui lòng nhập mức lương chính thức",
-    MSG_SALARY_MIN: "Mức lương phải lớn hơn 0",
+    MSG_SALARY_MIN: "Mức lương chính thức tối thiểu là 1,000,000 VNĐ.",
+    MSG_SIGNING_DATE_MIN: (date: string) =>
+      `Ngày kí hợp đồng chính thức phải bằng hoặc sau ngày nhận việc (${date})`,
   },
 
   // Common Toast Messages

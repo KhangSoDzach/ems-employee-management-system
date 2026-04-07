@@ -68,6 +68,11 @@ public class LeaveBalance extends BaseEntity {
     @Builder.Default
     private Integer usedDays = 0;
 
+    @Min(value = 0, message = "Reserved days must be zero or positive")
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer reservedDays = 0;
+
     @Column(nullable = false)
     private Integer remainingDays;
 
@@ -100,18 +105,41 @@ public class LeaveBalance extends BaseEntity {
     }
 
     /**
-     * Use leave days
+     * Use leave days (final approval)
+     * Moves days from reserved to used.
      */
     public void useLeave(int days) {
         if (days < 0) {
             throw new IllegalArgumentException("Days must be positive");
         }
-        if (days > remainingDays) {
-            throw new IllegalStateException(
-                    String.format("Insufficient leave balance. Requested: %d, Available: %d", days, remainingDays));
-        }
+        // Deduct from reserved (even if it goes slightly negative in race conditions, though should be avoided)
+        this.reservedDays = Math.max(0, this.reservedDays - days);
         this.usedDays += days;
         calculateRemainingDays();
+    }
+
+    /**
+     * Reserve leave days (on submission)
+     */
+    public void reserveLeave(int days) {
+        if (days < 0) {
+            throw new IllegalArgumentException("Days must be positive");
+        }
+        if (days > getAvailableDays()) {
+            throw new IllegalStateException(
+                    String.format("Insufficient available balance. Requested: %d, Available: %d", days, getAvailableDays()));
+        }
+        this.reservedDays += days;
+    }
+
+    /**
+     * Unreserve leave days (on rejection or cancellation)
+     */
+    public void unreserveLeave(int days) {
+        if (days < 0) {
+            throw new IllegalArgumentException("Days must be positive");
+        }
+        this.reservedDays = Math.max(0, this.reservedDays - days);
     }
 
     /**
@@ -147,10 +175,18 @@ public class LeaveBalance extends BaseEntity {
     }
 
     /**
-     * Check if employee has sufficient balance
+     * Check if employee has sufficient available balance
      */
     public boolean hasSufficientBalance(int days) {
-        return remainingDays >= days;
+        return getAvailableDays() >= days;
+    }
+
+    /**
+     * Calculate available days (Remaining - Reserved)
+     */
+    public int getAvailableDays() {
+        if (remainingDays == null) calculateRemainingDays();
+        return remainingDays - (reservedDays != null ? reservedDays : 0);
     }
 
     /**
