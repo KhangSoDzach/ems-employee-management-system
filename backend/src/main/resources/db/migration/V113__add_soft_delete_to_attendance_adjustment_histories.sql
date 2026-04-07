@@ -6,8 +6,8 @@
 -- =====================================
 
 ALTER TABLE attendance_adjustment_histories
-    ADD COLUMN deleted_at DATETIME(6) NULL AFTER version,
-    ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE AFTER deleted_at,
-    ADD COLUMN deleted_by VARCHAR(255) NULL AFTER is_deleted;
+    ADD COLUMN deleted_at DATETIME(6) NULL,
+    ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN deleted_by VARCHAR(255) NULL;
 
 CREATE INDEX idx_adj_histories_is_deleted ON attendance_adjustment_histories (is_deleted);
