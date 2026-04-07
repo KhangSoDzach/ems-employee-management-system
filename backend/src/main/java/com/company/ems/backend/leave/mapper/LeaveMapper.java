@@ -26,7 +26,6 @@ public interface LeaveMapper {
     LeaveResponse toResponse(Leave leave);
     @Mapping(target = "employeeId", source = "employee.id")
     @Mapping(target = "leaveType",  expression = "java(balance.getLeaveType() != null ? balance.getLeaveType().name() : null)")
-    @Mapping(target = "availableDays", expression = "java(balance.getAvailableDays())")
     LeaveBalanceResponse toResponse(LeaveBalance balance);
     @Mapping(target = "action",       expression = "java(h.getAction() != null ? h.getAction().name() : null)")
     @Mapping(target = "statusBefore", expression = "java(h.getStatusBefore() != null ? h.getStatusBefore().name() : null)")

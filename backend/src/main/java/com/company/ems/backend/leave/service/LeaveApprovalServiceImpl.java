@@ -173,11 +173,6 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
 
     private void handleReject(Leave leave, User approver, String comments) {
         leave.reject(approver, comments);
-        // Unreserve balance as the request is now terminal and NOT approved
-        leaveBalanceService.returnReservedBalance(
-                leave.getEmployee().getId(),
-                leave.getLeaveType(),
-                leave.getTotalDays().intValue());
     }
 
     private void handleSendBack(Leave leave, User approver, String comments) {
