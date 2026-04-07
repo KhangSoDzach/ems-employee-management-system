@@ -3,6 +3,7 @@ package com.company.ems.backend.leave.repository;
 import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.leave.entity.Leave;
 import com.company.ems.backend.leave.enums.LeaveStatus;
+import com.company.ems.backend.leave.enums.LeaveType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -177,4 +178,14 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
                                                                        @Param("excludeEmployeeId") Long excludeEmployeeId,
                                                                        @Param("canApproveLongLeaveFallback") boolean canApproveLongLeaveFallback,
                                                                        Pageable pageable);
+    @Query("SELECT COALESCE(SUM(l.totalDays), 0) FROM Leave l " +
+           "WHERE l.employee.id = :employeeId " +
+           "AND l.leaveType = :leaveType " +
+           "AND l.status IN :pendingStatuses " +
+           "AND YEAR(l.startDate) = :year")
+    Integer sumPendingDays(
+            @Param("employeeId") Long employeeId,
+            @Param("leaveType") LeaveType leaveType,
+            @Param("pendingStatuses") java.util.Collection<com.company.ems.backend.leave.enums.LeaveStatus> pendingStatuses,
+            @Param("year") int year);
 }

@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { calculateWorkingDays } from "@/lib/date-utils";
 import { CalendarIcon, MessageSquare, User } from "lucide-react";
 
 import {
@@ -44,11 +45,7 @@ export const LeaveDetailSheet = ({
     return null;
   }
 
-  const daysCount =
-    Math.ceil(
-      (request.endDate.getTime() - request.startDate.getTime()) /
-        (1000 * 60 * 60 * 24),
-    ) + 1;
+  const daysCount = calculateWorkingDays(request.startDate, request.endDate);
 
   return (
     <Sheet

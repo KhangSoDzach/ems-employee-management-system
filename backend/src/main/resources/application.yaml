@@ -10,6 +10,7 @@ spring:
     use-code-as-default-message: false
 
   jackson:
+    time-zone: Asia/Ho_Chi_Minh
     serialization:
       write-dates-as-timestamps: false
     deserialization:
@@ -31,7 +32,7 @@ spring:
   # Default credentials khớp với docker-compose.yml (MYSQL_ROOT_PASSWORD=root123).
   # Override bằng env vars khi deploy.
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver

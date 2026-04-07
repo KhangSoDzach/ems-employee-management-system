@@ -63,17 +63,20 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class EmployeeServiceImpl implements EmployeeService {
 
-        /** Date format for default password derivation: ddMMyy (e.g. 110299 for 11/02/1999). */
+        /**
+         * Date format for default password derivation: ddMMyy (e.g. 110299 for
+         * 11/02/1999).
+         */
         private static final DateTimeFormatter DOB_PASSWORD_FORMATTER = DateTimeFormatter.ofPattern("ddMMyy");
         private static final int MANAGER_LEVEL_THRESHOLD = 3;
         private static final List<Integer> ALLOWED_FIXED_TERM_MONTHS = List.of(12, 24, 36);
         private static final long MAX_EMPLOYEE_FILE_SIZE_BYTES = 10L * 1024 * 1024;
         private static final Set<String> ALLOWED_DOCUMENT_TYPES = Set.of(
-                "application/pdf",
-                "application/msword",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "image/jpeg",
-                "image/png");
+                        "application/pdf",
+                        "application/msword",
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        "image/jpeg",
+                        "image/png");
         private static final Set<String> ALLOWED_AVATAR_TYPES = Set.of("image/jpeg", "image/png");
         private static final String EMPLOYEE_UPLOAD_ROOT = "uploads/employee-files";
         private static final String EMPLOYEE_UPLOAD_PUBLIC_PREFIX = "/uploads/employee-files/";
@@ -100,29 +103,33 @@ public class EmployeeServiceImpl implements EmployeeService {
                 if (request.getNationalId() != null && employeeRepository.existsByNationalId(request.getNationalId())) {
                         throw new BusinessException("DUPLICATE_NATIONAL_ID", "CCCD/CMND đã tồn tại trong hệ thống");
                 }
-                if (request.getSocialSecurityNumber() != null && employeeRepository.existsBySocialSecurityNumber(request.getSocialSecurityNumber())) {
-                        throw new BusinessException("DUPLICATE_SOCIAL_SECURITY_NUMBER", "Số sổ BHXH đã tồn tại trong hệ thống");
+                if (request.getSocialSecurityNumber() != null
+                                && employeeRepository.existsBySocialSecurityNumber(request.getSocialSecurityNumber())) {
+                        throw new BusinessException("DUPLICATE_SOCIAL_SECURITY_NUMBER",
+                                        "Số sổ BHXH đã tồn tại trong hệ thống");
                 }
                 if (request.getTaxId() != null && employeeRepository.existsByTaxId(request.getTaxId())) {
                         throw new BusinessException("DUPLICATE_TAX_ID", "Mã số thuế đã tồn tại trong hệ thống");
                 }
-                if (request.getBankAccountNumber() != null && employeeRepository.existsByBankAccountNumber(request.getBankAccountNumber())) {
-                        throw new BusinessException("DUPLICATE_BANK_ACCOUNT", "Số tài khoản ngân hàng đã tồn tại trong hệ thống");
+                if (request.getBankAccountNumber() != null
+                                && employeeRepository.existsByBankAccountNumber(request.getBankAccountNumber())) {
+                        throw new BusinessException("DUPLICATE_BANK_ACCOUNT",
+                                        "Số tài khoản ngân hàng đã tồn tại trong hệ thống");
                 }
 
                 Department department = departmentRepository.findById(request.getDepartmentId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Department", "id",
-                                request.getDepartmentId()));
+                                .orElseThrow(() -> new ResourceNotFoundException("Department", "id",
+                                                request.getDepartmentId()));
 
                 Position position = positionRepository.findById(request.getPositionId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Position", "id",
-                                request.getPositionId()));
+                                .orElseThrow(() -> new ResourceNotFoundException("Position", "id",
+                                                request.getPositionId()));
 
                 Employee reportingManager = null;
                 if (request.getReportingManagerId() != null) {
                         reportingManager = employeeRepository.findById(request.getReportingManagerId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Employee (Manager)", "id",
-                                        request.getReportingManagerId()));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Employee (Manager)", "id",
+                                                        request.getReportingManagerId()));
                 }
 
                 String year = String.valueOf(java.time.LocalDate.now().getYear());
@@ -148,59 +155,59 @@ public class EmployeeServiceImpl implements EmployeeService {
                         rawPassword = buildDefaultPassword(employeeCode, request.getDateOfBirth());
                         Role assignedRole = resolveRoleForDepartment(department, position, request.getRoleId());
                         linkedUser = User.builder()
-                                .username(employeeCode)
-                                .email(request.getEmail())
-                                .password(passwordEncoder.encode(rawPassword))
-                                .roles(new HashSet<>(Set.of(assignedRole)))
-                                .build();
+                                        .username(employeeCode)
+                                        .email(request.getEmail())
+                                        .password(passwordEncoder.encode(rawPassword))
+                                        .roles(new HashSet<>(Set.of(assignedRole)))
+                                        .build();
                 }
 
                 Employee employee = Employee.builder().user(linkedUser)
-                        .employeeCode(employeeCode)
-                        .firstName(request.getFirstName())
-                        .lastName(request.getLastName())
-                        .email(request.getEmail())
-                        .phone(request.getPhone())
-                        .dateOfBirth(request.getDateOfBirth())
-                        .hireDate(request.getHireDate())
-                        .department(department)
-                        .position(position)
-                        .address(request.getAddress())
-                        .city(request.getCity())
-                        .state(request.getState())
-                        .zipCode(request.getZipCode())
-                        .country(request.getCountry())
+                                .employeeCode(employeeCode)
+                                .firstName(request.getFirstName())
+                                .lastName(request.getLastName())
+                                .email(request.getEmail())
+                                .phone(request.getPhone())
+                                .dateOfBirth(request.getDateOfBirth())
+                                .hireDate(request.getHireDate())
+                                .department(department)
+                                .position(position)
+                                .address(request.getAddress())
+                                .city(request.getCity())
+                                .state(request.getState())
+                                .zipCode(request.getZipCode())
+                                .country(request.getCountry())
 
-                        .emergencyContactName(request.getEmergencyContactName())
-                        .emergencyContactPhone(request.getEmergencyContactPhone())
-                        .emergencyContactRelation(request.getEmergencyContactRelation())
+                                .emergencyContactName(request.getEmergencyContactName())
+                                .emergencyContactPhone(request.getEmergencyContactPhone())
+                                .emergencyContactRelation(request.getEmergencyContactRelation())
 
-                        .taxId(request.getTaxId())
-                        .socialSecurityNumber(request.getSocialSecurityNumber())
-                        .nationalId(request.getNationalId())
+                                .taxId(request.getTaxId())
+                                .socialSecurityNumber(request.getSocialSecurityNumber())
+                                .nationalId(request.getNationalId())
 
-                        .bankAccountNumber(request.getBankAccountNumber())
-                        .bankName(request.getBankName())
-                        .bankBranch(request.getBankBranch())
+                                .bankAccountNumber(request.getBankAccountNumber())
+                                .bankName(request.getBankName())
+                                .bankBranch(request.getBankBranch())
 
-                        .reportingManager(reportingManager)
-                        .probationEndDate(request.getProbationEndDate())
-                        .probationSalary(initialSalary)
-                        .officialSalary(request.getOfficialSalary())
-                        .workLocation(request.getWorkLocation())
+                                .reportingManager(reportingManager)
+                                .probationEndDate(request.getProbationEndDate())
+                                .probationSalary(initialSalary)
+                                .officialSalary(request.getOfficialSalary())
+                                .workLocation(request.getWorkLocation())
 
-                        .nationality(request.getNationality())
-                        .bloodGroup(request.getBloodGroup())
-                        .gender(request.getGender())
-                        .avatarUrl(request.getAvatarUrl())
-                        .notes(request.getNotes())
-                        .salary(initialSalary)
-                        .status(EmployeeStatus.ACTIVE)
-                        .workStatus(WorkStatus.PROBATION)
-                        .build();
+                                .nationality(request.getNationality())
+                                .bloodGroup(request.getBloodGroup())
+                                .gender(request.getGender())
+                                .avatarUrl(request.getAvatarUrl())
+                                .notes(request.getNotes())
+                                .salary(initialSalary)
+                                .status(EmployeeStatus.ACTIVE)
+                                .workStatus(WorkStatus.PROBATION)
+                                .build();
 
                 applyContractRules(employee, request.getContractType(), request.getContractStartDate(),
-                        request.getContractDurationMonths(), request.getContractEndDate());
+                                request.getContractDurationMonths(), request.getContractEndDate());
 
                 Employee saved = employeeRepository.save(employee);
 
@@ -213,13 +220,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                 // blocks or rolls back the creation transaction.
                 if (rawPassword != null) {
                         emailNotificationService.notifyNewEmployeeAsync(
-                                saved.getEmail(),
-                                saved.getFirstName() + " " + saved.getLastName(),
-                                saved.getEmployeeCode(),
-                                rawPassword);
+                                        saved.getEmail(),
+                                        saved.getFirstName() + " " + saved.getLastName(),
+                                        saved.getEmployeeCode(),
+                                        rawPassword);
                 } else {
                         log.warn("[EMS-EMAIL] Skipping credentials email for employee [{}]: dateOfBirth is null",
-                                saved.getEmployeeCode());
+                                        saved.getEmployeeCode());
                 }
 
                 return employeeMapper.toResponse(saved);
@@ -228,7 +235,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         @Override
         @Transactional(readOnly = true)
         public PageResponse<EmployeeResponse> getAllEmployees(int page, int size, String department,
-                                                              String position, String status, String search, boolean includeDeleted) {
+                        String position, String status, String search, boolean includeDeleted) {
                 CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
                 PageRequest pageable = PageRequest.of(page, size);
 
@@ -266,38 +273,38 @@ public class EmployeeServiceImpl implements EmployeeService {
                 } else if (principal.hasDataScope(DataScope.ALL)) {
                         // HR Admin: xem tất cả với filter
                         employees = employeeRepository.searchEmployees(search, departmentIdFilter, positionIdFilter,
-                                statusFilter, pageable);
+                                        statusFilter, pageable);
 
                 } else if (principal.hasDataScope(DataScope.TEAM)) {
                         // Manager: chỉ xem team của mình
                         Employee managerEmployee = employeeRepository.findByUserId(principal.getUserId())
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                        "Employee record không tồn tại cho userId: "
-                                                + principal.getUserId()));
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Employee record không tồn tại cho userId: "
+                                                                        + principal.getUserId()));
 
                         employees = employeeRepository.searchEmployeesByManager(managerEmployee.getId(), search,
-                                departmentIdFilter, positionIdFilter, statusFilter, pageable);
+                                        departmentIdFilter, positionIdFilter, statusFilter, pageable);
 
                 } else {
                         // Employee (SELF): chỉ thấy chính mình
                         Employee self = employeeRepository.findByUserId(principal.getUserId())
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                        "Employee record không tồn tại cho userId: "
-                                                + principal.getUserId()));
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Employee record không tồn tại cho userId: "
+                                                                        + principal.getUserId()));
                         // Wrap single result as page
                         return PageResponse.<EmployeeResponse>builder()
-                                .content(List.of(employeeMapper.toResponse(self)))
-                                .page(0).size(1).totalElements(1L).totalPages(1)
-                                .build();
+                                        .content(List.of(employeeMapper.toResponse(self)))
+                                        .page(0).size(1).totalElements(1L).totalPages(1)
+                                        .build();
                 }
 
                 List<EmployeeResponse> content = employees.getContent().stream()
-                        .map(employeeMapper::toResponse)
-                        .toList();
+                                .map(employeeMapper::toResponse)
+                                .toList();
 
                 return PageResponse.<EmployeeResponse>builder().content(content).page(page).size(size)
-                        .totalElements(employees.getTotalElements()).totalPages(employees.getTotalPages())
-                        .build();
+                                .totalElements(employees.getTotalElements()).totalPages(employees.getTotalPages())
+                                .build();
         }
 
         @Override
@@ -309,10 +316,10 @@ public class EmployeeServiceImpl implements EmployeeService {
                 dataScopeService.assertCanAccessEmployee(principal, id);
 
                 Employee employee = employeeRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
                 log.debug("User [{}] accessed employee [{}] - DataScopes: {}",
-                        principal.getUsername(), id, principal.getDataScopes());
+                                principal.getUsername(), id, principal.getDataScopes());
 
                 return employeeMapper.toResponse(employee);
         }
@@ -325,47 +332,55 @@ public class EmployeeServiceImpl implements EmployeeService {
                 dataScopeService.assertCanAccessEmployee(principal, id);
 
                 Employee employee = employeeRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
                 if (!employee.getEmail().equals(request.getEmail())
-                        && employeeRepository.existsByEmail(request.getEmail())) {
+                                && employeeRepository.existsByEmail(request.getEmail())) {
                         throw new BusinessException("DUPLICATE_EMAIL", "Email đã tồn tại trong hệ thống");
                 }
                 if (request.getNationalId() != null && !request.getNationalId().equals(employee.getNationalId())
-                        && employeeRepository.existsByNationalId(request.getNationalId())) {
+                                && employeeRepository.existsByNationalId(request.getNationalId())) {
                         throw new BusinessException("DUPLICATE_NATIONAL_ID", "CCCD/CMND đã tồn tại trong hệ thống");
                 }
-                if (request.getSocialSecurityNumber() != null && !request.getSocialSecurityNumber().equals(employee.getSocialSecurityNumber())
-                        && employeeRepository.existsBySocialSecurityNumber(request.getSocialSecurityNumber())) {
-                        throw new BusinessException("DUPLICATE_SOCIAL_SECURITY_NUMBER", "Số sổ BHXH đã tồn tại trong hệ thống");
+                if (request.getSocialSecurityNumber() != null
+                                && !request.getSocialSecurityNumber().equals(employee.getSocialSecurityNumber())
+                                && employeeRepository.existsBySocialSecurityNumber(request.getSocialSecurityNumber())) {
+                        throw new BusinessException("DUPLICATE_SOCIAL_SECURITY_NUMBER",
+                                        "Số sổ BHXH đã tồn tại trong hệ thống");
                 }
                 if (request.getTaxId() != null && !request.getTaxId().equals(employee.getTaxId())
-                        && employeeRepository.existsByTaxId(request.getTaxId())) {
+                                && employeeRepository.existsByTaxId(request.getTaxId())) {
                         throw new BusinessException("DUPLICATE_TAX_ID", "Mã số thuế đã tồn tại trong hệ thống");
                 }
-                if (request.getBankAccountNumber() != null && !request.getBankAccountNumber().equals(employee.getBankAccountNumber())
-                        && employeeRepository.existsByBankAccountNumber(request.getBankAccountNumber())) {
-                        throw new BusinessException("DUPLICATE_BANK_ACCOUNT", "Số tài khoản ngân hàng đã tồn tại trong hệ thống");
+                if (request.getBankAccountNumber() != null
+                                && !request.getBankAccountNumber().equals(employee.getBankAccountNumber())
+                                && employeeRepository.existsByBankAccountNumber(request.getBankAccountNumber())) {
+                        throw new BusinessException("DUPLICATE_BANK_ACCOUNT",
+                                        "Số tài khoản ngân hàng đã tồn tại trong hệ thống");
                 }
 
                 Department departmentModel = departmentRepository.findById(request.getDepartmentId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Department", "id",
-                                request.getDepartmentId()));
+                                .orElseThrow(() -> new ResourceNotFoundException("Department", "id",
+                                                request.getDepartmentId()));
 
                 Position positionModel = positionRepository.findById(request.getPositionId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Position", "id",
-                                request.getPositionId()));
+                                .orElseThrow(() -> new ResourceNotFoundException("Position", "id",
+                                                request.getPositionId()));
 
                 Employee reportingManager = null;
                 if (request.getReportingManagerId() != null) {
                         reportingManager = employeeRepository.findById(request.getReportingManagerId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Employee (Manager)", "id",
-                                        request.getReportingManagerId()));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Employee (Manager)", "id",
+                                                        request.getReportingManagerId()));
                 }
 
                 employee.setFirstName(request.getFirstName());
                 employee.setLastName(request.getLastName());
                 employee.setEmail(request.getEmail());
+                // Keep the linked User account in sync with the employee's new email
+                if (employee.getUser() != null) {
+                        employee.getUser().setEmail(request.getEmail());
+                }
                 employee.setPhone(request.getPhone());
                 employee.setDateOfBirth(request.getDateOfBirth());
                 employee.setHireDate(request.getHireDate());
@@ -398,7 +413,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 employee.setWorkLocation(request.getWorkLocation());
 
                 applyContractRules(employee, request.getContractType(), request.getContractStartDate(),
-                        request.getContractDurationMonths(), request.getContractEndDate());
+                                request.getContractDurationMonths(), request.getContractEndDate());
 
                 employee.setNationality(request.getNationality());
                 employee.setBloodGroup(request.getBloodGroup());
@@ -421,16 +436,16 @@ public class EmployeeServiceImpl implements EmployeeService {
                 dataScopeService.assertCanAccessEmployee(principal, id);
 
                 Employee employee = employeeRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
                 if (employee.getWorkStatus() != WorkStatus.PROBATION) {
                         throw new BusinessException("EMPLOYEE_NOT_IN_PROBATION",
-                                "Chỉ nhân viên ở trạng thái thử việc mới có thể xác nhận chính thức");
+                                        "Chỉ nhân viên ở trạng thái thử việc mới có thể xác nhận chính thức");
                 }
 
                 String contractTerm = request.getContractTerm() != null
-                        ? request.getContractTerm().trim().toUpperCase()
-                        : "";
+                                ? request.getContractTerm().trim().toUpperCase()
+                                : "";
 
                 LocalDate contractEndDate;
                 switch (contractTerm) {
@@ -456,14 +471,14 @@ public class EmployeeServiceImpl implements EmployeeService {
                         }
                         default ->
                                 throw new BusinessException("INVALID_CONTRACT_TERM",
-                                        "Loại hợp đồng không hợp lệ. Chỉ chấp nhận ONE_YEAR, TWO_YEARS, THREE_YEARS hoặc INDEFINITE");
+                                                "Loại hợp đồng không hợp lệ. Chỉ chấp nhận ONE_YEAR, TWO_YEARS, THREE_YEARS hoặc INDEFINITE");
                 }
 
                 if (("ONE_YEAR".equals(contractTerm) || "TWO_YEARS".equals(contractTerm)
-                        || "THREE_YEARS".equals(contractTerm))
-                        && contractEndDate == null) {
+                                || "THREE_YEARS".equals(contractTerm))
+                                && contractEndDate == null) {
                         throw new BusinessException("INVALID_CONTRACT_END_DATE",
-                                "Hợp đồng có thời hạn bắt buộc phải có ngày hết hạn");
+                                        "Hợp đồng có thời hạn bắt buộc phải có ngày hết hạn");
                 }
 
                 if (employee.getProbationSalary() == null) {
@@ -495,7 +510,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 dataScopeService.assertCanAccessEmployee(principal, id);
 
                 Employee employee = employeeRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
                 String normalizedType = fileType == null ? "DOCUMENT" : fileType.trim().toUpperCase();
                 boolean isAvatar = "AVATAR".equals(normalizedType);
@@ -505,7 +520,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                         throw new BusinessException("INVALID_AVATAR_TYPE", "Ảnh đại diện chỉ chấp nhận JPG hoặc PNG");
                 }
                 if (!isAvatar && !ALLOWED_DOCUMENT_TYPES.contains(contentType)) {
-                        throw new BusinessException("INVALID_DOCUMENT_TYPE", "Tài liệu chỉ chấp nhận PDF, DOC, DOCX, JPG, PNG");
+                        throw new BusinessException("INVALID_DOCUMENT_TYPE",
+                                        "Tài liệu chỉ chấp nhận PDF, DOC, DOCX, JPG, PNG");
                 }
 
                 String relativePath = storeEmployeeFile(file, employee, isAvatar ? "avatars" : "documents");
@@ -518,13 +534,14 @@ public class EmployeeServiceImpl implements EmployeeService {
                 }
 
                 EmployeeAttachment attachment = EmployeeAttachment.builder()
-                        .employee(employee)
-                        .originalFileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown")
-                        .storedFileName(Paths.get(relativePath).getFileName().toString())
-                        .fileUrl(fileUrl)
-                        .fileType(contentType)
-                        .fileSize(file.getSize())
-                        .build();
+                                .employee(employee)
+                                .originalFileName(file.getOriginalFilename() != null ? file.getOriginalFilename()
+                                                : "unknown")
+                                .storedFileName(Paths.get(relativePath).getFileName().toString())
+                                .fileUrl(fileUrl)
+                                .fileType(contentType)
+                                .fileSize(file.getSize())
+                                .build();
                 employeeAttachmentRepository.save(attachment);
                 return fileUrl;
         }
@@ -536,9 +553,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                 dataScopeService.assertCanAccessEmployee(principal, id);
 
                 return employeeAttachmentRepository.findByEmployeeIdAndIsDeletedFalseOrderByCreatedAtDesc(id)
-                        .stream()
-                        .map(this::toAttachmentResponse)
-                        .toList();
+                                .stream()
+                                .map(this::toAttachmentResponse)
+                                .toList();
         }
 
         @Override
@@ -546,14 +563,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         public List<EmployeeAttachmentResponse> getMyEmployeeAttachments() {
                 CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
                 Employee employee = employeeRepository.findByUserId(principal.getUserId())
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "Không tìm thấy hồ sơ nhân viên cho tài khoản hiện tại"));
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Không tìm thấy hồ sơ nhân viên cho tài khoản hiện tại"));
 
                 return employeeAttachmentRepository
-                        .findByEmployeeIdAndIsDeletedFalseOrderByCreatedAtDesc(employee.getId())
-                        .stream()
-                        .map(this::toAttachmentResponse)
-                        .toList();
+                                .findByEmployeeIdAndIsDeletedFalseOrderByCreatedAtDesc(employee.getId())
+                                .stream()
+                                .map(this::toAttachmentResponse)
+                                .toList();
         }
 
         @Override
@@ -562,8 +579,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                 dataScopeService.assertCanAccessEmployee(principal, id);
 
                 EmployeeAttachment attachment = employeeAttachmentRepository
-                        .findByIdAndEmployeeIdAndIsDeletedFalse(attachmentId, id)
-                        .orElseThrow(() -> new ResourceNotFoundException("EmployeeAttachment", "id", attachmentId));
+                                .findByIdAndEmployeeIdAndIsDeletedFalse(attachmentId, id)
+                                .orElseThrow(() -> new ResourceNotFoundException("EmployeeAttachment", "id",
+                                                attachmentId));
 
                 deleteStoredEmployeeFile(attachment.getFileUrl());
                 attachment.softDelete(principal.getUsername());
@@ -580,7 +598,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 }
 
                 Employee employee = employeeRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
                 // Soft delete: mark as deleted, set status TERMINATED
                 employee.softDelete(principal.getUsername());
@@ -602,7 +620,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 }
 
                 Employee employee = employeeRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+                                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
                 if (employee.getIsDeleted() == null || !employee.getIsDeleted()) {
                         throw new BusinessException("EMPLOYEE_NOT_DELETED", "Nhân viên này chưa bị xóa");
@@ -621,11 +639,11 @@ public class EmployeeServiceImpl implements EmployeeService {
                 CustomUserPrincipal principal = dataScopeService.getCurrentPrincipal();
 
                 Employee employee = employeeRepository.findByUserId(principal.getUserId())
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "Không tìm thấy hồ sơ nhân viên cho tài khoản hiện tại"));
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Không tìm thấy hồ sơ nhân viên cho tài khoản hiện tại"));
 
                 log.info("User [{}] accessed own profile [employeeId={}]",
-                        principal.getUsername(), employee.getId());
+                                principal.getUsername(), employee.getId());
 
                 PublicEmployeeResponse response = employeeMapper.toPublicResponse(employee);
 
@@ -643,7 +661,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 LocalDate today = LocalDate.now();
                 LocalDate firstDayOfMonth = today.with(TemporalAdjusters.firstDayOfMonth());
                 AttendanceSummaryResponse summary = attendanceService.getSummary(
-                        employee.getId(), firstDayOfMonth, today, principal);
+                                employee.getId(), firstDayOfMonth, today, principal);
                 response.setAttendancePercentage(summary.getAttendancePercentage());
 
                 return response;
@@ -655,15 +673,15 @@ public class EmployeeServiceImpl implements EmployeeService {
                 // Trả danh sách nhân viên ACTIVE có vị trí là manager (level == 3) - Không lấy
                 // ADMIN
                 return employeeRepository.findAll().stream()
-                        .filter(e -> e.getStatus() == EmployeeStatus.ACTIVE
-                                && e.getPosition() != null
-                                && e.getPosition().getLevel() != null
-                                && e.getPosition().getLevel() == 3)
-                        .map(e -> Map.<String, Object>of(
-                                "id", e.getId(),
-                                "name", e.getFullName(),
-                                "position", e.getPosition().getTitle()))
-                        .collect(java.util.stream.Collectors.toList());
+                                .filter(e -> e.getStatus() == EmployeeStatus.ACTIVE
+                                                && e.getPosition() != null
+                                                && e.getPosition().getLevel() != null
+                                                && e.getPosition().getLevel() == 3)
+                                .map(e -> Map.<String, Object>of(
+                                                "id", e.getId(),
+                                                "name", e.getFullName(),
+                                                "position", e.getPosition().getTitle()))
+                                .collect(java.util.stream.Collectors.toList());
         }
 
         @Override
@@ -677,92 +695,97 @@ public class EmployeeServiceImpl implements EmployeeService {
                 if (principal.hasDataScope(DataScope.ALL)) {
                         // HR / Admin: có thể thấy tất cả nhân viên
                         employees = employeeRepository.searchEmployees(
-                                search, null, null, null, pageable);
+                                        search, null, null, null, pageable);
 
                 } else if (principal.hasDataScope(DataScope.TEAM)) {
                         // Manager: chỉ thấy nhân viên trong team của mình
                         Employee managerEmployee = employeeRepository.findByUserId(principal.getUserId())
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                        "Employee record không tồn tại cho userId: "
-                                                + principal.getUserId()));
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Employee record không tồn tại cho userId: "
+                                                                        + principal.getUserId()));
 
                         employees = employeeRepository.searchEmployeesByManager(
-                                managerEmployee.getId(), search, null, null, null, pageable);
+                                        managerEmployee.getId(), search, null, null, null, pageable);
 
                 } else if (principal.hasDataScope(DataScope.SELF)) {
                         // Employee: thấy các thành viên cùng nhóm (cùng reporting manager)
                         Employee self = employeeRepository.findByUserId(principal.getUserId())
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                        "Employee record không tồn tại cho userId: "
-                                                + principal.getUserId()));
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Employee record không tồn tại cho userId: "
+                                                                        + principal.getUserId()));
 
                         if (self.getReportingManager() == null) {
                                 return PageResponse.<MemberResponse>builder()
-                                        .content(List.of(mapToMemberResponse(self)))
-                                        .page(0)
-                                        .size(1)
-                                        .totalElements(1L)
-                                        .totalPages(1)
-                                        .build();
+                                                .content(List.of(mapToMemberResponse(self)))
+                                                .page(0)
+                                                .size(1)
+                                                .totalElements(1L)
+                                                .totalPages(1)
+                                                .build();
                         }
 
                         employees = employeeRepository.searchEmployeesFor360ByManagerGroup(
-                                self.getReportingManager().getId(),
-                                search,
-                                null,
-                                null,
-                                null,
-                                pageable);
+                                        self.getReportingManager().getId(),
+                                        search,
+                                        null,
+                                        null,
+                                        null,
+                                        pageable);
 
                 } else {
                         throw new ForbiddenException();
                 }
 
                 List<MemberResponse> content = employees.getContent().stream()
-                        .map(this::mapToMemberResponse)
-                        .toList();
+                                .map(this::mapToMemberResponse)
+                                .toList();
 
                 return PageResponse.<MemberResponse>builder()
-                        .content(content)
-                        .page(page)
-                        .size(size)
-                        .totalElements(employees.getTotalElements())
-                        .totalPages(employees.getTotalPages())
-                        .build();
+                                .content(content)
+                                .page(page)
+                                .size(size)
+                                .totalElements(employees.getTotalElements())
+                                .totalPages(employees.getTotalPages())
+                                .build();
         }
 
         /**
          * Maps an Employee to a slim MemberResponse (no sensitive fields).
          */
         private MemberResponse mapToMemberResponse(Employee employee) {
-                if (employee == null) return null;
+                if (employee == null)
+                        return null;
                 return MemberResponse.builder()
-                        .id(employee.getId())
-                        .userId(employee.getUser() != null ? employee.getUser().getId() : null)
-                        .employeeCode(employee.getEmployeeCode())
-                        .fullName(employee.getFullName())
-                        .email(employee.getEmail())
-                        .avatarUrl(employee.getAvatarUrl())
-                        .positionTitle(employee.getPosition() != null ? employee.getPosition().getTitle() : null)
-                        .departmentName(employee.getDepartment() != null ? employee.getDepartment().getName() : null)
-                        .status(employee.getStatus() != null ? employee.getStatus().name() : null)
-                        .build();
+                                .id(employee.getId())
+                                .userId(employee.getUser() != null ? employee.getUser().getId() : null)
+                                .employeeCode(employee.getEmployeeCode())
+                                .fullName(employee.getFullName())
+                                .email(employee.getEmail())
+                                .avatarUrl(employee.getAvatarUrl())
+                                .positionTitle(employee.getPosition() != null ? employee.getPosition().getTitle()
+                                                : null)
+                                .departmentName(employee.getDepartment() != null ? employee.getDepartment().getName()
+                                                : null)
+                                .status(employee.getStatus() != null ? employee.getStatus().name() : null)
+                                .build();
         }
 
         private EmployeeAttachmentResponse toAttachmentResponse(EmployeeAttachment attachment) {
                 return EmployeeAttachmentResponse.builder()
-                        .id(attachment.getId())
-                        .originalFileName(attachment.getOriginalFileName())
-                        .fileUrl(attachment.getFileUrl())
-                        .fileType(attachment.getFileType())
-                        .fileSize(attachment.getFileSize())
-                        .createdAt(attachment.getCreatedAt())
-                        .build();
+                                .id(attachment.getId())
+                                .originalFileName(attachment.getOriginalFileName())
+                                .fileUrl(attachment.getFileUrl())
+                                .fileType(attachment.getFileType())
+                                .fileSize(attachment.getFileSize())
+                                .createdAt(attachment.getCreatedAt())
+                                .build();
         }
 
         /**
          * Derives the default login password: {@code employeeCode + DOB(ddMMyy)}.
-         * <p>Example: code {@code IT202600001} + DOB {@code 1999-02-11} => {@code IT202600001110299}.
+         * <p>
+         * Example: code {@code IT202600001} + DOB {@code 1999-02-11} =>
+         * {@code IT202600001110299}.
          */
         private String buildDefaultPassword(String employeeCode, LocalDate dateOfBirth) {
                 return employeeCode + dateOfBirth.format(DOB_PASSWORD_FORMATTER);
@@ -770,8 +793,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         private String storeEmployeeFile(MultipartFile file, Employee employee, String categoryFolder) {
                 String safeCode = employee.getEmployeeCode() != null
-                        ? employee.getEmployeeCode().replaceAll("[^a-zA-Z0-9_\\-]", "_")
-                        : String.valueOf(employee.getId());
+                                ? employee.getEmployeeCode().replaceAll("[^a-zA-Z0-9_\\-]", "_")
+                                : String.valueOf(employee.getId());
                 String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
                 String storedFilename = UUID.randomUUID() + (extension != null ? "." + extension : "");
 
@@ -799,20 +822,21 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         private void applyContractRules(Employee employee, ContractType contractType,
-                                        LocalDate contractStartDate,
-                                        Integer contractDurationMonths,
-                                        LocalDate contractEndDate) {
+                        LocalDate contractStartDate,
+                        Integer contractDurationMonths,
+                        LocalDate contractEndDate) {
                 employee.setContractType(contractType);
                 employee.setContractStartDate(contractStartDate);
 
                 if (ContractType.CONTRACT.equals(contractType)) {
                         if (contractStartDate == null) {
                                 throw new BusinessException("MISSING_CONTRACT_START_DATE",
-                                        "Hợp đồng có thời hạn bắt buộc phải có ngày bắt đầu");
+                                                "Hợp đồng có thời hạn bắt buộc phải có ngày bắt đầu");
                         }
-                        if (contractDurationMonths == null || !ALLOWED_FIXED_TERM_MONTHS.contains(contractDurationMonths)) {
+                        if (contractDurationMonths == null
+                                        || !ALLOWED_FIXED_TERM_MONTHS.contains(contractDurationMonths)) {
                                 throw new BusinessException("INVALID_CONTRACT_DURATION",
-                                        "Hợp đồng có thời hạn chỉ được phép 12, 24 hoặc 36 tháng");
+                                                "Hợp đồng có thời hạn chỉ được phép 12, 24 hoặc 36 tháng");
                         }
                         employee.setContractDurationMonths(contractDurationMonths);
                         employee.setContractEndDate(contractStartDate.plusMonths(contractDurationMonths).minusDays(1));
@@ -835,26 +859,27 @@ public class EmployeeServiceImpl implements EmployeeService {
         private Role resolveRoleForDepartment(Department department, Position position, Long explicitRoleId) {
                 if (explicitRoleId != null) {
                         return roleRepository.findById(explicitRoleId)
-                                .orElseThrow(() -> new ResourceNotFoundException("Role", "id", explicitRoleId));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "id", explicitRoleId));
                 }
 
                 String deptCode = department.getCode();
                 if ("ADMIN".equals(deptCode)) {
                         return roleRepository.findByName("ROLE_ADMIN")
-                                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_ADMIN"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_ADMIN"));
                 }
                 if ("HR".equals(deptCode)) {
                         return roleRepository.findByName("ROLE_HR")
-                                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_HR"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_HR"));
                 }
 
                 Integer level = position.getLevel();
                 if (level != null && level >= MANAGER_LEVEL_THRESHOLD) {
                         return roleRepository.findByName("ROLE_MANAGER")
-                                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_MANAGER"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name",
+                                                        "ROLE_MANAGER"));
                 }
 
                 return roleRepository.findByName("ROLE_EMPLOYEE")
-                        .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_EMPLOYEE"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_EMPLOYEE"));
         }
 }
