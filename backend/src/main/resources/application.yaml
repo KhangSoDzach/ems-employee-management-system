@@ -136,7 +136,8 @@ app:
 
 # Server Configuration
 server:
-  port: 8080
+  # Render injects PORT for web services; default keeps local/dev behavior unchanged.
+  port: ${PORT:8080}
   servlet:
     context-path: /
     encoding:

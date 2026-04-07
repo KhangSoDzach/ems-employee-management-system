@@ -16,8 +16,10 @@
 --    Add photo URLs for check-in / check-out camera captures
 -- ─────────────────────────────────────────────────────────────
 ALTER TABLE attendances
-    ADD COLUMN check_in_photo_url  VARCHAR(500) NULL AFTER approval_notes,
-    ADD COLUMN check_out_photo_url VARCHAR(500) NULL AFTER check_in_photo_url;
+    ADD COLUMN IF NOT EXISTS check_in_photo_url VARCHAR(500) NULL;
+
+ALTER TABLE attendances
+    ADD COLUMN IF NOT EXISTS check_out_photo_url VARCHAR(500) NULL;
 
 -- ─────────────────────────────────────────────────────────────
 -- 2. WORKFLOW_TEMPLATES
