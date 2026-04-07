@@ -6,7 +6,7 @@ spring:
   datasource:
     # MYSQL_HOST defaults to "localhost" for hybrid dev (Spring on host, MySQL in Docker).
     # Set MYSQL_HOST=mysql (via docker-compose env) when Spring also runs inside Docker.
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
     username: ${MYSQL_USER:emsuser}
     password: ${MYSQL_PASSWORD:emspass123}
     driver-class-name: com.mysql.cj.jdbc.Driver
