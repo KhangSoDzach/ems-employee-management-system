@@ -153,6 +153,41 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
                                 .orElse(true); // No quota record → treat as unlimited (e.g. UNPAID)
         }
 
+        @Override
+        public void reserveBalance(Long employeeId, LeaveType leaveType, int days) {
+                int year = LocalDate.now().getYear();
+                if (LeaveType.ANNUAL.equals(leaveType)) {
+                        initializeDefaultBalancesForEmployee(employeeId, year);
+                }
+                Optional<LeaveBalance> opt = leaveBalanceRepository.findByEmployeeIdAndYearAndLeaveType(employeeId,
+                                year,
+                                leaveType);
+
+                if (opt.isPresent()) {
+                        LeaveBalance balance = opt.get();
+                        balance.reserveLeave(days);
+                        leaveBalanceRepository.save(balance);
+                        log.info("Reserved {} days for employeeId={} leaveType={}. Reserved: {}",
+                                        days, employeeId, leaveType, balance.getReservedDays());
+                }
+        }
+
+        @Override
+        public void returnReservedBalance(Long employeeId, LeaveType leaveType, int days) {
+                int year = LocalDate.now().getYear();
+                Optional<LeaveBalance> opt = leaveBalanceRepository.findByEmployeeIdAndYearAndLeaveType(employeeId,
+                                year,
+                                leaveType);
+
+                if (opt.isPresent()) {
+                        LeaveBalance balance = opt.get();
+                        balance.unreserveLeave(days);
+                        leaveBalanceRepository.save(balance);
+                        log.info("Returned reserved {} days for employeeId={} leaveType={}. Reserved: {}",
+                                        days, employeeId, leaveType, balance.getReservedDays());
+                }
+        }
+
         private void syncEmployeeDenormalizedBalance(Long employeeId, LeaveType leaveType, Integer remainingDays) {
                 if (remainingDays == null) {
                         return;
