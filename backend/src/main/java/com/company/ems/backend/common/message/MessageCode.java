@@ -108,6 +108,8 @@ public enum MessageCode {
     LEAVE_CANNOT_CANCEL("leave.cannot_cancel"),
     LEAVE_SELF_APPROVE_FORBIDDEN("leave.self_approve_forbidden"),
     LEAVE_CANCEL_FORBIDDEN("leave.cancel_forbidden"),
+    LEAVE_OVERLAPPING_RANGE("leave.overlapping_range"),
+    LEAVE_INSUFFICIENT_BALANCE("leave.insufficient_balance"),
 
     INVALID_STATUS("invalid.status"),
 

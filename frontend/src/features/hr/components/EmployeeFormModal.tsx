@@ -75,10 +75,16 @@ export default function EmployeeFormModal(props: Readonly<Props>) {
   const methods = useForm<EmployeeFormValues>({
     resolver: async (data, context, options) => {
       const selectedPos = positions.find((p) => p.id === data.positionId);
+      const selectedDept = departments.find((d) => d.id === data.departmentId);
       const isManager = selectedPos
         ? selectedPos.level >= MANAGER_LEVEL
         : false;
-      return zodResolver(getEmployeeSchema(isManager))(data, context, options);
+      const isHR = selectedDept?.code === "HR";
+      return zodResolver(getEmployeeSchema(isManager, isHR))(
+        data,
+        context,
+        options,
+      );
     },
     defaultValues: INITIAL_FORM_STATE as EmployeeFormValues,
     mode: "onBlur",

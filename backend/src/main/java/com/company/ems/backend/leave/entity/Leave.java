@@ -151,16 +151,39 @@ public class Leave extends BaseEntity {
     private String emergencyPhoneDuringLeave;
 
     /**
-     * Calculate total days between start and end date
+     * Calculate total working days between start and end date (inclusive, excluding weekends)
+     */
+    public static int calculateDays(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            return 0;
+        }
+        if (endDate.isBefore(startDate)) {
+            return 0;
+        }
+        int workingDays = 0;
+        java.time.LocalDate current = startDate;
+        while (!current.isAfter(endDate)) {
+            java.time.DayOfWeek dow = current.getDayOfWeek();
+            if (dow != java.time.DayOfWeek.SATURDAY && dow != java.time.DayOfWeek.SUNDAY) {
+                workingDays++;
+            }
+            current = current.plusDays(1);
+        }
+        return workingDays;
+    }
+
+    /**
+     * Calculate total days between start and end date (excluding weekends)
      */
     public void calculateTotalDays() {
         if (startDate != null && endDate != null) {
-            long days = ChronoUnit.DAYS.between(startDate, endDate) + 1; // +1 to include both start and end date
+            int workingDays = calculateDays(startDate, endDate);
 
-            if (isHalfDay != null && isHalfDay) {
-                this.totalDays = 1; // Half day is counted as 0.5 but stored as 1
+            if (isHalfDay != null && isHalfDay && workingDays > 0) {
+                this.totalDays = 1; // Half day is counted as 1 day in your current logic but represents 0.5 effectively.
+                                    // Keeping it 1 to stay consistent with your previous implementation.
             } else {
-                this.totalDays = (int) days;
+                this.totalDays = workingDays;
             }
         }
     }
