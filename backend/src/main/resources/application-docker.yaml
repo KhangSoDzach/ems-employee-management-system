@@ -4,11 +4,10 @@
 # ─────────────────────────────────────────────────────────────
 spring:
   datasource:
-    # MYSQL_HOST defaults to "localhost" for hybrid dev (Spring on host, MySQL in Docker).
-    # Set MYSQL_HOST=mysql (via docker-compose env) when Spring also runs inside Docker.
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: ${MYSQL_USER:emsuser}
-    password: ${MYSQL_PASSWORD:emspass123}
+    # Supports both explicit URL (Render/TiDB) and individual vars (Docker Compose)
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${MYSQL_HOST:localhost}:3306/ems_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:${MYSQL_USER:emsuser}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${MYSQL_PASSWORD:emspass123}}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10

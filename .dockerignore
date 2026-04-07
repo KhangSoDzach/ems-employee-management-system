@@ -1,0 +1,39 @@
+# Root .dockerignore for Render deployment
+
+# Frontend (not needed for backend build)
+frontend/
+node_modules/
+package.json
+package-lock.json
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.github/
+
+# Docker
+docker/
+docker-compose.yml
+docker-compose.override.yml
+
+# Docs and misc
+docs/
+logs/
+scripts/
+*.md
+.env
+.env.example
+.env.render.example
+duplicates.json
+find_duplicates.js
+system_prompt.txt
+AGENTS.md
+.husky/
+.opencode/
+
+# Backend build artifacts (will be rebuilt)
+backend/target/
