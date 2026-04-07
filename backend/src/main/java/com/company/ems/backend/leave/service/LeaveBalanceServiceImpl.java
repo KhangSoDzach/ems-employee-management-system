@@ -11,8 +11,10 @@ import com.company.ems.backend.employee.repository.EmployeeRepository;
 import com.company.ems.backend.leave.dto.LeaveBalanceResponse;
 import com.company.ems.backend.leave.entity.LeaveBalance;
 import com.company.ems.backend.leave.enums.LeaveType;
+import com.company.ems.backend.leave.enums.LeaveStatus;
 import com.company.ems.backend.leave.mapper.LeaveMapper;
 import com.company.ems.backend.leave.repository.LeaveBalanceRepository;
+import com.company.ems.backend.leave.repository.LeaveRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,8 +41,17 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
         private static final int DEFAULT_ANNUAL_LEAVE_DAYS = 12;
 
         private final LeaveBalanceRepository leaveBalanceRepository;
+        private final LeaveRepository leaveRepository;
         private final LeaveMapper leaveMapper;
         private final EmployeeRepository employeeRepository;
+
+        private static final List<LeaveStatus> PENDING_STATUSES = List.of(
+                        LeaveStatus.PENDING,
+                        LeaveStatus.PENDING_LEVEL_1,
+                        LeaveStatus.PENDING_LEVEL_2,
+                        LeaveStatus.PENDING_LEVEL_3,
+                        LeaveStatus.PENDING_LEVEL_4,
+                        LeaveStatus.PENDING_LEVEL_5);
 
         @Override
         public List<LeaveBalanceResponse> getBalanceForEmployee(Long employeeId) {
@@ -147,9 +158,14 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
                 if (LeaveType.ANNUAL.equals(leaveType)) {
                         initializeDefaultBalancesForEmployee(employeeId, year);
                 }
+
+                // Per user request: Subtract pending requests from remaining balance to block
+                // new ones
+                int pendingDays = leaveRepository.sumPendingDays(employeeId, leaveType, PENDING_STATUSES, year);
+
                 return leaveBalanceRepository
                                 .findByEmployeeIdAndYearAndLeaveType(employeeId, year, leaveType)
-                                .map(b -> b.hasSufficientBalance(days))
+                                .map(b -> (b.getRemainingDays() - pendingDays) >= days)
                                 .orElse(true); // No quota record → treat as unlimited (e.g. UNPAID)
         }
 

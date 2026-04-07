@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
+import { calculateWorkingDays } from "@/lib/date-utils";
 import {
   Loader2,
   MoreHorizontal,
@@ -151,6 +152,7 @@ export default function LeaveRequestPage() {
             dateCreated: new Date(dto.createdAt),
             startDate: new Date(`${dto.startDate}T00:00:00`),
             endDate: new Date(`${dto.endDate}T00:00:00`),
+            duration: dto.duration ?? 0,
             type: dto.leaveType.toLowerCase() as LeaveType,
             status: mapBackendStatus(dto.status),
             reason: dto.reason,
@@ -200,12 +202,21 @@ export default function LeaveRequestPage() {
   const handleCreate = async (data: LeaveFormValues) => {
     const requestedType = data.leaveType.toUpperCase();
 
-    // ─── Business Validation: Leave Balance ───
+    // ─── Business Validation: Leave Balance (including pending) ───
     if (requestedType !== LEAVE_TYPE.UNPAID.toUpperCase()) {
-      const requestedDays = differenceInDays(data.endDate, data.startDate) + 1;
+      const requestedDays = calculateWorkingDays(data.startDate, data.endDate);
       const leaveBalance = profile?.annualLeaveBalance ?? 0;
 
-      if (requestedDays > leaveBalance) {
+      const pendingDays = requests
+        .filter((r) => r.status === "PENDING")
+        .reduce(
+          (acc, r) => acc + calculateWorkingDays(r.startDate, r.endDate),
+          0,
+        );
+
+      const availableBalance = leaveBalance - pendingDays;
+
+      if (requestedDays > availableBalance) {
         throw new Error(SYSTEM_MESSAGES.LEAVE.MSG_INSUFFICIENT_BALANCE);
       }
     }
@@ -230,6 +241,7 @@ export default function LeaveRequestPage() {
       dateCreated: new Date(dto.createdAt),
       startDate: new Date(`${dto.startDate}T00:00:00`),
       endDate: new Date(`${dto.endDate}T00:00:00`),
+      duration: dto.duration ?? 0,
       type: dto.leaveType.toLowerCase() as LeaveType,
       status: mapBackendStatus(dto.status),
       reason: dto.reason,
@@ -483,10 +495,7 @@ export default function LeaveRequestPage() {
                           ` – ${format(req.endDate, DATE_FORMAT)}`}
                       </span>
                       <span className="text-muted-foreground text-xs block mt-0.5">
-                        {Math.ceil(
-                          (req.endDate.getTime() - req.startDate.getTime()) /
-                            (1000 * 60 * 60 * 24),
-                        ) + 1}{" "}
+                        {calculateWorkingDays(req.startDate, req.endDate)}{" "}
                         {SYSTEM_MESSAGES.LEAVE.DAYS}
                       </span>
                     </TableCell>
@@ -616,6 +625,13 @@ export default function LeaveRequestPage() {
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreate}
+        annualBalance={profile?.annualLeaveBalance ?? 0}
+        pendingDays={requests
+          .filter((r) => r.status === "PENDING")
+          .reduce(
+            (acc, r) => acc + calculateWorkingDays(r.startDate, r.endDate),
+            0,
+          )}
       />
 
       {/* Detail Sheet */}

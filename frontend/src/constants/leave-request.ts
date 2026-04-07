@@ -29,6 +29,7 @@ export interface LeaveRequest {
   dateCreated: Date;
   startDate: Date;
   endDate: Date;
+  duration: number;
   type: LeaveType;
   status: LeaveStatus;
   reason: string;

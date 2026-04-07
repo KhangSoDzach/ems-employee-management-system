@@ -63,12 +63,16 @@ interface CreateLeaveModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: LeaveFormValues) => Promise<void>;
+  annualBalance?: number;
+  pendingDays?: number;
 }
 
 export const CreateLeaveModal = ({
   open,
   onClose,
   onSubmit,
+  annualBalance = 0,
+  pendingDays = 0,
 }: CreateLeaveModalProps) => {
   const form = useForm<LeaveFormValues>({
     resolver: zodResolver(leaveSchema),
@@ -265,8 +269,26 @@ export const CreateLeaveModal = ({
             />
 
             {/* Summary Info Box */}
-            <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-              {TEXT.WARNING}
+            <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm space-y-2">
+              <div className="flex justify-between items-center text-muted-foreground">
+                <span>{TEXT.BALANCE_CURRENT}</span>
+                <span className="font-bold text-foreground">
+                  {annualBalance} {SYSTEM_MESSAGES.LEAVE.DAYS}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-amber-600/80">
+                <span>{TEXT.BALANCE_PENDING}</span>
+                <span className="font-bold">
+                  {pendingDays} {SYSTEM_MESSAGES.LEAVE.DAYS}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-primary/10 flex justify-between items-center text-primary font-medium">
+                <span>{TEXT.BALANCE_AVAILABLE}</span>
+                <span className="font-bold underline underline-offset-4">
+                  {Math.max(0, annualBalance - pendingDays)}{" "}
+                  {SYSTEM_MESSAGES.LEAVE.DAYS}
+                </span>
+              </div>
             </div>
 
             {/* ── Actions ── */}
