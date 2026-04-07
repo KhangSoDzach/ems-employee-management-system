@@ -9,6 +9,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
       MYSQL_USER: ${MYSQL_USER:-emsuser}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-emspass123}
+      TZ: Asia/Ho_Chi_Minh
+
     ports:
       - "3306:3306"
     volumes:
@@ -64,6 +66,8 @@ services:
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       JWT_SECRET: ${JWT_SECRET:-changeme-secret-key-for-development-only-minimum-256-bits-required-please-use-env-variable}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-changeme-refresh-secret-key-for-development-only-use-env-variable-in-production}
+      TZ: Asia/Ho_Chi_Minh
+
     ports:
       - "8080:8080"
     networks:
@@ -96,6 +100,8 @@ services:
         condition: service_healthy
     environment:
       VITE_API_URL: http://localhost:8080/api/v1
+      TZ: Asia/Ho_Chi_Minh
+
     ports:
       - "5173:5173"
     volumes:
