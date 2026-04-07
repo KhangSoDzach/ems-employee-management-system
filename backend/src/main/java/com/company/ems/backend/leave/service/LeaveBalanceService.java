@@ -41,14 +41,4 @@ public interface LeaveBalanceService {
      * Returns {@code true} if the employee has sufficient remaining balance.
      */
     boolean hasSufficientBalance(Long employeeId, LeaveType leaveType, int days);
-
-    /**
-     * Reserves days from an employee's leave balance when a request is submitted.
-     */
-    void reserveBalance(Long employeeId, LeaveType leaveType, int days);
-
-    /**
-     * Unreserves days from an employee's leave balance when a request is rejected or cancelled.
-     */
-    void returnReservedBalance(Long employeeId, LeaveType leaveType, int days);
 }

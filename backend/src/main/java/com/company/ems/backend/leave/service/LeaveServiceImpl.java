@@ -55,7 +55,6 @@ public class LeaveServiceImpl implements LeaveService {
     private final EmployeeRepository employeeRepository;
     private final DataScopeService dataScopeService;
         private final LeaveApprovalService leaveApprovalService;
-        private final LeaveBalanceService leaveBalanceService;
         private final WorkflowEngineService workflowEngineService;
     private final MessageService messages;
 
@@ -89,16 +88,6 @@ public class LeaveServiceImpl implements LeaveService {
                 .status(LeaveStatus.PENDING_LEVEL_1)
                 .build();
         leave.calculateTotalDays();
-
-        // 1. Check and reserve balance
-        if (!leaveBalanceService.hasSufficientBalance(employee.getId(), leave.getLeaveType(),
-                        leave.getTotalDays().intValue())) {
-                throw new BusinessException("INSUFFICIENT_BALANCE",
-                                messages.get(MessageCode.LEAVE_INSUFFICIENT_BALANCE));
-        }
-        leaveBalanceService.reserveBalance(employee.getId(), leave.getLeaveType(),
-                        leave.getTotalDays().intValue());
-
         initialiseLeaveWorkflow(leave);
 
         Leave saved = leaveRepository.save(leave);
@@ -263,13 +252,6 @@ public class LeaveServiceImpl implements LeaveService {
 
         leave.cancel();
         leaveRepository.save(leave);
-
-        // Unreserve balance as the request is no longer pending
-        leaveBalanceService.returnReservedBalance(
-                        leave.getEmployee().getId(),
-                        leave.getLeaveType(),
-                        leave.getTotalDays().intValue());
-
         log.info("User [{}] cancelled leave [{}]", principal.getUsername(), id);
     }
 
