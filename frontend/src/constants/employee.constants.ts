@@ -125,7 +125,7 @@ export const EMPLOYEE_CONSTANTS = {
     NATIONAL_ID_LENGTH: 12,
     SALARY_MIN: 0,
     SUGGESTED_INCREASE_RATE: 1.1, // 10% increase for official contract
-    MIN_OFFICIAL_SALARY: 0,
+    MIN_OFFICIAL_SALARY: 1,
     SALARY_STEP: 1000,
   },
 

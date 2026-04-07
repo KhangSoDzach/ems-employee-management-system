@@ -26,12 +26,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
         boolean existsByNationalId(String nationalId);
 
-        boolean existsBySocialSecurityNumber(String socialSecurityNumber);
-
-        boolean existsByTaxId(String taxId);
-
-        boolean existsByBankAccountNumber(String bankAccountNumber);
-
         @Query("SELECT MAX(e.employeeCode) FROM Employee e WHERE e.employeeCode LIKE :prefix%")
         String findMaxEmployeeCodeByPrefix(@Param("prefix") String prefix);
 

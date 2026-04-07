@@ -98,15 +98,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 if (request.getNationalId() != null && employeeRepository.existsByNationalId(request.getNationalId())) {
                         throw new BusinessException("DUPLICATE_NATIONAL_ID", "CCCD/CMND đã tồn tại trong hệ thống");
                 }
-                if (request.getSocialSecurityNumber() != null && employeeRepository.existsBySocialSecurityNumber(request.getSocialSecurityNumber())) {
-                        throw new BusinessException("DUPLICATE_SOCIAL_SECURITY_NUMBER", "Số sổ BHXH đã tồn tại trong hệ thống");
-                }
-                if (request.getTaxId() != null && employeeRepository.existsByTaxId(request.getTaxId())) {
-                        throw new BusinessException("DUPLICATE_TAX_ID", "Mã số thuế đã tồn tại trong hệ thống");
-                }
-                if (request.getBankAccountNumber() != null && employeeRepository.existsByBankAccountNumber(request.getBankAccountNumber())) {
-                        throw new BusinessException("DUPLICATE_BANK_ACCOUNT", "Số tài khoản ngân hàng đã tồn tại trong hệ thống");
-                }
 
                 Department department = departmentRepository.findById(request.getDepartmentId())
                         .orElseThrow(() -> new ResourceNotFoundException("Department", "id",
@@ -333,18 +324,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 if (request.getNationalId() != null && !request.getNationalId().equals(employee.getNationalId())
                         && employeeRepository.existsByNationalId(request.getNationalId())) {
                         throw new BusinessException("DUPLICATE_NATIONAL_ID", "CCCD/CMND đã tồn tại trong hệ thống");
-                }
-                if (request.getSocialSecurityNumber() != null && !request.getSocialSecurityNumber().equals(employee.getSocialSecurityNumber())
-                        && employeeRepository.existsBySocialSecurityNumber(request.getSocialSecurityNumber())) {
-                        throw new BusinessException("DUPLICATE_SOCIAL_SECURITY_NUMBER", "Số sổ BHXH đã tồn tại trong hệ thống");
-                }
-                if (request.getTaxId() != null && !request.getTaxId().equals(employee.getTaxId())
-                        && employeeRepository.existsByTaxId(request.getTaxId())) {
-                        throw new BusinessException("DUPLICATE_TAX_ID", "Mã số thuế đã tồn tại trong hệ thống");
-                }
-                if (request.getBankAccountNumber() != null && !request.getBankAccountNumber().equals(employee.getBankAccountNumber())
-                        && employeeRepository.existsByBankAccountNumber(request.getBankAccountNumber())) {
-                        throw new BusinessException("DUPLICATE_BANK_ACCOUNT", "Số tài khoản ngân hàng đã tồn tại trong hệ thống");
                 }
 
                 Department departmentModel = departmentRepository.findById(request.getDepartmentId())

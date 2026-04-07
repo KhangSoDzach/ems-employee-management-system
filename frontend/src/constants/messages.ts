@@ -989,7 +989,7 @@ export const SYSTEM_MESSAGES = {
     SECTION_ASSET_INFO: "Thông tin tài sản",
     LABEL_ASSET_NAME: "Tên tài sản",
     LABEL_ASSET_STATUS: "Trạng thái",
-    // LABEL_ASSET_CODE: "Mã tài sản",
+    LABEL_ASSET_CODE: "Mã tài sản",
     LABEL_DEVICE_CODE: "Mã thiết bị",
     LABEL_ASSET_TAG_SHORT: "Tag tài sản",
     LABEL_CURRENT_CONDITION: "Tình trạng hiện tại",
