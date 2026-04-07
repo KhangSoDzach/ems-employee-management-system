@@ -22,3 +22,4 @@ CI_SETUP_COMPLETE.md
 /.idea
 /.idea
 /.opencode
+.env.render.example
