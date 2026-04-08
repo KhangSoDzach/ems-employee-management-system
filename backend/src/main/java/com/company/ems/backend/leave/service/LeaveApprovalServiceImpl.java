@@ -3,6 +3,7 @@ package com.company.ems.backend.leave.service;
 import com.company.ems.backend.common.exception.BusinessException;
 import com.company.ems.backend.common.exception.ForbiddenException;
 import com.company.ems.backend.common.exception.ResourceNotFoundException;
+import com.company.ems.backend.employee.entity.Employee;
 import com.company.ems.backend.leave.dto.LeaveApprovalHistoryResponse;
 import com.company.ems.backend.leave.dto.LeaveApprovalRequest;
 import com.company.ems.backend.leave.dto.LeaveResponse;
@@ -127,6 +128,8 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
     /**
      * Calculates and sets the max approval level for a newly created leave request.
      * Applies the long-leave HR rule when applicable.
+     * [V13 Update] Automatically skips the first level (Manager) if the employee
+     * has no reporting manager assigned, preventing stuck requests for HR/Managers.
      *
      * @param leave    the unsaved leave entity (already has totalDays set)
      * @param template the active workflow template for LEAVE
@@ -140,11 +143,31 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
                 && leave.getTotalDays() >= longLeaveThresholdDays
                 && !lastLevelIsHr(levels);
 
+        int maxLevel = longLeaveRule ? configuredMax + 1 : configuredMax;
         leave.setWorkflowTemplateId(template.getId());
-        leave.setCurrentApprovalLevel(1);
-        leave.setMaxApprovalLevel(longLeaveRule ? configuredMax + 1 : configuredMax);
+        leave.setMaxApprovalLevel(maxLevel);
         leave.setLongLeaveHrRequired(longLeaveRule);
-        leave.setStatus(LeaveStatus.PENDING_LEVEL_1);
+
+        // --- Skip Manager logic for V13 ---
+        Employee requester = leave.getEmployee();
+        boolean hasNoManager = requester.getReportingManager() == null;
+        int startLevel = (hasNoManager && configuredMax >= 1) ? 2 : 1;
+
+        if (startLevel > maxLevel) {
+            // No levels left or entire chain skipped -> Auto-approve
+            leave.setStatus(LeaveStatus.APPROVED);
+            leave.setCurrentApprovalLevel(maxLevel);
+            log.info("Leave request for employee [{}] AUTO-APPROVED (system skip - no manager).",
+                    requester.getEmployeeCode());
+        } else {
+            leave.setCurrentApprovalLevel(startLevel);
+            leave.setStatus(LeaveStatus.pendingForLevel(startLevel));
+            if (startLevel > 1) {
+                log.info(
+                        "Leave request for employee [{}] SKIPPED manager level (no manager set). Starting at Level {}.",
+                        requester.getEmployeeCode(), startLevel);
+            }
+        }
 
         if (longLeaveRule) {
             log.info("Long-leave rule applied for leave [totalDays={}]: extra {} level added.",
