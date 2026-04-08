@@ -1,3 +1,9 @@
+/**
+ * @file ApproveLeaveRequest.tsx
+ * @description Trang dành cho quản lý để duyệt/từ chối các yêu cầu nghỉ phép của nhân viên.
+ * Page for managers to approve/reject leave requests from employees.
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Search,
@@ -147,7 +153,13 @@ const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 /* ================= MAIN PAGE ================= */
 
+/**
+ * @component ApproveLeaveRequest
+ * @description Thành phần chính quản lý quy trình phê duyệt nghỉ phép theo cấp bậc.
+ * Main component managing the hierarchical leave approval process.
+ */
 export default function ApproveLeaveRequest() {
+  // ══════════════ STATE ══════════════
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("PENDING");

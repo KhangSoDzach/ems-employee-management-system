@@ -1,3 +1,9 @@
+/**
+ * @file ApproveAdjustmentRequest.tsx
+ * @description Trang dành cho quản lý để duyệt/từ chối các yêu cầu điều chỉnh chấm công từ nhân viên.
+ * Page for managers to approve/reject attendance adjustment requests from employees.
+ */
+
 import React, { useState, useEffect, useCallback } from "react";
 import { ReviewAdjustmentSheet } from "./components/ReviewAdjustmentSheet";
 
@@ -120,16 +126,12 @@ function mapHistoryAction(action: string): AuditEntry["action"] {
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 /**
- * ApproveAdjustmentRequest Component
- * Management interface for reviewing and deciding on attendance adjustment requests.
- *
- * Capabilities:
- * - Correction Review: Analyze proposed adjustments to check-in/out times by employees.
- * - Multi-Level Approval: Supports complex approval chains for attendance corrections.
- * - Audit Visibility: View the full history and reasoning for each adjustment request.
- * - Batch Monitoring: Track pending requests across the team or department.
+ * @component ApproveAdjustmentRequest
+ * @description Thành phần chính hiển thị danh sách các yêu cầu điều chỉnh đợi duyệt.
+ * Main component displaying the list of adjustment requests waiting for approval.
  */
 const ApproveAdjustmentRequest: React.FC = () => {
+  // ══════════════ STATE & HOOKS ══════════════
   const [openReview, setOpenReview] = useState(false);
   const [detailRequest, setDetailRequest] = useState<AdjustmentRequest | null>(
     null,

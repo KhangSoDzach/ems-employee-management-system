@@ -1,3 +1,9 @@
+/**
+ * @file CheckinPage.tsx
+ * @description Trang chấm công hàng ngày cho nhân viên, hỗ trợ định vị GPS và bản đồ.
+ * Daily attendance check-in/out page for employees, supporting GPS and maps.
+ */
+
 import { Play, Square, Plane, CalendarClock, Loader2 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -177,7 +183,13 @@ function workHoursStatus(minutes: number | null) {
   };
 }
 
+/**
+ * @component CheckinPage
+ * @description Thành phần xử lý việc ghi nhận thời gian làm việc và xác thực vị trí.
+ * Component handling work time recording and location verification.
+ */
 export default function CheckinPage() {
+  // ══════════════ STATE & HOOKS ══════════════
   const navigate = useNavigate();
 
   // ── Live clock ────────────────────────────────────────────────────────────

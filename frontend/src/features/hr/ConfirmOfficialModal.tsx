@@ -1,3 +1,9 @@
+/**
+ * @file ConfirmOfficialModal.tsx
+ * @description Modal xác nhận chuyển nhân viên thử việc thành nhân viên chính thức.
+ * Modal for confirming the conversion of a probation employee to an official employee.
+ */
+
 import { useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -25,12 +31,18 @@ interface Props {
   onSuccess: () => void;
 }
 
+/**
+ * @component ConfirmOfficialModal
+ * @description Thành phần modal thu thập thông tin hợp đồng chính thức và mức lương mới.
+ * Modal component collecting official contract info and new salary level.
+ */
 export default function ConfirmOfficialModal({
   open,
   employee,
   onClose,
   onSuccess,
 }: Readonly<Props>) {
+  // ══════════════ STATE & MUTATION ══════════════
   const convertMutation = useConvertToOfficial();
   const {
     register,

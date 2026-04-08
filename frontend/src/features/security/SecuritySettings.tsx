@@ -1,3 +1,9 @@
+/**
+ * @file SecuritySettings.tsx
+ * @description Thành phần quản lý cài đặt bảo mật và tùy chỉnh giao diện người dùng.
+ * Component for managing security settings and user interface customization.
+ */
+
 import * as React from "react";
 import {
   ShieldCheck,
@@ -48,6 +54,22 @@ interface SidebarSettingsProps {
   setIsNotificationsEnabled?: (value: boolean) => void;
 }
 
+/**
+ * @component SidebarSettings
+ * @description Thành phần thanh bên cho phép người dùng cấu hình 2FA và chế độ tối/sáng.
+ * Sidebar component allowing users to configure 2FA and dark/light mode.
+ */
+/**
+ * SidebarSettings Component (Security & Preferences)
+ * A slide-out interface for managing personal account security and UI preferences.
+ *
+ * Capabilities:
+ * - 2FA Management: Enable/Disable Two-Factor Authentication with QR code and recovery codes.
+ * - Security Notifications: Toggle system-wide security alerts and notifications.
+ * - Visual Personalization: Seamless switching between Dark Mode and Light Mode.
+ * - Session Management: Integrated secure logout functionality.
+ * - Responsive Feedback: Real-time UI updates reflecting security status changes.
+ */
 export default function SidebarSettings({
   isNotificationsEnabled: externalNotificationsEnabled,
   setIsNotificationsEnabled: setExternalNotificationsEnabled,

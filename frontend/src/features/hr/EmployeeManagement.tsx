@@ -1,3 +1,9 @@
+/**
+ * @file EmployeeManagement.tsx
+ * @description Trang quản lý toàn bộ nhân viên trong hệ thống (dành cho HR/Admin).
+ * Management page for all employees in the system (for HR/Admin).
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Eye,
@@ -27,7 +33,13 @@ import { EMPLOYEE_CONSTANTS } from "../../constants/employee.constants";
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
+/**
+ * @component EmployeeManagementPage
+ * @description Thành phần chính của trang quản lý nhân viên với các tính năng tìm kiếm, lọc và các hành động CRUD.
+ * Main component of the employee management page with search, filtering, and CRUD actions.
+ */
 export default function EmployeeManagementPage() {
+  // ══════════════ STATE ══════════════
   const [employees, setEmployees] = useState<EmployeeResponse[]>([]);
   const [totalElements, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);

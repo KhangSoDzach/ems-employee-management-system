@@ -47,16 +47,12 @@ import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useAuth } from "@/contexts/AuthContext";
 
 /**
- * AssetRequestManagement Component
- * Administrative dashboard for managing employee requests for new equipment or asset assignments.
- *
- * Capabilities:
- * - Request Lifecycle: Process asset requests from initial submission to final fulfillment.
- * - Priority Handling: Sort and address requests based on urgency and business impact.
- * - Direct Provisioning: Integrates with the asset assignment flow to grant equipment to employees.
- * - Transparent Communication: Provide feedback and status updates directly to requesting employees.
+ * @file AssetRequestManagement.tsx
+ * @description Trang quản lý các yêu cầu cấp phát tài sản từ nhân viên dành cho Admin.
+ * Management of asset allocation requests from employees for Admins.
  */
 export function AssetRequestManagement() {
+  // ══════════════ STATE ══════════════
   const { user } = useAuth();
   const [requests, setRequests] = useState<AssetRequestAdminItem[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,3 +1,9 @@
+/**
+ * @file Asset-Management.tsx
+ * @description Trang quản lý danh sách tài sản trong hệ thống (Inventory Management).
+ * Main inventory management page for all company assets.
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Eye,
@@ -50,17 +56,12 @@ const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 /**
- * AssetManagementPage Component
- * Centralized hub for managing the company's physical and digital assets.
- *
- * Capabilities:
- * - Asset Inventory: View, search, and filter the complete asset library.
- * - Lifecycle Management: Handle asset creation, editing, and retirement/deletion.
- * - Real-time Status: Monitor asset availability (Available, Assigned, Retired).
- * - Data Export: Export asset inventory to CSV for reporting and audit purposes.
- * - Role-Based Access: Provides administrative tools for asset controllers.
+ * @component AssetManagementPage
+ * @description Thành phần chính quản lý kho tài sản, bao gồm các chức năng CRUD và xuất dữ liệu.
+ * Main component for managing asset inventory, including CRUD functions and data export.
  */
 export default function AssetManagementPage() {
+  // ══════════════ STATE ══════════════
   const [assets, setAssets] = useState<AssetSummary[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -141,6 +142,10 @@ export default function AssetManagementPage() {
     setPage(0);
   }, [statusFilter, searchDebounced]);
 
+  /**
+   * Tải danh sách tài sản từ API với phân trang và bộ lọc.
+   * Fetches the asset list from the API with pagination and filtering.
+   */
   const fetchList = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);

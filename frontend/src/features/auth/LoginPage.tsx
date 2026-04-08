@@ -1,3 +1,9 @@
+/**
+ * @file LoginPage.tsx
+ * @description Trang đăng nhập vào hệ thống với hỗ trợ mã xác thực 2 lớp (2FA).
+ * System login page with support for Two-Factor Authentication (2FA).
+ */
+
 import { useState, useEffect } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +47,13 @@ function getRedirectByRole(): string {
   return "/profile";
 }
 
+/**
+ * @component LoginPage
+ * @description Thành phần trang đăng nhập xử lý xác thực người dùng và điều hướng theo vai trò.
+ * Login page component handling user authentication and role-based navigation.
+ */
 export const LoginPage = () => {
+  // ══════════════ STATE & HOOKS ══════════════
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);

@@ -4,15 +4,12 @@ import { Navigate } from "react-router-dom";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 /**
- * AnnouncementManagementPage Component
- * Administrative interface for creating and publishing internal company communications.
- *
- * Capabilities:
- * - Content Creation: Compose and format internal announcements for all employees.
- * - Distribution Control: Manage the visibility and publication status of notifications.
- * - RBAC Enforcement: Strict access control ensuring only authorized personnel can post updates.
+ * @file AnnouncementManagementPage.tsx
+ * @description Trang quản lý thông báo nội bộ, cho phép Admin tạo và quản lý các thông báo trong hệ thống.
+ * Internal announcement management page, allowing Admins to create and manage system announcements.
  */
 export default function AnnouncementManagementPage() {
+  // ══════════════ RBAC & LOGIC ══════════════
   const role = useEffectiveRole();
 
   if (role !== "admin") {

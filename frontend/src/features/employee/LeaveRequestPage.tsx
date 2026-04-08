@@ -1,3 +1,9 @@
+/**
+ * @file LeaveRequestPage.tsx
+ * @description Trang quản lý yêu cầu nghỉ phép của nhân viên.
+ * Management page for employee leave requests.
+ */
+
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -92,7 +98,13 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
 
 /* ══════════════ MAIN PAGE ══════════════ */
 
+/**
+ * @component LeaveRequestPage
+ * @description Thành phần chính hiển thị danh sách nghỉ phép và form tạo yêu cầu.
+ * Main component displaying the leave list and request creation form.
+ */
 export default function LeaveRequestPage() {
+  // ══════════════ STATE & HOOKS ══════════════
   const queryClient = useQueryClient();
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);

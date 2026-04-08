@@ -8,6 +8,11 @@ import { assetService, AdminIncidentListItem } from "@/services/assetService";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { AUTH_ROLES } from "@/constants/auth";
+/**
+ * @file AssetIncidentManagementPage.tsx
+ * @description Trang quản lý sự cố tài sản, tích hợp chức năng phê duyệt nhanh.
+ * Asset incident management page with quick approval integration.
+ */
 export interface IncidentItem {
   id: string;
   numericId: number;
@@ -52,7 +57,13 @@ function mapToIncidentItem(r: AdminIncidentListItem): IncidentItem {
   };
 }
 
+/**
+ * @component AssetIncidentManagementPage
+ * @description Thành phần chính hiển thị bảng danh sách sự cố và tích hợp modal xử lý.
+ * Main component displaying the incident list table and integrated processing modal.
+ */
 export default function AssetIncidentManagementPage() {
+  // ══════════════ STATE ══════════════
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);

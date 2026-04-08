@@ -1,3 +1,9 @@
+/**
+ * @file PayrollRunPage.tsx
+ * @description Trang xử lý chạy bảng lương hàng tháng cho toàn bộ nhân viên.
+ * Page for processing monthly payroll for all employees.
+ */
+
 import { useState } from "react";
 import {
   Play,
@@ -116,7 +122,13 @@ function ResultSummary({ result }: ResultSummaryProps) {
  * PayrollRunPage Component
  * Administrative interface for HR and Admin roles to trigger and manage payroll calculation cycles.
  */
+/**
+ * @component PayrollRunPage
+ * @description Thành phần chính cho phép HR kích hoạt quá trình tính toán lương.
+ * Main component allowing HR to trigger the salary calculation process.
+ */
 export default function PayrollRunPage() {
+  // ══════════════ STATE & ROLE ══════════════
   const role = useEffectiveRole();
   const [period, setPeriod] = useState<string>(getCurrentPeriod);
   const [lastResult, setLastResult] = useState<RunPayrollResult | null>(null);

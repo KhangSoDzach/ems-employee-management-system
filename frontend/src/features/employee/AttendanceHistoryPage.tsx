@@ -1,3 +1,9 @@
+/**
+ * @file AttendanceHistoryPage.tsx
+ * @description Trang xem lịch sử chấm công chi tiết của nhân viên theo tháng.
+ * Page for viewing detailed employee attendance history by month.
+ */
+
 import { useMemo, useState } from "react";
 import {
   Calendar,
@@ -211,7 +217,13 @@ function MetricCard({
 
 const WEEKDAY_LABELS = ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"];
 
+/**
+ * @component AttendanceHistoryPage
+ * @description Thành phần chính hiển thị bảng lịch sử chấm công với bộ lọc thời gian.
+ * Main component displaying the attendance history table with time filters.
+ */
 export default function AttendanceHistoryPage() {
+  // ══════════════ STATE & HOOKS ══════════════
   const [viewMonth, setViewMonth] = useState<Date>(startOfMonth(new Date()));
   const [selectedDateOverride, setSelectedDateOverride] = useState<
     string | null

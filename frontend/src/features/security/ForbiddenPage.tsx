@@ -1,8 +1,19 @@
+/**
+ * @file ForbiddenPage.tsx
+ * @description Trang hiển thị thông báo lỗi 403 khi người dùng không có quyền truy cập.
+ * Page displaying 403 error message when the user lacks access permissions.
+ */
+
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
+/**
+ * @component ForbiddenPage
+ * @description Thành phần hiển thị giao diện báo lỗi truy cập bị từ chối.
+ * Component displaying the access denied error interface.
+ */
 export function ForbiddenPage() {
   const navigate = useNavigate();
 

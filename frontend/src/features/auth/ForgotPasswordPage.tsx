@@ -1,3 +1,9 @@
+/**
+ * @file ForgotPasswordPage.tsx
+ * @description Trang khôi phục mật khẩu qua email cho người dùng HR/Admin/Employee.
+ * Password recovery page via email for HR/Admin/Employee users.
+ */
+
 import { useState, useEffect } from "react";
 import { useForm, FieldErrors, UseFormRegister } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -497,11 +503,17 @@ const ResetFooter = ({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+/**
+ * @component ForgotPasswordPage
+ * @description Thành phần xử lý quy trình quên mật khẩu và đặt lại mật khẩu mới.
+ * Component handling the forgot password and reset new password process.
+ */
 export const ForgotPasswordPage = ({
   isProfileMode = false,
   userEmail = "",
   onClose,
 }: ForgotPasswordPageProps) => {
+  // ══════════════ STATE & FLOW ══════════════
   const navigate = useNavigate();
 
   /** 1 = enter email | 2 = enter OTP + new password | 3 = success */
