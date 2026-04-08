@@ -1,4 +1,8 @@
-// src/features/admin/AttendanceSettings.tsx
+/**
+ * @file AttendanceSettings.tsx
+ * @description Trang cấu hình các thiết lập chấm công cho hệ thống (Giờ làm việc, GPS, vị trí văn phòng).
+ * Configuration page for system attendance settings (Working hours, GPS, office locations).
+ */
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
@@ -57,6 +61,11 @@ import {
   OfficeLocationUpsertRequest,
 } from "@/services/officeLocationService";
 
+/**
+ * @component TimeField
+ * @description Thành phần input nhập thời gian (giờ:phút) tích hợp với React Hook Form.
+ * Time input component integrated with React Hook Form.
+ */
 interface TimeFieldProps {
   control: any;
   name: string;
@@ -95,6 +104,11 @@ const TimeField: React.FC<TimeFieldProps> = ({
   />
 );
 
+/**
+ * @component NumberField
+ * @description Thành phần input nhập số tích hợp với React Hook Form.
+ * Number input component integrated with React Hook Form.
+ */
 interface NumberFieldProps {
   control: any;
   name: string;
@@ -183,7 +197,13 @@ type BranchLocationDraft = {
   isActive: boolean;
 };
 
+/**
+ * @component AttendanceSettings
+ * @description Component chính quản lý cấu hình chấm công bao gồm thiết lập ca làm việc và vị trí văn phòng.
+ * Main component for managing attendance configuration including shift settings and office locations.
+ */
 export default function AttendanceSettings() {
+  // ══════════════ STATE & HOOKS ══════════════
   const queryClient = useQueryClient();
   const [mapSearchKeyword, setMapSearchKeyword] = React.useState("");
   const [mapSearchQuery, setMapSearchQuery] = React.useState("");
@@ -206,6 +226,10 @@ export default function AttendanceSettings() {
     Record<string, string>
   >({});
 
+  /**
+   * Khởi tạo form với schema và các giá trị mặc định.
+   * Form initialization with schema and default values.
+   */
   const form = useForm<
     AttendanceSettingsFormInput,
     unknown,
@@ -230,6 +254,7 @@ export default function AttendanceSettings() {
     },
   });
 
+  // ══════════════ QUERIES & MUTATIONS ══════════════
   const { data: officeConfig } = useQuery({
     queryKey: QUERY_KEY_OFFICE_CONFIG,
     queryFn: officeLocationService.getOfficeConfig,
@@ -294,6 +319,12 @@ export default function AttendanceSettings() {
     },
   });
 
+  // ══════════════ HANDLERS ══════════════
+
+  /**
+   * Xử lý lưu cấu hình chấm công chung.
+   * Handles saving general attendance configuration.
+   */
   const onSubmit = async (data: AttendanceSettingsFormValues) => {
     const loadingToastId = toast.loading(
       ATTENDANCE_SETTINGS_CONSTANTS.TOAST.LOADING,
@@ -343,6 +374,10 @@ export default function AttendanceSettings() {
     }
   };
 
+  /**
+   * Lấy vị trí tọa độ hiện tại từ trình duyệt qua GPS.
+   * Fetch current GPS coordinates from the browser.
+   */
   const onUseCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error(
@@ -462,6 +497,10 @@ export default function AttendanceSettings() {
     });
   };
 
+  /**
+   * Xử lý tìm kiếm vị trí trên bản đồ khi nhấn nút Tìm kiếm.
+   * Handles map location search when Search button is clicked.
+   */
   const onSearchMapLocation = () => {
     const keyword = mapSearchKeyword.trim();
     if (!keyword) {
@@ -525,6 +564,10 @@ export default function AttendanceSettings() {
     });
   };
 
+  /**
+   * Lưu thông tin chi nhánh/văn phòng mới.
+   * Saves new branch/office information.
+   */
   const onCreateBranchLocation = async () => {
     const validationResult =
       branchLocationSchema.safeParse(branchLocationDraft);

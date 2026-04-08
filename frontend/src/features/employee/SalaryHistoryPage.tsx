@@ -1,3 +1,9 @@
+/**
+ * @file SalaryHistoryPage.tsx
+ * @description Trang xem lịch sử nhận lương và chi tiết phiếu lương của nhân viên.
+ * Page for viewing salary history and payroll slip details for the employee.
+ */
+
 import { useState, useMemo } from "react";
 import {
   Calendar,
@@ -61,7 +67,13 @@ function toSlip(p: PayrollSlipApi, idx: number): SalarySlip {
  * - Client-side pagination for optimized table performance.
  * - Detailed Salary Slip view via a side-sheet.
  */
+/**
+ * @component SalaryHistoryPage
+ * @description Thành phần chính hiển thị danh sách các kỳ lương đã thanh toán.
+ * Main component displaying the list of paid payroll periods.
+ */
 export default function SalaryHistoryPage() {
+  // ══════════════ STATE ══════════════
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState<

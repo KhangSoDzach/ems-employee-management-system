@@ -1,3 +1,9 @@
+/**
+ * @file AuditLogsPage.tsx
+ * @description Trang quản lý nhật ký hệ thống (Audit Logs), cho phép Admin theo dõi các hoạt động của người dùng.
+ * System audit logs management page, allowing Admins to track user activities.
+ */
+
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -95,6 +101,10 @@ type FilterState = {
   to: string;
 };
 
+/**
+ * Định dạng chuỗi ngày tháng theo định dạng dd/MM/yyyy HH:mm:ss.
+ * Formats date string to dd/MM/yyyy HH:mm:ss.
+ */
 function formatDateTime(value: string | null | undefined): string {
   if (!value) {
     return "—";
@@ -106,6 +116,10 @@ function formatDateTime(value: string | null | undefined): string {
   }
 }
 
+/**
+ * Chuyển đổi datetime-local sang chuẩn ISO để gửi lên API.
+ * Converts local datetime-local to ISO format for API requests.
+ */
 function toIsoLocal(dateTimeLocal: string): string | undefined {
   if (!dateTimeLocal) {
     return undefined;
@@ -113,6 +127,10 @@ function toIsoLocal(dateTimeLocal: string): string | undefined {
   return dateTimeLocal.length === 16 ? `${dateTimeLocal}:00` : dateTimeLocal;
 }
 
+/**
+ * Che giấu thông tin định danh (Email hoặc ID) để bảo mật.
+ * Masks identifiers (Email or ID) for security purposes.
+ */
 function maskIdentifier(identifier: string | null): string {
   if (!identifier) {
     return "—";
@@ -148,7 +166,13 @@ function actionLabel(action: AuditActionType): string {
   return found?.label ?? action;
 }
 
+/**
+ * @component AuditLogsPage
+ * @description Hiển thị danh sách nhật ký hoạt động hệ thống với các bộ lọc năng cao và chi tiết bản ghi.
+ * Displays system activity logs with advanced filters and record details.
+ */
 export default function AuditLogsPage() {
+  // ══════════════ STATE ══════════════
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -162,6 +186,7 @@ export default function AuditLogsPage() {
   });
   const [appliedFilters, setAppliedFilters] = useState<FilterState>(filters);
 
+  // ══════════════ QUERIES ══════════════
   const queryFilters = useMemo(
     () => ({
       actor: appliedFilters.actor || undefined,
@@ -198,6 +223,7 @@ export default function AuditLogsPage() {
   const totalPages = logsQuery.data?.totalPages ?? 0;
   const totalElements = logsQuery.data?.totalElements ?? 0;
 
+  // ══════════════ ACTIONS ══════════════
   const applyFilters = () => {
     setPage(0);
     setAppliedFilters(filters);
@@ -216,6 +242,10 @@ export default function AuditLogsPage() {
     setPage(0);
   };
 
+  /**
+   * Mở modal xem chi tiết một bản ghi log.
+   * Opens details modal for a specific log item.
+   */
   const openDetail = (item: AuditLogItem) => {
     setSelectedId(item.id);
     setDetailOpen(true);

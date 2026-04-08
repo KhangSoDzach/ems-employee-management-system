@@ -1,3 +1,9 @@
+/**
+ * @file MemberList.tsx
+ * @description Trang hiển thị danh sách thành viên trong nhóm và quản lý đánh giá hiệu suất.
+ * Page displaying the list of team members and managing performance evaluations.
+ */
+
 import { useMemo, useRef, useState } from "react";
 import { Search, ChevronLeft, ChevronRight, Eye, Star } from "lucide-react";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
@@ -193,7 +199,13 @@ function EditWrapper({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+/**
+ * @component MemberList
+ * @description Thành phần chính liệt kê thành viên với các chức năng xem chi tiết và đánh giá (360 feedback).
+ * Main component listing members with view details and evaluation features (360 feedback).
+ */
 export default function MemberList() {
+  // ══════════════ STATE & CONTEXT ══════════════
   const t = SYSTEM_MESSAGES.MEMBER_LIST;
   const effectiveRole = useEffectiveRole();
   const { user } = useAuth();

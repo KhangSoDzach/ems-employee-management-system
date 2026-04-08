@@ -1,3 +1,9 @@
+/**
+ * @file AdjustmentRequestPage.tsx
+ * @description Trang quản lý yêu cầu điều chỉnh chấm công cho nhân viên (quên checkin/checkout).
+ * Management page for employee attendance adjustment requests (forgot checkin/checkout).
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import {
@@ -183,7 +189,13 @@ const EmptyState = ({ hasFilter }: { hasFilter: boolean }) => (
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 /* ══════════════ MAIN PAGE ══════════════ */
+/**
+ * @component AdjustmentRequestPage
+ * @description Thành phần chính hiển thị danh sách yêu cầu điều chỉnh và các hành động liên quan.
+ * Main component displaying adjustment requests and related actions.
+ */
 export default function AdjustmentRequestPage() {
+  // ══════════════ STATE ══════════════
   const [requests, setRequests] = useState<AdjustmentRequest[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -238,6 +250,10 @@ export default function AdjustmentRequestPage() {
   }, [detailRequest]);
 
   // ── Fetch my adjustments ───────────────────────────────────────────────────
+  /**
+   * Tải danh sách yêu cầu điều chỉnh của nhân viên hiện tại.
+   * Fetches the current employee's adjustment requests.
+   */
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {

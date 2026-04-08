@@ -46,7 +46,13 @@ import {
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * @file AssetRequestManagement.tsx
+ * @description Trang quản lý các yêu cầu cấp phát tài sản từ nhân viên dành cho Admin.
+ * Management of asset allocation requests from employees for Admins.
+ */
 export function AssetRequestManagement() {
+  // ══════════════ STATE ══════════════
   const { user } = useAuth();
   const [requests, setRequests] = useState<AssetRequestAdminItem[]>([]);
   const [loading, setLoading] = useState(true);

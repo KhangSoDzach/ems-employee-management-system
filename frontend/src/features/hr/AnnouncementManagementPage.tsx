@@ -3,7 +3,13 @@ import { CreateAnnouncementForm } from "@/features/admin/components/CreateAnnoun
 import { Navigate } from "react-router-dom";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
+/**
+ * @file AnnouncementManagementPage.tsx
+ * @description Trang quản lý thông báo nội bộ, cho phép Admin tạo và quản lý các thông báo trong hệ thống.
+ * Internal announcement management page, allowing Admins to create and manage system announcements.
+ */
 export default function AnnouncementManagementPage() {
+  // ══════════════ RBAC & LOGIC ══════════════
   const role = useEffectiveRole();
 
   if (role !== "admin") {

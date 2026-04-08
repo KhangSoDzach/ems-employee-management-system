@@ -1,3 +1,9 @@
+/**
+ * @file ProfilePage.tsx
+ * @description Trang hồ sơ cá nhân của nhân viên, hiển thị thông tin chi tiết và các chỉ số liên quan.
+ * Employee profile page, displaying detailed information and relevant metrics.
+ */
+
 import { useEffect, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +37,23 @@ import { ProfileJobSection } from "./components/ProfileJobSection";
 import { ProfileDocuments } from "./components/ProfileDocuments";
 import { ProfileStats } from "./components/ProfileStats";
 
+/**
+ * @component ProfilePage
+ * @description Thành phần chính hiển thị hồ sơ cá nhân ở chế độ chỉ đọc.
+ * Main component displaying the personal profile in read-only mode.
+ */
+/**
+ * ProfilePage Component
+ * Provides a read-only view of the employee's personal and professional profile.
+ *
+ * Capabilities:
+ * - Personal Information: View contact details, national ID, and date of birth.
+ * - Job Details: Display department, position, hire date, and work status.
+ * - Document Repository: Access and download verified employee documents (PDFs, Images).
+ * - Balance Overview: Track remaining leave balances and annual attendance percentage.
+ * - Account Security: Integrated password reset functionality through ForgotPasswordPage.
+ * - RBAC Compliance: Strict read-only mode for employees (US-07 AC-04).
+ */
 export default function ProfilePage() {
   const canEdit = false; // Toàn bộ người dùng không được phép tự ý chỉnh sửa thông tin cá nhân (US-07 AC-04)
   const form = useForm<ProfileFormValues>({

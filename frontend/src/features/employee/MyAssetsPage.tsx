@@ -1,3 +1,9 @@
+/**
+ * @file MyAssetsPage.tsx
+ * @description Trang xem các tài sản được cấp phát cho nhân viên và yêu cầu hỗ trợ/báo hỏng.
+ * Page for viewing assets assigned to the employee and requesting support or reporting damage.
+ */
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   AlertTriangle,
@@ -124,7 +130,13 @@ function AssetCard({
 
 /* ─────────────── MAIN PAGE ─────────────── */
 
+/**
+ * @component MyAssetsPage
+ * @description Thành phần chính quản lý tài sản cá nhân của nhân viên.
+ * Main component for managing employee personal assets.
+ */
 export default function MyAssetsPage() {
+  // ══════════════ STATE & HOOKS ══════════════
   const [assets, setAssets] = useState<MyAsset[]>([]);
   const [reports, setReports] = useState<IncidentReportRow[]>([]);
   const [loading, setLoading] = useState(true);

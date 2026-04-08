@@ -1,3 +1,9 @@
+/**
+ * @file SalaryComponentPage.tsx
+ * @description Trang cấu hình các thành phần lương (Base Salary, Allowances, etc.) dành cho Admin/HR.
+ * Configuration page for salary components (Base Salary, Allowances, etc.) for Admin/HR.
+ */
+
 import { useMemo, useState } from "react";
 import {
   ChevronLeft,
@@ -86,7 +92,13 @@ function getApiErrorMessage(error: unknown): string {
  * - Set fixed Amounts or Percentage Rates.
  * - Search and Paginate through the component library.
  */
+/**
+ * @component SalaryComponentPage
+ * @description Thành phần chính cung cấp giao diện quản lý cấu trúc lương của công ty.
+ * Main component providing the interface for managing company salary structure.
+ */
 export default function SalaryComponentPage() {
+  // ══════════════ STATE & HOOKS ══════════════
   const role = useEffectiveRole();
   const [modal, setModal] = useState<ModalState>(INITIAL_MODAL_STATE);
   const [serverError, setServerError] = useState<string | null>(null);

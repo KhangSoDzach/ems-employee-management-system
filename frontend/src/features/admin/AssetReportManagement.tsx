@@ -58,7 +58,13 @@ import {
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * @file AssetReportManagement.tsx
+ * @description Quản lý báo cáo sự cố tài sản (hỏng hóc, mất mát) dành cho Admin.
+ * Management of asset incident reports (damage, loss) for Admins.
+ */
 export default function AssetReportManagement() {
+  // ══════════════ STATE & HOOKS ══════════════
   const { user } = useAuth();
   const [reports, setReports] = useState<AdminIncidentListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +86,10 @@ export default function AssetReportManagement() {
     (page + 1) * PAGE_SIZE,
   );
 
+  /**
+   * Tải danh sách báo cáo sự cố từ API.
+   * Fetches the list of incident reports from the API.
+   */
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
@@ -112,6 +122,10 @@ export default function AssetReportManagement() {
     }
   };
 
+  /**
+   * Xử lý phê duyệt hoặc từ chối báo cáo sự cố.
+   * Processes approval or rejection of an incident report.
+   */
   const handleProcess = async (type: "APPROVE" | "REJECT") => {
     if (!selectedReport) {
       return;
