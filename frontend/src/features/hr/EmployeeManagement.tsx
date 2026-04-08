@@ -148,11 +148,10 @@ export default function EmployeeManagementPage() {
 
             <div className="flex-1">
               <p className="font-bold text-foreground text-base">
-                Khôi phục nhân viên
+                {SYSTEM_MESSAGES.EMPLOYEE.TITLE_RESTORE}
               </p>
               <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                Nhân viên sẽ được khôi phục về danh sách đang làm việc với trạng
-                thái ACTIVE.
+                {SYSTEM_MESSAGES.EMPLOYEE.MSG_RESTORE_DESC}
               </p>
 
               <div className="flex justify-end gap-2 mt-5">
@@ -168,17 +167,19 @@ export default function EmployeeManagementPage() {
                     toast.dismiss(t);
                     try {
                       await employeeService.restoreEmployee(id);
-                      toast.success("Nhân viên đã được khôi phục thành công");
+                      toast.success(
+                        SYSTEM_MESSAGES.EMPLOYEE.MSG_RESTORE_SUCCESS,
+                      );
                       fetchList();
                     } catch (error: any) {
                       const errorMsg =
                         error.response?.data?.message ||
-                        "Không thể khôi phục nhân viên";
+                        SYSTEM_MESSAGES.EMPLOYEE.MSG_RESTORE_ERROR;
                       toast.error(errorMsg);
                     }
                   }}
                 >
-                  Khôi phục
+                  {SYSTEM_MESSAGES.BTN_RESTORE}
                 </button>
               </div>
             </div>
@@ -327,7 +328,7 @@ export default function EmployeeManagementPage() {
               }`}
             >
               <RotateCcw size={14} />
-              Lưu trữ / Thôi việc
+              {SYSTEM_MESSAGES.EMPLOYEE.TAB_ARCHIVED}
             </button>
 
             {(statusFilter || search) && !isArchivedTab && (
@@ -459,7 +460,7 @@ export default function EmployeeManagementPage() {
                             </span>
                             {isArchived && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                                Đã thôi việc
+                                {SYSTEM_MESSAGES.EMPLOYEE.STATUS_TERMINATED}
                               </span>
                             )}
                           </div>
@@ -478,10 +479,10 @@ export default function EmployeeManagementPage() {
                                 <button
                                   onClick={() => handleRestore(emp.id)}
                                   className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-green-600 border border-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition"
-                                  title="Khôi phục nhân viên"
+                                  title={SYSTEM_MESSAGES.EMPLOYEE.TITLE_RESTORE}
                                 >
                                   <RotateCcw size={14} />
-                                  Khôi phục
+                                  {SYSTEM_MESSAGES.BTN_RESTORE}
                                 </button>
                               </>
                             ) : (

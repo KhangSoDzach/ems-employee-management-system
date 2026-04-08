@@ -25,6 +25,7 @@ export const SYSTEM_MESSAGES = {
   BTN_ADD: "Thêm mới",
   BTN_EDIT: "Chỉnh sửa",
   BTN_CLOSE: "Đóng",
+  BTN_RESTORE: "Khôi phục",
   DIALOG: {
     TITLE: "Hộp thoại",
     DESCRIPTION: "Chi tiết nội dung hộp thoại",
@@ -564,6 +565,7 @@ export const SYSTEM_MESSAGES = {
 
   // Employee Management (Admin Dashboard + HR)
   EMPLOYEE: {
+    REQUIRE_MARK: "*",
     TITLE: "Danh sách nhân viên",
     DESC_MGMT: "Quản lý thông tin hồ sơ và trạng thái làm việc của nhân viên",
     BTN_ADD: "Thêm nhân viên",
@@ -621,7 +623,6 @@ export const SYSTEM_MESSAGES = {
     SELECT_DEPT: "Chọn phòng ban...",
     SELECT_POSITION: "Chọn vị trí...",
     LABEL_REPORTING_MANAGER: "Trưởng phòng / Quản lý",
-    OPTION_NO_MANAGER: "— Không chỉ định —",
     MSG_MANAGER_LEVEL: "Cấp bậc Trưởng phòng / Quản lý.",
     LABEL_EMP_CODE_SHORT: "Mã NV",
     CONTRACT_TYPES: {
@@ -654,6 +655,14 @@ export const SYSTEM_MESSAGES = {
     MSG_VALIDATION_ERROR: "Vui lòng điền đầy đủ nội dung",
     MSG_DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa nhân viên này?",
     MSG_FETCH_ERROR: "Không thể tải danh sách nhân viên.",
+    // Restore actions
+    TITLE_RESTORE: "Khôi phục nhân viên",
+    MSG_RESTORE_DESC:
+      "Nhân viên sẽ được khôi phục về danh sách đang làm việc với trạng thái ACTIVE.",
+    MSG_RESTORE_SUCCESS: "Nhân viên đã được khôi phục thành công",
+    MSG_RESTORE_ERROR: "Không thể khôi phục nhân viên",
+    TAB_ARCHIVED: "Lưu trữ / Thôi việc",
+    STATUS_TERMINATED: "Đã thôi việc",
     INFO_NOTE:
       "Các thay đổi về chức danh và phòng ban sẽ cần sự phê duyệt của trưởng bộ phận.",
     DEPT_SOFTWARE: "Phòng Phát triển phần mềm",

@@ -25,7 +25,7 @@ import {
   payrollPeriodApi,
   type PayrollSummaryRow,
 } from "@/services/payrollPeriodApi";
-import { PAYROLL_HR_CONSTANTS } from "../payroll.constants";
+import { PAYROLL_HR_CONSTANTS } from "../../../constants/payroll.constants";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 const PERIOD_REGEX = PAYROLL_HR_CONSTANTS.VIEW.PERIOD_REGEX;
