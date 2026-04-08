@@ -6,7 +6,7 @@ import {
   type SalaryComponentPayload,
   type SalaryComponentResponse,
 } from "@/services/salaryComponentApi";
-import { PAYROLL_ADMIN_CONSTANTS } from "../payroll.constants";
+import { PAYROLL_ADMIN_CONSTANTS } from "../../../constants/payroll.constants";
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 
 interface SalaryComponentFormProps {

@@ -28,7 +28,7 @@ import {
   useUpdateSalaryComponent,
 } from "@/features/hr/hooks/useSalaryComponents";
 import { SalaryComponentForm } from "@/features/hr/components/SalaryComponentForm";
-import { PAYROLL_ADMIN_CONSTANTS } from "./payroll.constants";
+import { PAYROLL_ADMIN_CONSTANTS } from "../../constants/payroll.constants";
 import { useEffectiveRole, EFFECTIVE_ROLES } from "@/hooks/useEffectiveRole";
 import { ForbiddenPage } from "../security/ForbiddenPage";
 import { SYSTEM_MESSAGES } from "@/constants/messages";

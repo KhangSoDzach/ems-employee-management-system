@@ -341,7 +341,7 @@ export default function EmployeeEditModal({
                     <label className="text-xs font-bold text-muted-foreground uppercase">
                       {EMPLOYEE_CONSTANTS.LABELS.LAST_NAME}{" "}
                       <span className="text-red-500">
-                        {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
+                        {SYSTEM_MESSAGES.EMPLOYEE.REQUIRE_MARK}
                       </span>
                     </label>
                     <input
@@ -361,7 +361,7 @@ export default function EmployeeEditModal({
                     <label className="text-xs font-bold text-muted-foreground uppercase">
                       {EMPLOYEE_CONSTANTS.LABELS.FIRST_NAME}{" "}
                       <span className="text-red-500">
-                        {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
+                        {SYSTEM_MESSAGES.EMPLOYEE.REQUIRE_MARK}
                       </span>
                     </label>
                     <input
@@ -381,7 +381,7 @@ export default function EmployeeEditModal({
                     <label className="text-xs font-bold text-muted-foreground uppercase">
                       {EMPLOYEE_CONSTANTS.LABELS.EMAIL}{" "}
                       <span className="text-red-500">
-                        {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
+                        {SYSTEM_MESSAGES.EMPLOYEE.REQUIRE_MARK}
                       </span>
                     </label>
                     <input
@@ -442,7 +442,7 @@ export default function EmployeeEditModal({
                     <label className="text-xs font-bold text-muted-foreground uppercase">
                       {EMPLOYEE_CONSTANTS.LABELS.SALARY}{" "}
                       <span className="text-red-500">
-                        {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
+                        {SYSTEM_MESSAGES.EMPLOYEE.REQUIRE_MARK}
                       </span>
                     </label>
                     <input
@@ -487,7 +487,7 @@ export default function EmployeeEditModal({
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">
                       {EMPLOYEE_CONSTANTS.LABELS.DEPARTMENT}{" "}
                       <span className="text-red-500">
-                        {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
+                        {SYSTEM_MESSAGES.EMPLOYEE.REQUIRE_MARK}
                       </span>
                     </label>
                     <select
@@ -515,7 +515,7 @@ export default function EmployeeEditModal({
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">
                       {EMPLOYEE_CONSTANTS.LABELS.POSITION}{" "}
                       <span className="text-red-500">
-                        {SYSTEM_MESSAGES.EMPLOYEE.TXT_REQUIRED_MARK}
+                        {SYSTEM_MESSAGES.EMPLOYEE.REQUIRE_MARK}
                       </span>
                     </label>
                     <select

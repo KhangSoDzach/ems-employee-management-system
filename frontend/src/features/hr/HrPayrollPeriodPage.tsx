@@ -1,5 +1,5 @@
 import { PayrollPeriodView } from "@/features/hr/components/PayrollPeriodView";
-import { PAYROLL_HR_CONSTANTS } from "./payroll.constants";
+import { PAYROLL_HR_CONSTANTS } from "../../constants/payroll.constants";
 
 export default function HrPayrollPeriodPage() {
   return (

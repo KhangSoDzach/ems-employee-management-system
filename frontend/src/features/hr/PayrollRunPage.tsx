@@ -21,7 +21,7 @@ import {
   useRecalculatePayroll,
   type RunPayrollResult,
 } from "@/features/hr/hooks/usePayrollRun";
-import { PAYROLL_HR_CONSTANTS } from "./payroll.constants";
+import { PAYROLL_HR_CONSTANTS } from "../../constants/payroll.constants";
 import { ForbiddenPage } from "../security/ForbiddenPage";
 import { useEffectiveRole, EFFECTIVE_ROLES } from "@/hooks/useEffectiveRole";
 import { toast } from "sonner";
