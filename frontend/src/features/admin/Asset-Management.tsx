@@ -49,6 +49,17 @@ const STATUS_FILTERS: { label: string; value: AssetStatus | "" }[] = [
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
+/**
+ * AssetManagementPage Component
+ * Centralized hub for managing the company's physical and digital assets.
+ *
+ * Capabilities:
+ * - Asset Inventory: View, search, and filter the complete asset library.
+ * - Lifecycle Management: Handle asset creation, editing, and retirement/deletion.
+ * - Real-time Status: Monitor asset availability (Available, Assigned, Retired).
+ * - Data Export: Export asset inventory to CSV for reporting and audit purposes.
+ * - Role-Based Access: Provides administrative tools for asset controllers.
+ */
 export default function AssetManagementPage() {
   const [assets, setAssets] = useState<AssetSummary[]>([]);
   const [totalElements, setTotalElements] = useState(0);

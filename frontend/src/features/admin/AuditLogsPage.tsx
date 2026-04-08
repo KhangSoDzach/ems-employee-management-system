@@ -148,6 +148,16 @@ function actionLabel(action: AuditActionType): string {
   return found?.label ?? action;
 }
 
+/**
+ * AuditLogsPage Component
+ * Provides a comprehensive audit trail of system activities for security and transparency.
+ *
+ * Capabilities:
+ * - Activity Monitoring: Track login success/failure, profile changes, and sensitive operations.
+ * - Advanced Filtering: Filter logs by actor, action type, IP address, and date range.
+ * - Detailed Inspection: View full metadata for each audit entry, including user-agent and correlation IDs.
+ * - Security Analytics: Identify potential security breaches or suspicious patterns.
+ */
 export default function AuditLogsPage() {
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<number | null>(null);

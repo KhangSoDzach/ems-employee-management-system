@@ -119,6 +119,16 @@ function mapHistoryAction(action: string): AuditEntry["action"] {
 
 const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
+/**
+ * ApproveAdjustmentRequest Component
+ * Management interface for reviewing and deciding on attendance adjustment requests.
+ *
+ * Capabilities:
+ * - Correction Review: Analyze proposed adjustments to check-in/out times by employees.
+ * - Multi-Level Approval: Supports complex approval chains for attendance corrections.
+ * - Audit Visibility: View the full history and reasoning for each adjustment request.
+ * - Batch Monitoring: Track pending requests across the team or department.
+ */
 const ApproveAdjustmentRequest: React.FC = () => {
   const [openReview, setOpenReview] = useState(false);
   const [detailRequest, setDetailRequest] = useState<AdjustmentRequest | null>(
