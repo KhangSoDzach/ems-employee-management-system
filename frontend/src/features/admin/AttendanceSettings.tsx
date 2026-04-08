@@ -1,5 +1,18 @@
 // src/features/admin/AttendanceSettings.tsx
 
+/**
+ * AttendanceSettings Component
+ * Manages the core operational parameters for the company's attendance system.
+ *
+ * Capabilities:
+ * - Configure Office Locations: Set geofencing parameters (Latitude, Longitude, Radius).
+ * - Multi-Branch Support: Manage multiple office branches with individual geofencing.
+ * - Shift Management: Define Check-in and Check-out times for multiple shifts.
+ * - Grace Periods & Thresholds: Set allowable late arrival periods and early leave thresholds.
+ * - GPS-Based Verification: Toggle and configure location-based attendance rules.
+ * - Integration: Synchronizes settings with the backend to enforce attendance logic.
+ */
+
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

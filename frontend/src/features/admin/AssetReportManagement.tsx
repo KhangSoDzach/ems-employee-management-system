@@ -58,6 +58,16 @@ import {
 import { SYSTEM_MESSAGES } from "@/constants/messages";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * AssetReportManagement Component
+ * Specialized interface for administrators to review and process asset-related incident reports.
+ *
+ * Capabilities:
+ * - Incident Review: Review reports submitted by employees regarding damaged or lost assets.
+ * - Approval Workflow: Approve or reject reports with mandatory feedback/notes.
+ * - Status Monitoring: Track the progress of reports from Pending to Resolved.
+ * - Asset Condition Updates: Automatically triggers status changes in the asset inventory upon report resolution.
+ */
 export default function AssetReportManagement() {
   const { user } = useAuth();
   const [reports, setReports] = useState<AdminIncidentListItem[]>([]);
