@@ -192,6 +192,11 @@ export function AppSidebar({
           url: "/announcements/manage",
           icon: Bell,
         },
+        {
+          title: SYSTEM_MESSAGES.SIDEBAR.MENU_AUDIT_LOGS,
+          url: "/audit-logs",
+          icon: ClipboardList,
+        },
       ];
       return [commonSection, manageSection];
     }
