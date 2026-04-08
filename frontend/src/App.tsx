@@ -150,7 +150,6 @@ function App() {
                     }
                   >
                     <Route path="/assets" element={<AssetManagementPage />} />
-                    <Route path="/audit-logs" element={<AuditLogsPage />} />
                     <Route
                       path="/announcements/manage"
                       element={<AnnouncementManagementPage />}
@@ -187,6 +186,7 @@ function App() {
                       path="/attendance-settings"
                       element={<AttendanceSettings />}
                     />
+                    <Route path="/audit-logs" element={<AuditLogsPage />} />
                   </Route>
 
                   {/* Employee + HR + Manager */}

@@ -346,10 +346,13 @@ export default function AttendanceSettings() {
   const onUseCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error(
-        SYSTEM_MESSAGES.ATTENDANCE_SETTINGS.MSG_GEOLOCATION_NOT_SUPPORTED,
+        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH
+          .TOAST_NO_GEOLOCATION,
       );
       return;
     }
+
+    const toastId = toast.loading("Đang lấy vị trí từ GPS...");
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -361,12 +364,20 @@ export default function AttendanceSettings() {
         form.setValue("longitude", String(position.coords.longitude), {
           shouldDirty: true,
         });
-      },
-      () => {
-        toast.error(
-          SYSTEM_MESSAGES.ATTENDANCE_SETTINGS.MSG_CANNOT_GET_LOCATION,
+        toast.dismiss(toastId);
+        toast.success(
+          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH
+            .TOAST_LOCATION_UPDATE_SUCCESS,
         );
       },
+      () => {
+        toast.dismiss(toastId);
+        toast.error(
+          ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH
+            .TOAST_CANNOT_GET_LOCATION,
+        );
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
     );
   };
 
@@ -1128,60 +1139,6 @@ export default function AttendanceSettings() {
                         />
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="settings-card mt-6">
-                <CardContent className="settings-card-content space-y-4">
-                  <div className="flex flex-wrap items-center gap-3 mb-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onUseCurrentLocation}
-                      disabled={!form.watch("gpsEnabled")}
-                    >
-                      <Navigation className="mr-2 h-4 w-4" />
-                      {
-                        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH
-                          .USE_CURRENT_LOCATION
-                      }
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        if (!hasValidCoordinates && !mapSearchQuery) {
-                          toast.error(
-                            ATTENDANCE_SETTINGS_CONSTANTS.VALIDATION
-                              .INVALID_COORDINATE,
-                          );
-                          return;
-                        }
-                        const mapsQuery =
-                          mapSearchQuery || `${latitude},${longitude}`;
-                        window.open(
-                          `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}`,
-                          "_blank",
-                        );
-                      }}
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      {
-                        ATTENDANCE_SETTINGS_CONSTANTS.LOCATION_RULES.MAP_SEARCH
-                          .OPEN_GOOGLE_MAPS
-                      }
-                    </Button>
-                  </div>
-
-                  <div className="overflow-hidden rounded-xl border bg-white">
-                    <iframe
-                      title="Google Maps Preview"
-                      src={googleMapsEmbedUrl}
-                      className="w-full h-72"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
                   </div>
                 </CardContent>
               </Card>

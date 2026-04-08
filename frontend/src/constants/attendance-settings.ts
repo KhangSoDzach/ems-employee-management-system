@@ -116,6 +116,7 @@ export const ATTENDANCE_SETTINGS_CONSTANTS = {
       TOAST_SEARCH_ERROR: "Không thể tìm kiếm vị trí. Vui lòng thử lại.",
       TOAST_NO_GEOLOCATION: "Trình duyệt không hỗ trợ định vị.",
       TOAST_CANNOT_GET_LOCATION: "Không thể lấy vị trí hiện tại.",
+      TOAST_LOCATION_UPDATE_SUCCESS: "Đã cập nhật vị trí thành công từ GPS!",
     },
 
     GPS_ENABLED: {
