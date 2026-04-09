@@ -39,7 +39,7 @@ import {
   type PayrollSlipApi,
 } from "@/services/salaryHistoryApi";
 
-const PAGE_SIZE = 4;
+const PAGE_SIZE = SYSTEM_MESSAGES.COMMON.DEFAULT_PAGE_SIZE;
 
 function toSlip(p: PayrollSlipApi, idx: number): SalarySlip {
   return {

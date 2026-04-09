@@ -17,7 +17,22 @@ export const employeeSchema = z
         message: FORM_VALIDATION_MESSAGES.PHONE_FORMAT,
       }),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]),
-    dateOfBirth: z.string().min(1, FORM_VALIDATION_MESSAGES.DOB_REQUIRED),
+    dateOfBirth: z
+      .string()
+      .min(1, FORM_VALIDATION_MESSAGES.DOB_REQUIRED)
+      .refine((val) => {
+        if (!val) {
+          return false;
+        }
+        const birthDate = new Date(val);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        return age >= 18;
+      }, FORM_VALIDATION_MESSAGES.AGE_MIN),
     hireDate: z.string().min(1, FORM_VALIDATION_MESSAGES.START_DATE_REQUIRED),
     departmentId: z.number().min(1, FORM_VALIDATION_MESSAGES.DEPT_REQUIRED),
     positionId: z.number().min(1, FORM_VALIDATION_MESSAGES.ROLE_REQUIRED),
