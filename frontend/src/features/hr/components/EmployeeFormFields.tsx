@@ -159,7 +159,10 @@ export default function EmployeeFormFields(props: Props) {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase">
-                {EMPLOYEE_CONSTANTS.LABELS.PHONE}
+                {EMPLOYEE_CONSTANTS.LABELS.PHONE}{" "}
+                <span className="text-red-500" aria-hidden="true">
+                  {EMPLOYEE_CONSTANTS.MESSAGES.REQUIRED_MARK}
+                </span>
               </label>
               <input
                 {...register("phone")}
