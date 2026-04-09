@@ -12,8 +12,8 @@ export const employeeSchema = z
       .email(FORM_VALIDATION_MESSAGES.EMAIL_INVALID),
     phone: z
       .string()
-      .optional()
-      .refine((val) => !val || /^\d{10,13}$/.test(val), {
+      .min(1, FORM_VALIDATION_MESSAGES.PHONE_REQUIRED)
+      .refine((val) => /^\d{10,13}$/.test(val), {
         message: FORM_VALIDATION_MESSAGES.PHONE_FORMAT,
       }),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]),

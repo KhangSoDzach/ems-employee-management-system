@@ -8,6 +8,7 @@ export const FORM_VALIDATION_MESSAGES = {
   ID_FORMAT: "CMND/CCCD phải là 9 hoặc 12 số",
   EMAIL_INVALID: "Email không hợp lệ",
   PHONE_FORMAT: "SĐT phải từ 10-13 số",
+  PHONE_REQUIRED: "Vui lòng nhập số điện thoại",
   DOB_REQUIRED: "Vui lòng chọn ngày sinh",
   AGE_MIN: "Nhân viên phải từ 18 tuổi trở lên",
   START_DATE_REQUIRED: "Vui lòng chọn ngày bắt đầu",
